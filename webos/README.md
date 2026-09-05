@@ -50,7 +50,7 @@ git push --force-with-lease origin webos
 
 | Fase | Descrição | Status |
 |---|---|---|
-| 0 | Fundação e Setup | 🟡 Em andamento (T0.1 concluída) |
+| 0 | Fundação e Setup | 🟡 Em andamento (T0.1–T0.3 concluídas) |
 | 1 | Build e Compatibilidade JS | ⬜ Pendente |
 | 2 | CSS e Layout | ⬜ Pendente |
 | 3 | Plataforma webOS | ⬜ Pendente |

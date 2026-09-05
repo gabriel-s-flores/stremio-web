@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Stremio webOS Hello — Diagnostics</title>
+	<style type="text/css">
+		body {
+			margin: 0;
+			background-color: #202020;
+			color: #EDEDED;
+			font-family: monospace;
+			font-size: 20px;
+		}
+		#header {
+			padding: 12px 20px;
+			background-color: #7B2BF9;
+			font-size: 26px;
+			font-weight: bold;
+		}
+		#nav {
+			padding: 8px 20px;
+			background-color: #303030;
+		}
+		#nav a {
+			color: #7EC6FF;
+			margin-right: 24px;
+			font-size: 22px;
+		}
+		#main {
+			display: table;
+			width: 100%;
+		}
+		#col-left {
+			display: table-cell;
+			width: 46%;
+			vertical-align: top;
+			padding: 12px 20px;
+		}
+		#col-right {
+			display: table-cell;
+			vertical-align: top;
+			padding: 12px 20px;
+		}
+		.kv {
+			margin: 4px 0;
+			word-break: break-all;
+		}
+		.k {
+			color: #9E9E9E;
+		}
+		.v {
+			color: #FFFFFF;
+		}
+		.key-flash {
+			background-color: #FF9800;
+			color: #000;
+			font-size: 28px;
+			font-weight: bold;
+			padding: 6px 14px;
+			margin: 8px 0;
+			display: inline-block;
+			border-radius: 6px;
+		}
+		#log {
+			background-color: #101010;
+			border: 1px solid #3A3A3A;
+			height: 760px;
+			overflow: hidden;
+			padding: 8px;
+			font-size: 17px;
+			line-height: 1.35;
+		}
+		.log-line {
+			white-space: pre-wrap;
+			word-break: break-all;
+		}
+		.log-evt { color: #7EC6FF; }
+		.log-key { color: #FFB74D; }
+		.log-ok { color: #81C784; }
+		.log-err { color: #E57373; }
+		.log-info { color: #BDBDBD; }
+		button, .btn {
+			font-size: 22px;
+			padding: 10px 18px;
+			margin: 6px 8px 6px 0;
+			background-color: #7B2BF9;
+			color: #FFF;
+			border: none;
+			border-radius: 6px;
+			cursor: pointer;
+		}
+	</style>
+</head>
+<body>
+	<div id="header">Stremio webOS Hello — diag <span id="mode"></span></div>
+	<div id="nav">
+		<a href="#/a">#/a</a>
+		<a href="#/b">#/b</a>
+		<a href="#/c">#/c</a>
+		<span id="route"></span>
+	</div>
+	<div id="main">
+		<div id="col-left">
+			<div class="kv"><span class="k">userAgent: </span><span class="v" id="ua"></span></div>
+			<div class="kv"><span class="k">window.PalmSystem: </span><span class="v" id="palm"></span></div>
+			<div class="kv"><span class="k">window.webOS: </span><span class="v" id="webosapi"></span></div>
+			<div class="kv"><span class="k">location.href: </span><span class="v" id="href"></span></div>
+			<div class="kv"><span class="k">origin: </span><span class="v" id="origin"></span></div>
+			<div class="kv"><span class="k">document.cookie suportado: </span><span class="v" id="cookie"></span></div>
+			<div class="kv"><span class="k">localStorage: </span><span class="v" id="ls"></span></div>
+			<div class="kv"><span class="k">serviceWorker: </span><span class="v" id="sw"></span></div>
+			<div id="lastkey"></div>
+			<div>
+				<button id="btn-back">webOS.platformBack()</button>
+				<button id="btn-luna">Luna getTime</button>
+				<button id="btn-menu">Mostrar/Ocultar menu</button>
+			</div>
+			<div id="menu" style="display:none; background:#37474F; padding:10px; border-radius:6px; margin-top:6px;">
+				<b>Menu simulado ABERTO</b> — Back deve fechar este menu primeiro.
+			</div>
+		</div>
+		<div id="col-right">
+			<div id="log"></div>
+		</div>
+	</div>
+
+	<script src="webOSTVjs-1.2.10/webOSTV.js" charset="utf-8"></script>
+	<script type="text/javascript">
+	(function () {
+		'use strict';
+
+		var logEl = document.getElementById('log');
+		var MAX_LINES = 200;
+
+		function ts() {
+			var d = new Date();
+			function p(n, l) {
+				var s = String(n);
+				while (s.length < (l || 2)) s = '0' + s;
+				return s;
+			}
+			return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + '.' + p(d.getMilliseconds(), 3);
+		}
+
+		function log(cls, msg) {
+			var line = document.createElement('div');
+			line.className = 'log-line ' + cls;
+			line.appendChild(document.createTextNode(ts() + ' ' + msg));
+			logEl.appendChild(line);
+			while (logEl.childNodes.length > MAX_LINES) {
+				logEl.removeChild(logEl.firstChild);
+			}
+			logEl.scrollTop = logEl.scrollHeight;
+			if (window.console && console.log) console.log(msg);
+		}
+
+		function setText(id, value) {
+			document.getElementById(id).appendChild(document.createTextNode(value));
+		}
+
+		log('log-info', '=== boot da pagina (script inline executou) ===');
+
+		// ---- Info basica -----------------------------------------------------
+		setText('ua', navigator.userAgent);
+		setText('palm', typeof window.PalmSystem);
+		setText('webosapi', typeof window.webOS);
+		setText('href', String(location.href));
+		setText('origin', String(location.origin));
+		setText('mode', location.protocol === 'file:' ? '(PACKAGED / file://)' : '(HOSTED / http)');
+		document.getElementById('mode').style.backgroundColor =
+			location.protocol === 'file:' ? '#B71C1C' : '#1B5E20';
+
+		try {
+			document.cookie = 'diag=1';
+			setText('cookie', document.cookie.indexOf('diag=1') !== -1 ? 'SIM' : 'NAO (' + document.cookie + ')');
+		} catch (e) {
+			setText('cookie', 'ERRO: ' + e.message);
+		}
+
+		try {
+			localStorage.setItem('diag', '1');
+			setText('ls', localStorage.getItem('diag') === '1' ? 'OK' : 'FALHOU');
+		} catch (e) {
+			setText('ls', 'ERRO: ' + e.message);
+		}
+
+		setText('sw', ('serviceWorker' in navigator) ? 'presente' : 'ausente');
+
+		// ---- Mini-router por hash (testa Back com History API) ----------------
+		var routeEl = document.getElementById('route');
+		function renderRoute() {
+			var h = location.hash || '#/a';
+			routeEl.innerHTML = '';
+			routeEl.appendChild(document.createTextNode('  rota atual: ' + h));
+			log('log-info', 'hashchange/rota -> ' + h + ' (history.length=' + history.length + ')');
+		}
+		window.addEventListener('hashchange', renderRoute);
+		renderRoute();
+
+		// ---- Eventos de plataforma -------------------------------------------
+		function on(name) {
+			return function (ev) {
+				var extra = '';
+				if (ev && typeof ev === 'object') {
+					try { extra = ' ' + JSON.stringify(ev.detail || {}); } catch (e) { /* noop */ }
+				}
+				log('log-evt', name + extra);
+			};
+		}
+		document.addEventListener('webOSLaunch', on('webOSLaunch'));
+		document.addEventListener('webOSRelaunch', on('webOSRelaunch'));
+		document.addEventListener('webOSFullscreen', on('webOSFullscreen'));
+		document.addEventListener('visibilitychange', function () {
+			log('log-evt', 'visibilitychange -> ' + document.visibilityState + ' (hidden=' + document.hidden + ')');
+		});
+		window.addEventListener('focus', function () { log('log-evt', 'window focus'); });
+		window.addEventListener('blur', function () { log('log-evt', 'window blur'); });
+		window.addEventListener('pagehide', function () { log('log-evt', 'pagehide'); });
+		window.addEventListener('pageshow', function (e) {
+			log('log-evt', 'pageshow (persisted=' + (e && e.persisted) + ')');
+		});
+
+		// ---- Teclas (Back = 461) ----------------------------------------------
+		var KEY_NAMES = {
+			'13': 'OK', '37': 'LEFT', '38': 'UP', '39': 'RIGHT', '40': 'DOWN',
+			'461': '*** BACK ***',
+			'403': 'RED', '404': 'GREEN', '405': 'YELLOW', '406': 'BLUE',
+			'415': 'PLAY', '19': 'PAUSE', '413': 'STOP', '417': 'FF', '412': 'RW'
+		};
+		var menu = document.getElementById('menu');
+
+		function describeKey(e) {
+			var code = e.keyCode || e.which;
+			var name = KEY_NAMES[String(code)] || '';
+			return code + (name ? ' (' + name + ')' : '');
+		}
+
+		window.addEventListener('keydown', function (e) {
+			var code = e.keyCode || e.which;
+			log('log-key', 'keydown ' + describeKey(e));
+			var flash = document.getElementById('lastkey');
+			flash.innerHTML = '';
+			var kf = document.createElement('div');
+			kf.className = 'key-flash';
+			kf.appendChild(document.createTextNode('keydown ' + describeKey(e)));
+			flash.appendChild(kf);
+
+			if (code === 461) {
+				// App decide o que fazer (preview de D2): fecha menu antes de sair
+				if (menu.style.display !== 'none') {
+					menu.style.display = 'none';
+					log('log-ok', 'BACK(461): menu fechado pelo app; evento consumido (preventDefault)');
+					e.preventDefault();
+				} else {
+					log('log-key', 'BACK(461): sem menu — plataforma decide (history/exit conforme appinfo)');
+				}
+			}
+		});
+		window.addEventListener('keyup', function (e) {
+			log('log-key', 'keyup   ' + describeKey(e));
+		});
+
+		// ---- Botoes -----------------------------------------------------------
+		document.getElementById('btn-back').addEventListener('click', function () {
+			if (window.webOS && webOS.platformBack) {
+				log('log-ok', 'chamando webOS.platformBack()...');
+				webOS.platformBack();
+			} else {
+				log('log-err', 'webOS.platformBack indisponivel (webOSTV.js nao carregou?)');
+			}
+		});
+
+		document.getElementById('btn-luna').addEventListener('click', function () {
+			if (window.webOS && webOS.service && webOS.service.request) {
+				log('log-info', 'Luna call: systemservice/clock/getTime ...');
+				webOS.service.request('luna://com.palm.systemservice', {
+					method: 'clock/getTime',
+					parameters: {},
+					onSuccess: function (args) {
+						log('log-ok', 'Luna onSuccess: utc=' + args.utc);
+					},
+					onFailure: function (args) {
+						log('log-err', 'Luna onFailure: ' + JSON.stringify(args));
+					}
+				});
+			} else {
+				log('log-err', 'webOS.service.request indisponivel');
+			}
+		});
+
+		document.getElementById('btn-menu').addEventListener('click', function () {
+			menu.style.display = (menu.style.display === 'none') ? 'block' : 'none';
+			log('log-info', 'menu -> ' + menu.style.display);
+		});
+
+		log('log-ok', 'pagina pronta; aguardando eventos/teclas...');
+	})();
+	</script>
+</body>
+</html>
