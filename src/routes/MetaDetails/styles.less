@@ -84,7 +84,13 @@
             align-self: stretch;
             padding: 0 4rem 2rem 4rem;
 
-            padding-left: max(1rem, calc(4rem - var(--safe-area-inset-left)));
+            & when (@webos = false) {
+                padding-left: max(1rem, calc(4rem - var(--safe-area-inset-left)));
+            }
+            & when (@webos = true) {
+                // T2.8: restore a compile-time clamp if the left inset exceeds 3rem.
+                padding-left: calc(4rem - var(--safe-area-inset-left));
+            }
         }
 
         .spacing {
@@ -95,8 +101,12 @@
             flex: 0 0 30rem;
             align-self: stretch;
             border-radius: var(--border-radius) 0 0 var(--border-radius);
-            background-color: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(15px);
+            background-color: rgba(12, 11, 17, 0.95);
+
+            @supports (backdrop-filter: blur(1px)) {
+                background-color: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(15px);
+            }
         }
     }
 }

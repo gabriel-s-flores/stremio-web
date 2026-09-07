@@ -9,25 +9,40 @@
         "start": "webpack serve --mode development",
         "start-prod": "webpack serve --mode production",
         "build": "webpack --mode production",
+        "build:webos": "webpack --mode production --env WEBOS=1",
+        "build:webos:debug": "webpack --mode production --env WEBOS=1 --env WEBOS_DEBUG=1",
+        "check:webos-compat": "node tools/check-es-compat.mjs",
         "test": "jest",
         "lint": "eslint src",
-        "scan-translations": "pnpx jest ./tests/i18nScan.test.js"
+        "scan-translations": "pnpx jest ./tests/i18nScan.test.js",
+        "verify:build-equivalence": "node scripts/verify-build-equivalence.mjs",
+        "verify:webos-debug": "node scripts/verify-webos-debug-build.mjs",
+        "verify:hosted-build": "node scripts/verify-hosted-build.mjs",
+        "verify:webos-core": "node scripts/verify-webos-core.mjs",
+        "verify:webos-ui": "node scripts/verify-webos-ui.mjs",
+        "verify:hosted-deploy": "node scripts/verify-hosted-deploy.mjs"
     },
     "engines": {
         "node": ">=22",
         "pnpm": ">=11"
     },
+    "browserslist": {
+        "webos": [
+            "Chrome 68"
+        ]
+    },
     "dependencies": {
         "@babel/runtime": "7.29.2",
         "@sentry/browser": "8.42.0",
         "@stremio/stremio-colors": "5.2.0",
-        "@stremio/stremio-core-web": "0.62.1",
+        "@stremio/stremio-core-web": "0.57.0",
         "@stremio/stremio-icons": "5.15.0",
         "@stremio/stremio-video": "0.0.96",
         "a-color-picker": "1.2.1",
         "bowser": "2.14.1",
         "buffer": "6.0.3",
         "classnames": "2.5.1",
+        "core-js": "3.49.0",
         "eventemitter3": "5.0.4",
         "fast-equals": "^6.0.0",
         "filter-invalid-dom-props": "3.0.1",
@@ -70,6 +85,7 @@
         "css-loader": "6.11.0",
         "cssnano": "7.1.9",
         "cssnano-preset-advanced": "7.0.16",
+        "es-check": "9.6.4",
         "eslint": "^9.39.4",
         "eslint-plugin-react": "^7.37.5",
         "globals": "^15.15.0",

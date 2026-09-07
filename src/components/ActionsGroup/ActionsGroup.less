@@ -13,11 +13,14 @@
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
-    background-color: var(--overlay-color);
+    background-color: rgba(12, 11, 17, 0.95);
     border-radius: 2rem;
     height: @height;
     width: fit-content;
-    backdrop-filter: blur(5px);
+    @supports (backdrop-filter: blur(1px)) {
+        background-color: var(--overlay-color);
+        backdrop-filter: blur(5px);
+    }
 
     .icon-container {
         display: flex;

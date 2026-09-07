@@ -1,0 +1,240 @@
+name: webOS Hosted
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Hosted action
+        required: true
+        type: choice
+        options:
+          - deploy
+          - rollback
+        default: deploy
+      environment:
+        description: Deployment environment configured in GitHub
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+      build_target:
+        description: Build target to publish
+        required: true
+        type: choice
+        options:
+          - standard
+          - webos
+        default: standard
+      release_sha:
+        description: Full 40-character SHA for rollback
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webos-hosted-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: ${{ inputs.action == 'deploy' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure webOS branch
+        run: test "$GITHUB_REF_NAME" = "webos"
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6.0.10
+        with:
+          version: 11.8.0
+          run_install: false
+
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build standard
+        if: ${{ inputs.build_target == 'standard' }}
+        run: pnpm build
+
+      - name: Build webOS
+        if: ${{ inputs.build_target == 'webos' }}
+        run: pnpm build:webos
+
+      - name: Check Chromium 68 compatibility
+        if: ${{ inputs.build_target == 'webos' }}
+        run: pnpm check:webos-compat
+
+      - name: Verify diagnostics isolation
+        run: pnpm verify:webos-debug build standard
+
+      - name: Verify hosted build
+        run: pnpm verify:hosted-build
+
+      - name: Verify Chromium 68 core WASM
+        run: pnpm verify:webos-core
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webos-hosted-build-${{ github.sha }}
+          path: build
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
+  deploy:
+    if: ${{ inputs.action == 'deploy' }}
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+    steps:
+      - name: Ensure webOS branch
+        run: test "$GITHUB_REF_NAME" = "webos"
+
+      - name: Checkout deployment tools
+        uses: actions/checkout@v7
+
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: webos-hosted-build-${{ github.sha }}
+          path: build
+
+      - name: Configure SSH
+        env:
+          HOSTED_SSH_PRIVATE_KEY: ${{ secrets.HOSTED_SSH_PRIVATE_KEY }}
+          HOSTED_SSH_KNOWN_HOSTS: ${{ secrets.HOSTED_SSH_KNOWN_HOSTS }}
+        run: |
+          set -eu
+          test -n "$HOSTED_SSH_PRIVATE_KEY"
+          test -n "$HOSTED_SSH_KNOWN_HOSTS"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$HOSTED_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$HOSTED_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      - name: Upload immutable release
+        env:
+          HOSTED_SSH_HOST: ${{ secrets.HOSTED_SSH_HOST }}
+          HOSTED_SSH_PORT: ${{ secrets.HOSTED_SSH_PORT }}
+          HOSTED_SSH_USER: ${{ secrets.HOSTED_SSH_USER }}
+          HOSTED_RELEASES_PATH: ${{ secrets.HOSTED_RELEASES_PATH }}
+        run: |
+          set -eu
+          : "${HOSTED_SSH_HOST:?HOSTED_SSH_HOST is required}"
+          : "${HOSTED_SSH_USER:?HOSTED_SSH_USER is required}"
+          : "${HOSTED_RELEASES_PATH:?HOSTED_RELEASES_PATH is required}"
+          ssh_port="${HOSTED_SSH_PORT:-22}"
+          ssh_command="ssh -i $HOME/.ssh/id_ed25519 -p $ssh_port -o BatchMode=yes -o StrictHostKeyChecking=yes"
+          release_path="$HOSTED_RELEASES_PATH/${GITHUB_SHA}"
+          $ssh_command "$HOSTED_SSH_USER@$HOSTED_SSH_HOST" "mkdir -p -- '$release_path'"
+          export RSYNC_RSH="$ssh_command"
+          rsync -az --human-readable build/ "$HOSTED_SSH_USER@$HOSTED_SSH_HOST:$release_path/"
+
+      - name: Activate release atomically
+        env:
+          HOSTED_SSH_HOST: ${{ secrets.HOSTED_SSH_HOST }}
+          HOSTED_SSH_PORT: ${{ secrets.HOSTED_SSH_PORT }}
+          HOSTED_SSH_USER: ${{ secrets.HOSTED_SSH_USER }}
+          HOSTED_RELEASES_PATH: ${{ secrets.HOSTED_RELEASES_PATH }}
+          HOSTED_CURRENT_PATH: ${{ secrets.HOSTED_CURRENT_PATH }}
+        run: |
+          set -eu
+          : "${HOSTED_RELEASES_PATH:?HOSTED_RELEASES_PATH is required}"
+          : "${HOSTED_CURRENT_PATH:?HOSTED_CURRENT_PATH is required}"
+          ssh_port="${HOSTED_SSH_PORT:-22}"
+          ssh_command="ssh -i $HOME/.ssh/id_ed25519 -p $ssh_port -o BatchMode=yes -o StrictHostKeyChecking=yes"
+          release_path="$HOSTED_RELEASES_PATH/${GITHUB_SHA}"
+          next_path="${HOSTED_CURRENT_PATH}.next.${GITHUB_RUN_ID}"
+          $ssh_command "$HOSTED_SSH_USER@$HOSTED_SSH_HOST" "ln -s -- '$release_path' '$next_path' && mv -Tf -- '$next_path' '$HOSTED_CURRENT_PATH'"
+
+      - name: Verify hosted deployment
+        env:
+          HOSTED_BASE_URL: ${{ secrets.HOSTED_BASE_URL }}
+          HOSTED_HTTP_BASE_URL: ${{ secrets.HOSTED_HTTP_BASE_URL }}
+          EXPECTED_COMMIT_SHA: ${{ github.sha }}
+        run: node scripts/verify-hosted-deploy.mjs
+
+  rollback:
+    if: ${{ inputs.action == 'rollback' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+    steps:
+      - name: Ensure webOS branch
+        run: test "$GITHUB_REF_NAME" = "webos"
+
+      - name: Checkout deployment tools
+        uses: actions/checkout@v7
+
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Configure SSH
+        env:
+          HOSTED_SSH_PRIVATE_KEY: ${{ secrets.HOSTED_SSH_PRIVATE_KEY }}
+          HOSTED_SSH_KNOWN_HOSTS: ${{ secrets.HOSTED_SSH_KNOWN_HOSTS }}
+        run: |
+          set -eu
+          test -n "$HOSTED_SSH_PRIVATE_KEY"
+          test -n "$HOSTED_SSH_KNOWN_HOSTS"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$HOSTED_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$HOSTED_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      - name: Activate previous release atomically
+        env:
+          HOSTED_SSH_HOST: ${{ secrets.HOSTED_SSH_HOST }}
+          HOSTED_SSH_PORT: ${{ secrets.HOSTED_SSH_PORT }}
+          HOSTED_SSH_USER: ${{ secrets.HOSTED_SSH_USER }}
+          HOSTED_RELEASES_PATH: ${{ secrets.HOSTED_RELEASES_PATH }}
+          HOSTED_CURRENT_PATH: ${{ secrets.HOSTED_CURRENT_PATH }}
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        run: |
+          set -eu
+          if ! printf '%s\n' "$RELEASE_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo 'release_sha must be a full lowercase 40-character SHA'
+            exit 1
+          fi
+          ssh_port="${HOSTED_SSH_PORT:-22}"
+          ssh_command="ssh -i $HOME/.ssh/id_ed25519 -p $ssh_port -o BatchMode=yes -o StrictHostKeyChecking=yes"
+          release_path="$HOSTED_RELEASES_PATH/$RELEASE_SHA"
+          next_path="${HOSTED_CURRENT_PATH}.next.${GITHUB_RUN_ID}"
+          $ssh_command "$HOSTED_SSH_USER@$HOSTED_SSH_HOST" "test -d '$release_path' && ln -s -- '$release_path' '$next_path' && mv -Tf -- '$next_path' '$HOSTED_CURRENT_PATH'"
+
+      - name: Verify rollback
+        env:
+          HOSTED_BASE_URL: ${{ secrets.HOSTED_BASE_URL }}
+          HOSTED_HTTP_BASE_URL: ${{ secrets.HOSTED_HTTP_BASE_URL }}
+          EXPECTED_COMMIT_SHA: ${{ inputs.release_sha }}
+        run: node scripts/verify-hosted-deploy.mjs

@@ -7,7 +7,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    .tv-flex-gap(1rem, 1rem, column);
     width: var(--vertical-nav-bar-size);
     padding: 1rem 0;
     background-color: transparent;
@@ -30,7 +30,7 @@
     .vertical-nav-bar-container {
         flex-direction: row;
         justify-content: space-between;
-        gap: 0;
+        .tv-flex-gap(0, 0, row);
         height: var(--vertical-nav-bar-size);
         width: 100%;
         padding: 0 1rem;

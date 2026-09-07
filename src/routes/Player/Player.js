@@ -72,6 +72,7 @@ const Player = () => {
     const video = useVideo();
     const routeFocused = useRouteFocused();
     const platform = usePlatform();
+    const videoPlatform = platform.name === 'webos' ? 'webOS' : platform.name;
     const toast = useToast();
     const discord = useDiscord();
     const discordTimestamps = React.useRef(EMPTY_DISCORD_TIMESTAMPS);
@@ -523,7 +524,7 @@ const Player = () => {
                 assSubtitlesStyling: settings.assSubtitlesStyling,
                 gpuVideoProcessing: settings.gpuVideoProcessing && platform.shell.capabilities.gpuVideoProcessing,
                 videoMode: settings.videoMode,
-                platform: platform.name,
+                platform: videoPlatform,
                 streamingServerURL: streamingServer.baseUrl ?
                     casting ?
                         streamingServer.baseUrl
@@ -537,7 +538,7 @@ const Player = () => {
                 shellTransport: platform.shell.active ? platform.shell : null,
             });
         }
-    }, [streamingServer.baseUrl, player.selected, player.stream, streamSubtitles, forceTranscoding, casting, cancelKeyboardSeek]);
+    }, [streamingServer.baseUrl, player.selected, player.stream, streamSubtitles, forceTranscoding, casting, cancelKeyboardSeek, videoPlatform]);
 
     React.useEffect(() => {
         !seeking && timeChanged(video.state.time, video.state.duration, video.state.manifest?.name);

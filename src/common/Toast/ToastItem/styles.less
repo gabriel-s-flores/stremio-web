@@ -14,7 +14,9 @@
     pointer-events: auto;
     border-radius: var(--border-radius);
     border: 0.4px solid var(--primary-accent-color);
-    backdrop-filter: blur(10px);
+    @supports (backdrop-filter: blur(1px)) {
+        backdrop-filter: blur(10px);
+    }
     padding: 1rem;
     &.success {
         .icon-container {

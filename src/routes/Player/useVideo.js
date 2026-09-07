@@ -6,6 +6,12 @@ const EventEmitter = require('eventemitter3');
 
 const events = new EventEmitter();
 
+const recordDebugImplementation = (manifest) => {
+    if (typeof window !== 'undefined' && window.__stremioWebosDebug && typeof window.__stremioWebosDebug.recordPlayerImplementation === 'function') {
+        window.__stremioWebosDebug.recordPlayerImplementation(manifest?.name);
+    }
+};
+
 const useVideo = () => {
     const video = React.useRef(null);
     const containerRef = React.useRef(null);
@@ -211,6 +217,7 @@ const useVideo = () => {
             manifest
         }));
 
+        recordDebugImplementation(manifest);
         events.emit('implementationChanged', manifest);
     };
 

@@ -28,7 +28,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1.25rem;
+    .tv-flex-gap(1.25rem, 1.25rem, column);
     padding: 2rem;
     background: linear-gradient(41deg, var(--primary-background-color) 0%, var(--secondary-background-color) 100%);
     color: var(--primary-foreground-color);
@@ -117,7 +117,7 @@
     }
 
     @media only screen and (max-width: 30rem) {
-        gap: 1rem;
+        .tv-flex-gap(1rem, 1rem, column);
         padding: 1.5rem;
 
         .logo {

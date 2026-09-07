@@ -23,3 +23,52 @@
 @phone-landscape: ~"screen and (max-width: @{phone-portrait-size}) and (max-height: @{phone-landscape-size}) and (orientation: landscape)";
 @phone-portrait: ~"screen and (max-width: @{phone-landscape-size}) and (max-height: @{phone-portrait-size}) and (orientation: portrait)";
 
+// less-loader overrides this value for the webOS build. Chromium 68 reports
+// generic gap support because Grid supports it, but Flexbox gap is unavailable.
+@webos: false;
+
+.tv-flex-gap(@row-gap, @column-gap: @row-gap, @direction: row) {
+    gap: @row-gap @column-gap;
+
+    & when (@webos = true) {
+        > * + * {
+            margin-top: 0;
+            margin-left: 0;
+        }
+
+        & when (@direction = row) {
+            > * + * {
+                margin-left: @column-gap;
+            }
+        }
+
+        & when (@direction = column) {
+            > * + * {
+                margin-top: @row-gap;
+            }
+        }
+    }
+}
+
+.tv-flex-gap-wrap(@row-gap, @column-gap: @row-gap) {
+    gap: @row-gap @column-gap;
+
+    & when (@webos = true) {
+        // Trim the final child margin from the container's outer box.
+        margin-right: -@column-gap;
+        margin-bottom: -@row-gap;
+
+        > * {
+            margin-right: @column-gap;
+            margin-bottom: @row-gap;
+        }
+    }
+}
+
+.tv-flex-gap-reset() when (@webos = true) {
+    > * + * {
+        margin-top: 0;
+        margin-left: 0;
+    }
+}
+

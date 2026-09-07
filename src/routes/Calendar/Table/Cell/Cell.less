@@ -16,7 +16,7 @@
     .cell {
         .items {
             padding: 1px;
-            gap: 0.15rem;
+            .tv-flex-gap(0.15rem, 0.15rem, row);
         }
     }
 }
@@ -26,7 +26,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 0.5rem;
+    .tv-flex-gap(0.5rem, 0.5rem, column);
     background-color: var(--overlay-color);
     border: 0.15rem solid transparent;
     overflow: hidden;
@@ -69,7 +69,7 @@
         position: relative;
         display: flex;
         flex-direction: row;
-        gap: 0.2rem;
+        .tv-flex-gap(0.2rem, 0.2rem, row);
         padding: 0.1rem;
         flex: 1 1 60%;
         overflow-x: auto;
@@ -156,6 +156,43 @@
     }
 }
 
+// Chromium 68 (webOS TV 5) has no `aspect-ratio` and cannot propagate an
+// intrinsic ratio from a replaced child to the shrink-wrapped item box, so the
+// item width is pinned by a runtime measurement in Cell.tsx. This block keeps
+// the CSS half of the fallback: a definite height for the items row (old Blink
+// cannot resolve percentage heights across the grid > flex chain), vertical
+// centering for the icon without static-position flex behavior and the poster
+// stretched to fill the measured item box with `object-fit: cover`.
+@supports not (aspect-ratio: 2 / 3) {
+    .cell {
+        .items {
+            flex-basis: auto;
+            height: calc(100% - 2rem);
+
+            .item {
+                position: relative;
+                display: inline-block;
+
+                .icon {
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                }
+
+                .poster {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                }
+            }
+        }
+    }
+}
+
 @media only screen and (max-width: @minimum) {
     .disable-cell-items();
 }
@@ -164,6 +201,7 @@
     .cell {
         flex-direction: column;
         display: grid;
+        .tv-flex-gap-reset();
     }
     .compact-items();
     .disable-cell-items();
@@ -172,6 +210,7 @@
 @media @phone-landscape {
     .cell {
         flex-direction: row;
+        .tv-flex-gap(0.5rem, 0.5rem, row);
     }
     .compact-items();
     .disable-cell-items();
@@ -179,7 +218,7 @@
 
 @media only screen and (max-height: @medium) and (max-width: @medium) and (orientation: landscape) {
     .cell {
-        gap: 0;
+        .tv-flex-gap(0, 0, row);
 
         .heading {
             .day {
@@ -202,6 +241,8 @@
         .heading {
             flex: 1 1 33%;
         }
+
+        .tv-flex-gap(0.5rem, 0.5rem, column);
     }
 }
 

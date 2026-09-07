@@ -1,3 +1,5 @@
+@import (reference) '~stremio/common/screen-sizes.less';
+
 :import('~stremio/routes/Settings/components/Option/Option.less') {
     option-content: content;
 }
@@ -6,7 +8,7 @@
     .option-content {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        .tv-flex-gap(1rem, 1rem, row);
         overflow: hidden;
 
         .label {
@@ -15,6 +17,17 @@
             text-overflow: ellipsis;
             color: var(--primary-foreground-color);
             padding: 0 1rem;
+        }
+
+        .fallback-input {
+            flex: auto;
+            min-width: 0;
+            height: 3.5rem;
+            padding: 0 1rem;
+            color: var(--primary-foreground-color);
+            user-select: text;
+            background-color: var(--overlay-color);
+            border-radius: 3.5rem;
         }
 
         .configure-button-container {

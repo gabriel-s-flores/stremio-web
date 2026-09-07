@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2024 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/screen-sizes.less';
 
 :import('~stremio/components/Slider/styles.less') {
     slider-track-after: track-after;
@@ -32,7 +33,7 @@
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 0.25rem;
+            .tv-flex-gap-wrap(0.25rem, 0.25rem);
             padding: 0 1rem;
 
             .speed-button {
@@ -60,7 +61,7 @@
             flex-direction: column;
             flex: none;
             min-height: 3rem;
-            gap: 0.5rem;
+            .tv-flex-gap(0.5rem, 0.5rem, column);
             padding: 0.5rem 0;
 
             .speed-title {

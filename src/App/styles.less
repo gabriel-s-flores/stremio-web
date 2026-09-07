@@ -20,23 +20,27 @@
 }
 
 // iOS pads the bottom inset more than needed, so we deduce the actual inset size when using the webapp
-@calculated-bottom-safe-inset: ~"min(env(safe-area-inset-bottom, 0rem), max(1rem, calc(var(--viewport-height-diff) - env(safe-area-inset-top, 0rem))))";
+@calculated-bottom-safe-inset: if(@webos = true, 0rem, ~"min(env(safe-area-inset-bottom, 0rem), max(1rem, calc(var(--viewport-height-diff) - env(safe-area-inset-top, 0rem))))");
 
 // Viewport sizes
 @viewport-width: ~"100vw";
 @viewport-height: ~"100vh";
 
 // HTML sizes
-@html-width: ~"calc(max(var(--small-viewport-width), var(--dynamic-viewport-width)))";
-@html-height: ~"calc(max(var(--small-viewport-height), var(--dynamic-viewport-height)))";
-@html-standalone-width: ~"calc(max(100%, var(--large-viewport-width)))";
-@html-standalone-height: ~"calc(max(100%, var(--large-viewport-height)))";
+// Chromium 68 does not parse max() in calc(), so the webOS build uses the
+// viewport fallback directly while modern builds keep dynamic sizing.
+@html-width: if(@webos = true, @viewport-width, ~"calc(max(var(--small-viewport-width), var(--dynamic-viewport-width)))");
+@html-height: if(@webos = true, @viewport-height, ~"calc(max(var(--small-viewport-height), var(--dynamic-viewport-height)))");
+@html-standalone-width: if(@webos = true, @viewport-width, ~"calc(max(100%, var(--large-viewport-width)))");
+@html-standalone-height: if(@webos = true, @viewport-height, ~"calc(max(100%, var(--large-viewport-height)))");
 
 // Safe area insets
-@safe-area-inset-top: env(safe-area-inset-top, 0rem);
-@safe-area-inset-right: env(safe-area-inset-right, 0rem);
-@safe-area-inset-bottom: env(safe-area-inset-bottom, 0rem);
-@safe-area-inset-left: env(safe-area-inset-left, 0rem);
+// Chromium 68 cannot resolve env() stored in custom properties. TV has no notch;
+// T2.8 can adjust these constants for overscan after validating the TV layout.
+@safe-area-inset-top: if(@webos = true, 0rem, env(safe-area-inset-top, 0rem));
+@safe-area-inset-right: if(@webos = true, 0rem, env(safe-area-inset-right, 0rem));
+@safe-area-inset-bottom: if(@webos = true, 0rem, env(safe-area-inset-bottom, 0rem));
+@safe-area-inset-left: if(@webos = true, 0rem, env(safe-area-inset-left, 0rem));
 
 @top-overlay-size: 5.25rem;
 @bottom-overlay-size: 0rem;

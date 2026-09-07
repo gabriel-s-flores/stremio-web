@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/screen-sizes.less';
 
 .error-container {
     position: relative;
@@ -10,7 +11,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
+    .tv-flex-gap(1rem, 1rem, column);
 
     .error-image {
         flex: none;
@@ -26,7 +27,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 0.5rem;
+        .tv-flex-gap(0.5rem, 0.5rem, column);
 
         .title {
             font-size: 2rem;
@@ -56,8 +57,8 @@
         flex-wrap: wrap;
         align-items: center;
         justify-content: center;
-        gap: 1.5rem;
         margin-top: 1rem;
+        .tv-flex-gap-wrap(1.5rem, 1.5rem);
 
         .button-container {
             flex-grow: 0;

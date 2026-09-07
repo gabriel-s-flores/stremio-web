@@ -19,7 +19,7 @@
     flex-direction: column;
     padding: @padding;
     padding-top: calc(@padding + var(--safe-area-inset-top));
-    height: 100dvh;
+    height: if(@webos = true, 100vh, 100dvh);
     max-width: 35rem;
     overflow-y: auto;
     position: relative;
@@ -27,7 +27,9 @@
     border-bottom-left-radius: var(--border-radius);
     background-color: var(--modal-background-color);
     box-shadow: 0 1.35rem 2.7rem var(--color-background-dark5-40), 0 1.1rem 0.85rem var(--color-background-dark5-20);
-    backdrop-filter: blur(15px);
+    @supports (backdrop-filter: blur(1px)) {
+        backdrop-filter: blur(15px);
+    }
     transition: transform 0.3s ease-in-out;
     z-index: 1;
 

@@ -1,0 +1,133 @@
+.debug-container {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding: 2rem;
+    color: var(--primary-foreground-color);
+}
+
+.debug-content {
+    max-width: 75rem;
+    margin: 0 auto;
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.header > div:first-child {
+    margin-right: 1rem;
+}
+
+.header h1 {
+    margin-bottom: 0.35rem;
+    font-size: 1.5rem;
+}
+
+.header p {
+    color: var(--secondary-foreground-color);
+    font-size: 0.8rem;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.actions button {
+    margin: 0 0 0.5rem 0.5rem;
+}
+
+.actions button {
+    padding: 0.65rem 0.8rem;
+    color: var(--primary-foreground-color);
+    border: 1px solid var(--overlay-color);
+    border-radius: var(--border-radius);
+    background: var(--secondary-background-color);
+    cursor: pointer;
+}
+
+.actions button:focus,
+.actions button:hover {
+    border-color: var(--primary-accent-color);
+}
+
+.section {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--overlay-color);
+    border-radius: var(--border-radius);
+    background: var(--overlay-color);
+}
+
+.section h2 {
+    margin-bottom: 0.75rem;
+    color: var(--primary-accent-color);
+    font-size: 1rem;
+}
+
+.metric {
+    display: grid;
+    grid-template-columns: minmax(12rem, 0.3fr) minmax(0, 1fr);
+    padding: 0.35rem 0;
+}
+
+.metric dd {
+    padding-left: 0.75rem;
+}
+
+.metric dt {
+    color: var(--secondary-foreground-color);
+}
+
+.metric dd {
+    overflow-wrap: anywhere;
+    color: var(--primary-foreground-color);
+    word-break: break-all;
+}
+
+.json {
+    max-height: 28rem;
+    padding: 1rem;
+    overflow: auto;
+    color: var(--primary-foreground-color);
+    border: 1px solid var(--overlay-color);
+    border-radius: var(--border-radius);
+    background: var(--primary-background-color);
+    font-family: monospace;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    user-select: text;
+}
+
+@media only screen and (max-width: 50rem) {
+    .debug-container {
+        padding: 1rem;
+    }
+
+    .header {
+        display: block;
+    }
+
+    .actions {
+        justify-content: flex-start;
+        margin-top: 1rem;
+    }
+
+    .actions button {
+        margin-left: 0;
+        margin-right: 0.5rem;
+    }
+
+    .metric {
+        display: block;
+    }
+
+    .metric dt {
+        margin-bottom: 0.2rem;
+    }
+}

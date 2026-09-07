@@ -21,8 +21,11 @@ webos/hello/
 │   ├── index.html        # cópia de site/index.html (o pacote é self-contained)
 │   ├── webOSTVjs-1.2.10/ # vendored (packaged não tem rede garantida)
 │   └── icon.png / largeIcon.png
+├── t04-packaged/         # fixture isolada da T0.4: CORS, storage e Service Worker
+├── hosted-https/         # wrapper HTTPS da T0.4 → https://web.stremio.com
+├── hosted-probe.js       # probe injetado via CDP no hosted HTTPS
 ├── tools/
-│   ├── cdp.mjs           # debug via CDP bruto (list/eval/logs) na porta 9998
+│   ├── cdp.mjs           # debug via CDP bruto (list/eval/logs/network) na porta 9998
 │   └── rcu.mjs           # injeção de teclas do controle remoto (remocon, porta 19001)
 └── dist/                 # .ipk gerados (gitignored)
 ```
@@ -112,3 +115,40 @@ verdade, use `rcu.mjs` (ou a GUI "Remote Controller" do SDK).
 | `ares-launch` no app já em background | `webOSRelaunch {"displayAffinity":0}` na **mesma instância** (sem reboot) ✅ |
 | `ares-launch -c` | app fecha (some de `ares-launch -r`) ✅ |
 | Screensaver | ⚠️ **não testável no emulador**: não há app de screensaver em `/usr/palm/applications`, `com.webos.service.screensaver` não existe, e `com.webos.settingsservice` nega acesso ao usuário `developer`. A página já instrumenta `visibilitychange`/`focus`/`blur`/`pagehide`/`pageshow` — validação fica para a TV real (ver R15). |
+
+## T0.4 — Hosted HTTPS vs packaged
+
+Fixture e evidência: `t04-packaged/`, `hosted-https/`, `hosted-probe.js` e
+[`t04-results.md`](t04-results.md).
+
+```powershell
+# De webos/hello/
+ares-package -o dist t04-packaged
+ares-package -o dist hosted-https
+ares-install dist\com.stremio.webos.hello.t04.packaged_1.0.0_all.ipk
+ares-install dist\com.stremio.webos.hello.t04.https_1.0.0_all.ipk
+ares-launch com.stremio.webos.hello.t04.packaged
+ares-launch com.stremio.webos.hello.t04.https
+
+# CDP bruto
+node tools\cdp.mjs list
+node tools\cdp.mjs eval t04.packaged "JSON.stringify(window.t04.getState())"
+node tools\cdp.mjs eval-file web.stremio.com hosted-probe.js
+node tools\cdp.mjs network t04.packaged 15
+```
+
+Resultado no emulador webOS TV 5.0.0 (2026-09-05):
+
+| Probe | Packaged (`file://`) | Hosted HTTPS |
+|---|---|---|
+| Cookie | ❌ não legível | ✅ legível e persistente após relaunch |
+| `localStorage` | ✅ legível e persistente após relaunch | ✅ legível e persistente após relaunch |
+| Fetch do manifesto Cinemeta | ✅ HTTP 200, resposta JSON legível | ✅ HTTP 200, resposta JSON legível |
+| Origem enviada no fetch | nenhum `Origin` observado no CDP | `Origin: https://web.stremio.com` |
+| Service Worker | ❌ `SecurityError`: protocolo `file:` não suportado | ✅ ativo em `https://web.stremio.com/service-worker.js` |
+| Controle pelo SW | ❌ | ✅ após reload/relaunch |
+
+Conclusão: D1 foi ratificada — **hosted HTTPS primário, packaged secundário**.
+O packaged pode funcionar com addons que aceitem a requisição observada, mas não
+oferece cookies nem atualização por Service Worker; o resultado de CORS continua
+dependente da política de cada servidor.

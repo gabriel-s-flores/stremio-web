@@ -3,6 +3,8 @@
 @border-radius: 2.75rem;
 @height: 3rem;
 
+@import (reference) '~stremio/common/screen-sizes.less';
+
 .multiselect-menu {
     position: relative;
     min-width: 8.5rem;
@@ -14,33 +16,33 @@
         opacity: 0.3;
     }
 
-    .multiselect-button {
-        height: @height;
-        padding: 0.75rem 1.5rem;
-        display: flex;
-        flex: 1;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0 0.5rem;
-        border-radius: @border-radius;
+.multiselect-button {
+    height: @height;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    flex: 1;
+    justify-content: space-between;
+    align-items: center;
+    .tv-flex-gap(0, 0.5rem, row);
+    border-radius: @border-radius;
 
-        .label {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: var(--primary-foreground-color);
-        }
+    .label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--primary-foreground-color);
+    }
 
-        .icon {
-            width: 1rem;
-            color: var(--primary-foreground-color);
-            opacity: 0.6;
+    .icon {
+        width: 1rem;
+        color: var(--primary-foreground-color);
+        opacity: 0.6;
 
-            &.open {
-                transform: rotate(180deg);
-            }
+        &.open {
+            transform: rotate(180deg);
         }
     }
+}
 
     &:hover, &.active {
         background-color: var(--overlay-color);

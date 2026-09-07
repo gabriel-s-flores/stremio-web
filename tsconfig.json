@@ -9,6 +9,7 @@
         "types": ["node"],
         "paths": {
             "stremio/*": ["./src/*"],
+            "stremio-router-base-paths": ["./src/router/routerPaths.tsx"],
         },
         "resolveJsonModule": true,
         "esModuleInterop": true,

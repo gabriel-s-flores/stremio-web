@@ -13,6 +13,20 @@ const TerserPlugin = require('terser-webpack-plugin');
 const packageJson = require('./package.json');
 
 const COMMIT_HASH = execSync('git rev-parse HEAD').toString().trim();
+const WEBOS_TRANSPILE_PACKAGES = ['i18next', 'react-i18next', 'use-long-press'];
+
+const isEnabled = (value) => value === true || value === '1' || value === 'true';
+
+const shouldExcludeNodeModule = (resourcePath) => {
+    const normalizedPath = `/${resourcePath.replace(/\\/g, '/')}`;
+
+    if (!normalizedPath.includes('/node_modules/')) return false;
+
+    return !WEBOS_TRANSPILE_PACKAGES.some((packageName) => (
+        normalizedPath.includes(`/node_modules/${packageName}/`)
+        || normalizedPath.endsWith(`/node_modules/${packageName}`)
+    ));
+};
 
 const THREAD_LOADER = {
     loader: 'thread-loader',
@@ -33,12 +47,27 @@ threadLoader.warmup(
     ],
 );
 
-module.exports = (env, argv) => ({
+module.exports = (env = {}, argv) => {
+    const webos = isEnabled(env.WEBOS);
+    const webosDebug = webos && isEnabled(env.WEBOS_DEBUG);
+    const nodeModulesExclude = webos ? shouldExcludeNodeModule : /node_modules/;
+    const mainEntry = webos ? [
+        // Workers have their own global scope, so each webOS entry needs this first.
+        'core-js/stable',
+        ...(webosDebug ? ['./src/webos/diagnostics/bootstrap.js'] : []),
+        './src/index.js',
+    ] : './src/index.js';
+    const workerEntry = webos ? [
+        'core-js/stable',
+        './node_modules/@stremio/stremio-core-web/worker.js',
+    ] : './node_modules/@stremio/stremio-core-web/worker.js';
+
+    return {
     mode: argv.mode,
     devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
     entry: {
-        main: './src/index.js',
-        worker: './node_modules/@stremio/stremio-core-web/worker.js'
+        main: mainEntry,
+        worker: workerEntry,
     },
     output: {
         path: path.join(__dirname, 'build'),
@@ -49,14 +78,17 @@ module.exports = (env, argv) => ({
         rules: [
             {
                 test: /\.js$/,
-                exclude: /node_modules/,
+                exclude: nodeModulesExclude,
                 use: [
                     THREAD_LOADER,
                     {
                         loader: 'babel-loader',
                         options: {
                             presets: [
-                                '@babel/preset-env',
+                                ['@babel/preset-env', {
+                                    browserslistEnv: webos ? 'webos' : undefined,
+                                    ignoreBrowserslistConfig: !webos,
+                                }],
                                 '@babel/preset-react'
                             ],
                         }
@@ -71,6 +103,7 @@ module.exports = (env, argv) => ({
                     {
                         loader: 'ts-loader',
                         options: {
+                            configFile: path.resolve(__dirname, webos ? 'tsconfig.webos.json' : 'tsconfig.json'),
                             happyPackMode: true,
                         }
                     }
@@ -143,7 +176,10 @@ module.exports = (env, argv) => ({
                         options: {
                             lessOptions: {
                                 strictMath: true,
-                                ieCompat: false
+                                ieCompat: false,
+                                modifyVars: {
+                                    webos: webos ? 'true' : 'false'
+                                }
                             }
                         }
                     }
@@ -178,7 +214,15 @@ module.exports = (env, argv) => ({
         extensions: ['.tsx', '.ts', '.js', '.json', '.less', '.wasm'],
         alias: {
             'stremio': path.resolve(__dirname, 'src'),
-            'stremio-router': path.resolve(__dirname, 'src', 'router')
+            'stremio-router': path.resolve(__dirname, 'src', 'router'),
+            ...(webosDebug ? {
+                'stremio-router-base-paths$': path.resolve(
+                    __dirname,
+                    'src',
+                    'router',
+                    'routerPaths.tsx'
+                )
+            } : {})
         }
     },
     devServer: {
@@ -215,8 +259,14 @@ module.exports = (env, argv) => ({
             SERVICE_WORKER_DISABLED: false,
             DEBUG: argv.mode !== 'production',
             VERSION: packageJson.version,
-            COMMIT_HASH
+            COMMIT_HASH,
+            WEBOS: webos,
+            WEBOS_DEBUG: webosDebug
         }),
+        webosDebug && new webpack.NormalModuleReplacementPlugin(
+            /[\\/]routerPaths$/,
+            path.resolve(__dirname, 'src', 'router', 'routerPaths.webos.tsx')
+        ),
         new webpack.ProvidePlugin({
             Buffer: ['buffer', 'Buffer']
         }),
@@ -233,6 +283,12 @@ module.exports = (env, argv) => ({
                 { from: 'assets/screenshots/*.webp', to: 'screenshots/[name][ext]' },
                 { from: '.well-known', to: '.well-known' },
                 { from: 'manifest.json', to: 'manifest.json' },
+                ...(webos ? [
+                    {
+                        from: 'webos/hello/site/webOSTVjs-1.2.10/webOSTV.js',
+                        to: 'webos/webOSTV.js',
+                    },
+                ] : []),
             ]
         }),
         new MiniCssExtractPlugin({
@@ -244,6 +300,8 @@ module.exports = (env, argv) => ({
             scriptLoading: 'blocking',
             faviconsPath: 'favicons',
             imagesPath: 'images',
+            webos,
         }),
     ].filter(Boolean)
-});
+    };
+};

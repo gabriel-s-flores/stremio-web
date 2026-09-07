@@ -34,7 +34,13 @@
     }
 
     .back-button-container {
-        margin-left: max(0rem, calc(1rem - var(--safe-area-inset-left)));
+        & when (@webos = false) {
+            margin-left: max(0rem, calc(1rem - var(--safe-area-inset-left)));
+        }
+        & when (@webos = true) {
+            // T2.8: restore a compile-time clamp if the left inset exceeds 1rem.
+            margin-left: calc(1rem - var(--safe-area-inset-left));
+        }
     }
 
     .title {
@@ -58,7 +64,7 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: 0.5rem;
+        .tv-flex-gap(0.5rem, 0.5rem, row);
         overflow: visible;
     }
 

@@ -1,5 +1,7 @@
 // Copyright (C) 2017-2026 Smart code 203358507
 
+@import (reference) '~stremio/common/screen-sizes.less';
+
 .trigger {
     -webkit-touch-callout: none;
     cursor: pointer;
@@ -17,8 +19,15 @@
 .menu-container {
     position: fixed;
     min-width: 9rem;
-    max-width: min(14rem, calc(100vw - 1rem));
-    max-height: min(calc(3rem * 7), calc(100vh - 1rem));
+    & when (@webos = false) {
+        max-width: min(14rem, calc(100vw - 1rem));
+        max-height: min(calc(3rem * 7), calc(100vh - 1rem));
+    }
+    & when (@webos = true) {
+        // Equivalent limits at the TV viewport (1920x1080, 15px root).
+        max-width: 14rem;
+        max-height: 21rem;
+    }
     overflow-y: auto;
     border-radius: var(--border-radius);
     background-color: var(--modal-background-color);

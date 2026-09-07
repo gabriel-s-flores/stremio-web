@@ -2,6 +2,8 @@
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
 
+@import (reference) '~stremio/common/screen-sizes.less';
+
 .search-bar-container {
     --search-bar-size: 3.25rem;
     display: flex;
@@ -62,7 +64,7 @@
         justify-content: center;
         align-items: flex-start;
         flex-direction: column;
-        gap: 1.5rem;
+        .tv-flex-gap(1.5rem, 1.5rem, column);
         background-color: var(--modal-background-color);
         border-radius: var(--border-radius);
         

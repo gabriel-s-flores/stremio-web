@@ -2,3 +2,6 @@ minimumReleaseAgeExclude:
   - '@stremio/*'
 
 blockExoticSubdeps: false
+
+allowBuilds:
+  core-js: false

@@ -5,11 +5,16 @@
 //   node cdp.mjs list                          -> lista alvos (pages/apps)
 //   node cdp.mjs eval <id-parcial|url> <js>    -> Runtime.evaluate na pagina
 //   node cdp.mjs logs <id-parcial|url> [secs]  -> escuta console.log da pagina
+//   node cdp.mjs network <id-parcial|url> [secs] -> captura requests/responses
+//   node cdp.mjs eval-file <id-parcial|url> <arquivo.js> -> avalia um arquivo
+//   node cdp.mjs debug <id-parcial|url> [arquivo.json] -> captura o snapshot T0.6
+//   node cdp.mjs screenshot <id-parcial|url> [arquivo.png] -> captura a viewport
 //
 // Ex.: node cdp.mjs eval hello.hosted "location.href"
 //      node cdp.mjs eval hello.packaged "location.hash = '#/b'"
 
 const CDP_HTTP = process.env.CDP_HTTP || 'http://127.0.0.1:9998';
+const fs = await import('node:fs');
 
 async function listTargets() {
 	const res = await fetch(`${CDP_HTTP}/json`);
@@ -81,6 +86,51 @@ async function main() {
 		return;
 	}
 
+	if (cmd === 'eval-file') {
+		const [hint, filePath] = rest;
+		const t = await findTarget(hint);
+		const ws = await connect(t.webSocketDebuggerUrl);
+		wire(ws);
+		const expression = fs.readFileSync(filePath, 'utf8');
+		const r = await send(ws, 'Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
+		console.log(JSON.stringify(r.result && 'value' in r.result ? r.result.value : r, null, 2));
+		ws.close();
+		return;
+	}
+
+	if (cmd === 'debug') {
+		const [hint, filePath] = rest;
+		const t = await findTarget(hint);
+		const ws = await connect(t.webSocketDebuggerUrl);
+		wire(ws);
+		const r = await send(ws, 'Runtime.evaluate', {
+			expression: 'window.__stremioWebosDebug ? window.__stremioWebosDebug.refresh() : null',
+			returnByValue: true,
+		});
+		const value = r.result && 'value' in r.result ? r.result.value : r;
+		const output = JSON.stringify(value, null, 2) + '\n';
+		if (filePath) {
+			fs.writeFileSync(filePath, output);
+		} else {
+			console.log(output);
+		}
+		ws.close();
+		return;
+	}
+
+	if (cmd === 'screenshot') {
+		const [hint, filePath = 'webos-screenshot.png'] = rest;
+		const t = await findTarget(hint);
+		const ws = await connect(t.webSocketDebuggerUrl);
+		wire(ws);
+		const r = await send(ws, 'Page.captureScreenshot', { format: 'png', fromSurface: true });
+		if (!r.data) throw new Error('CDP nao retornou dados da captura');
+		fs.writeFileSync(filePath, Buffer.from(r.data, 'base64'));
+		console.log(filePath);
+		ws.close();
+		return;
+	}
+
 	if (cmd === 'logs') {
 		const [hint, secs] = rest;
 		const t = await findTarget(hint);
@@ -100,7 +150,38 @@ async function main() {
 		return;
 	}
 
-	console.log('comandos: list | eval <hint> <js> | logs <hint> [secs]');
+	if (cmd === 'network') {
+		const [hint, secs] = rest;
+		const t = await findTarget(hint);
+		const ws = await connect(t.webSocketDebuggerUrl);
+		wire(ws, (msg) => {
+			if (msg.method === 'Network.requestWillBeSent') {
+				const request = msg.params.request;
+				console.log(JSON.stringify({
+					type: 'request',
+					url: request.url,
+					method: request.method,
+					headers: request.headers
+				}, null, 2));
+			} else if (msg.method === 'Network.responseReceived') {
+				const response = msg.params.response;
+				console.log(JSON.stringify({
+					event: 'response',
+					url: response.url,
+					status: response.status,
+					mimeType: response.mimeType,
+					type: response.type,
+					headers: response.headers
+				}, null, 2));
+			}
+		});
+		await send(ws, 'Network.enable');
+		console.log(`capturando rede de "${t.url}" por ${secs || 30}s...`);
+		setTimeout(() => { ws.close(); process.exit(0); }, (parseInt(secs, 10) || 30) * 1000);
+		return;
+	}
+
+	console.log('comandos: list | eval <hint> <js> | eval-file <hint> <arquivo.js> | debug <hint> [arquivo.json] | screenshot <hint> [arquivo.png] | logs <hint> [secs] | network <hint> [secs]');
 	process.exit(1);
 }
 

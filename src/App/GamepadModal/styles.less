@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2026 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/screen-sizes.less';
 
 .gamepad-modal {
     position: absolute;
@@ -27,7 +28,7 @@
         position: relative;
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        .tv-flex-gap(1rem, 1rem, column);
         max-height: 90%;
         max-width: 72rem;
         width: 92%;
@@ -86,7 +87,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 3rem;
+            .tv-flex-gap(3rem, 3rem, column);
             padding: 0 3rem;
             padding-bottom: 3rem;
             flex: 1;
@@ -146,7 +147,7 @@
         flex: none;
         display: flex;
         flex-direction: row;
-        gap: 5rem;
+        .tv-flex-gap(5rem, 5rem, row);
         width: 100%;
         max-width: 56rem;
         overflow: visible;
@@ -156,7 +157,7 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 1.2rem;
+        .tv-flex-gap(1.2rem, 1.2rem, column);
         overflow: visible;
     }
 
@@ -214,7 +215,7 @@
 
         .sections {
             flex-direction: column;
-            gap: 2rem;
+            .tv-flex-gap(2rem, 2rem, column);
         }
     }
 }
