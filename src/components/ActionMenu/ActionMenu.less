@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2026 Smart code 203358507
 
 @import (reference) '~stremio/common/screen-sizes.less';
+@import (reference) '~stremio/common/tv-focus.less';
 
 .trigger {
     -webkit-touch-callout: none;
@@ -55,4 +56,11 @@
             opacity: 0.8;
         }
     }
+}
+
+.trigger, .menu-container .option-container { .tv-focus(); }
+
+.menu-container .option-container .label when (@webos = true) {
+    font-size: 22px;
+    line-height: 1.3;
 }

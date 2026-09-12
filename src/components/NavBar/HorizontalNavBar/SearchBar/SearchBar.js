@@ -58,9 +58,24 @@ const SearchBar = React.memo(({ className, query, active }) => {
     }, []);
 
     const queryInputOnPaste = React.useCallback((event) => {
-        const pasted = event.clipboardData.getData('text');
-        if (pasted) {
-            handlePlayUrl(pasted);
+        // Native paste only: guard clipboardData access for Chromium 68 /
+        // webOS hardening. No modal here; failures are intentionally silent
+        // and never log the pasted value.
+        let pasted = null;
+        try {
+            const clipboardData = event && event.clipboardData;
+            pasted = clipboardData && typeof clipboardData.getData === 'function'
+                ? clipboardData.getData('text')
+                : null;
+        } catch (_) {
+            pasted = null;
+        }
+        if (typeof pasted === 'string' && pasted) {
+            try {
+                Promise.resolve(handlePlayUrl(pasted)).catch(() => undefined);
+            } catch (_) {
+                // Never surface pasted content.
+            }
         }
     }, [handlePlayUrl]);
 

@@ -1,0 +1,45 @@
+{
+  "mode": "hosted",
+  "configured": true,
+  "status": "passed",
+  "passed": true,
+  "wasmBlocked": false,
+  "samples": [
+    {
+      "chromium68": true,
+      "protocol": "http:",
+      "atOrigin": true,
+      "mounted": true,
+      "reactRootCreated": true,
+      "coreReady": true,
+      "fixture": true,
+      "observability": {
+        "sentryEnabled": true,
+        "provider": "sentry",
+        "release": "webos-5.0.0-beta.39",
+        "dist": "4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8",
+        "initState": "initialized",
+        "failureKind": null,
+        "transportState": "accepted"
+      },
+      "routePreserved": true
+    }
+  ],
+  "phase": "capture-flush",
+  "flushed": true,
+  "sinkCalls": 1,
+  "sink": {
+    "requests": 1,
+    "events": 1,
+    "rejected": 0,
+    "privacyPassed": true,
+    "identityPassed": true,
+    "nullOrigin": false,
+    "hashes": [
+      "a6786594866d0261b0109362bc4c43c9424f1e2d28e1ad21cea90e390717429e"
+    ]
+  },
+  "reactMountPassed": true,
+  "coreReady": true,
+  "entryReachedReact": true
+}

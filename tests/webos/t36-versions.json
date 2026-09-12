@@ -1,0 +1,17 @@
+{
+  "versions": [
+    {
+      "version": "v1",
+      "directory": "C:\\Users\\gabri\\AppData\\Local\\Temp\\stremio-t36-versions-uhpkE8\\v1",
+      "mainSha256": "518f19330cd48bbbe861f96d590d76a49e016a9ff3c6f7a3f49c5c3bbd300782",
+      "serviceWorkerSha256": "4511ef0c4eb460ebc0d5efc6539e028c2f20900102374a0cdb49ef43b92dc8df"
+    },
+    {
+      "version": "v2",
+      "directory": "C:\\Users\\gabri\\AppData\\Local\\Temp\\stremio-t36-versions-uhpkE8\\v2",
+      "mainSha256": "76480bb9961825e49ae84d3e308826dcd8ca24d7334a833ad814dff0bc9d5f60",
+      "serviceWorkerSha256": "7fca48955626403513d408f5c99ddfeea393f480349ffce4cc26e82f4b025c90"
+    }
+  ],
+  "runtimeValidated": false
+}

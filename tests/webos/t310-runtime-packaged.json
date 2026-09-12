@@ -1,0 +1,231 @@
+{
+  "mode": "packaged",
+  "date": "2026-09-12T15:46:22.662Z",
+  "browser": "Edg/153.0.4234.32",
+  "runtime": "isolated React fixture; desktop Chromium, not webOS emulator",
+  "checks": {
+    "tvNoDragListeners": true,
+    "tvNoInputOrOverlay": true,
+    "tvNoShellCalls": true,
+    "tvNoDesktopControls": true,
+    "tvChildrenAndGamepadPreserved": true,
+    "correctProtocol": true,
+    "tvCleanupNoCalls": true,
+    "desktopFileDrop": true,
+    "desktopControls": true,
+    "desktopDiscordConnect": true,
+    "desktopDragVisual": true,
+    "desktopUpdaterNotification": true,
+    "desktopUpdaterInstall": true,
+    "desktopDiscordActivity": true,
+    "desktopPlayerHidesUpdater": true,
+    "desktopDragCleanup": true,
+    "cleanup-discord-status": true,
+    "cleanup-autoupdater-show-notif": true,
+    "tvRemountInert": true,
+    "zeroErrors": true
+  },
+  "tv": {
+    "protocol": "file:",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0",
+    "dragAdds": [],
+    "dragRemoves": [],
+    "fileInputs": 0,
+    "fileOverlays": 0,
+    "shellCalls": [],
+    "shortcutsButtons": 0,
+    "shortcutsSections": 0,
+    "desktopControls": [],
+    "updater": false,
+    "updaterVisible": false,
+    "gamepad": true,
+    "child": true,
+    "errors": [],
+    "unhandledrejections": []
+  },
+  "tvCleanup": {
+    "protocol": "file:",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0",
+    "dragAdds": [],
+    "dragRemoves": [],
+    "fileInputs": 0,
+    "fileOverlays": 0,
+    "shellCalls": [],
+    "shortcutsButtons": 0,
+    "shortcutsSections": 0,
+    "desktopControls": [],
+    "updater": false,
+    "updaterVisible": false,
+    "gamepad": false,
+    "child": false,
+    "errors": [],
+    "unhandledrejections": []
+  },
+  "desktop": {
+    "protocol": "file:",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0",
+    "dragAdds": [
+      "dragstart",
+      "dragover",
+      "dragleave"
+    ],
+    "dragRemoves": [],
+    "fileInputs": 1,
+    "fileOverlays": 1,
+    "shellCalls": [
+      [
+        "on",
+        "autoupdater-show-notif"
+      ],
+      [
+        "on",
+        "discord-status"
+      ],
+      [
+        "send",
+        "discord-connect"
+      ]
+    ],
+    "shortcutsButtons": 1,
+    "shortcutsSections": 1,
+    "desktopControls": [
+      "SETTINGS_QUIT_ON_CLOSE",
+      "SETTINGS_FULLSCREEN_EXIT",
+      "SETTINGS_HWDEC",
+      "SETTINGS_GPU_VIDEO_PROCESSING",
+      "SETTINGS_VIDEO_MODE",
+      "SETTINGS_PAUSE_MINIMIZED"
+    ],
+    "updater": true,
+    "updaterVisible": false,
+    "gamepad": true,
+    "child": true,
+    "errors": [],
+    "unhandledrejections": []
+  },
+  "desktopAfterEvents": {
+    "protocol": "file:",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0",
+    "dragAdds": [
+      "dragstart",
+      "dragover",
+      "dragleave"
+    ],
+    "dragRemoves": [],
+    "fileInputs": 1,
+    "fileOverlays": 1,
+    "shellCalls": [
+      [
+        "on",
+        "autoupdater-show-notif"
+      ],
+      [
+        "on",
+        "discord-status"
+      ],
+      [
+        "send",
+        "discord-connect"
+      ],
+      [
+        "send",
+        "discord-set-activity"
+      ],
+      [
+        "send",
+        "autoupdater-notif-clicked"
+      ]
+    ],
+    "shortcutsButtons": 1,
+    "shortcutsSections": 1,
+    "desktopControls": [
+      "SETTINGS_QUIT_ON_CLOSE",
+      "SETTINGS_FULLSCREEN_EXIT",
+      "SETTINGS_HWDEC",
+      "SETTINGS_GPU_VIDEO_PROCESSING",
+      "SETTINGS_VIDEO_MODE",
+      "SETTINGS_PAUSE_MINIMIZED"
+    ],
+    "updater": true,
+    "updaterVisible": true,
+    "gamepad": true,
+    "child": true,
+    "errors": [],
+    "unhandledrejections": []
+  },
+  "desktopCleanup": {
+    "protocol": "file:",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0",
+    "dragAdds": [
+      "dragstart",
+      "dragover",
+      "dragleave"
+    ],
+    "dragRemoves": [
+      "dragstart",
+      "dragover",
+      "dragleave"
+    ],
+    "fileInputs": 0,
+    "fileOverlays": 0,
+    "shellCalls": [
+      [
+        "on",
+        "autoupdater-show-notif"
+      ],
+      [
+        "on",
+        "discord-status"
+      ],
+      [
+        "send",
+        "discord-connect"
+      ],
+      [
+        "send",
+        "discord-set-activity"
+      ],
+      [
+        "send",
+        "autoupdater-notif-clicked"
+      ],
+      [
+        "off",
+        "discord-status"
+      ],
+      [
+        "off",
+        "autoupdater-show-notif"
+      ]
+    ],
+    "shortcutsButtons": 0,
+    "shortcutsSections": 0,
+    "desktopControls": [],
+    "updater": false,
+    "updaterVisible": false,
+    "gamepad": false,
+    "child": false,
+    "errors": [],
+    "unhandledrejections": []
+  },
+  "tvRemount": {
+    "protocol": "file:",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0",
+    "dragAdds": [],
+    "dragRemoves": [],
+    "fileInputs": 0,
+    "fileOverlays": 0,
+    "shellCalls": [],
+    "shortcutsButtons": 0,
+    "shortcutsSections": 0,
+    "desktopControls": [],
+    "updater": false,
+    "updaterVisible": false,
+    "gamepad": true,
+    "child": true,
+    "errors": [],
+    "unhandledrejections": []
+  },
+  "passed": true,
+  "runtimeErrors": []
+}

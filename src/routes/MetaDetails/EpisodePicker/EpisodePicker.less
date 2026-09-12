@@ -1,3 +1,4 @@
+@import (reference) '~stremio/common/screen-sizes.less';
 // Copyright (C) 2017-2025 Smart code 203358507
 
 .button-container {
@@ -19,7 +20,7 @@
 
     .label {
         flex: 0 1 auto;
-        font-size: 1rem;
+        font-size: if(@webos = true, 22px, 1rem);
         font-weight: 700;
         max-height: 3.5rem;
         text-align: center;

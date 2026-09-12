@@ -1,0 +1,529 @@
+{
+  "url": "http://127.0.0.1:8098/#/debug/player",
+  "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "visualWidth": 1920,
+    "visualHeight": 1080,
+    "scale": 1,
+    "devicePixelRatio": 1,
+    "root": {
+      "left": 0,
+      "top": 0,
+      "right": 1920,
+      "bottom": 1080,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "insets": {
+    "top": 27,
+    "right": 48,
+    "bottom": 27,
+    "left": 48
+  },
+  "safeFrame": {
+    "left": 48,
+    "top": 27,
+    "right": 1872,
+    "bottom": 1053
+  },
+  "documentOverflowX": false,
+  "samples": [
+    {
+      "tag": "DIV",
+      "classes": "button-container-zVLH6",
+      "text": "00:00:00",
+      "rect": {
+        "left": 1759.5,
+        "top": 956.03125,
+        "right": 1842,
+        "bottom": 977.46875,
+        "width": 82.5,
+        "height": 21.4375
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "control-bar-button-FQUsj button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 78,
+        "top": 985.5,
+        "right": 138,
+        "bottom": 1045.5,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "control-bar-button-FQUsj button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "control-bar-button-FQUsj button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 145.5,
+        "top": 985.5,
+        "right": 205.5,
+        "bottom": 1045.5,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "control-bar-button-FQUsj button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "control-bar-button-FQUsj button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 213,
+        "top": 985.5,
+        "right": 273,
+        "bottom": 1045.5,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "control-bar-button-FQUsj button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "control-bar-button-FQUsj button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1309.5,
+        "top": 985.5,
+        "right": 1369.5,
+        "bottom": 1045.5,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "control-bar-button-FQUsj button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "control-bar-button-FQUsj button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1377,
+        "top": 985.5,
+        "right": 1437,
+        "bottom": 1045.5,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "control-bar-button-FQUsj button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "control-bar-button-FQUsj button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1444.5,
+        "top": 985.5,
+        "right": 1504.5,
+        "bottom": 1045.5,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "control-bar-button-FQUsj button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "control-bar-button-FQUsj button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1512,
+        "top": 985.5,
+        "right": 1572,
+        "bottom": 1045.5,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "control-bar-button-FQUsj button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "control-bar-button-FQUsj button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1579.5,
+        "top": 985.5,
+        "right": 1639.5,
+        "bottom": 1045.5,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "control-bar-button-FQUsj button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "control-bar-button-FQUsj button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1647,
+        "top": 985.5,
+        "right": 1707,
+        "bottom": 1045.5,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "control-bar-button-FQUsj button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "control-bar-button-FQUsj button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1714.5,
+        "top": 985.5,
+        "right": 1774.5,
+        "bottom": 1045.5,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "control-bar-button-FQUsj button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "control-bar-button-FQUsj button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1782,
+        "top": 985.5,
+        "right": 1842,
+        "bottom": 1045.5,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "control-bar-button-FQUsj button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "button-container-i4F7t dismiss-IvEL_ button-container-zVLH6",
+      "text": "Dismiss",
+      "rect": {
+        "left": 1447.5,
+        "top": 892.5,
+        "right": 1631.25,
+        "bottom": 945,
+        "width": 183.75,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "button-container-i4F7t dismiss-IvEL_ button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "button-container-i4F7t play-button-Dluk6 button-container-zVLH6",
+      "text": "Watch now",
+      "rect": {
+        "left": 1661.25,
+        "top": 892.5,
+        "right": 1845,
+        "bottom": 945,
+        "width": 183.75,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "button-container-i4F7t play-button-Dluk6 button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    }
+  ],
+  "typography": [
+    {
+      "classes": "fixture-label-sQ1PL",
+      "ancestors": [
+        "layer-qalDW video-layer-YO7EU",
+        "player-container-wIELK fixture-uBlPl",
+        "route-content",
+        "route-container",
+        "routes-container"
+      ],
+      "text": "webOS Player fixture",
+      "fontSize": 15,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 836.859375,
+        "top": 514.5,
+        "right": 1083.125,
+        "bottom": 565.5,
+        "width": 246.265625,
+        "height": 51
+      }
+    },
+    {
+      "classes": "label-QFbsS",
+      "ancestors": [
+        "seek-bar-I7WeY seek-bar-container-JGGTa",
+        "layer-qalDW control-bar-layer-m2jto control-bar-container-xsWA7",
+        "player-container-wIELK fixture-uBlPl",
+        "route-content",
+        "route-container"
+      ],
+      "text": "00:00:00",
+      "fontSize": 16.5,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 78,
+        "top": 956.25,
+        "right": 160.5,
+        "bottom": 977.25,
+        "width": 82.5,
+        "height": 21
+      }
+    },
+    {
+      "classes": "label-QFbsS",
+      "ancestors": [
+        "button-container-zVLH6",
+        "seek-bar-I7WeY seek-bar-container-JGGTa",
+        "layer-qalDW control-bar-layer-m2jto control-bar-container-xsWA7",
+        "player-container-wIELK fixture-uBlPl",
+        "route-content"
+      ],
+      "text": "00:00:00",
+      "fontSize": 16.5,
+      "lineHeight": "21.45px",
+      "rect": {
+        "left": 1759.5,
+        "top": 956.03125,
+        "right": 1842,
+        "bottom": 977.46875,
+        "width": 82.5,
+        "height": 21.4375
+      }
+    },
+    {
+      "classes": "name-sIiDL",
+      "ancestors": [
+        "details-container-bUOTZ",
+        "info-container-KLOMx",
+        "layer-qalDW menu-layer-HZFG9 next-video-popup-container-H4wnL",
+        "player-container-wIELK fixture-uBlPl",
+        "route-content"
+      ],
+      "text": "Next on webOS Player Fixture",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1462.5,
+        "top": 782.8125,
+        "right": 1830,
+        "bottom": 811.40625,
+        "width": 367.5,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-zOq_w",
+      "ancestors": [
+        "name-sIiDL",
+        "details-container-bUOTZ",
+        "info-container-KLOMx",
+        "layer-qalDW menu-layer-HZFG9 next-video-popup-container-H4wnL",
+        "player-container-wIELK fixture-uBlPl"
+      ],
+      "text": "Next on",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1462.5,
+        "top": 782.8125,
+        "right": 1544.71875,
+        "bottom": 810.8125,
+        "width": 82.21875,
+        "height": 28
+      }
+    },
+    {
+      "classes": "title-Z5Kgo",
+      "ancestors": [
+        "details-container-bUOTZ",
+        "info-container-KLOMx",
+        "layer-qalDW menu-layer-HZFG9 next-video-popup-container-H4wnL",
+        "player-container-wIELK fixture-uBlPl",
+        "route-content"
+      ],
+      "text": "Fixture episode two (S1E2)",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1462.5,
+        "top": 841.40625,
+        "right": 1830,
+        "bottom": 870,
+        "width": 367.5,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-zOq_w",
+      "ancestors": [
+        "button-container-i4F7t dismiss-IvEL_ button-container-zVLH6",
+        "buttons-container-iYrpZ",
+        "info-container-KLOMx",
+        "layer-qalDW menu-layer-HZFG9 next-video-popup-container-H4wnL",
+        "player-container-wIELK fixture-uBlPl"
+      ],
+      "text": "Dismiss",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1524.59375,
+        "top": 904.453125,
+        "right": 1605.140625,
+        "bottom": 933.046875,
+        "width": 80.546875,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-zOq_w",
+      "ancestors": [
+        "button-container-i4F7t play-button-Dluk6 button-container-zVLH6",
+        "buttons-container-iYrpZ",
+        "info-container-KLOMx",
+        "layer-qalDW menu-layer-HZFG9 next-video-popup-container-H4wnL",
+        "player-container-wIELK fixture-uBlPl"
+      ],
+      "text": "Watch now",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1720.234375,
+        "top": 904.453125,
+        "right": 1837.015625,
+        "bottom": 933.046875,
+        "width": 116.78125,
+        "height": 28.59375
+      }
+    }
+  ],
+  "failures": [],
+  "requestedRoute": "/debug/player"
+}

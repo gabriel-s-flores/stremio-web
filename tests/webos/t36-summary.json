@@ -1,0 +1,26 @@
+{
+  "status": "incomplete",
+  "checksPassed": true,
+  "packagedRuntimePassed": true,
+  "httpRuntimePassed": true,
+  "httpsUpdateValidated": false,
+  "playerUpdateValidated": false,
+  "physicalTVValidated": false,
+  "hashes": {
+    "webpack.config.js": "46d460c154d3034c20302c612379c9c7b7ef1ee2157abe6829bb31c5e952966d",
+    "package.json": "21abd79e9f904f47a16ebdfe8051f87fc479876925441981e61758070ddf84cc",
+    "src/App/WebUpdateScreen/index.ts": "58bd6e5389cf6fcad9f9a6e1ffbf540b03c6bef9c1c3e600d0a240463aa11814",
+    "src/App/WebUpdateScreen/disabled.js": "b339ad4f05c776640e39b138a00970dfff703ba31ea1be4f6ddcfb9f144fdca6",
+    "src/App/WebUpdateScreen/useServiceWorkerUpdater.ts": "71cc4457465ed92d850a051b6756cc79fe503a8d418536849651c188c2c46869",
+    "scripts/verify-webos-packaged-build.mjs": "c041e7237b411c3c547ca4204ea11e195a98c6cece328e489306563284344e1f",
+    "tests/webosServiceWorker.spec.js": "11f4e8d62fdde18bdf3d938275152e9fc2091db8575418eaafd510d388bdb4c7",
+    "tools/t36-checks.mjs": "ebc13ecada6483ddb733d17f1d86dff9a09f29b67e0fa563b8b7438ee4e6dd6c",
+    "tools/t36-evidence.mjs": "daaadf389ba0f7c51a14ae88c505e0af79e2aedf2013408ede38c6e705c8f5b1",
+    "tools/t36-http-server.mjs": "23065981825fd15866410370e2d0e1091e91fd7bbd27ff545bd2d38c2f0b0a27",
+    "tools/t36-https-preflight.mjs": "f2c3299cdb3dcd37bc485bcd8738c7055a9dd3c970d53bf2977afa5ca0de91fd",
+    "tools/t36-https-server.mjs": "7fb7bb24c06fca0e168c04e91b3163cdb830f224e8dafdb698ef0463fe633dc5",
+    "tools/t36-prepare.mjs": "3361f3856abff5a3d2f156db79eb3ccf4fdcc2f427068d3c81cabba71ae65c5e",
+    "tools/t36-runtime.mjs": "458cf2b20f2c6e4fd67ad8cc72a573daf7a3e57eee59907a18e32022df826e62",
+    "tools/t36-versions.mjs": "6c4636ad579c9563db894cabb69187138d12fba4a60d1b5b524f65daa6a9fa91"
+  }
+}

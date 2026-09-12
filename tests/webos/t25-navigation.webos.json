@@ -1,0 +1,65 @@
+{
+  "note": "Existing spatial navigation, CDP key events; not a physical remote certification",
+  "steps": [
+    {
+      "key": "ArrowRight",
+      "moved": true,
+      "after": {
+        "control": "div.button-mnzMf.selected.active.button-container-zVLH6",
+        "surface": "div.button-mnzMf.selected.active.button-container-zVLH6",
+        "text": "Selected + active",
+        "ring": {
+          "style": "solid",
+          "width": "4px",
+          "color": "rgb(255, 255, 255)",
+          "offset": "-4px"
+        }
+      }
+    },
+    {
+      "key": "ArrowRight",
+      "moved": true,
+      "after": {
+        "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+        "surface": "div.poster-container-qkw48",
+        "text": "Poster and secondary action",
+        "ring": {
+          "style": "solid",
+          "width": "4px",
+          "color": "rgb(255, 255, 255)",
+          "offset": "-4px"
+        }
+      }
+    },
+    {
+      "key": "ArrowDown",
+      "moved": true,
+      "after": {
+        "control": "button.trigger-AimsT.button-mnzMf",
+        "surface": "button.trigger-AimsT.button-mnzMf",
+        "text": "Open action menu",
+        "ring": {
+          "style": "solid",
+          "width": "4px",
+          "color": "rgb(255, 255, 255)",
+          "offset": "-4px"
+        }
+      }
+    },
+    {
+      "key": "ArrowLeft",
+      "moved": false,
+      "after": {
+        "control": "button.trigger-AimsT.button-mnzMf",
+        "surface": "button.trigger-AimsT.button-mnzMf",
+        "text": "Open action menu",
+        "ring": {
+          "style": "solid",
+          "width": "4px",
+          "color": "rgb(255, 255, 255)",
+          "offset": "-4px"
+        }
+      }
+    }
+  ]
+}

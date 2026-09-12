@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 const React = require('react');
+const { toVideoPlatform, getVideoPlatformError } = require('stremio/common/Platform/videoPlatform');
 const { useParams, useNavigate } = require('react-router');
 const { useSearchParams } = require('react-router-dom');
 const classnames = require('classnames');
@@ -72,7 +73,7 @@ const Player = () => {
     const video = useVideo();
     const routeFocused = useRouteFocused();
     const platform = usePlatform();
-    const videoPlatform = platform.name === 'webos' ? 'webOS' : platform.name;
+    const videoPlatform = toVideoPlatform(platform.name);
     const toast = useToast();
     const discord = useDiscord();
     const discordTimestamps = React.useRef(EMPTY_DISCORD_TIMESTAMPS);
@@ -505,6 +506,11 @@ const Player = () => {
         video.unload();
 
         if (player.selected && player.stream?.type === 'Ready' && streamingServer.settings?.type !== 'Loading') {
+            const platformError = getVideoPlatformError(videoPlatform, window);
+            if (platformError) {
+                onError(platformError);
+                return;
+            }
             video.load({
                 stream: {
                     ...player.stream.content,
@@ -666,10 +672,10 @@ const Player = () => {
     }, []);
 
     React.useEffect(() => {
-        if (settings.pauseOnMinimize && (platform.shell.state.windowClosed || platform.shell.state.windowHidden)) {
+        if (settings.pauseOnMinimize && (platform.shell.state.windowClosed || platform.shell.state.windowHidden || platform.webos.hidden)) {
             onPauseRequested();
         }
-    }, [settings.pauseOnMinimize, platform.shell.state.windowClosed, platform.shell.state.windowHidden]);
+    }, [settings.pauseOnMinimize, platform.shell.state.windowClosed, platform.shell.state.windowHidden, platform.webos.hidden]);
 
     React.useEffect(() => {
         if (video.state.stream === null || typeof player?.title !== 'string') {

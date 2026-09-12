@@ -19,12 +19,16 @@ const UpdaterBanner = ({ className }: Props) => {
     }, [shell]);
 
     useEffect(() => {
+        if (!shell.active) return;
+
         shell.on('autoupdater-show-notif', show);
 
         return () => {
             shell.off('autoupdater-show-notif', show);
         };
-    }, []);
+    }, [shell, show]);
+
+    if (!shell.active) return null;
 
     return (
         <UpdateBanner

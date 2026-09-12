@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 const React = require('react');
+const { default: ExternalLink } = require('stremio/components/ExternalLink');
 const { useTranslation } = require('react-i18next');
 const { default: Button } = require('stremio/components/Button');
 const ModalDialog = require('stremio/components/ModalDialog');
@@ -72,11 +73,11 @@ const EventModal = () => {
                             </Button>
                             :
                             modal.externalUrl ?
-                                <Button className={styles['action-button']} href={modal.externalUrl} target={'_blank'}>
+                                <ExternalLink className={styles['action-button']} href={modal.externalUrl} target={'_blank'}>
                                     <div className={styles['button-label']}>
                                         { t('LEARN_MORE') }
                                     </div>
-                                </Button>
+                                </ExternalLink>
                                 :
                                 null
                     }

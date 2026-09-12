@@ -57,7 +57,7 @@ const EXTERNAL_PLAYERS = [
     {
         label: 'EXTERNAL_PLAYER_DISABLED',
         value: null,
-        platforms: ['ios', 'visionos', 'android', 'windows', 'linux', 'macos'],
+        platforms: ['ios', 'visionos', 'android', 'windows', 'linux', 'macos', 'webos'],
     },
     {
         label: 'EXTERNAL_PLAYER_ALLOW_CHOOSING',

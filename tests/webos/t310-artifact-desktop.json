@@ -1,0 +1,18 @@
+{
+  "mode": "desktop",
+  "date": "2026-09-12T15:45:02.774Z",
+  "appleScripts": [
+    "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"
+  ],
+  "sources": [
+    "src/common/FileDrop/FileDrop.tsx",
+    "src/common/Discord/Discord.tsx",
+    "src/App/UpdaterBanner/UpdaterBanner.tsx",
+    "src/routes/Settings/Settings.tsx",
+    "src/routes/Settings/Menu/Menu.tsx",
+    "src/routes/Settings/Interface/Interface.tsx",
+    "src/routes/Settings/Player/Player.tsx"
+  ],
+  "mainSha256": "6ea1c0a6c25c4460f08247958fcd34dc8eaf3cba2193bbd632ad1987eabdf65a",
+  "passed": true
+}

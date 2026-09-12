@@ -1,3 +1,4 @@
+@import (reference) '~stremio/common/screen-sizes.less';
 // Copyright (C) 2017-2023 Smart code 203358507
 
 .search-bar-container {
@@ -14,7 +15,7 @@
         flex: 1;
         max-height: 1.2em;
         margin-right: 1rem;
-        font-size: 1.1rem;
+        font-size: if(@webos = true, 22px, 1.1rem);
         color: var(--color-placeholder-text);
     }
 

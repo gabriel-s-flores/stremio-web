@@ -2,6 +2,7 @@
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
 @import (reference) '~stremio/common/screen-sizes.less';
+@import (reference) '~stremio/common/tv-focus.less';
 
 .warning-container {
     display: flex;
@@ -14,7 +15,7 @@
 
     .warning-statement {
         flex: 1;
-        font-size: 1.2rem;
+        font-size: if(@webos = true, 22px, 1.2rem);
         max-height: 2.4em;
         color: @color-surface-light5-90;
     }
@@ -35,7 +36,7 @@
             }
     
             .label {
-                font-size: 1.2rem;
+                font-size: if(@webos = true, 22px, 1.2rem);
                 color: @color-surface-light5-90;
             }
     
@@ -46,6 +47,10 @@
             }
         }
     }
+}
+
+.warning-container .actions > a.action:focus {
+    .tv-focus-ring();
 }
 
 @media only screen and (max-width: @minimum) {

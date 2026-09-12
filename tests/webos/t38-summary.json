@@ -1,0 +1,38 @@
+{
+  "date": "2026-09-10T22:28:20.622Z",
+  "status": "incomplete-browser-unavailable",
+  "checksPassed": true,
+  "tests": 544,
+  "suites": 25,
+  "standardBuildExcludesFixture": true,
+  "runtime": {
+    "hosted": {
+      "seamPassed": true,
+      "browserLaunch": "blocked-browser-not-installed",
+      "acceptance": "incomplete"
+    },
+    "packaged": {
+      "seamPassed": true,
+      "browserLaunch": "blocked-browser-not-installed",
+      "acceptance": "incomplete"
+    }
+  },
+  "limitations": [
+    "Emulator SDK 5.0.0 returns -101 / not exist for com.webos.app.browser. Browser opening and browser-specific return remain unvalidated.",
+    "Fixtures use actual Platform/ExternalLink/Modal components without core startup; full packaged core boot is outside this evidence.",
+    "Clipboard unavailable on these HTTP/file fixtures; selectable URL and failure feedback verified."
+  ],
+  "hashes": {
+    "src/common/Platform/Platform.tsx": "f10a9d54a65d1647e8b6409fbc970554fff9227b61e54a74e476b68da05f00a5",
+    "src/common/Platform/resolveExternalUrl.js": "28f57bc231a5d470db0175483475074906c257932231bed65881a8c6f9c3d0a1",
+    "src/common/Platform/safeOpenExternal.js": "082232dd5d48bfa0dbd699c6a4f5bc8cdf549141075980f6fb89c47eac8eb3cc",
+    "src/common/Platform/webos/adapter.ts": "f272d30d22e9eb785a215c45102856bf6578ad751b5d127acd9e19915d13a470",
+    "src/common/Platform/webos/globals.d.ts": "245814d293d6b30e013a0fe7aff66b85165ff977eb1fb783d05d94be4c49b37e",
+    "src/components/ExternalLink/index.tsx": "f5b8bff64a230ed7134bacdc71d61159d29539e798e1a56421276ce6b61a4472",
+    "src/App/ExternalLinkFailureModal.js": "6852112164b5db2355ca1952d05bec59d15a8d3069a6459eee574aa958e7e39a",
+    "src/App/externalLinkFailure.less": "50b96e7f315fc48fa8f56685e521a965d0751551263e83bbe2355e8549c4df39",
+    "src/webos/diagnostics/ExternalLinksDebugPage.tsx": "1bd9f654259b23482774e8b1509bb21b69d2514250b905f2c5c6993f95d0eecd",
+    "src/webos/diagnostics/ExternalLinksDebugPage.less": "b83737bf8e07c1c6ec3067c01772180b594981af2239c157aa3db611bc4dcc76"
+  },
+  "fixtureMainSha256": "df4aecf1f4feec947e7946de204dd02c20bad585594dd468372c1e1d41a939c4"
+}

@@ -47,6 +47,9 @@
     }
 
     .footer {
+        & when (@webos = true) {
+            .label { font-size: 22px; }
+        }
         display: flex;
         justify-content: space-between;
 
@@ -98,4 +101,9 @@
             }
         }
     }
+}
+
+// Preserve hover transitions without animating the TV outline.
+.wrapper .footer .add-url, .wrapper .footer .reload {
+    & when (@webos = true) { transition-property: background-color, border-color; }
 }

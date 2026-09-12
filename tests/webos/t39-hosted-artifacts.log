@@ -1,0 +1,9 @@
+{
+  "buildDirectory": "C:\\Users\\gabri\\Documents\\Projects\\Stremio\\stremio-web\\build",
+  "commitHash": "4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8",
+  "wasmFiles": [
+    "stremio_core_web_bg.wasm"
+  ],
+  "checkedReferences": 53
+}
+$ node scripts/verify-hosted-build.mjs

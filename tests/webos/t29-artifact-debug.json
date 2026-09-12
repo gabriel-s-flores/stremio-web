@@ -1,0 +1,25 @@
+{
+  "mode": "debug",
+  "cssFile": "4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8\\styles\\main.css",
+  "cssSha256": "d0e6dad9a9c00ad90bcf6dc051c7c35720439d9c31116ab76658972ca75d8249",
+  "fonts": [
+    {
+      "name": "PlusJakartaSans.ttf",
+      "urls": [
+        "../../fonts/PlusJakartaSans.ttf"
+      ],
+      "valid": true,
+      "bytes": 176408
+    },
+    {
+      "name": "TwemojiFlags.woff2",
+      "urls": [
+        "../../fonts/TwemojiFlags.woff2"
+      ],
+      "valid": true,
+      "bytes": 78292
+    }
+  ],
+  "fixturePresent": true,
+  "failures": []
+}

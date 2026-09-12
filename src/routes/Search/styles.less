@@ -13,7 +13,7 @@
 
 .search-container {
     height: calc(100% - var(--safe-area-inset-bottom));
-    width: 100%;
+    width: if(@webos = true, ~"calc(100% - var(--safe-area-inset-left) - var(--safe-area-inset-right))", 100%);
     background-color: transparent;
 
     .search-content {
@@ -85,7 +85,7 @@
                         flex-grow: 0;
                         flex-shrink: 1;
                         flex-basis: auto;
-                        font-size: 1.2rem;
+                        font-size: if(@webos = true, 22px, 1.2rem);
                         color: @color-surface-light5-90;
                         text-align: center;
                         opacity: 0.4;

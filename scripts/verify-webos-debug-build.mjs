@@ -31,11 +31,17 @@ try {
     const main = fs.readFileSync(mainPath, 'utf8');
     const css = fs.readFileSync(cssPath, 'utf8');
     const debugPresent = main.includes('__stremioWebosDebug') && main.includes('webOS diagnostics') && main.includes('/debug') && css.includes('debug-container');
+    const focusFixturePresent = main.includes('data-webos-focus-fixture') && main.includes('/debug/focus');
+    const fontsIconsFixturePresent = main.includes('data-webos-fonts-icons-fixture') && main.includes('/debug/fonts-icons');
 
     if (expectedMode === 'debug') {
         assert(debugPresent, 'debug runtime, route, or styles are missing');
+        assert(focusFixturePresent, 'T2.5 real-control fixture is missing');
+        assert(fontsIconsFixturePresent, 'T2.9 fonts/icons fixture is missing');
     } else {
         assert(!debugPresent, 'debug diagnostics leaked into the standard build');
+        assert(!main.includes('data-webos-focus-fixture') && !main.includes('/debug/focus'), 'T2.5 fixture leaked into the standard build');
+        assert(!main.includes('data-webos-fonts-icons-fixture') && !main.includes('/debug/fonts-icons'), 'T2.9 fixture leaked into the standard build');
     }
 
     console.log(JSON.stringify({
@@ -43,6 +49,8 @@ try {
         commitHash,
         mode: expectedMode,
         debugPresent,
+        focusFixturePresent,
+        fontsIconsFixturePresent,
     }, null, 2));
 } catch (error) {
     console.error(error.message);

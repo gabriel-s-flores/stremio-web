@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/tv-focus.less';
 @import (reference) '~stremio/common/screen-sizes.less';
 
 .intro-container {
@@ -96,7 +97,7 @@
                 flex-grow: 0;
                 flex-shrink: 1;
                 flex-basis: auto;
-                font-size: 1.1rem;
+                font-size: if(@webos = true, 22px, 1.1rem);
                 font-weight: 700;
                 color: var(--primary-foreground-color);
                 text-align: center;
@@ -267,7 +268,7 @@
             border-radius: 3.5rem;
             padding: 0 1rem;
             margin-top: 2rem;
-            font-size: 1.1rem;
+            font-size: if(@webos = true, 22px, 1.1rem);
             font-weight: 700;
             color: var(--primary-foreground-color);
             outline: var(--focus-outline-size) solid var(--primary-foreground-color);
@@ -332,4 +333,16 @@
             }
         }
     }
+}
+
+// Keep the TV cursor visible through local hover/selected overrides.
+.intro-container .content-container .submit-button,
+.intro-container .content-container .guest-login-button,
+.intro-container .content-container .signup-form-button,
+.intro-container .content-container .login-form-button,
+.intro-container .content-container .form-container .credentials-text-input,
+.intro-container .content-container .options-container .facebook-button,
+.intro-container .content-container .options-container .apple-button,
+.loading-modal-container .loader-container .button {
+    .tv-focus();
 }

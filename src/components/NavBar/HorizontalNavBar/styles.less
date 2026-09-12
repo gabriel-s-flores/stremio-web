@@ -2,6 +2,7 @@
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
 @import (reference) '~stremio/common/screen-sizes.less';
+@import (reference) '~stremio/App/styles.less';
 
 .horizontal-nav-bar-container {
     display: flex;
@@ -38,15 +39,14 @@
             margin-left: max(0rem, calc(1rem - var(--safe-area-inset-left)));
         }
         & when (@webos = true) {
-            // T2.8: restore a compile-time clamp if the left inset exceeds 1rem.
-            margin-left: calc(1rem - var(--safe-area-inset-left));
+            margin-left: max(0px, (@webos-root-size - @webos-overscan-horizontal));
         }
     }
 
     .title {
         flex: 4 0 0;
         padding: 0 1rem;
-        font-size: 1.2rem;
+        font-size: if(@webos = true, 22px, 1.2rem);
         font-style: normal;
         font-weight: 500;
         letter-spacing: 0.01rem;

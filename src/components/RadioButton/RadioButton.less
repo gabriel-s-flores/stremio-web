@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2024 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/tv-focus.less';
 
 .radio-button {
     display: flex;
@@ -66,4 +67,13 @@
             outline-style: solid;
         }
     }
+}
+
+.radio-button .radio-container:focus, .radio-button .radio-container:focus-within {
+    .tv-focus-ring();
+}
+
+.radio-button .radio-container when (@webos = true) {
+    // The existing transition: all must not animate the 5-way cursor.
+    transition-property: background-color, border-color;
 }

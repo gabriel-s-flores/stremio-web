@@ -47,8 +47,8 @@ html:not(.active-slider-within) {
 
         &.background-layer {
             .image {
-                width: 100vw;
-                height: 100vh;
+                width: if(@webos = true, 1920px, 100vw);
+                height: if(@webos = true, 1080px, 100vh);
                 object-fit: cover;
                 opacity: 0.6;
             }
@@ -91,7 +91,7 @@ html:not(.active-slider-within) {
         &.side-drawer-button-layer {
             position: fixed;
             top: 50%;
-            right: -4rem;
+            right: if(@webos = true, var(--safe-area-inset-right), -4rem);
             left: initial;
             transform: translateY(-50%);
         }

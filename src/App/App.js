@@ -11,6 +11,8 @@ const { FullscreenProvider, ToastProvider, TooltipProvider, ShortcutsProvider, D
 const ServicesToaster = require('./ServicesToaster');
 const SearchParamsHandler = require('./SearchParamsHandler');
 const DeepLinkHandler = require('./DeepLinkHandler');
+const ExternalLinkFailureModal = require('./ExternalLinkFailureModal');
+const { parseDeepLink, parseLaunchDeepLink } = require('../common/parseDeepLink');
 const { default: UpdaterBanner } = require('./UpdaterBanner');
 const { default: ShortcutsModal } = require('./ShortcutsModal');
 const { default: GamepadModal } = require('./GamepadModal');
@@ -23,7 +25,7 @@ const App = () => {
     const core = useCore();
     const profile = useProfile();
     const { i18n } = useTranslation();
-    const { shell } = usePlatform();
+    const { shell, webos } = usePlatform();
     const navigate = useNavigate();
     const [gamepadSupportEnabled, setGamepadSupportEnabled] = React.useState(false);
     const services = React.useMemo(() => {
@@ -106,19 +108,8 @@ const App = () => {
 
     React.useEffect(() => {
         const onOpenMedia = (data) => {
-            try {
-                const { protocol, hostname, pathname, searchParams } = new URL(data);
-                if (protocol === CONSTANTS.PROTOCOL) {
-                    if (hostname.length) {
-                        const transportUrl = `https://${hostname}${pathname}`;
-                        navigate(`/addons?addon=${encodeURIComponent(transportUrl)}`);
-                    } else {
-                        navigate(`${pathname}?${searchParams.toString()}`);
-                    }
-                }
-            } catch (e) {
-                console.error('Failed to open media:', e);
-            }
+            const path = parseDeepLink(data);
+            if (path !== null) navigate(path);
         };
 
         shell.on('open-media', onOpenMedia);
@@ -128,6 +119,11 @@ const App = () => {
 
         return () => shell.off('open-media', onOpenMedia);
     }, [shell.state.initialized]);
+
+    React.useEffect(() => webos.subscribeLifecycle(({ params }) => {
+        const path = parseLaunchDeepLink(params);
+        if (path !== null) navigate(path, { replace: true });
+    }), [webos.subscribeLifecycle, navigate]);
 
     React.useEffect(() => {
         if (typeof profile.settings?.interfaceLanguage === 'string') {
@@ -199,6 +195,7 @@ const App = () => {
                                     <DeepLinkHandler />
                                     <UpdaterBanner className={styles['updater-banner-container']} />
                                     <ProtectedRoutes />
+                                    <ExternalLinkFailureModal />
                                 </DiscordProvider>
                             </FullscreenProvider>
                         </ShortcutsProvider>

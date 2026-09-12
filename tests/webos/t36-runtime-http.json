@@ -1,0 +1,28 @@
+{
+  "mode": "http",
+  "device": "emulator",
+  "passed": true,
+  "registrationError": false,
+  "wasmError": false,
+  "samples": [
+    {
+      "protocol": "http:",
+      "secure": false,
+      "registerCalls": 0,
+      "banner": false,
+      "coreReady": true,
+      "loaded": true,
+      "chromium68": true
+    },
+    {
+      "protocol": "http:",
+      "secure": false,
+      "registerCalls": 0,
+      "banner": false,
+      "coreReady": true,
+      "loaded": true,
+      "chromium68": true
+    }
+  ],
+  "phase": "sample"
+}

@@ -1,0 +1,20 @@
+{
+  "desktop": false,
+  "passed": true,
+  "scripts": [
+    "webos/webOSTV.js",
+    "4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8/scripts/main.js",
+    "4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8/scripts/worker.js",
+    "//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1",
+    "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"
+  ],
+  "hashes": {
+    "webos/lib/webOSTVjs-1.2.10/webOSTV.js": "d672fd86217282c0221a82f4a19359598a365375ebd549163d24b5bd273711e9",
+    "webos/lib/webOSTVjs-1.2.10/LICENSE-2.0.txt": "a07e9185cca870c556a44d5b4dff2bea516e0068ecf7984fd9c6818839bfd761",
+    "webos/hello/site/webOSTVjs-1.2.10/webOSTV.js": "d672fd86217282c0221a82f4a19359598a365375ebd549163d24b5bd273711e9",
+    "webos/hello/site/webOSTVjs-1.2.10/LICENSE-2.0.txt": "a07e9185cca870c556a44d5b4dff2bea516e0068ecf7984fd9c6818839bfd761",
+    "webos/hello/packaged/webOSTVjs-1.2.10/webOSTV.js": "d672fd86217282c0221a82f4a19359598a365375ebd549163d24b5bd273711e9",
+    "webos/hello/packaged/webOSTVjs-1.2.10/LICENSE-2.0.txt": "a07e9185cca870c556a44d5b4dff2bea516e0068ecf7984fd9c6818839bfd761"
+  },
+  "main": "25bf0a36ecd07681f29d9543a8d0b8ee04fc5af4a3950b7c829ab530574f553f"
+}

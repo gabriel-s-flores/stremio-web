@@ -1,4 +1,5 @@
 @import (reference) '~stremio/common/screen-sizes.less';
+@import (reference) '~stremio/common/tv-focus.less';
 
 :import('~stremio/routes/Settings/components/Option/Option.less') {
     option-content: content;
@@ -54,4 +55,9 @@
             }
         }
     }
+}
+
+// Keep the TV cursor visible through local hover/selected overrides.
+.configure-input-container .option-content .configure-button-container {
+    .tv-focus();
 }

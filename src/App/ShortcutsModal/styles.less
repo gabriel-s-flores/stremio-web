@@ -1,4 +1,5 @@
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/tv-focus.less';
 @import (reference) '~stremio/common/screen-sizes.less';
 
 .shortcuts-modal {
@@ -89,4 +90,9 @@
             overflow-y: auto;
         }
     }
+}
+
+// Keep the TV cursor visible through local hover/selected overrides.
+.shortcuts-modal .container .header .close-button {
+    .tv-focus();
 }

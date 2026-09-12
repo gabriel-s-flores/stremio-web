@@ -1,0 +1,23 @@
+{
+  "started": "2026-09-09T03:58:34.111Z",
+  "status": "blocked",
+  "targets": {},
+  "pairs": [],
+  "failures": [
+    "Private config required: webos/desktop endpoint, targetId, origin, buildDirectory, sessionProbe"
+  ],
+  "review": "pending manual side-by-side review; no pixel threshold",
+  "acceptedDifferences": [],
+  "preflightArtifact": "t210-emulator-preflight.json (separate observation; not a validated gallery target)",
+  "availability": [
+    {
+      "port": 9226,
+      "available": false
+    },
+    {
+      "port": 9998,
+      "available": true,
+      "browser": ""
+    }
+  ]
+}

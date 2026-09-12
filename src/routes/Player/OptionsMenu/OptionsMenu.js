@@ -6,6 +6,8 @@ const classnames = require('classnames');
 const { useTranslation } = require('react-i18next');
 const { usePlatform, useToast } = require('stremio/common');
 const { default: usePlayOnDevice } = require('../usePlayOnDevice');
+const { writeTextToClipboard } = require('stremio/common/clipboard');
+const ClipboardFallbackModal = require('stremio/components/ClipboardFallbackModal');
 const Option = require('./Option');
 const styles = require('./styles');
 
@@ -33,51 +35,52 @@ const OptionsMenu = React.memo(React.forwardRef(({ className, stream, playbackDe
         const track = extraSubtitlesTracks?.find(({ id }) => id === selectedExtraSubtitlesTrackId);
         return track?.fallbackUrl ?? track?.url ?? null;
     }, [extraSubtitlesTracks, selectedExtraSubtitlesTrackId]);
+    const [copyFallbackValue, setCopyFallbackValue] = React.useState(null);
+    const closeCopyFallback = React.useCallback(() => {
+        setCopyFallbackValue(null);
+    }, []);
 
-    const onCopyStreamButtonClick = React.useCallback(() => {
-        if (streamingUrl || downloadUrl) {
-            navigator.clipboard.writeText(streamingUrl || downloadUrl)
-                .then(() => {
+    const copyWithFallback = React.useCallback((value, successKey, errorKey) => {
+        if (!value) {
+            return;
+        }
+        try {
+            Promise.resolve(writeTextToClipboard(value)).then(
+                () => {
                     toast.show({
                         type: 'success',
                         title: 'Copied',
-                        message: t('PLAYER_COPY_STREAM_SUCCESS'),
+                        message: t(successKey),
                         timeout: 3000
                     });
-                })
-                .catch((e) => {
-                    console.error(e);
+                },
+                () => {
+                    setCopyFallbackValue(value);
                     toast.show({
                         type: 'error',
                         title: t('ERROR'),
-                        message: `${t('PLAYER_COPY_STREAM_ERROR')}: ${streamingUrl || downloadUrl}`,
+                        message: t(errorKey),
                         timeout: 3000
                     });
-                });
+                }
+            ).catch(() => {
+                setCopyFallbackValue(value);
+            });
+        } catch (_) {
+            setCopyFallbackValue(value);
         }
-    }, [streamingUrl, downloadUrl]);
+    }, [t, toast]);
+
+    const onCopyStreamButtonClick = React.useCallback(() => {
+        if (streamingUrl || downloadUrl) {
+            copyWithFallback(streamingUrl || downloadUrl, 'PLAYER_COPY_STREAM_SUCCESS', 'PLAYER_COPY_STREAM_ERROR');
+        }
+    }, [streamingUrl, downloadUrl, copyWithFallback]);
     const onCopyMagnetButtonClick = React.useCallback(() => {
         if (magnetUrl) {
-            navigator.clipboard.writeText(magnetUrl)
-                .then(() => {
-                    toast.show({
-                        type: 'success',
-                        title: 'Copied',
-                        message: t('PLAYER_COPY_MAGNET_LINK_SUCCESS'),
-                        timeout: 3000
-                    });
-                })
-                .catch((e) => {
-                    console.error(e);
-                    toast.show({
-                        type: 'error',
-                        title: t('Error'),
-                        message: `${t('PLAYER_COPY_MAGNET_LINK_ERROR')}: ${magnetUrl}`,
-                        timeout: 3000
-                    });
-                });
+            copyWithFallback(magnetUrl, 'PLAYER_COPY_MAGNET_LINK_SUCCESS', 'PLAYER_COPY_MAGNET_LINK_ERROR');
         }
-    }, [magnetUrl]);
+    }, [magnetUrl, copyWithFallback]);
     const onDownloadVideoButtonClick = React.useCallback(() => {
         if (downloadUrl) {
             platform.openExternal(downloadUrl);
@@ -93,64 +96,75 @@ const OptionsMenu = React.memo(React.forwardRef(({ className, stream, playbackDe
     }, []);
 
     return (
-        <div ref={ref} className={classnames(className, styles['options-menu-container'])} onMouseDown={onMouseDown}>
+        <React.Fragment>
+            <div ref={ref} className={classnames(className, styles['options-menu-container'])} onMouseDown={onMouseDown}>
+                {
+                    streamingUrl || downloadUrl ?
+                        <Option
+                            icon={'link'}
+                            label={t('CTX_COPY_STREAM_LINK')}
+                            disabled={stream === null}
+                            onClick={onCopyStreamButtonClick}
+                        />
+                        :
+                        null
+                }
+                {
+                    magnetUrl ?
+                        <Option
+                            icon={'magnet-link'}
+                            label={t('CTX_COPY_MAGNET_LINK')}
+                            disabled={stream === null}
+                            onClick={onCopyMagnetButtonClick}
+                        />
+                        :
+                        null
+                }
+                {
+                    downloadUrl ?
+                        <Option
+                            icon={'download'}
+                            label={t('CTX_DOWNLOAD_VIDEO')}
+                            disabled={stream === null}
+                            onClick={onDownloadVideoButtonClick}
+                        />
+                        :
+                        null
+                }
+                {
+                    subtitlesTrackUrl ?
+                        <Option
+                            icon={'download'}
+                            label={t('CTX_DOWNLOAD_SUBS')}
+                            disabled={stream === null}
+                            onClick={onDownloadSubtitlesClick}
+                        />
+                        :
+                        null
+                }
+                {
+                    streamingUrl && externalDevices.map(({ id, name }) => (
+                        <Option
+                            key={id}
+                            icon={'vlc'}
+                            label={t('PLAYER_PLAY_IN', { device: name })}
+                            deviceId={id}
+                            disabled={stream === null}
+                            onClick={playOnDevice}
+                        />
+                    ))
+                }
+            </div>
             {
-                streamingUrl || downloadUrl ?
-                    <Option
-                        icon={'link'}
-                        label={t('CTX_COPY_STREAM_LINK')}
-                        disabled={stream === null}
-                        onClick={onCopyStreamButtonClick}
+                copyFallbackValue !== null ?
+                    <ClipboardFallbackModal
+                        value={copyFallbackValue}
+                        onClose={closeCopyFallback}
                     />
                     :
                     null
             }
-            {
-                magnetUrl ?
-                    <Option
-                        icon={'magnet-link'}
-                        label={t('CTX_COPY_MAGNET_LINK')}
-                        disabled={stream === null}
-                        onClick={onCopyMagnetButtonClick}
-                    />
-                    :
-                    null
-            }
-            {
-                downloadUrl ?
-                    <Option
-                        icon={'download'}
-                        label={t('CTX_DOWNLOAD_VIDEO')}
-                        disabled={stream === null}
-                        onClick={onDownloadVideoButtonClick}
-                    />
-                    :
-                    null
-            }
-            {
-                subtitlesTrackUrl ?
-                    <Option
-                        icon={'download'}
-                        label={t('CTX_DOWNLOAD_SUBS')}
-                        disabled={stream === null}
-                        onClick={onDownloadSubtitlesClick}
-                    />
-                    :
-                    null
-            }
-            {
-                streamingUrl && externalDevices.map(({ id, name }) => (
-                    <Option
-                        key={id}
-                        icon={'vlc'}
-                        label={t('PLAYER_PLAY_IN', { device: name })}
-                        deviceId={id}
-                        disabled={stream === null}
-                        onClick={playOnDevice}
-                    />
-                ))
-            }
-        </div>
+        </React.Fragment>
     );
 }));
 

@@ -1,0 +1,13 @@
+﻿{
+    "src/common/Platform/Platform.tsx":  "83b595bb02d2ea3efd4289e885665005b61e287a053b28206592edf4e7a1a843",
+    "src/common/Platform/webos/adapter.ts":  "4d8181ced4c9e0703bb92f0e5469b687758c9a826aa9c7585e2084bc1145ee48",
+    "src/common/Platform/webos/useWebOS.ts":  "1edd259c7abb1cef87df485d1c32a56e51a279985d4cbefc6346bd5d48ed4548",
+    "src/common/Platform/webos/globals.d.ts":  "c957855e5dd5d8f5651ef124131422e0aa8e6b14959212931466672bef079109",
+    "src/common/Platform/webos/index.ts":  "56b089838e18548bf1e191579c7b7b2214fe334738e3fa269f150b0dd4837475",
+    "src/webos/diagnostics/DebugPage.tsx":  "5c0e6f15a43554adc45f2ca04a307a63f6bc62feeae6d0f8a28d46eb6a5a8e74",
+    "src/index.html":  "4548f8e966f88bcc43c04005fd64abff394e0a4148ec6dbdd0eaab782469c436",
+    "webpack.config.js":  "229d7eb6fab576241e925c461a7083d7427072cca9dcf5d832bf00e90a310f7b",
+    "tests/webosPlatform.spec.js":  "cf5288c39dc430e859a46826dd1b2b4b3a535e5fa16e8be420e77b5cf4f90878",
+    "scripts/verify-webos-vendor.mjs":  "c8086f0c7892325d2982e6d1d15d951c212380c4e31e6dc35442b806acb3ce00",
+    "tools/t32-webos-smoke.mjs":  "a73aba618d82d4dbc887a91609fb84427c1ddd1982af1d5edf921982668f07df"
+}

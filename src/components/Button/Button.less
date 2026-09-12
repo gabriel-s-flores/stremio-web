@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2024 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/tv-focus.less';
 
 .button-container {
     outline-width: var(--focus-outline-size);
@@ -30,4 +31,13 @@
             transition: none;
         }
     }
+}
+// Keep the TV cursor visible through local hover/selected overrides.
+.button-container {
+    .tv-focus();
+}
+
+.button-container when (@webos = true) {
+    font-size: 22px;
+    line-height: 1.3;
 }

@@ -9,6 +9,8 @@ const { useCore } = require('stremio/core');
 const { useProfile, usePlatform, useToast, useBinaryState } = require('stremio/common');
 const { Button, Image, Popup } = require('stremio/components');
 const { default: useRouteFocused } = require('stremio/common/useRouteFocused');
+const { writeTextToClipboard } = require('stremio/common/clipboard');
+const ClipboardFallbackModal = require('stremio/components/ClipboardFallbackModal');
 const StreamPlaceholder = require('./StreamPlaceholder');
 const styles = require('./styles');
 
@@ -20,6 +22,39 @@ const Stream = ({ className, videoId, videoReleased, addonName, name, descriptio
     const routeFocused = useRouteFocused();
 
     const [menuOpen, openMenu, closeMenu, toggleMenu] = useBinaryState(false);
+    const [copyFallbackValue, setCopyFallbackValue] = React.useState(null);
+    const closeCopyFallback = React.useCallback(() => {
+        setCopyFallbackValue(null);
+    }, []);
+
+    const copyWithFallback = React.useCallback((value, successKey, errorKey) => {
+        if (!value) {
+            return;
+        }
+        try {
+            Promise.resolve(writeTextToClipboard(value)).then(
+                () => {
+                    toast.show({
+                        type: 'success',
+                        title: t(successKey),
+                        timeout: 4000
+                    });
+                },
+                () => {
+                    setCopyFallbackValue(value);
+                    toast.show({
+                        type: 'error',
+                        title: t(errorKey),
+                        timeout: 4000,
+                    });
+                }
+            ).catch(() => {
+                setCopyFallbackValue(value);
+            });
+        } catch (_) {
+            setCopyFallbackValue(value);
+        }
+    }, [toast]);
 
     const popupLabelOnMouseUp = React.useCallback((event) => {
         if (!event.nativeEvent.togglePopupPrevented) {
@@ -56,6 +91,7 @@ const Stream = ({ className, videoId, videoReleased, addonName, name, descriptio
     }, []);
 
     const href = React.useMemo(() => {
+        if (platform.name === 'webos') return deepLinks?.player || null;
         return deepLinks ?
             deepLinks.externalPlayer ?
                 deepLinks.externalPlayer.web ?
@@ -72,7 +108,7 @@ const Stream = ({ className, videoId, videoReleased, addonName, name, descriptio
                 deepLinks.player
             :
             null;
-    }, [deepLinks]);
+    }, [deepLinks, platform.name]);
 
     const download = React.useMemo(() => {
         return href === deepLinks?.externalPlayer?.playlist ?
@@ -117,7 +153,7 @@ const Stream = ({ className, videoId, videoReleased, addonName, name, descriptio
             return;
         }
 
-        if (profile.settings.playerType !== null) {
+        if (platform.name !== 'webos' && profile.settings.playerType !== null) {
             markVideoAsWatched();
             toast.show({
                 type: 'success',
@@ -129,73 +165,31 @@ const Stream = ({ className, videoId, videoReleased, addonName, name, descriptio
         if (typeof props.onClick === 'function') {
             props.onClick(event);
         }
-    }, [props.onClick, profile.settings, markVideoAsWatched]);
+    }, [props.onClick, profile.settings, markVideoAsWatched, platform.name]);
 
     const copyMagnetLink = React.useCallback((event) => {
         event.preventDefault();
         closeMenu();
         if (magnetLink) {
-            navigator.clipboard.writeText(magnetLink)
-                .then(() => {
-                    toast.show({
-                        type: 'success',
-                        title: t('PLAYER_COPY_MAGNET_LINK_SUCCESS'),
-                        timeout: 4000
-                    });
-                })
-                .catch(() => {
-                    toast.show({
-                        type: 'error',
-                        title: t('PLAYER_COPY_MAGNET_LINK_ERROR'),
-                        timeout: 4000,
-                    });
-                });
+            copyWithFallback(magnetLink, 'PLAYER_COPY_MAGNET_LINK_SUCCESS', 'PLAYER_COPY_MAGNET_LINK_ERROR');
         }
-    }, [magnetLink]);
+    }, [magnetLink, copyWithFallback, closeMenu]);
 
     const copyDownloadLink = React.useCallback((event) => {
         event.preventDefault();
         closeMenu();
         if (downloadLink) {
-            navigator.clipboard.writeText(downloadLink)
-                .then(() => {
-                    toast.show({
-                        type: 'success',
-                        title: t('PLAYER_COPY_DOWNLOAD_LINK_SUCCESS'),
-                        timeout: 4000
-                    });
-                })
-                .catch(() => {
-                    toast.show({
-                        type: 'error',
-                        title: t('PLAYER_COPY_DOWNLOAD_LINK_ERROR'),
-                        timeout: 4000,
-                    });
-                });
+            copyWithFallback(downloadLink, 'PLAYER_COPY_DOWNLOAD_LINK_SUCCESS', 'PLAYER_COPY_DOWNLOAD_LINK_ERROR');
         }
-    }, [downloadLink]);
+    }, [downloadLink, copyWithFallback, closeMenu]);
 
     const copyStreamLink = React.useCallback((event) => {
         event.preventDefault();
         closeMenu();
         if (streamLink) {
-            navigator.clipboard.writeText(streamLink)
-                .then(() => {
-                    toast.show({
-                        type: 'success',
-                        title: t('PLAYER_COPY_STREAM_SUCCESS'),
-                        timeout: 4000
-                    });
-                })
-                .catch(() => {
-                    toast.show({
-                        type: 'error',
-                        title: t('PLAYER_COPY_STREAM_ERROR'),
-                        timeout: 4000,
-                    });
-                });
+            copyWithFallback(streamLink, 'PLAYER_COPY_STREAM_SUCCESS', 'PLAYER_COPY_STREAM_ERROR');
         }
-    }, [streamLink]);
+    }, [streamLink, copyWithFallback, closeMenu]);
 
     const renderThumbnailFallback = React.useCallback(() => (
         <Icon className={styles['placeholder-icon']} name={'ic_broken_link'} />
@@ -279,16 +273,27 @@ const Stream = ({ className, videoId, videoReleased, addonName, name, descriptio
     }, [routeFocused]);
 
     return (
-        <Popup
-            className={className}
-            onMouseUp={popupLabelOnMouseUp}
-            onLongPress={popupLabelOnLongPress}
-            onContextMenu={popupLabelOnContextMenu}
-            open={menuOpen}
-            onCloseRequest={closeMenu}
-            renderLabel={renderLabel}
-            renderMenu={renderMenu}
-        />
+        <React.Fragment>
+            <Popup
+                className={className}
+                onMouseUp={popupLabelOnMouseUp}
+                onLongPress={popupLabelOnLongPress}
+                onContextMenu={popupLabelOnContextMenu}
+                open={menuOpen}
+                onCloseRequest={closeMenu}
+                renderLabel={renderLabel}
+                renderMenu={renderMenu}
+            />
+            {
+                copyFallbackValue !== null ?
+                    <ClipboardFallbackModal
+                        value={copyFallbackValue}
+                        onClose={closeCopyFallback}
+                    />
+                    :
+                    null
+            }
+        </React.Fragment>
     );
 };
 

@@ -1,0 +1,1091 @@
+{
+  "date": "2026-09-09T18:27:57.498Z",
+  "mode": "packaged",
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "",
+    "revision": "@cbd6ac4848a540ea6646d4f79700cf531e4eb9f9",
+    "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36",
+    "jsVersion": "6.8.275.26"
+  },
+  "results": [
+    {
+      "label": "route",
+      "output": "[Info] Set target device : emulator\nLaunched application com.stremio.webos.t34.fixture\n",
+      "state": {
+        "hash": "#/settings",
+        "boot": 1788978456107,
+        "hidden": false,
+        "history": 1,
+        "events": [
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          }
+        ],
+        "fixture": {
+          "boot": 1788978455596,
+          "events": [
+            {
+              "type": "launch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///metadetails/movie/tt123"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///settings"
+              }
+            }
+          ],
+          "pauses": 1,
+          "setEnabled": {},
+          "hidden": false,
+          "enabled": true
+        },
+        "video": {
+          "paused": true,
+          "time": 0.048934
+        }
+      }
+    },
+    {
+      "label": "relaunch",
+      "output": "[Info] Set target device : emulator\nLaunched application com.stremio.webos.t34.fixture\n",
+      "state": {
+        "hash": "#/addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json",
+        "boot": 1788978456107,
+        "hidden": false,
+        "history": 1,
+        "events": [
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          }
+        ],
+        "fixture": {
+          "boot": 1788978455596,
+          "events": [
+            {
+              "type": "launch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///metadetails/movie/tt123"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///settings"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+              }
+            }
+          ],
+          "pauses": 1,
+          "setEnabled": {},
+          "hidden": false,
+          "enabled": true
+        },
+        "video": {
+          "paused": true,
+          "time": 0.048934
+        }
+      }
+    },
+    {
+      "label": "empty",
+      "output": "[Info] Set target device : emulator\nLaunched application com.stremio.webos.t34.fixture\n",
+      "state": {
+        "hash": "#/addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json",
+        "boot": 1788978456107,
+        "hidden": false,
+        "history": 1,
+        "events": [
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          }
+        ],
+        "fixture": {
+          "boot": 1788978455596,
+          "events": [
+            {
+              "type": "launch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///metadetails/movie/tt123"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///settings"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            }
+          ],
+          "pauses": 1,
+          "setEnabled": {},
+          "hidden": false,
+          "enabled": true
+        },
+        "video": {
+          "paused": true,
+          "time": 0.048934
+        }
+      }
+    },
+    {
+      "label": "invalid",
+      "output": "[Info] Set target device : emulator\nLaunched application com.stremio.webos.t34.fixture\n",
+      "state": {
+        "hash": "#/addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json",
+        "boot": 1788978456107,
+        "hidden": false,
+        "history": 1,
+        "events": [
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "https://example.org"
+            },
+            "hidden": false
+          }
+        ],
+        "fixture": {
+          "boot": 1788978455596,
+          "events": [
+            {
+              "type": "launch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///metadetails/movie/tt123"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///settings"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "https://example.org"
+              }
+            }
+          ],
+          "pauses": 1,
+          "setEnabled": {},
+          "hidden": false,
+          "enabled": true
+        },
+        "video": {
+          "paused": true,
+          "time": 0.048934
+        }
+      }
+    },
+    {
+      "label": "before-hide-true",
+      "state": {
+        "hash": "#/addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json",
+        "boot": 1788978456107,
+        "hidden": false,
+        "history": 1,
+        "events": [
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "https://example.org"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          }
+        ],
+        "fixture": {
+          "boot": 1788978455596,
+          "events": [
+            {
+              "type": "launch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///metadetails/movie/tt123"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///settings"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "https://example.org"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            }
+          ],
+          "pauses": 1,
+          "setEnabled": {},
+          "hidden": false,
+          "enabled": true
+        },
+        "video": {
+          "paused": false,
+          "time": 0.753507
+        }
+      }
+    },
+    {
+      "label": "hidden-true",
+      "state": {
+        "hash": "#/addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json",
+        "boot": 1788978456107,
+        "hidden": true,
+        "history": 1,
+        "events": [
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "https://example.org"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "visibilitychange",
+            "hidden": true
+          }
+        ],
+        "fixture": {
+          "boot": 1788978455596,
+          "events": [
+            {
+              "type": "launch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///metadetails/movie/tt123"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///settings"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "https://example.org"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            }
+          ],
+          "pauses": 2,
+          "setEnabled": {},
+          "hidden": true,
+          "enabled": true
+        },
+        "video": {
+          "paused": true,
+          "time": 1.547559
+        }
+      }
+    },
+    {
+      "label": "return-true",
+      "state": {
+        "hash": "#/addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json",
+        "boot": 1788978456107,
+        "hidden": false,
+        "history": 1,
+        "events": [
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "https://example.org"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "visibilitychange",
+            "hidden": true
+          },
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          }
+        ],
+        "fixture": {
+          "boot": 1788978455596,
+          "events": [
+            {
+              "type": "launch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///metadetails/movie/tt123"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///settings"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "https://example.org"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            }
+          ],
+          "pauses": 2,
+          "setEnabled": {},
+          "hidden": false,
+          "enabled": true
+        },
+        "video": {
+          "paused": true,
+          "time": 1.547559
+        }
+      }
+    },
+    {
+      "label": "before-hide-false",
+      "state": {
+        "hash": "#/addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json",
+        "boot": 1788978456107,
+        "hidden": false,
+        "history": 1,
+        "events": [
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "https://example.org"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "visibilitychange",
+            "hidden": true
+          },
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          }
+        ],
+        "fixture": {
+          "boot": 1788978455596,
+          "events": [
+            {
+              "type": "launch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///metadetails/movie/tt123"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///settings"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "https://example.org"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            }
+          ],
+          "pauses": 2,
+          "setEnabled": {},
+          "hidden": false,
+          "enabled": false
+        },
+        "video": {
+          "paused": false,
+          "time": 0.703932
+        }
+      }
+    },
+    {
+      "label": "hidden-false",
+      "state": {
+        "hash": "#/addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json",
+        "boot": 1788978456107,
+        "hidden": true,
+        "history": 1,
+        "events": [
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "https://example.org"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "visibilitychange",
+            "hidden": true
+          },
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "visibilitychange",
+            "hidden": true
+          }
+        ],
+        "fixture": {
+          "boot": 1788978455596,
+          "events": [
+            {
+              "type": "launch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///metadetails/movie/tt123"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///settings"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "https://example.org"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            }
+          ],
+          "pauses": 2,
+          "setEnabled": {},
+          "hidden": true,
+          "enabled": false
+        },
+        "video": {
+          "paused": false,
+          "time": 1.864865
+        }
+      }
+    },
+    {
+      "label": "return-false",
+      "state": {
+        "hash": "#/addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json",
+        "boot": 1788978456107,
+        "hidden": false,
+        "history": 1,
+        "events": [
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "https://example.org"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "visibilitychange",
+            "hidden": true
+          },
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "visibilitychange",
+            "hidden": true
+          },
+          {
+            "type": "visibilitychange",
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          }
+        ],
+        "fixture": {
+          "boot": 1788978455596,
+          "events": [
+            {
+              "type": "launch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///metadetails/movie/tt123"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///settings"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0,
+                "url": "https://example.org"
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            },
+            {
+              "type": "relaunch",
+              "detail": {
+                "displayAffinity": 0
+              }
+            }
+          ],
+          "pauses": 2,
+          "setEnabled": {},
+          "hidden": false,
+          "enabled": false
+        },
+        "video": {
+          "paused": false,
+          "time": 0.788859
+        }
+      }
+    }
+  ]
+}

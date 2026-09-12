@@ -112,7 +112,7 @@ const Settings = () => {
                         streamingServer={streamingServer}
                     />
                     {
-                        !platform.isMobile && <Shortcuts ref={shortcutsSectionRef} />
+                        !platform.isMobile && !platform.isTV && <Shortcuts ref={shortcutsSectionRef} />
                     }
                     <Info streamingServer={streamingServer} />
                 </div>

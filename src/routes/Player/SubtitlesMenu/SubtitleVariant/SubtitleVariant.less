@@ -33,7 +33,7 @@
         .variant-label {
             flex: 1;
             min-width: 0;
-            font-size: 1.1rem;
+            font-size: if(@webos = true, 22px, 1.1rem);
             line-height: 1.5rem;
             color: var(--primary-foreground-color);
             text-wrap: nowrap;

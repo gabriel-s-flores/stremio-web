@@ -75,10 +75,10 @@ describe.each([false, true])('safe areas and CSS math (webos=%s)', (webos) => {
         const app = compiled.get(files[0]);
         for (const side of ['top', 'right', 'bottom', 'left']) {
             expect(values(app, ':root', `--safe-area-inset-${side}`))
-                .toEqual([webos ? '0rem' : `env(safe-area-inset-${side}, 0rem)`]);
+                .toEqual([webos ? (['left', 'right'].includes(side) ? '48px' : '27px') : `env(safe-area-inset-${side}, 0rem)`]);
         }
         expect(values(app, ':root', '--safe-area-inset-bottom', ['(display-mode: standalone)']))
-            .toEqual([webos ? '0rem' : iosInset]);
+            .toEqual([webos ? '27px' : iosInset]);
     });
 
     test('ActionMenu has bounded dimensions', () => {
@@ -91,9 +91,9 @@ describe.each([false, true])('safe areas and CSS math (webos=%s)', (webos) => {
 
     test('back button and MetaDetails spacing keep their original clamps on desktop', () => {
         expect(values(compiled.get(files[2]), '.horizontal-nav-bar-container .back-button-container', 'margin-left'))
-            .toEqual([webos ? 'calc(1rem - var(--safe-area-inset-left))' : 'max(0rem, calc(1rem - var(--safe-area-inset-left)))']);
+            .toEqual([webos ? '0px' : 'max(0rem, calc(1rem - var(--safe-area-inset-left)))']);
         expect(values(compiled.get(files[3]), '.metadetails-container .metadetails-content .meta-preview', 'padding-left'))
-            .toEqual([webos ? 'calc(4rem - var(--safe-area-inset-left))' : 'max(1rem, calc(4rem - var(--safe-area-inset-left)))']);
+            .toEqual([webos ? '15px' : 'max(1rem, calc(4rem - var(--safe-area-inset-left)))']);
     });
 });
 

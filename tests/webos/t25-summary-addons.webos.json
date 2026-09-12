@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-07T14:18:34.132Z",
+  "endpoint": "http://127.0.0.1:9998",
+  "results": [
+    {
+      "name": "addons",
+      "count": 29,
+      "failures": [],
+      "clipping": []
+    }
+  ]
+}

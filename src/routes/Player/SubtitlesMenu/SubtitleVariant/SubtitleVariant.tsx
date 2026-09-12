@@ -1,9 +1,12 @@
 // Copyright (C) 2017-2026 Smart code 203358507
 
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import ExternalLink from 'stremio/components/ExternalLink';
 import { useTranslation } from 'react-i18next';
 import { Button, ContextMenu } from 'stremio/components';
 import { languages, useToast } from 'stremio/common';
+import { writeTextToClipboard } from 'stremio/common/clipboard';
+import ClipboardFallbackModal from 'stremio/components/ClipboardFallbackModal';
 import classNames from 'classnames';
 import Icon from '@stremio/stremio-icons/react';
 import styles from './SubtitleVariant.less';
@@ -36,6 +39,10 @@ const SubtitleVariant = ({ track, selected, onSelect }: Props) => {
     const toast = useToast();
     const buttonRef = useRef<HTMLElement>(null);
     const triggers = useMemo(() => [buttonRef], []);
+    const [copyFallbackValue, setCopyFallbackValue] = useState<string | null>(null);
+    const closeCopyFallback = useCallback(() => {
+        setCopyFallbackValue(null);
+    }, []);
 
     const downloadUrl = track.fallbackUrl || track.url;
     const variantLabel = hasValidLabel(track.label) ? track.label : languages.label(track.lang);
@@ -50,9 +57,19 @@ const SubtitleVariant = ({ track, selected, onSelect }: Props) => {
     }, [onSelect, track]);
 
     const copyToClipboard = useCallback((value: string, successKey: string, errorKey: string) => {
-        navigator.clipboard.writeText(value)
-            .then(() => toast.show({ type: 'success', title: t(successKey), timeout: 4000 }))
-            .catch(() => toast.show({ type: 'error', title: t(errorKey), timeout: 4000 }));
+        try {
+            Promise.resolve(writeTextToClipboard(value)).then(
+                () => toast.show({ type: 'success', title: t(successKey), timeout: 4000 }),
+                () => {
+                    setCopyFallbackValue(value);
+                    toast.show({ type: 'error', title: t(errorKey), timeout: 4000 });
+                }
+            ).catch(() => {
+                setCopyFallbackValue(value);
+            });
+        } catch (_) {
+            setCopyFallbackValue(value);
+        }
     }, [toast, t]);
 
     const onCopyUrlClick = useCallback(() => {
@@ -68,28 +85,29 @@ const SubtitleVariant = ({ track, selected, onSelect }: Props) => {
     }, [track.addonSubtitleId, copyToClipboard]);
 
     return (
-        <Button
-            ref={buttonRef}
-            title={hoverTitle}
-            onClick={onSelectClick}
-            className={classNames(styles['variant-option'], { 'selected': selected })}
-        >
-            <div className={styles['info']}>
-                <div className={styles['variant-title']}>
-                    <div className={styles['variant-label']}>
-                        {variantLabel}
+        <React.Fragment>
+            <Button
+                ref={buttonRef}
+                title={hoverTitle}
+                onClick={onSelectClick}
+                className={classNames(styles['variant-option'], { 'selected': selected })}
+            >
+                <div className={styles['info']}>
+                    <div className={styles['variant-title']}>
+                        <div className={styles['variant-label']}>
+                            {variantLabel}
+                        </div>
+                        {track.ass ? <div className={styles['ass-badge']}>{ASS_BADGE}</div> : null}
                     </div>
-                    {track.ass ? <div className={styles['ass-badge']}>{ASS_BADGE}</div> : null}
+                    <div className={styles['variant-origin']}>
+                        {t(track.origin)}
+                    </div>
                 </div>
-                <div className={styles['variant-origin']}>
-                    {t(track.origin)}
-                </div>
-            </div>
-            {selected ? <div className={styles['icon']} /> : null}
-            {!track.embedded &&
+                {selected ? <div className={styles['icon']} /> : null}
+                {!track.embedded &&
                 <ContextMenu on={triggers} autoClose={true} lock={'bottom'}>
                     {downloadUrl ?
-                        <Button
+                        <ExternalLink
                             className={styles['context-menu-option']}
                             title={t('CTX_DOWNLOAD_SUBTITLE')}
                             href={downloadUrl}
@@ -100,7 +118,7 @@ const SubtitleVariant = ({ track, selected, onSelect }: Props) => {
                             <div className={styles['context-menu-option-label']}>
                                 {t('CTX_DOWNLOAD_SUBTITLE')}
                             </div>
-                        </Button>
+                        </ExternalLink>
                         :
                         null
                     }
@@ -133,8 +151,18 @@ const SubtitleVariant = ({ track, selected, onSelect }: Props) => {
                         null
                     }
                 </ContextMenu>
+                }
+            </Button>
+            {
+                copyFallbackValue !== null ?
+                    <ClipboardFallbackModal
+                        value={copyFallbackValue}
+                        onClose={closeCopyFallback}
+                    />
+                    :
+                    null
             }
-        </Button>
+        </React.Fragment>
     );
 };
 

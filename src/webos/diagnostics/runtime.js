@@ -337,6 +337,7 @@ const getSnapshot = () => {
             implementation: state.player.implementation,
             history: state.player.history.slice(),
         },
+        observability: require('./observability').getSnapshot(),
         capturedAt: new Date().toISOString(),
     };
 };

@@ -25,7 +25,7 @@
 
         .label {
             flex: none;
-            font-size: 1.1rem;
+            font-size: if(@webos = true, 22px, 1.1rem);
             color: var(--primary-foreground-color);
         }
     

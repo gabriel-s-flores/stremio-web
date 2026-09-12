@@ -50,8 +50,8 @@ const Streaming = forwardRef<HTMLDivElement, Props>(({ profile, streamingServer 
                 title: t('SETTINGS_REMOTE_URL_COPIED'),
                 timeout: 2500,
             });
-        } catch (error) {
-            console.error('Failed to copy remote URL:', error);
+        } catch (_) {
+            // Inline fallback preserved from T1.5. Never log the URL value.
             setCopyFallbackUrl(remoteUrl);
             toast.show({
                 type: 'error',

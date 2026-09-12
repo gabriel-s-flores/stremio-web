@@ -1,0 +1,149 @@
+{
+  "mode": "webos",
+  "scrollAlignment": "center",
+  "url": "http://10.0.2.2:8090/#/debug/focus",
+  "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "samples": [
+    {
+      "index": 0,
+      "control": "div.close-button-container-cmxAp.button-container-zVLH6",
+      "surface": "div.close-button-container-cmxAp.button-container-zVLH6",
+      "text": "Close",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 1095,
+        "y": 403,
+        "width": 45,
+        "height": 45
+      },
+      "after": {
+        "x": 1095,
+        "y": 403,
+        "width": 45,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 1095,
+        "y": 403,
+        "width": 45,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 1,
+      "control": "input.text-NF7bt.text-input-hnLiz",
+      "surface": "input.text-NF7bt.text-input-hnLiz",
+      "text": "text",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 802.5,
+        "y": 493,
+        "width": 300,
+        "height": 49
+      },
+      "after": {
+        "x": 802.5,
+        "y": 493,
+        "width": 300,
+        "height": 49
+      },
+      "surfaceGeometry": {
+        "x": 802.5,
+        "y": 493,
+        "width": 300,
+        "height": 49
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 2,
+      "control": "div.action-button-eprQG.button-container-zVLH6",
+      "surface": "div.action-button-eprQG.button-container-zVLH6",
+      "text": "Close",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 802.5,
+        "y": 602,
+        "width": 315,
+        "height": 52.5
+      },
+      "after": {
+        "x": 802.5,
+        "y": 602,
+        "width": 315,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 802.5,
+        "y": 602,
+        "width": 315,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    }
+  ],
+  "skipped": [],
+  "failures": []
+}

@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/tv-focus.less';
 @import (reference) '~stremio/common/screen-sizes.less';
 
 .meta-preview-container {
@@ -290,4 +291,15 @@
     .share-prompt {
         width: auto;
     }
+}
+
+// Keep the TV cursor visible through local hover/selected overrides.
+.meta-preview-container .meta-info-container .runtime-release-info-container .imdb-button-container,
+.meta-preview-container .action-buttons-container .action-button.show-button {
+    .tv-focus();
+}
+
+.meta-preview-container .meta-info-container .description-container when (@webos = true) {
+    font-size: 22px;
+    line-height: 1.3;
 }

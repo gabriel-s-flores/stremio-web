@@ -1,0 +1,170 @@
+{
+  "date": "2026-09-07T14:24:12.363Z",
+  "note": "Aggregated latest per-route reports. Desktop fixtures/player use the test-only desktop config.",
+  "controls": 308,
+  "results": [
+    {
+      "name": "board",
+      "url": "http://127.0.0.1:8091/#/",
+      "count": 73,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-board-0.desktop.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "discover",
+      "url": "http://127.0.0.1:8091/#/discover",
+      "count": 67,
+      "failures": [],
+      "skipped": 6,
+      "screenshots": [
+        "t25-discover-0.desktop.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "library",
+      "url": "http://127.0.0.1:8091/#/library?sort=lastwatched",
+      "count": 10,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-library-0.desktop.jpg"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "calendar",
+      "url": "http://127.0.0.1:8091/#/calendar",
+      "count": 10,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-calendar-0.desktop.jpg"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "metadetails",
+      "url": "http://127.0.0.1:8091/#/detail/movie/tt11561116/tt11561116",
+      "count": 15,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-metadetails-0.desktop.jpg"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "search",
+      "url": "http://127.0.0.1:8091/#/search",
+      "count": 10,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-search-0.desktop.jpg"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "settings",
+      "url": "http://127.0.0.1:8091/#/settings",
+      "count": 40,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-settings-0.desktop.jpg"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "addons",
+      "url": "http://127.0.0.1:8091/#/addons",
+      "count": 30,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-addons-0.desktop.jpg"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "intro",
+      "url": "http://127.0.0.1:8091/#/intro",
+      "count": 16,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-intro-0.desktop.jpg"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "player",
+      "url": "http://127.0.0.1:8091/focus-fixture/#/debug/player",
+      "count": 14,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-player-0.desktop.jpg"
+      ],
+      "clipping": [],
+      "scrollAlignment": "center"
+    },
+    {
+      "name": "fixture",
+      "url": "http://127.0.0.1:8091/focus-fixture/#/debug/focus",
+      "count": 18,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-fixture-0.desktop.jpg",
+        "t25-fixture-10.desktop.jpg",
+        "t25-fixture-12.desktop.jpg",
+        "t25-fixture-16.desktop.jpg",
+        "t25-fixture-17.desktop.jpg",
+        "t25-fixture-3.desktop.jpg",
+        "t25-fixture-6.desktop.jpg"
+      ],
+      "clipping": [],
+      "scrollAlignment": "center"
+    },
+    {
+      "name": "fixture-menu",
+      "url": "http://127.0.0.1:8091/focus-fixture/#/debug/focus",
+      "count": 2,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-fixture-menu-0.desktop.jpg"
+      ],
+      "clipping": [],
+      "scrollAlignment": "center"
+    },
+    {
+      "name": "fixture-modal",
+      "url": "http://127.0.0.1:8091/focus-fixture/#/debug/focus",
+      "count": 3,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-fixture-modal-0.desktop.jpg",
+        "t25-fixture-modal-1.desktop.jpg"
+      ],
+      "clipping": [],
+      "scrollAlignment": "center"
+    }
+  ]
+}

@@ -19,7 +19,7 @@
     flex-direction: column;
     padding: @padding;
     padding-top: calc(@padding + var(--safe-area-inset-top));
-    height: if(@webos = true, 100vh, 100dvh);
+    height: if(@webos = true, 1080px, 100dvh);
     max-width: 35rem;
     overflow-y: auto;
     position: relative;
@@ -139,4 +139,9 @@
             padding: calc(@padding / 2);
         }
     }
+}
+
+// Preserve hover transitions without animating the TV outline.
+.side-drawer .close-button when (@webos = true) {
+    transition-property: background-color;
 }

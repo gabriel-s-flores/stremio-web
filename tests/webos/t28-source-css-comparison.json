@@ -1,0 +1,296 @@
+[
+  {
+    "file": "App/styles.less",
+    "identical": true,
+    "beforeHash": "5c4c7e33162e120bf03029c71c33ecfababa6c2e93238685908e9a957ed9ca2c",
+    "afterHash": "5c4c7e33162e120bf03029c71c33ecfababa6c2e93238685908e9a957ed9ca2c"
+  },
+  {
+    "file": "components/ActionMenu/ActionMenu.less",
+    "identical": true,
+    "beforeHash": "0e1ad8bc0a51826514b3078b125a1a573822d985345bf6899a99e0e4b8bfcfe5",
+    "afterHash": "0e1ad8bc0a51826514b3078b125a1a573822d985345bf6899a99e0e4b8bfcfe5"
+  },
+  {
+    "file": "components/Button/Button.less",
+    "identical": true,
+    "beforeHash": "d4f13f5b7912c4b618f7bb21dba1b4b242da23ea553824228c301b731034fc2a",
+    "afterHash": "d4f13f5b7912c4b618f7bb21dba1b4b242da23ea553824228c301b731034fc2a"
+  },
+  {
+    "file": "components/ColorInput/ColorInput.less",
+    "identical": true,
+    "beforeHash": "c58966446979f7103ff0ef577ef3bbf63618b0dd5664a5170cc2661c856e76c4",
+    "afterHash": "c58966446979f7103ff0ef577ef3bbf63618b0dd5664a5170cc2661c856e76c4"
+  },
+  {
+    "file": "components/MetaItem/styles.less",
+    "identical": true,
+    "beforeHash": "d933147f826dbb57d7526f85eebf123d3fd51f37b5349c8f79ac09d83ed8b224",
+    "afterHash": "d933147f826dbb57d7526f85eebf123d3fd51f37b5349c8f79ac09d83ed8b224"
+  },
+  {
+    "file": "components/MetaPreview/styles.less",
+    "identical": true,
+    "beforeHash": "4fbd47ac59ac88a98c21c67599e5af9701c5313eff186e866f42915b03d8de88",
+    "afterHash": "4fbd47ac59ac88a98c21c67599e5af9701c5313eff186e866f42915b03d8de88"
+  },
+  {
+    "file": "components/MetaRow/styles.less",
+    "identical": true,
+    "beforeHash": "7ee7b34878dd5b639378c233b8adc7a52c5d4576f6d667bf7392dc8ac6a26f61",
+    "afterHash": "7ee7b34878dd5b639378c233b8adc7a52c5d4576f6d667bf7392dc8ac6a26f61"
+  },
+  {
+    "file": "components/ModalDialog/styles.less",
+    "identical": true,
+    "beforeHash": "bbf5108c1fd124417b83e6f07971f937aa33716b08151798658e558945f8f717",
+    "afterHash": "bbf5108c1fd124417b83e6f07971f937aa33716b08151798658e558945f8f717"
+  },
+  {
+    "file": "components/Multiselect/styles.less",
+    "identical": true,
+    "beforeHash": "de781688a43d797b5513e0fc7657e5c38bfd5e4b1748c4606558854e51fd2437",
+    "afterHash": "de781688a43d797b5513e0fc7657e5c38bfd5e4b1748c4606558854e51fd2437"
+  },
+  {
+    "file": "components/MultiselectMenu/MultiselectMenu.less",
+    "identical": true,
+    "beforeHash": "5fa8d69df5d3a563ff7d0240329040c402fe3d2abcfeabce2223a7caa1fd7bdf",
+    "afterHash": "5fa8d69df5d3a563ff7d0240329040c402fe3d2abcfeabce2223a7caa1fd7bdf"
+  },
+  {
+    "file": "components/SearchBar/styles.less",
+    "identical": true,
+    "beforeHash": "2ee944cbd916420e5f70e3613fff1f1990423172247a55501a9a286a7e86bf47",
+    "afterHash": "2ee944cbd916420e5f70e3613fff1f1990423172247a55501a9a286a7e86bf47"
+  },
+  {
+    "file": "components/SharePrompt/styles.less",
+    "identical": true,
+    "beforeHash": "23133ac645760822f188b0923a818afba2d0a5182101e7bda39578a3d9aaa5ff",
+    "afterHash": "23133ac645760822f188b0923a818afba2d0a5182101e7bda39578a3d9aaa5ff"
+  },
+  {
+    "file": "components/TextInput/styles.less",
+    "identical": true,
+    "beforeHash": "61c55a50e9eefbb2b100d0e82eb70f76d827ada4cfbf4970229645bba4a3ea5b",
+    "afterHash": "61c55a50e9eefbb2b100d0e82eb70f76d827ada4cfbf4970229645bba4a3ea5b"
+  },
+  {
+    "file": "components/Video/styles.less",
+    "identical": true,
+    "beforeHash": "6eb3f7a1d0274d0d18e16179f0daea4a13d5dbcf2328d90864d5381d94870063",
+    "afterHash": "6eb3f7a1d0274d0d18e16179f0daea4a13d5dbcf2328d90864d5381d94870063"
+  },
+  {
+    "file": "routes/Addons/styles.less",
+    "identical": true,
+    "beforeHash": "39c62afe3fe7b5c54ec8f7d6afffcc9281afeff1d3ec56a0af580b0b0b17409e",
+    "afterHash": "39c62afe3fe7b5c54ec8f7d6afffcc9281afeff1d3ec56a0af580b0b0b17409e"
+  },
+  {
+    "file": "routes/Discover/styles.less",
+    "identical": true,
+    "beforeHash": "012047741603b56428c5cfa1a841af4836a4477f96a8d33986ee0b39e15392df",
+    "afterHash": "012047741603b56428c5cfa1a841af4836a4477f96a8d33986ee0b39e15392df"
+  },
+  {
+    "file": "routes/Intro/styles.less",
+    "identical": true,
+    "beforeHash": "2c293f19cdcf2cf08bcaa518df90022660b51d5189d8a2c1fa2513f90511d69a",
+    "afterHash": "2c293f19cdcf2cf08bcaa518df90022660b51d5189d8a2c1fa2513f90511d69a"
+  },
+  {
+    "file": "routes/MetaDetails/styles.less",
+    "identical": true,
+    "beforeHash": "1537370290e0c0aef964ba72da90b069a620b65c13a24abd94abbee6ae78add2",
+    "afterHash": "1537370290e0c0aef964ba72da90b069a620b65c13a24abd94abbee6ae78add2"
+  },
+  {
+    "file": "routes/Player/styles.less",
+    "identical": true,
+    "beforeHash": "954844a06b7c43a1e6685422f5f22ad54d46300bec729345e5e93c0e7b68b731",
+    "afterHash": "954844a06b7c43a1e6685422f5f22ad54d46300bec729345e5e93c0e7b68b731"
+  },
+  {
+    "file": "routes/Search/styles.less",
+    "identical": true,
+    "beforeHash": "ea7570d7e3268d23e64b9ae0d1670c83a552280a6c5ce33de0775f360f37dded",
+    "afterHash": "ea7570d7e3268d23e64b9ae0d1670c83a552280a6c5ce33de0775f360f37dded"
+  },
+  {
+    "file": "routes/Settings/Settings.less",
+    "identical": true,
+    "beforeHash": "b23b39d8ac157f512dcc5af1c793685d11c12aa2fa60481de284c36f9f3439f7",
+    "afterHash": "b23b39d8ac157f512dcc5af1c793685d11c12aa2fa60481de284c36f9f3439f7"
+  },
+  {
+    "file": "components/MetaPreview/ActionButton/styles.less",
+    "identical": true,
+    "beforeHash": "294ab617aa414de164610d866504cf60d1c545be566b187560f7c3b25dacf887",
+    "afterHash": "294ab617aa414de164610d866504cf60d1c545be566b187560f7c3b25dacf887"
+  },
+  {
+    "file": "components/MetaRow/MetaRowPlaceholder/styles.less",
+    "identical": true,
+    "beforeHash": "68dafbc71efb2d0d6e775f7bdcaef94451269f45385b720443d7b0c52853411d",
+    "afterHash": "68dafbc71efb2d0d6e775f7bdcaef94451269f45385b720443d7b0c52853411d"
+  },
+  {
+    "file": "components/NavBar/HorizontalNavBar/styles.less",
+    "identical": true,
+    "beforeHash": "ccc66d0a2781d081759671962833c3232f8e169299391c5cccbb6a9ee692124d",
+    "afterHash": "ccc66d0a2781d081759671962833c3232f8e169299391c5cccbb6a9ee692124d"
+  },
+  {
+    "file": "components/SearchBar/SearchBarPlaceholder/styles.less",
+    "identical": true,
+    "beforeHash": "ec02bfe0adac8d591d84bdae302266a7178b813edbe2079b48cfde98cb2f45bc",
+    "afterHash": "ec02bfe0adac8d591d84bdae302266a7178b813edbe2079b48cfde98cb2f45bc"
+  },
+  {
+    "file": "routes/Addons/Addon/styles.less",
+    "identical": true,
+    "beforeHash": "57b4ac7869da66df048b29f76c686b4dc9ca3949b239e8c4d5595952f1f067cb",
+    "afterHash": "57b4ac7869da66df048b29f76c686b4dc9ca3949b239e8c4d5595952f1f067cb"
+  },
+  {
+    "file": "routes/Board/StreamingServerWarning/StreamingServerWarning.less",
+    "identical": true,
+    "beforeHash": "02f4369a36fb0796d5fce3b8d0329b57c0f376c7c63afc4f994c5f1ea6f22a93",
+    "afterHash": "02f4369a36fb0796d5fce3b8d0329b57c0f376c7c63afc4f994c5f1ea6f22a93"
+  },
+  {
+    "file": "routes/Calendar/Placeholder/Placeholder.less",
+    "identical": true,
+    "beforeHash": "876e9a83ea1519ed3cf1d32888e2a154dc3d3a5dceb6ad665bdf98b974a513cc",
+    "afterHash": "876e9a83ea1519ed3cf1d32888e2a154dc3d3a5dceb6ad665bdf98b974a513cc"
+  },
+  {
+    "file": "routes/Calendar/Selector/Selector.less",
+    "identical": true,
+    "beforeHash": "00b103d6cafb813523e10c935e873a30d9ece8fd0fee1304866797da54c99203",
+    "afterHash": "00b103d6cafb813523e10c935e873a30d9ece8fd0fee1304866797da54c99203"
+  },
+  {
+    "file": "routes/Intro/PasswordResetModal/styles.less",
+    "identical": true,
+    "beforeHash": "bdb31c978b873008d633d6a77d6f4c45bbb5ad450a7f1a11a38e9db5612ea13f",
+    "afterHash": "bdb31c978b873008d633d6a77d6f4c45bbb5ad450a7f1a11a38e9db5612ea13f"
+  },
+  {
+    "file": "routes/Library/Placeholder/Placeholder.less",
+    "identical": true,
+    "beforeHash": "876e9a83ea1519ed3cf1d32888e2a154dc3d3a5dceb6ad665bdf98b974a513cc",
+    "afterHash": "876e9a83ea1519ed3cf1d32888e2a154dc3d3a5dceb6ad665bdf98b974a513cc"
+  },
+  {
+    "file": "routes/MetaDetails/EpisodePicker/EpisodePicker.less",
+    "identical": true,
+    "beforeHash": "bcb2a5278c1ada7b139a1049edc2fc3a79c6c44afbb76df8123f5ebd78088be2",
+    "afterHash": "bcb2a5278c1ada7b139a1049edc2fc3a79c6c44afbb76df8123f5ebd78088be2"
+  },
+  {
+    "file": "routes/MetaDetails/StreamsList/styles.less",
+    "identical": true,
+    "beforeHash": "4ff8c42c8eeecfd3541b6ef5475b542a7961a6c91812a45f4bdf3183ab54d208",
+    "afterHash": "4ff8c42c8eeecfd3541b6ef5475b542a7961a6c91812a45f4bdf3183ab54d208"
+  },
+  {
+    "file": "routes/MetaDetails/VideosList/styles.less",
+    "identical": true,
+    "beforeHash": "1014fb884cff26d6629ce2aaff5e60ce3254412abd9a40bb943ff2981435c6db",
+    "afterHash": "1014fb884cff26d6629ce2aaff5e60ce3254412abd9a40bb943ff2981435c6db"
+  },
+  {
+    "file": "routes/Player/AudioMenu/AudioMenu.less",
+    "identical": true,
+    "beforeHash": "694de771cd43f5dba7d6359b9408ba4676edbe2c26bb9749eeb7535cbbf5753d",
+    "afterHash": "694de771cd43f5dba7d6359b9408ba4676edbe2c26bb9749eeb7535cbbf5753d"
+  },
+  {
+    "file": "routes/Player/Error/styles.less",
+    "identical": true,
+    "beforeHash": "6a73b1c7126c8faa248bd5b7a3ba584285313ee71bcbe67b5f90cab2b76d6205",
+    "afterHash": "6a73b1c7126c8faa248bd5b7a3ba584285313ee71bcbe67b5f90cab2b76d6205"
+  },
+  {
+    "file": "routes/Player/NextVideoPopup/styles.less",
+    "identical": true,
+    "beforeHash": "54d3b43f5adb1627efe79723f25738f330918fa5c82484c052c27561a6be401d",
+    "afterHash": "54d3b43f5adb1627efe79723f25738f330918fa5c82484c052c27561a6be401d"
+  },
+  {
+    "file": "routes/Player/SideDrawer/SideDrawer.less",
+    "identical": true,
+    "beforeHash": "ac69355358c807706a76ec11f04d5c6e7f539877cc97d7e10ecfca02aea81b27",
+    "afterHash": "ac69355358c807706a76ec11f04d5c6e7f539877cc97d7e10ecfca02aea81b27"
+  },
+  {
+    "file": "routes/Player/SubtitlesMenu/styles.less",
+    "identical": true,
+    "beforeHash": "e3885912110b72b889acd6e8aeb11234b43846aa15a213a0ff7556df63bd36e1",
+    "afterHash": "e3885912110b72b889acd6e8aeb11234b43846aa15a213a0ff7556df63bd36e1"
+  },
+  {
+    "file": "routes/Settings/Menu/Menu.less",
+    "identical": true,
+    "beforeHash": "dfb07c626ab5d9ba997c0a54d6a8784529c62827d3bbe240939f4f236ca05f81",
+    "afterHash": "dfb07c626ab5d9ba997c0a54d6a8784529c62827d3bbe240939f4f236ca05f81"
+  },
+  {
+    "file": "components/MultiselectMenu/Dropdown/Option/Option.less",
+    "identical": true,
+    "beforeHash": "b7dbcef1a7a40cebc1f361af3d41c4d9e447a540e53f9ede0a76550b3eb245ec",
+    "afterHash": "b7dbcef1a7a40cebc1f361af3d41c4d9e447a540e53f9ede0a76550b3eb245ec"
+  },
+  {
+    "file": "components/NavBar/HorizontalNavBar/NavMenu/styles.less",
+    "identical": true,
+    "beforeHash": "4428acc9d3c30410b625a0cdc054e302d4696f66aeab6f2e0f8e0b77a6ccc67f",
+    "afterHash": "4428acc9d3c30410b625a0cdc054e302d4696f66aeab6f2e0f8e0b77a6ccc67f"
+  },
+  {
+    "file": "components/NavBar/HorizontalNavBar/SearchBar/styles.less",
+    "identical": true,
+    "beforeHash": "ff4e8b6d7ea490ba10266fb2ae6ca0ba4200a9e21af9ea3bb26153209a416048",
+    "afterHash": "ff4e8b6d7ea490ba10266fb2ae6ca0ba4200a9e21af9ea3bb26153209a416048"
+  },
+  {
+    "file": "routes/Player/SubtitlesMenu/SubtitleVariant/SubtitleVariant.less",
+    "identical": true,
+    "beforeHash": "6c7889b399bcde8796c4b6aa679f6d40bd2bca7e063b2f06a3d30a6d882dd195",
+    "afterHash": "6c7889b399bcde8796c4b6aa679f6d40bd2bca7e063b2f06a3d30a6d882dd195"
+  },
+  {
+    "file": "routes/Settings/components/Category/Category.less",
+    "identical": true,
+    "beforeHash": "c686778883f99c94b3d31dc62ec164a21acc61232da1764b0648e0a8be21908d",
+    "afterHash": "c686778883f99c94b3d31dc62ec164a21acc61232da1764b0648e0a8be21908d"
+  },
+  {
+    "file": "routes/Settings/components/Link/Link.less",
+    "identical": true,
+    "beforeHash": "25f29f2bf3d12b260fd0c58c7610ba10b82d0ee66b3d570a043c8859306c3c3a",
+    "afterHash": "25f29f2bf3d12b260fd0c58c7610ba10b82d0ee66b3d570a043c8859306c3c3a"
+  },
+  {
+    "file": "routes/Settings/components/Option/Option.less",
+    "identical": true,
+    "beforeHash": "9a242f838248efe0416424bfbef6baf12e06c4844c8e0c7a53edf9f62f87c1e2",
+    "afterHash": "9a242f838248efe0416424bfbef6baf12e06c4844c8e0c7a53edf9f62f87c1e2"
+  },
+  {
+    "file": "routes/Settings/General/User/User.less",
+    "identical": true,
+    "beforeHash": "55062fc2608eaa0e3ce2c4de441259e2ede8bdd132b92617599e1cd89068a4c6",
+    "afterHash": "55062fc2608eaa0e3ce2c4de441259e2ede8bdd132b92617599e1cd89068a4c6"
+  },
+  {
+    "file": "routes/Settings/Streaming/URLsManager/URLsManager.less",
+    "identical": true,
+    "beforeHash": "39f3dc91243594bdebfcb321a6e337098c4f97e38bcadcb4745f5756b17b52f0",
+    "afterHash": "39f3dc91243594bdebfcb321a6e337098c4f97e38bcadcb4745f5756b17b52f0"
+  }
+]

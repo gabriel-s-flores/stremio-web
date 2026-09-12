@@ -1,0 +1,28 @@
+{
+  "mode": "packaged",
+  "device": "emulator",
+  "passed": true,
+  "registrationError": false,
+  "wasmError": true,
+  "samples": [
+    {
+      "protocol": "file:",
+      "secure": true,
+      "registerCalls": 0,
+      "banner": false,
+      "coreReady": false,
+      "loaded": true,
+      "chromium68": true
+    },
+    {
+      "protocol": "file:",
+      "secure": true,
+      "registerCalls": 0,
+      "banner": false,
+      "coreReady": false,
+      "loaded": true,
+      "chromium68": true
+    }
+  ],
+  "phase": "sample"
+}

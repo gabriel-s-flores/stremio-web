@@ -1,0 +1,403 @@
+{
+  "mode": "desktop",
+  "url": "http://127.0.0.1:8091/#/calendar",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "samples": [
+    {
+      "index": 0,
+      "control": "div.submit-button-container-MImNa.button-container-zVLH6",
+      "surface": "div.submit-button-container-MImNa.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1095.75,
+        "y": 16.875,
+        "width": 70.5,
+        "height": 48.75
+      },
+      "after": {
+        "x": 1095.75,
+        "y": 16.875,
+        "width": 70.5,
+        "height": 48.75
+      },
+      "surfaceGeometry": {
+        "x": 1095.75,
+        "y": 16.875,
+        "width": 70.5,
+        "height": 48.75
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 1,
+      "control": "div.button-container-xT9_L.button-container-zVLH6",
+      "surface": "div.button-container-xT9_L.button-container-zVLH6",
+      "text": "Enter fullscreen mode",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1792.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1792.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1792.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 2,
+      "control": "div.label-container-XOyzm.nav-menu-popup-label-XmUBo.button-container-xT9_L.menu-button-container-DtW4v.button-container-zVLH6",
+      "surface": "div.label-container-XOyzm.nav-menu-popup-label-XmUBo.button-container-xT9_L.menu-button-container-DtW4v.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1852.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1852.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1852.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 3,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Board",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 97.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 97.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 97.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 4,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Discover",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 184.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 184.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 184.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 5,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Library",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 6,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0.selected",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0.selected",
+      "text": "Calendar",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 358.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 358.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 358.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 7,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Addons",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 445.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 445.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 445.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 8,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Settings",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 532.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 532.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 532.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 9,
+      "control": "a.button-DsyS9.button-container-zVLH6",
+      "surface": "a.button-DsyS9.button-container-zVLH6",
+      "text": "Log in",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 906.734375,
+        "y": 736.125,
+        "width": 196.53125,
+        "height": 60
+      },
+      "after": {
+        "x": 906.734375,
+        "y": 736.125,
+        "width": 196.53125,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 906.734375,
+        "y": 736.125,
+        "width": 196.53125,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    }
+  ],
+  "skipped": [],
+  "failures": []
+}

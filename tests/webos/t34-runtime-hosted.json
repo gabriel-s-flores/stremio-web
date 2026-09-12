@@ -1,0 +1,221 @@
+{
+  "date": "2026-09-09T18:30:30.698Z",
+  "mode": "hosted",
+  "version": {
+    "protocolVersion": "1.3",
+    "product": "",
+    "revision": "@cbd6ac4848a540ea6646d4f79700cf531e4eb9f9",
+    "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36",
+    "jsVersion": "6.8.275.26"
+  },
+  "results": [
+    {
+      "label": "route",
+      "output": "[Info] Set target device : emulator\nLaunched application com.stremio.webos.hello.hosted\n",
+      "state": {
+        "hash": "#/settings",
+        "boot": 1788978621131,
+        "hidden": false,
+        "history": 3,
+        "events": [
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          }
+        ],
+        "video": null
+      }
+    },
+    {
+      "label": "relaunch",
+      "output": "[Info] Set target device : emulator\nLaunched application com.stremio.webos.hello.hosted\n",
+      "state": {
+        "hash": "#/addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json",
+        "boot": 1788978621131,
+        "hidden": false,
+        "history": 3,
+        "events": [
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          }
+        ],
+        "video": null
+      }
+    },
+    {
+      "label": "empty",
+      "output": "[Info] Set target device : emulator\nLaunched application com.stremio.webos.hello.hosted\n",
+      "state": {
+        "hash": "#/addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json",
+        "boot": 1788978621131,
+        "hidden": false,
+        "history": 3,
+        "events": [
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          }
+        ],
+        "video": null
+      }
+    },
+    {
+      "label": "invalid",
+      "output": "[Info] Set target device : emulator\nLaunched application com.stremio.webos.hello.hosted\n",
+      "state": {
+        "hash": "#/addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json",
+        "boot": 1788978621131,
+        "hidden": false,
+        "history": 3,
+        "events": [
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///settings"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "stremio:///addons?addon=https%3A%2F%2Faddon.example%2Fmanifest.json"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "https://example.org"
+            },
+            "hidden": false
+          },
+          {
+            "type": "webOSRelaunch",
+            "detail": {
+              "displayAffinity": 0,
+              "url": "https://example.org"
+            },
+            "hidden": false
+          }
+        ],
+        "video": null
+      }
+    }
+  ]
+}

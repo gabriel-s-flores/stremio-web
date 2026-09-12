@@ -1,0 +1,13 @@
+{
+  "origin": "https://10.0.2.2:8436",
+  "certificateErrors": [],
+  "passed": false,
+  "navigationError": null,
+  "state": {
+    "atOrigin": false,
+    "secure": false,
+    "chromium68": true,
+    "controller": false,
+    "loadErrorCode": null
+  }
+}

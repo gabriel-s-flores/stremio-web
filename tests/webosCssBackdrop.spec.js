@@ -25,6 +25,8 @@ const aliases = {
         manager.loadFile = (filename) => {
             const resolved = filename.startsWith('~stremio/')
                 ? path.join(root, 'src', filename.slice('~stremio/'.length))
+                : filename.startsWith('~stremio-router/')
+                    ? path.join(root, 'src/router', filename.slice('~stremio-router/'.length))
                 : require.resolve(filename.slice(1), { paths: [root] });
             return Promise.resolve({ filename: resolved, contents: fs.readFileSync(resolved, 'utf8') });
         };

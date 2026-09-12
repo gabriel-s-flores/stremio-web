@@ -49,6 +49,12 @@ threadLoader.warmup(
 
 module.exports = (env = {}, argv) => {
     const webos = isEnabled(env.WEBOS);
+    const serviceWorkerDisabled = isEnabled(env.SERVICE_WORKER_DISABLED);
+    for (const [key, limit] of [['WEBOS_OVERSCAN_HORIZONTAL', 960], ['WEBOS_OVERSCAN_VERTICAL', 540]]) {
+        if (webos && env[key] !== undefined && (!Number.isFinite(Number(env[key])) || Number(env[key]) < 0 || Number(env[key]) >= limit)) {
+            throw new Error(`${key} must be a non-negative pixel value below ${limit}`);
+        }
+    }
     const webosDebug = webos && isEnabled(env.WEBOS_DEBUG);
     const nodeModulesExclude = webos ? shouldExcludeNodeModule : /node_modules/;
     const mainEntry = webos ? [
@@ -141,6 +147,7 @@ module.exports = (env = {}, argv) => {
                                             'advanced',
                                             {
                                                 autoprefixer: {
+                                                    env: webos ? 'webos' : undefined,
                                                     add: true,
                                                     remove: true,
                                                     flexbox: false,
@@ -178,7 +185,13 @@ module.exports = (env = {}, argv) => {
                                 strictMath: true,
                                 ieCompat: false,
                                 modifyVars: {
-                                    webos: webos ? 'true' : 'false'
+                                    webos: webos ? 'true' : 'false',
+                                    ...(webos && env.WEBOS_OVERSCAN_HORIZONTAL !== undefined ? {
+                                        'webos-overscan-horizontal': `${Number(env.WEBOS_OVERSCAN_HORIZONTAL)}px`
+                                    } : {}),
+                                    ...(webos && env.WEBOS_OVERSCAN_VERTICAL !== undefined ? {
+                                        'webos-overscan-vertical': `${Number(env.WEBOS_OVERSCAN_VERTICAL)}px`
+                                    } : {})
                                 }
                             }
                         }
@@ -256,13 +269,17 @@ module.exports = (env = {}, argv) => {
         new webpack.EnvironmentPlugin({
             SENTRY_DSN: null,
             ...env,
-            SERVICE_WORKER_DISABLED: false,
+            SERVICE_WORKER_DISABLED: serviceWorkerDisabled,
             DEBUG: argv.mode !== 'production',
             VERSION: packageJson.version,
             COMMIT_HASH,
             WEBOS: webos,
             WEBOS_DEBUG: webosDebug
         }),
+        serviceWorkerDisabled && new webpack.NormalModuleReplacementPlugin(
+            /[\\/]App[\\/]WebUpdateScreen$/,
+            path.resolve(__dirname, 'src', 'App', 'WebUpdateScreen', 'disabled.js')
+        ),
         webosDebug && new webpack.NormalModuleReplacementPlugin(
             /[\\/]routerPaths$/,
             path.resolve(__dirname, 'src', 'router', 'routerPaths.webos.tsx')
@@ -270,11 +287,12 @@ module.exports = (env = {}, argv) => {
         new webpack.ProvidePlugin({
             Buffer: ['buffer', 'Buffer']
         }),
-        argv.mode === 'production' &&
+        argv.mode === 'production' && !serviceWorkerDisabled &&
             new WorkboxPlugin.GenerateSW({
                 maximumFileSizeToCacheInBytes: 20000000,
                 clientsClaim: true,
-                skipWaiting: true
+                // webOS applies updates through the banner; desktop keeps its existing policy.
+                skipWaiting: !webos
             }),
         new CopyWebpackPlugin({
             patterns: [
@@ -285,8 +303,9 @@ module.exports = (env = {}, argv) => {
                 { from: 'manifest.json', to: 'manifest.json' },
                 ...(webos ? [
                     {
-                        from: 'webos/hello/site/webOSTVjs-1.2.10/webOSTV.js',
+                        from: 'webos/lib/webOSTVjs-1.2.10/webOSTV.js',
                         to: 'webos/webOSTV.js',
+                        info: { minimized: true },
                     },
                 ] : []),
             ]

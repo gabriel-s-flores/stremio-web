@@ -1,5 +1,23 @@
 # webOS Branch
 
+## Fase 2 — T2.10 pendente
+
+Runner preparado em `tools/t210-visual-regression-runner.mjs`; a galeria ainda
+não foi coletada. A VM iniciou e um túnel CDP LG foi recuperado, mas o hosted
+target está em erro de conexão, sem comprovação do build ou sessão autenticada.
+Nenhuma divergência visual foi aceita e R04 permanece aberto. Ver
+[evidências, adendo de paridade e limitações](../tests/webos/T2.10%20-%20Evidências.md).
+
+## Fase 2 — exceção de validação T2.9
+
+T2.9 permanece **parcialmente validada**, como T2.8: builds, fontes emitidas,
+isolamento debug, lint, testes, ES2018 e Chrome local foram aprovados, mas os
+endpoints conhecidos do emulador Chromium 68 estavam indisponíveis. A T2.10 deve
+consumir o baseline e completar a execução no alvo real antes de fechar esse aceite.
+TV física: confirmação final de legibilidade, separada da prova de carregamento.
+Ver [evidências e pendências](../tests/webos/T2.9%20-%20Evidências.md) e
+[procedimento](../tests/webos/README.md#t29---fontes-e-ícones).
+
 > Branch de longa duração para o port do Stremio Web para **webOS TV 5** (Chromium 68).
 > Criado a partir de `development`, conforme decisão **D9** das Decisões Arquiteturais do Port.
 

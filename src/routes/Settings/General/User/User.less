@@ -1,4 +1,5 @@
 @import (reference) '~stremio/common/screen-sizes.less';
+@import (reference) '~stremio/common/tv-focus.less';
 
 .user {
     .user-info-content {
@@ -39,7 +40,7 @@
             .email-label-container {
                 .email-label {
                     flex: 1;
-                    font-size: 1.1rem;
+                    font-size: if(@webos = true, 22px, 1.1rem);
                     color: var(--primary-foreground-color);
                     opacity: 0.7;
                 }
@@ -81,5 +82,17 @@
         .user-panel-container {
             width: 100% !important;
         }
+    }
+}
+
+// Keep the TV cursor visible through local hover/selected overrides.
+.user .user-panel-container {
+    .tv-focus();
+}
+
+& when (@webos = true) {
+    .user .user-panel-container .user-panel-label {
+        font-size: 22px;
+        line-height: 1.3;
     }
 }

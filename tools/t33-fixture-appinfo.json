@@ -1,0 +1,10 @@
+{
+    "id": "com.stremio.webos.t33.fixture",
+    "version": "1.0.0",
+    "vendor": "Stremio webOS port",
+    "type": "web",
+    "main": "index.html",
+    "title": "T3.3 Video Bridge Fixture",
+    "resolution": "1920x1080",
+    "icon": "icon.png"
+}

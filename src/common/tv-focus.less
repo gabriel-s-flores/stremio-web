@@ -1,0 +1,17 @@
+// webOS focus is the 5-way cursor, independent of input modality.
+@import (reference) '~stremio/common/screen-sizes.less';
+
+@tv-focus-color: #fff;
+@tv-focus-size: 4px;
+@tv-focus-offset: -4px;
+
+.tv-focus-ring() when (@webos = true) {
+    outline: @tv-focus-size solid @tv-focus-color;
+    outline-offset: @tv-focus-offset;
+}
+
+.tv-focus() when (@webos = true) {
+    &:focus {
+        .tv-focus-ring();
+    }
+}

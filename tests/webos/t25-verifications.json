@@ -1,0 +1,69 @@
+{
+  "date": "2026-09-07T19:05:22.256Z",
+  "revision": "4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8",
+  "jest": {
+    "suites": 12,
+    "tests": 225,
+    "status": "passed"
+  },
+  "lint": "passed",
+  "diffCheck": "passed",
+  "desktopCss": {
+    "files": 44,
+    "normalization": "Remove comments and blank lines only",
+    "status": "identical"
+  },
+  "builds": {
+    "desktop": "passed",
+    "webos": "passed",
+    "webosDebug": "passed",
+    "desktopFixture": "passed"
+  },
+  "es2018": {
+    "webos": {
+      "passed": 7,
+      "total": 7
+    },
+    "webosDebug": {
+      "passed": 7,
+      "total": 7
+    }
+  },
+  "hostedReferences": {
+    "checked": 53,
+    "status": "passed"
+  },
+  "debugIsolation": "passed, including T2.5 fixture",
+  "compiledCss": {
+    "debug": {
+      "cssSha256": "38621eaff9ad001bb98e39bf0df2a53df76e996b60e79daa0759b52100b243b2",
+      "focusVisibleCount": 0,
+      "tvRingRules": 45
+    },
+    "standard": {
+      "cssSha256": "4601925a9bd45bd39013695727142c42e2712d6a565db1b8fdc60b40e8ec9361",
+      "focusVisibleCount": 0,
+      "tvRingRules": 44
+    },
+    "desktop": {
+      "cssSha256": "87e7a63757ed8316be6bce5c36717a2689e6a671cbb4404395e8f8979e47e75d",
+      "focusVisibleCount": 1,
+      "tvRingRules": 0
+    }
+  },
+  "browserProbes": {
+    "webos": {
+      "controls": 296,
+      "failures": 0
+    },
+    "desktop": {
+      "controls": 308,
+      "failures": 0
+    }
+  },
+  "limitations": [
+    "Physical TV legibility at approximately 3 metres is pending",
+    "Native nearest-edge scroll clipped 1.5-2.75px in Settings/Addons; archived separately for Fase 4",
+    "Unauthenticated Library/Calendar; Player is a real-control fixture, not video playback certification"
+  ]
+}

@@ -1,0 +1,659 @@
+{
+  "url": "http://127.0.0.1:8098/#/intro",
+  "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "visualWidth": 1920,
+    "visualHeight": 1080,
+    "scale": 1,
+    "devicePixelRatio": 1,
+    "root": {
+      "left": 0,
+      "top": 0,
+      "right": 1920,
+      "bottom": 1080,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "insets": {
+    "top": 27,
+    "right": 48,
+    "bottom": 27,
+    "left": 48
+  },
+  "safeFrame": {
+    "left": 48,
+    "top": 27,
+    "right": 1872,
+    "bottom": 1053
+  },
+  "documentOverflowX": false,
+  "samples": [
+    {
+      "tag": "INPUT",
+      "classes": "credentials-text-input-QMCZz text-input-hnLiz",
+      "text": "Email",
+      "rect": {
+        "left": 600,
+        "top": 457.03125,
+        "right": 930,
+        "bottom": 515.625,
+        "width": 330,
+        "height": 58.59375
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "credentials-text-input-QMCZz text-input-hnLiz",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "INPUT",
+      "classes": "credentials-text-input-QMCZz text-input-hnLiz",
+      "text": "Password",
+      "rect": {
+        "left": 600,
+        "top": 530.625,
+        "right": 930,
+        "bottom": 589.21875,
+        "width": 330,
+        "height": 58.59375
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "credentials-text-input-QMCZz text-input-hnLiz",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "INPUT",
+      "classes": "credentials-text-input-QMCZz text-input-hnLiz",
+      "text": "Confirm password",
+      "rect": {
+        "left": 600,
+        "top": 604.21875,
+        "right": 930,
+        "bottom": 662.8125,
+        "width": 330,
+        "height": 58.59375
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "credentials-text-input-QMCZz text-input-hnLiz",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "checkbox-container-O5cy3",
+      "text": "",
+      "rect": {
+        "left": 604.5,
+        "top": 693.609375,
+        "right": 627,
+        "bottom": 716.109375,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "checkbox-container-O5cy3",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "INPUT",
+      "classes": "",
+      "text": "",
+      "rect": {
+        "left": 615.75,
+        "top": 704.859375,
+        "right": 615.75,
+        "bottom": 704.859375,
+        "width": 0,
+        "height": 0
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "checkbox-container-O5cy3",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "link-ih0xx button-container-zVLH6",
+      "text": "Terms and Conditions",
+      "rect": {
+        "left": 642,
+        "top": 687.3125,
+        "right": 928.328125,
+        "bottom": 723.859375,
+        "width": 286.328125,
+        "height": 36.546875
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 13.5,
+      "focusSurface": "link-ih0xx button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "checkbox-container-O5cy3",
+      "text": "",
+      "rect": {
+        "left": 604.5,
+        "top": 747.421875,
+        "right": 627,
+        "bottom": 769.921875,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "checkbox-container-O5cy3",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "INPUT",
+      "classes": "",
+      "text": "",
+      "rect": {
+        "left": 615.75,
+        "top": 758.671875,
+        "right": 615.75,
+        "bottom": 758.671875,
+        "width": 0,
+        "height": 0
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "checkbox-container-O5cy3",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "link-ih0xx button-container-zVLH6",
+      "text": "Privacy Policy",
+      "rect": {
+        "left": 700.53125,
+        "top": 760.40625,
+        "right": 787.703125,
+        "bottom": 777.40625,
+        "width": 87.171875,
+        "height": 17
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 13.5,
+      "focusSurface": "link-ih0xx button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "checkbox-container-O5cy3",
+      "text": "",
+      "rect": {
+        "left": 604.5,
+        "top": 800.703125,
+        "right": 627,
+        "bottom": 823.203125,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "checkbox-container-O5cy3",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "INPUT",
+      "classes": "",
+      "text": "",
+      "rect": {
+        "left": 615.75,
+        "top": 811.953125,
+        "right": 615.75,
+        "bottom": 811.953125,
+        "width": 0,
+        "height": 0
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "checkbox-container-O5cy3",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "form-button-vyqqj submit-button-x3L8z button-container-zVLH6",
+      "text": "Sign up",
+      "rect": {
+        "left": 600,
+        "top": 853.453125,
+        "right": 930,
+        "bottom": 913.453125,
+        "width": 330,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "form-button-vyqqj submit-button-x3L8z button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "form-button-vyqqj facebook-button-LZ_kG button-container-zVLH6",
+      "text": "Continue with Facebook",
+      "rect": {
+        "left": 990,
+        "top": 457.03125,
+        "right": 1320,
+        "bottom": 517.03125,
+        "width": 330,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "form-button-vyqqj facebook-button-LZ_kG button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "form-button-vyqqj apple-button-V5nEI button-container-zVLH6",
+      "text": "Continue with Apple",
+      "rect": {
+        "left": 990,
+        "top": 532.03125,
+        "right": 1320,
+        "bottom": 592.03125,
+        "width": 330,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "form-button-vyqqj apple-button-V5nEI button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "form-button-vyqqj login-form-button-DqJUV button-container-zVLH6",
+      "text": "Log in",
+      "rect": {
+        "left": 990,
+        "top": 607.03125,
+        "right": 1320,
+        "bottom": 667.03125,
+        "width": 330,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "form-button-vyqqj login-form-button-DqJUV button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "form-button-vyqqj guest-login-button-D8DWZ button-container-zVLH6",
+      "text": "Guest login",
+      "rect": {
+        "left": 990,
+        "top": 682.03125,
+        "right": 1320,
+        "bottom": 742.03125,
+        "width": 330,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "form-button-vyqqj guest-login-button-D8DWZ button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    }
+  ],
+  "typography": [
+    {
+      "classes": "title-container-CbIkM",
+      "ancestors": [
+        "heading-container-oI70m",
+        "intro-container-tkNS6",
+        "route-content",
+        "route-container",
+        "routes-container"
+      ],
+      "text": "Freedom to Stream",
+      "fontSize": 45,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 750.71875,
+        "top": 289.53125,
+        "right": 1169.265625,
+        "bottom": 346.53125,
+        "width": 418.546875,
+        "height": 57
+      }
+    },
+    {
+      "classes": "slogan-container-UlcYd",
+      "ancestors": [
+        "heading-container-oI70m",
+        "intro-container-tkNS6",
+        "route-content",
+        "route-container",
+        "routes-container"
+      ],
+      "text": "All the Video Content You Enjoy in One Place",
+      "fontSize": 22.5,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 732.953125,
+        "top": 354.03125,
+        "right": 1187.03125,
+        "bottom": 382.03125,
+        "width": 454.078125,
+        "height": 28
+      }
+    },
+    {
+      "classes": "",
+      "ancestors": [
+        "",
+        "label-UHMAy",
+        "checkbox-_AF32",
+        "form-container-HMlEh",
+        "content-container-A1Drn"
+      ],
+      "text": "I have read and agree with the Stremio",
+      "fontSize": 13.5,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 642,
+        "top": 687.3125,
+        "right": 882.859375,
+        "bottom": 704.3125,
+        "width": 240.859375,
+        "height": 17
+      }
+    },
+    {
+      "classes": "link-ih0xx button-container-zVLH6",
+      "ancestors": [
+        "",
+        "label-UHMAy",
+        "checkbox-_AF32",
+        "form-container-HMlEh",
+        "content-container-A1Drn"
+      ],
+      "text": "Terms and Conditions",
+      "fontSize": 13.5,
+      "lineHeight": "17.55px",
+      "rect": {
+        "left": 642,
+        "top": 687.3125,
+        "right": 928.328125,
+        "bottom": 723.859375,
+        "width": 286.328125,
+        "height": 36.546875
+      }
+    },
+    {
+      "classes": "",
+      "ancestors": [
+        "",
+        "label-UHMAy",
+        "checkbox-_AF32",
+        "form-container-HMlEh",
+        "content-container-A1Drn"
+      ],
+      "text": "I have read and agree with the Stremio",
+      "fontSize": 13.5,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 642,
+        "top": 741.40625,
+        "right": 829.546875,
+        "bottom": 777.40625,
+        "width": 187.546875,
+        "height": 36
+      }
+    },
+    {
+      "classes": "link-ih0xx button-container-zVLH6",
+      "ancestors": [
+        "",
+        "label-UHMAy",
+        "checkbox-_AF32",
+        "form-container-HMlEh",
+        "content-container-A1Drn"
+      ],
+      "text": "Privacy Policy",
+      "fontSize": 13.5,
+      "lineHeight": "17.55px",
+      "rect": {
+        "left": 700.53125,
+        "top": 760.40625,
+        "right": 787.703125,
+        "bottom": 777.40625,
+        "width": 87.171875,
+        "height": 17
+      }
+    },
+    {
+      "classes": "",
+      "ancestors": [
+        "",
+        "label-UHMAy",
+        "checkbox-_AF32",
+        "form-container-HMlEh",
+        "content-container-A1Drn"
+      ],
+      "text": "I agree to receive marketing communications from Stremio",
+      "fontSize": 13.5,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 642,
+        "top": 794.953125,
+        "right": 928.546875,
+        "bottom": 830.953125,
+        "width": 286.546875,
+        "height": 36
+      }
+    },
+    {
+      "classes": "label-uHD7L",
+      "ancestors": [
+        "form-button-vyqqj submit-button-x3L8z button-container-zVLH6",
+        "form-container-HMlEh",
+        "content-container-A1Drn",
+        "intro-container-tkNS6",
+        "route-content"
+      ],
+      "text": "Sign up",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 725.53125,
+        "top": 869.15625,
+        "right": 804.453125,
+        "bottom": 897.75,
+        "width": 78.921875,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-uHD7L",
+      "ancestors": [
+        "form-button-vyqqj facebook-button-LZ_kG button-container-zVLH6",
+        "options-container-qxboQ",
+        "content-container-A1Drn",
+        "intro-container-tkNS6",
+        "route-content"
+      ],
+      "text": "Continue with Facebook",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1050,
+        "top": 458.4375,
+        "right": 1305,
+        "bottom": 515.625,
+        "width": 255,
+        "height": 57.1875
+      }
+    },
+    {
+      "classes": "label-uHD7L",
+      "ancestors": [
+        "form-button-vyqqj apple-button-V5nEI button-container-zVLH6",
+        "options-container-qxboQ",
+        "content-container-A1Drn",
+        "intro-container-tkNS6",
+        "route-content"
+      ],
+      "text": "Continue with Apple",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1068.71875,
+        "top": 547.734375,
+        "right": 1286.28125,
+        "bottom": 576.328125,
+        "width": 217.5625,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-uHD7L",
+      "ancestors": [
+        "form-button-vyqqj login-form-button-DqJUV button-container-zVLH6",
+        "options-container-qxboQ",
+        "content-container-A1Drn",
+        "intro-container-tkNS6",
+        "route-content"
+      ],
+      "text": "Log in",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1123.421875,
+        "top": 622.734375,
+        "right": 1186.5625,
+        "bottom": 651.328125,
+        "width": 63.140625,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-uHD7L",
+      "ancestors": [
+        "form-button-vyqqj guest-login-button-D8DWZ button-container-zVLH6",
+        "options-container-qxboQ",
+        "content-container-A1Drn",
+        "intro-container-tkNS6",
+        "route-content"
+      ],
+      "text": "Guest login",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1094.28125,
+        "top": 697.734375,
+        "right": 1215.703125,
+        "bottom": 726.328125,
+        "width": 121.421875,
+        "height": 28.59375
+      }
+    }
+  ],
+  "failures": [],
+  "requestedRoute": "/intro"
+}

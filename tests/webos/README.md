@@ -1,5 +1,54 @@
 # T0.6 — Evidências de medição webOS
 
+## T2.9 - Fontes e ícones
+
+Status: **parcialmente validada** — artefatos e Chrome local aprovados; Chromium 68
+indisponível. Ver [evidência T2.9](T2.9%20-%20Evidências.md).
+
+A rota `#/debug/fonts-icons` existe apenas em `WEBOS=1 WEBOS_DEBUG=1`. Mostra
+Plus Jakarta Sans, bandeira Twemoji e os sete ícones pedidos sobre três fundos,
+com foco. Um SVG adicional isola stroke/currentColor.
+
+Execute cada auditoria antes do próximo build, pois `build/` é substituído:
+
+```powershell
+corepack pnpm build
+node tools/t29-artifact-audit.cjs desktop
+corepack pnpm build:webos
+node tools/t29-artifact-audit.cjs webos
+corepack pnpm check:webos-compat
+corepack pnpm build:webos:debug
+node tools/t29-artifact-audit.cjs debug
+node scripts/verify-webos-debug-build.mjs build debug
+corepack pnpm check:webos-compat
+corepack pnpm test --runInBand
+corepack pnpm lint
+node tools/t29-fonts-icons-runner.mjs
+```
+
+O runner abre Chrome headless separado (`CHROME_PATH` opcional), serve o build e
+salva `tests/webos/t29-chrome{,-focus}.png` e `t29-chrome.json`. Captura erros de
+console/rede desde antes da navegação, desativa cache/service worker e retorna
+código não zero se um check falha. Não simula Chromium 68.
+
+Para emulador já aberto com o build debug, em viewport 1920×1080:
+
+```powershell
+$env:CDP_HTTP = 'http://127.0.0.1:9998'
+$env:TARGET_HINT = '<id-ou-url-do-app>'
+$env:T29_LABEL = 'chromium68'
+node tools/t29-fonts-icons-runner.mjs
+Remove-Item Env:CDP_HTTP, Env:TARGET_HINT, Env:T29_LABEL
+```
+
+O runner recarrega o alvo. O JSON registra a versão real e `chromium68`; o nome do
+arquivo não comprova o ambiente. Também é possível usar `cdp.mjs eval-file <target>
+tools/t29-fonts-icons-probe.js`, porém isso não coleta rede desde o boot nem capturas.
+A T2.10 deve complementar o baseline com Chromium 68 real. Legibilidade na TV física
+deve ser registrada separadamente da prova técnica de carregamento.
+
+## Evidências T0.6
+
 Esta pasta recebe snapshots JSON e relatórios agregados da T0.6. Os snapshots não
 devem conter tokens, URLs privadas ou dados de perfil.
 
@@ -111,4 +160,31 @@ no items in hosted mode), `t23-aspect-ratio-results.webos.json` (fallback: 35
 cells, 80 items, 0 failures) and `t23-aspect-ratio-results.desktop.json` (native:
 0 failures, no inline widths). Screenshots: `t23-calendar-fixture-webos.png` and
 `t23-calendar-fixture-desktop.png`.
+# T2.10 — coleta visual pareada
 
+Estado e limitações: [T2.10 — Evidências](T2.10%20-%20Evidências.md).
+O runner é preparado para targets existentes; não cria sessão nem simula UA.
+
+```powershell
+node tools/t210-visual-regression-runner.mjs C:/caminho-fora-do-repo/t210.private.json
+```
+
+O JSON privado contém `webos` e `desktop`, cada um com `endpoint`, `targetId`
+(ID exato CDP), `origin`, `buildDirectory` e `sessionProbe` (expressão JS ES2018
+que retorna `{ authenticated: boolean, identity: string }`). `identity` deve
+ser um identificador pseudônimo da sessão, nunca token/senha. O probe precisa
+consultar o estado real da sessão, não retornar uma constante de aprovação.
+Não salvar esse arquivo nem credenciais no repositório. Capturas podem conter
+dados da conta: usar exclusivamente a conta de teste autorizada.
+
+Servir diretórios imutáveis separados para o debug webOS e desktop do mesmo
+candidato; manter a origem autenticada e o mesmo catálogo. O config de fixture
+desktop existente é `tools/t25-desktop-fixture.config.cjs`. Validar builds normais
+separadamente com `scripts/verify-webos-debug-build.mjs build standard` antes de
+preparar o debug. Não reconstruir o diretório servido durante a galeria.
+
+Saídas: `t210-<rota>[ -focus].<webos|desktop>.png` (sem espaço no nome),
+`t210-gallery.html`, `t210-summary.json` e relatórios do Player estrito. Código
+de saída 1 significa bloqueio e 2 significa coleta que ainda exige revisão.
+Não há código de saída de aprovação automática. A execução sem config registra
+a disponibilidade das portas conhecidas e o bloqueio, sem fabricar imagens.

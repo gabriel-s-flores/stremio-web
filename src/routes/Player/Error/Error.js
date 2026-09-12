@@ -1,11 +1,11 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 const React = require('react');
+const { default: ExternalLink } = require('stremio/components/ExternalLink');
 const { useTranslation } = require('react-i18next');
 const PropTypes = require('prop-types');
 const classNames = require('classnames');
 const { default: Icon } = require('@stremio/stremio-icons/react');
-const { Button } = require('stremio/components');
 const styles = require('./styles');
 
 const Error = React.forwardRef(({ className, code, message, stream }, ref) => {
@@ -29,7 +29,7 @@ const Error = React.forwardRef(({ className, code, message, stream }, ref) => {
             }
             {
                 playlist && fileName ?
-                    <Button
+                    <ExternalLink
                         className={styles['playlist-button']}
                         title={t('PLAYER_OPEN_IN_EXTERNAL')}
                         href={playlist}
@@ -38,7 +38,7 @@ const Error = React.forwardRef(({ className, code, message, stream }, ref) => {
                     >
                         <Icon className={styles['icon']} name={'ic_downloads'} />
                         <div className={styles['label']}>{t('PLAYER_OPEN_IN_EXTERNAL')}</div>
-                    </Button>
+                    </ExternalLink>
                     :
                     null
             }

@@ -1,4 +1,5 @@
 @import (reference) '~stremio/common/screen-sizes.less';
+@import (reference) '~stremio/common/tv-focus.less';
 
 .option {
     position: relative;
@@ -79,4 +80,19 @@
             }
         }
     }
+}
+
+// Keep the TV cursor visible through local hover/selected overrides.
+.option .content :global(.button) {
+    .tv-focus();
+}
+
+// Preserve hover transitions without animating the TV outline.
+.option .content :global(.color-input) when (@webos = true) {
+    transition-property: border-color;
+}
+
+.option .heading .label when (@webos = true) {
+    font-size: 22px;
+    line-height: 1.3;
 }

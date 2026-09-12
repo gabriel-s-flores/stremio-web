@@ -1,0 +1,347 @@
+{
+  "note": "Initial probe with native scrollIntoView nearest; handoff to Fase 4",
+  "samples": [
+    {
+      "index": 24,
+      "control": "div.color-input.color-input-container-FAQiP.button-container-zVLH6",
+      "surface": "div.color-input.color-input-container-FAQiP.button-container-zVLH6",
+      "text": "#FFFFFFFF",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 1038.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "after": {
+        "x": 682.5,
+        "y": 1038.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 1038.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "clipping": [
+        "viewport",
+        "div.sections-container-ZaZpD:y",
+        "div.settings-content-co5eU.animation-fade-in:y",
+        "div.nav-content-container-zl9hQ:y",
+        "div.settings-container-_g1tS.main-nav-bars-container-wNjS5:y",
+        "div.route-content:y",
+        "div.route-container:y",
+        "div.routes-container:y",
+        "div.:y"
+      ],
+      "failures": [
+        "Focus ring is clipped"
+      ],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 25,
+      "control": "div.color-input.color-input-container-FAQiP.button-container-zVLH6",
+      "surface": "div.color-input.color-input-container-FAQiP.button-container-zVLH6",
+      "text": "Transparent",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 1038.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "after": {
+        "x": 682.5,
+        "y": 1038.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 1038.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "clipping": [
+        "viewport",
+        "div.sections-container-ZaZpD:y",
+        "div.settings-content-co5eU.animation-fade-in:y",
+        "div.nav-content-container-zl9hQ:y",
+        "div.settings-container-_g1tS.main-nav-bars-container-wNjS5:y",
+        "div.route-content:y",
+        "div.route-container:y",
+        "div.routes-container:y",
+        "div.:y"
+      ],
+      "failures": [
+        "Focus ring is clipped"
+      ],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 26,
+      "control": "div.color-input.color-input-container-FAQiP.button-container-zVLH6",
+      "surface": "div.color-input.color-input-container-FAQiP.button-container-zVLH6",
+      "text": "#000000",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 1038.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "after": {
+        "x": 682.5,
+        "y": 1038.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 1038.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "clipping": [
+        "viewport",
+        "div.sections-container-ZaZpD:y",
+        "div.settings-content-co5eU.animation-fade-in:y",
+        "div.nav-content-container-zl9hQ:y",
+        "div.settings-container-_g1tS.main-nav-bars-container-wNjS5:y",
+        "div.route-content:y",
+        "div.route-container:y",
+        "div.routes-container:y",
+        "div.:y"
+      ],
+      "failures": [
+        "Focus ring is clipped"
+      ],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 36,
+      "control": "div.radio-container-wPddo.selected-M_zHA.disabled-ZzMU9",
+      "surface": "div.radio-container-wPddo.selected-M_zHA.disabled-ZzMU9",
+      "text": "",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 429.5,
+        "y": 1056.5,
+        "width": 26.25,
+        "height": 26.25
+      },
+      "after": {
+        "x": 429.5,
+        "y": 1056.5,
+        "width": 26.25,
+        "height": 26.25
+      },
+      "surfaceGeometry": {
+        "x": 429.5,
+        "y": 1056.5,
+        "width": 26.25,
+        "height": 26.25
+      },
+      "clipping": [
+        "viewport",
+        "div.sections-container-ZaZpD:y",
+        "div.settings-content-co5eU.animation-fade-in:y",
+        "div.nav-content-container-zl9hQ:y",
+        "div.settings-container-_g1tS.main-nav-bars-container-wNjS5:y",
+        "div.route-content:y",
+        "div.route-container:y",
+        "div.routes-container:y",
+        "div.:y"
+      ],
+      "failures": [
+        "Focus ring is clipped"
+      ],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 37,
+      "control": "div.add-url-fEacA.button-container-zVLH6",
+      "surface": "div.add-url-fEacA.button-container-zVLH6",
+      "text": "Add URL",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 405,
+        "y": 1043.75,
+        "width": 124.125,
+        "height": 38
+      },
+      "after": {
+        "x": 405,
+        "y": 1043.75,
+        "width": 124.125,
+        "height": 38
+      },
+      "surfaceGeometry": {
+        "x": 405,
+        "y": 1043.75,
+        "width": 124.125,
+        "height": 38
+      },
+      "clipping": [
+        "viewport",
+        "div.sections-container-ZaZpD:y",
+        "div.settings-content-co5eU.animation-fade-in:y",
+        "div.nav-content-container-zl9hQ:y",
+        "div.settings-container-_g1tS.main-nav-bars-container-wNjS5:y",
+        "div.route-content:y",
+        "div.route-container:y",
+        "div.routes-container:y",
+        "div.:y"
+      ],
+      "failures": [
+        "Focus ring is clipped"
+      ],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 38,
+      "control": "div.reload-OVkwB.button-container-zVLH6",
+      "surface": "div.reload-OVkwB.button-container-zVLH6",
+      "text": "Reload",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 808.25,
+        "y": 1043.75,
+        "width": 121.75,
+        "height": 38
+      },
+      "after": {
+        "x": 808.25,
+        "y": 1043.75,
+        "width": 121.75,
+        "height": 38
+      },
+      "surfaceGeometry": {
+        "x": 808.25,
+        "y": 1043.75,
+        "width": 121.75,
+        "height": 38
+      },
+      "clipping": [
+        "viewport",
+        "div.sections-container-ZaZpD:y",
+        "div.settings-content-co5eU.animation-fade-in:y",
+        "div.nav-content-container-zl9hQ:y",
+        "div.settings-container-_g1tS.main-nav-bars-container-wNjS5:y",
+        "div.route-content:y",
+        "div.route-container:y",
+        "div.routes-container:y",
+        "div.:y"
+      ],
+      "failures": [
+        "Focus ring is clipped"
+      ],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    }
+  ]
+}

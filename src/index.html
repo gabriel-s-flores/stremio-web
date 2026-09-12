@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
+    <% if (htmlWebpackPlugin.options.webos) { %>
+    <meta name="viewport" content="width=1920, height=1080, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <% } else { %>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=0, user-scalable=no, viewport-fit=cover">
+    <% } %>
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -69,7 +73,9 @@
     <div id="app"></div>
     <%= htmlWebpackPlugin.tags.bodyTags %>
     <script src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+    <% if (!htmlWebpackPlugin.options.webos) { %>
     <script async src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
+    <% } %>
 </body>
 
 </html>

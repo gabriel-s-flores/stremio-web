@@ -70,3 +70,8 @@
         }
     }
 }
+
+// Preserve hover transitions without animating the TV outline.
+.update-banner .button when (@webos = true) {
+    transition-property: color, background-color, box-shadow;
+}

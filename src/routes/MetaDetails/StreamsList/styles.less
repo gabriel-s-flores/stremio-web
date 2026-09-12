@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/tv-focus.less';
 @import (reference) '~stremio/common/screen-sizes.less';
 
 :import('~stremio/components/Multiselect/styles.less') {
@@ -39,7 +40,7 @@
 
         .label {
             flex: none;
-            font-size: 1.4rem;
+            font-size: if(@webos = true, 22px, 1.4rem);
             text-align: center;
             color: var(--primary-foreground-color);
             margin-bottom: 2rem;
@@ -59,7 +60,7 @@
 
         .addons-loading {
             color: var(--primary-foreground-color);
-            font-size: 1rem;
+            font-size: if(@webos = true, 22px, 1rem);
         }
 
         .addons-loading-bar {
@@ -172,7 +173,7 @@
 
         .label {
             flex: 0 1 auto;
-            font-size: 1rem;
+            font-size: if(@webos = true, 22px, 1rem);
             font-weight: 700;
             max-height: 3.6em;
             text-align: center;
@@ -208,4 +209,9 @@
             background-color: var(--primary-background-color);
         }
     }
+}
+
+// Keep the TV cursor visible through local hover/selected overrides.
+.streams-list-container .install-button-container {
+    .tv-focus();
 }

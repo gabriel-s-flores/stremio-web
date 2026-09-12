@@ -2,6 +2,7 @@
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
 @import (reference) '~stremio/common/screen-sizes.less';
+@import (reference) '~stremio/App/styles.less';
 
 .metadetails-container {
     display: flex;
@@ -88,8 +89,7 @@
                 padding-left: max(1rem, calc(4rem - var(--safe-area-inset-left)));
             }
             & when (@webos = true) {
-                // T2.8: restore a compile-time clamp if the left inset exceeds 3rem.
-                padding-left: calc(4rem - var(--safe-area-inset-left));
+                padding-left: max(15px, (4 * @webos-root-size - @webos-overscan-horizontal));
             }
         }
 

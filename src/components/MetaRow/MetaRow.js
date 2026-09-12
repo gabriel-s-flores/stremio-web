@@ -8,11 +8,21 @@ const { default: Icon } = require('@stremio/stremio-icons/react');
 const { Button } = require('stremio/components');
 const CONSTANTS = require('stremio/common/CONSTANTS');
 const useTranslate = require('stremio/common/useTranslate');
+const { usePlatform } = require('stremio/common/Platform');
 const MetaRowPlaceholder = require('./MetaRowPlaceholder');
 const styles = require('./styles');
 
 const MetaRow = ({ className, title, catalog, message, itemComponent, notifications }) => {
     const t = useTranslate();
+    const platform = usePlatform();
+    const onFocusCapture = React.useCallback((event) => {
+        const container = event.currentTarget;
+        if (platform.name !== 'webos' || container.scrollWidth <= container.clientWidth) return;
+        const item = event.target.closest(`.${styles['meta-item']}`);
+        if (item && container.contains(item)) {
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        }
+    }, [platform.name]);
 
     const catalogTitle = React.useMemo(() => {
         return title ?? t.catalogTitle(catalog);
@@ -49,7 +59,7 @@ const MetaRow = ({ className, title, catalog, message, itemComponent, notificati
                 typeof message === 'string' && message.length > 0 ?
                     <div className={styles['message-container']} title={message}>{message}</div>
                     :
-                    <div className={styles['meta-items-container']}>
+                    <div className={styles['meta-items-container']} onFocusCapture={onFocusCapture}>
                         {
                             ReactIs.isValidElementType(itemComponent) ?
                                 items.slice(0, CONSTANTS.CATALOG_PREVIEW_SIZE).map((item, index) => {

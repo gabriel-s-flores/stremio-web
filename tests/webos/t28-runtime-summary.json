@@ -1,0 +1,73 @@
+{
+  "runtime": "local Chrome; not webOS validation",
+  "reports": [
+    {
+      "name": "board",
+      "controls": 73,
+      "smallText": 0,
+      "failures": []
+    },
+    {
+      "name": "discover",
+      "controls": 67,
+      "smallText": 13,
+      "failures": []
+    },
+    {
+      "name": "library",
+      "controls": 10,
+      "smallText": 0,
+      "failures": []
+    },
+    {
+      "name": "calendar",
+      "controls": 10,
+      "smallText": 0,
+      "failures": []
+    },
+    {
+      "name": "metadetails",
+      "controls": 15,
+      "smallText": 13,
+      "failures": []
+    },
+    {
+      "name": "search",
+      "controls": 10,
+      "smallText": 0,
+      "failures": []
+    },
+    {
+      "name": "player-idle-fixture",
+      "controls": 14,
+      "smallText": 3,
+      "failures": []
+    },
+    {
+      "name": "settings",
+      "controls": 40,
+      "smallText": 80,
+      "failures": []
+    },
+    {
+      "name": "addons",
+      "controls": 30,
+      "smallText": 12,
+      "failures": []
+    },
+    {
+      "name": "intro",
+      "controls": 16,
+      "smallText": 5,
+      "failures": []
+    }
+  ],
+  "browser": {
+    "Browser": "Chrome/153.0.8010.36",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+    "V8-Version": "15.3.76.10",
+    "WebKit-Version": "537.36 (@507c6ee3e2f3b2ca0e660547e5b9ea4820c67f4c)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9228/devtools/browser/db2ba30c-d43a-45ff-8fe2-b38ebc8db155"
+  }
+}

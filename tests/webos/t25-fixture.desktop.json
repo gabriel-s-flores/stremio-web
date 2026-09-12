@@ -1,0 +1,842 @@
+{
+  "mode": "desktop",
+  "scrollAlignment": "center",
+  "url": "http://127.0.0.1:8091/focus-fixture/#/debug/focus",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "samples": [
+    {
+      "index": 0,
+      "control": "div.button-mnzMf.button-container-zVLH6",
+      "surface": "div.button-mnzMf.button-container-zVLH6",
+      "text": "Button",
+      "fixtureCase": "buttons",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 45,
+        "y": 113,
+        "width": 78.75,
+        "height": 49
+      },
+      "after": {
+        "x": 45,
+        "y": 113,
+        "width": 78.75,
+        "height": 49
+      },
+      "surfaceGeometry": {
+        "x": 45,
+        "y": 113,
+        "width": 78.75,
+        "height": 49
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 1,
+      "control": "div.button-mnzMf.button-container-zVLH6",
+      "surface": "div.button-mnzMf.button-container-zVLH6",
+      "text": "Programmatic focus (-1)",
+      "fixtureCase": "buttons",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 138.75,
+        "y": 113,
+        "width": 199.53125,
+        "height": 49
+      },
+      "after": {
+        "x": 138.75,
+        "y": 113,
+        "width": 199.53125,
+        "height": 49
+      },
+      "surfaceGeometry": {
+        "x": 138.75,
+        "y": 113,
+        "width": 199.53125,
+        "height": 49
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 2,
+      "control": "div.button-mnzMf.selected.active.button-container-zVLH6",
+      "surface": "div.button-mnzMf.selected.active.button-container-zVLH6",
+      "text": "Selected + active",
+      "fixtureCase": "buttons",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 353.28125,
+        "y": 113,
+        "width": 153.1875,
+        "height": 49
+      },
+      "after": {
+        "x": 353.28125,
+        "y": 113,
+        "width": 153.1875,
+        "height": 49
+      },
+      "surfaceGeometry": {
+        "x": 353.28125,
+        "y": 113,
+        "width": 153.1875,
+        "height": 49
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 3,
+      "control": "div.icon-container-Vs4TN",
+      "surface": "div.icon-container-Vs4TN",
+      "text": "",
+      "fixtureCase": "actions",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 45,
+        "y": 187.5,
+        "width": 60,
+        "height": 60
+      },
+      "after": {
+        "x": 45,
+        "y": 187.5,
+        "width": 60,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 45,
+        "y": 187.5,
+        "width": 60,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 4,
+      "control": "div.icon-container-Vs4TN",
+      "surface": "div.icon-container-Vs4TN",
+      "text": "",
+      "fixtureCase": "actions",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 105,
+        "y": 187.5,
+        "width": 60,
+        "height": 60
+      },
+      "after": {
+        "x": 105,
+        "y": 187.5,
+        "width": 60,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 105,
+        "y": 187.5,
+        "width": 60,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 5,
+      "control": "input.text-NF7bt.text-input-hnLiz",
+      "surface": "input.text-NF7bt.text-input-hnLiz",
+      "text": "text",
+      "fixtureCase": "text",
+      "focused": true,
+      "immediateRing": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      },
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 45,
+        "y": 270,
+        "width": 300,
+        "height": 49
+      },
+      "after": {
+        "x": 45,
+        "y": 270,
+        "width": 300,
+        "height": 49
+      },
+      "surfaceGeometry": {
+        "x": 45,
+        "y": 270,
+        "width": 300,
+        "height": 49
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 6,
+      "control": "input.search-input-bAgAh.text-input-hnLiz",
+      "surface": "label.search-bar-container-p4tSt",
+      "text": "text",
+      "fixtureCase": "search",
+      "focused": true,
+      "immediateRing": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      },
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 69.5,
+        "y": 354.5,
+        "width": 1011.5,
+        "height": 19
+      },
+      "after": {
+        "x": 69.5,
+        "y": 354.5,
+        "width": 1011.5,
+        "height": 19
+      },
+      "surfaceGeometry": {
+        "x": 45,
+        "y": 341.5,
+        "width": 1098,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 7,
+      "control": "div.button-GWY2o.button-container-zVLH6",
+      "surface": "div.button-GWY2o.button-container-zVLH6",
+      "text": "",
+      "fixtureCase": "number",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 45,
+        "y": 409,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "after": {
+        "x": 45,
+        "y": 409,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 45,
+        "y": 409,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 8,
+      "control": "input.value-Y2xdx",
+      "surface": "input.value-Y2xdx",
+      "text": "number",
+      "fixtureCase": "number",
+      "focused": true,
+      "immediateRing": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "0px"
+      },
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 431.25,
+        "width": 75,
+        "height": 23
+      },
+      "after": {
+        "x": 112.5,
+        "y": 431.25,
+        "width": 75,
+        "height": 23
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 431.25,
+        "width": 75,
+        "height": 23
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 9,
+      "control": "div.button-GWY2o.button-container-zVLH6",
+      "surface": "div.button-GWY2o.button-container-zVLH6",
+      "text": "",
+      "fixtureCase": "number",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 202.5,
+        "y": 409,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "after": {
+        "x": 202.5,
+        "y": 409,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 202.5,
+        "y": 409,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 10,
+      "control": "div.checkbox-container-O5cy3.checked-cf9YT",
+      "surface": "div.checkbox-container-O5cy3.checked-cf9YT",
+      "text": "",
+      "fixtureCase": "checkbox",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      },
+      "before": {
+        "x": 49.5,
+        "y": 506.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "after": {
+        "x": 49.5,
+        "y": 506.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "surfaceGeometry": {
+        "x": 49.5,
+        "y": 506.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      }
+    },
+    {
+      "index": 11,
+      "control": "input.",
+      "surface": "div.checkbox-container-O5cy3.checked-cf9YT",
+      "text": "checkbox",
+      "fixtureCase": "checkbox",
+      "focused": true,
+      "immediateRing": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      },
+      "ring": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      },
+      "before": {
+        "x": 60.75,
+        "y": 517.75,
+        "width": 0,
+        "height": 0
+      },
+      "after": {
+        "x": 60.75,
+        "y": 517.75,
+        "width": 0,
+        "height": 0
+      },
+      "surfaceGeometry": {
+        "x": 49.5,
+        "y": 506.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      }
+    },
+    {
+      "index": 12,
+      "control": "div.radio-container-wPddo.selected-M_zHA",
+      "surface": "div.radio-container-wPddo.selected-M_zHA",
+      "text": "",
+      "fixtureCase": "radio",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 45,
+        "y": 559,
+        "width": 26.25,
+        "height": 26.25
+      },
+      "after": {
+        "x": 45,
+        "y": 559,
+        "width": 26.25,
+        "height": 26.25
+      },
+      "surfaceGeometry": {
+        "x": 45,
+        "y": 559,
+        "width": 26.25,
+        "height": 26.25
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 13,
+      "control": "input.",
+      "surface": "div.radio-container-wPddo.selected-M_zHA",
+      "text": "radio",
+      "fixtureCase": "radio",
+      "focused": true,
+      "immediateRing": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "ring": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 58.125,
+        "y": 572.125,
+        "width": 0,
+        "height": 0
+      },
+      "after": {
+        "x": 58.125,
+        "y": 572.125,
+        "width": 0,
+        "height": 0
+      },
+      "surfaceGeometry": {
+        "x": 45,
+        "y": 559,
+        "width": 26.25,
+        "height": 26.25
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 14,
+      "control": "button.trigger-AimsT.button-mnzMf",
+      "surface": "button.trigger-AimsT.button-mnzMf",
+      "text": "Open action menu",
+      "fixtureCase": "menu",
+      "focused": true,
+      "immediateRing": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      },
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 45,
+        "y": 607.75,
+        "width": 161.390625,
+        "height": 49
+      },
+      "after": {
+        "x": 45,
+        "y": 607.75,
+        "width": 161.390625,
+        "height": 49
+      },
+      "surfaceGeometry": {
+        "x": 45,
+        "y": 607.75,
+        "width": 161.390625,
+        "height": 49
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 15,
+      "control": "div.button-mnzMf.button-container-zVLH6",
+      "surface": "div.button-mnzMf.button-container-zVLH6",
+      "text": "Open modal",
+      "fixtureCase": "modal",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 45,
+        "y": 679.25,
+        "width": 119.015625,
+        "height": 49
+      },
+      "after": {
+        "x": 45,
+        "y": 679.25,
+        "width": 119.015625,
+        "height": 49
+      },
+      "surfaceGeometry": {
+        "x": 45,
+        "y": 679.25,
+        "width": 119.015625,
+        "height": 49
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 16,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Poster and secondary action",
+      "fixtureCase": "poster",
+      "focused": true,
+      "immediateRing": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1560,
+        "y": 135,
+        "width": 270,
+        "height": 455.265625
+      },
+      "after": {
+        "x": 1560,
+        "y": 135,
+        "width": 270,
+        "height": 455.265625
+      },
+      "surfaceGeometry": {
+        "x": 1560,
+        "y": 135,
+        "width": 270,
+        "height": 395.265625
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 17,
+      "control": "button.trigger-AimsT.menu-label-container-ChuX8",
+      "surface": "button.trigger-AimsT.menu-label-container-ChuX8",
+      "text": "Poster and secondary action",
+      "fixtureCase": "poster",
+      "focused": true,
+      "immediateRing": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 0)",
+        "offset": "0px"
+      },
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 0)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1822.5,
+        "y": 530.265625,
+        "width": 22.5,
+        "height": 60
+      },
+      "after": {
+        "x": 1822.5,
+        "y": 530.265625,
+        "width": 22.5,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 1822.5,
+        "y": 530.265625,
+        "width": 22.5,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 0)",
+        "offset": "0px"
+      }
+    }
+  ],
+  "skipped": [],
+  "failures": []
+}

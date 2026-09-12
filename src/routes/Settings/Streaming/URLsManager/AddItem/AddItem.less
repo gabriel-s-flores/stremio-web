@@ -84,3 +84,8 @@
         padding: 0.35rem 0.5rem;
     }
 }
+
+// Preserve hover transitions without animating the TV outline.
+.add-item .actions .add, .add-item .actions .cancel {
+    & when (@webos = true) { transition-property: opacity, background-color; }
+}

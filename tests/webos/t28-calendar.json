@@ -1,0 +1,374 @@
+{
+  "url": "http://127.0.0.1:8098/#/calendar",
+  "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "visualWidth": 1920,
+    "visualHeight": 1080,
+    "scale": 1,
+    "devicePixelRatio": 1,
+    "root": {
+      "left": 0,
+      "top": 0,
+      "right": 1920,
+      "bottom": 1080,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "insets": {
+    "top": 27,
+    "right": 48,
+    "bottom": 27,
+    "left": 48
+  },
+  "safeFrame": {
+    "left": 48,
+    "top": 27,
+    "right": 1872,
+    "bottom": 1053
+  },
+  "documentOverflowX": false,
+  "samples": [
+    {
+      "tag": "DIV",
+      "classes": "submit-button-container-MImNa button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1092,
+        "top": 43.875,
+        "right": 1162.5,
+        "bottom": 92.625,
+        "width": 70.5,
+        "height": 48.75
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "submit-button-container-MImNa button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "button-container-xT9_L button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1737,
+        "top": 42,
+        "right": 1789.5,
+        "bottom": 94.5,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "button-container-xT9_L button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "label-container-XOyzm nav-menu-popup-label-XmUBo button-container-xT9_L menu-button-container-DtW4v button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1804.5,
+        "top": 42,
+        "right": 1857,
+        "bottom": 94.5,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "label-container-XOyzm nav-menu-popup-label-XmUBo button-container-xT9_L menu-button-container-DtW4v button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Board",
+      "rect": {
+        "left": 57,
+        "top": 97.5,
+        "right": 129,
+        "bottom": 169.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Discover",
+      "rect": {
+        "left": 57,
+        "top": 199.5,
+        "right": 129,
+        "bottom": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Library",
+      "rect": {
+        "left": 57,
+        "top": 301.5,
+        "right": 129,
+        "bottom": 373.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0 selected",
+      "text": "Calendar",
+      "rect": {
+        "left": 57,
+        "top": 403.5,
+        "right": 129,
+        "bottom": 475.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0 selected",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Addons",
+      "rect": {
+        "left": 57,
+        "top": 505.5,
+        "right": 129,
+        "bottom": 577.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Settings",
+      "rect": {
+        "left": 57,
+        "top": 607.5,
+        "right": 129,
+        "bottom": 679.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "button-DsyS9 button-container-zVLH6",
+      "text": "Log in",
+      "rect": {
+        "left": 898.96875,
+        "top": 739.75,
+        "right": 1111.015625,
+        "bottom": 799.75,
+        "width": 212.046875,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "button-DsyS9 button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    }
+  ],
+  "typography": [
+    {
+      "classes": "placeholder-label-XyrN_",
+      "ancestors": [
+        "search-input-IQ0ZW",
+        "search-bar-h60ja search-bar-container-asfq1",
+        "horizontal-nav-bar-ji5GB horizontal-nav-bar-container-Y_zvK",
+        "calendar-cH2jw main-nav-bars-container-wNjS5",
+        "route-content"
+      ],
+      "text": "Search or paste link",
+      "fontSize": 22,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 742.5,
+        "top": 55.046875,
+        "right": 945.90625,
+        "bottom": 81.4375,
+        "width": 203.40625,
+        "height": 26.390625
+      }
+    },
+    {
+      "classes": "title-bE4zd",
+      "ancestors": [
+        "placeholder-pCQTz",
+        "nav-content-container-zl9hQ",
+        "calendar-cH2jw main-nav-bars-container-wNjS5",
+        "route-content",
+        "route-container"
+      ],
+      "text": "Calendar is only available for logged in users",
+      "fontSize": 26.25,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 734.328125,
+        "top": 347.75,
+        "right": 1275.65625,
+        "bottom": 380.75,
+        "width": 541.328125,
+        "height": 33
+      }
+    },
+    {
+      "classes": "text-Pa9GN",
+      "ancestors": [
+        "point-iTc1_",
+        "overview-RGglv",
+        "placeholder-pCQTz",
+        "nav-content-container-zl9hQ",
+        "calendar-cH2jw main-nav-bars-container-wNjS5"
+      ],
+      "text": "Never miss an episode again",
+      "fontSize": 22,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 678.75,
+        "top": 653.75,
+        "right": 945,
+        "bottom": 709.75,
+        "width": 266.25,
+        "height": 56
+      }
+    },
+    {
+      "classes": "text-Pa9GN",
+      "ancestors": [
+        "point-iTc1_",
+        "overview-RGglv",
+        "placeholder-pCQTz",
+        "nav-content-container-zl9hQ",
+        "calendar-cH2jw main-nav-bars-container-wNjS5"
+      ],
+      "text": "Schedule your personal watching calendar",
+      "fontSize": 22,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 1158.75,
+        "top": 653.75,
+        "right": 1425,
+        "bottom": 709.75,
+        "width": 266.25,
+        "height": 56
+      }
+    },
+    {
+      "classes": "button-DsyS9 button-container-zVLH6",
+      "ancestors": [
+        "button-container-fBjqZ",
+        "placeholder-pCQTz",
+        "nav-content-container-zl9hQ",
+        "calendar-cH2jw main-nav-bars-container-wNjS5",
+        "route-content"
+      ],
+      "text": "Log in",
+      "fontSize": 22,
+      "lineHeight": "60px",
+      "rect": {
+        "left": 898.96875,
+        "top": 739.75,
+        "right": 1111.015625,
+        "bottom": 799.75,
+        "width": 212.046875,
+        "height": 60
+      }
+    }
+  ],
+  "failures": [],
+  "requestedRoute": "/calendar"
+}

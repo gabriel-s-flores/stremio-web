@@ -10,6 +10,7 @@
         "start-prod": "webpack serve --mode production",
         "build": "webpack --mode production",
         "build:webos": "webpack --mode production --env WEBOS=1",
+        "build:webos:packaged": "webpack --mode production --env WEBOS=1 --env SERVICE_WORKER_DISABLED=true && node scripts/verify-webos-packaged-build.mjs",
         "build:webos:debug": "webpack --mode production --env WEBOS=1 --env WEBOS_DEBUG=1",
         "check:webos-compat": "node tools/check-es-compat.mjs",
         "test": "jest",

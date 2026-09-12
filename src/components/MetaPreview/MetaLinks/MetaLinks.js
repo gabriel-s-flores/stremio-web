@@ -3,7 +3,7 @@
 const React = require('react');
 const PropTypes = require('prop-types');
 const classnames = require('classnames');
-const { Button } = require('stremio/components');
+const { Button, ExternalLink } = require('stremio/components');
 const useTranslate = require('stremio/common/useTranslate');
 const styles = require('./styles');
 
@@ -22,11 +22,12 @@ const MetaLinks = ({ className, label, links }) => {
             {
                 Array.isArray(links) && links.length > 0 ?
                     <div className={styles['links-container']}>
-                        {links.map(({ label, href }, index) => (
-                            <Button key={index} className={styles['link-container']} title={label} href={href}>
+                        {links.map(({ label, href }, index) => {
+                            const Component = href?.startsWith('#') ? Button : ExternalLink;
+                            return <Component key={index} className={styles['link-container']} title={label} href={href}>
                                 { string(label) }
-                            </Button>
-                        ))}
+                            </Component>;
+                        })}
                     </div>
                     :
                     null

@@ -1,3 +1,5 @@
+@import (reference) '~stremio/common/tv-focus.less';
+
 // Copyright (C) 2017-2023 Smart code 203358507
 
 .text-input {
@@ -6,4 +8,10 @@
     &::-moz-focus-inner {
         border: none;
     }
+}
+.text-input { .tv-focus(); }
+
+.text-input when (@webos = true) {
+    font-size: 22px;
+    line-height: 1.3;
 }

@@ -1,0 +1,34 @@
+[
+    {
+        "command":  "corepack pnpm test --runInBand",
+        "exitCode":  0
+    },
+    {
+        "command":  "corepack pnpm lint",
+        "exitCode":  0
+    },
+    {
+        "command":  "corepack pnpm build",
+        "exitCode":  0
+    },
+    {
+        "command":  "corepack pnpm build:webos",
+        "exitCode":  0
+    },
+    {
+        "command":  "debug isolation standard",
+        "exitCode":  0
+    },
+    {
+        "command":  "corepack pnpm build:webos:debug",
+        "exitCode":  0
+    },
+    {
+        "command":  "corepack pnpm check:webos-compat",
+        "exitCode":  0
+    },
+    {
+        "command":  "git diff --check",
+        "exitCode":  0
+    }
+]

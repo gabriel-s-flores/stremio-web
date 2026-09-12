@@ -1,0 +1,3026 @@
+[
+  {
+    "route": "discover",
+    "classes": "runtime-label-TzAGI",
+    "ancestors": [
+      "runtime-release-info-container-BGd_r",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "119 min",
+    "fontSize": 18.75,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 1480.5,
+      "top": 274.5,
+      "right": 1542.5625,
+      "bottom": 297.5,
+      "width": 62.0625,
+      "height": 23
+    },
+    "source": "src/components/MetaPreview/styles.less",
+    "reason": "Metadados compactos: duração, ano e avaliação na mesma linha."
+  },
+  {
+    "route": "discover",
+    "classes": "release-info-label-LPJMB",
+    "ancestors": [
+      "runtime-release-info-container-BGd_r",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "2026",
+    "fontSize": 18.75,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 1609.8125,
+      "top": 274.5,
+      "right": 1656.9375,
+      "bottom": 297.5,
+      "width": 47.125,
+      "height": 23
+    },
+    "source": "src/components/MetaPreview/styles.less",
+    "reason": "Metadados compactos: duração, ano e avaliação na mesma linha."
+  },
+  {
+    "route": "discover",
+    "classes": "label-MXv72",
+    "ancestors": [
+      "imdb-button-container-gGjxp button-container-zVLH6",
+      "runtime-release-info-container-BGd_r",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg"
+    ],
+    "text": "7.3",
+    "fontSize": 18.75,
+    "lineHeight": "24.375px",
+    "rect": {
+      "left": 1727.671875,
+      "top": 273.8125,
+      "right": 1755,
+      "bottom": 298.1875,
+      "width": 27.328125,
+      "height": 24.375
+    },
+    "source": "src/components/MetaPreview/styles.less",
+    "reason": "Metadados compactos: duração, ano e avaliação na mesma linha."
+  },
+  {
+    "route": "discover",
+    "classes": "label-container-dYN2B",
+    "ancestors": [
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "Genres",
+    "fontSize": 14.25,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 1474.5,
+      "top": 521.5625,
+      "right": 1824.5,
+      "bottom": 539.5625,
+      "width": 350,
+      "height": 18
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "discover",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg"
+    ],
+    "text": "Comedy",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 1474.5,
+      "top": 550.8125,
+      "right": 1578.59375,
+      "bottom": 586.3125,
+      "width": 104.09375,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "discover",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg"
+    ],
+    "text": "Drama",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 1589.84375,
+      "top": 550.8125,
+      "right": 1678.65625,
+      "bottom": 586.3125,
+      "width": 88.8125,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "discover",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg"
+    ],
+    "text": "Romance",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 1689.90625,
+      "top": 550.8125,
+      "right": 1799.765625,
+      "bottom": 586.3125,
+      "width": 109.859375,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "discover",
+    "classes": "label-container-dYN2B",
+    "ancestors": [
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "Cast",
+    "fontSize": 14.25,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 1474.5,
+      "top": 620.0625,
+      "right": 1824.5,
+      "bottom": 638.0625,
+      "width": 350,
+      "height": 18
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "discover",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg"
+    ],
+    "text": "Zoey Deutch",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 1474.5,
+      "top": 649.3125,
+      "right": 1607.109375,
+      "bottom": 684.8125,
+      "width": 132.609375,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "discover",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg"
+    ],
+    "text": "Nick Robinson",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 1618.359375,
+      "top": 649.3125,
+      "right": 1762.046875,
+      "bottom": 684.8125,
+      "width": 143.6875,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "discover",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg"
+    ],
+    "text": "Harry Shum Jr.",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 1474.5,
+      "top": 696.0625,
+      "right": 1615.625,
+      "bottom": 731.5625,
+      "width": 141.125,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "discover",
+    "classes": "label-container-dYN2B",
+    "ancestors": [
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "Directors",
+    "fontSize": 14.25,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 1474.5,
+      "top": 765.3125,
+      "right": 1824.5,
+      "bottom": 783.3125,
+      "width": 350,
+      "height": 18
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "discover",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-container-CoWs5 meta-preview-container-o22hc compact-ii1zu",
+      "discover-content-CRsRg"
+    ],
+    "text": "Leah McKendrick",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 1474.5,
+      "top": 794.5625,
+      "right": 1638.71875,
+      "bottom": 830.0625,
+      "width": 164.21875,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "metadetails",
+    "classes": "runtime-label-TzAGI",
+    "ancestors": [
+      "runtime-release-info-container-BGd_r",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV",
+      "metadetails-container-K_Dqa"
+    ],
+    "text": "114 min",
+    "fontSize": 18.75,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 63,
+      "top": 274.5,
+      "right": 125.90625,
+      "bottom": 297.5,
+      "width": 62.90625,
+      "height": 23
+    },
+    "source": "src/components/MetaPreview/styles.less",
+    "reason": "Metadados compactos: duração, ano e avaliação na mesma linha."
+  },
+  {
+    "route": "metadetails",
+    "classes": "release-info-label-LPJMB",
+    "ancestors": [
+      "runtime-release-info-container-BGd_r",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV",
+      "metadetails-container-K_Dqa"
+    ],
+    "text": "2026",
+    "fontSize": 18.75,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 170.90625,
+      "top": 274.5,
+      "right": 218.03125,
+      "bottom": 297.5,
+      "width": 47.125,
+      "height": 23
+    },
+    "source": "src/components/MetaPreview/styles.less",
+    "reason": "Metadados compactos: duração, ano e avaliação na mesma linha."
+  },
+  {
+    "route": "metadetails",
+    "classes": "label-container-dYN2B",
+    "ancestors": [
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV",
+      "metadetails-container-K_Dqa"
+    ],
+    "text": "Genres",
+    "fontSize": 14.25,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 63,
+      "top": 320,
+      "right": 1362,
+      "bottom": 338,
+      "width": 1299,
+      "height": 18
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "metadetails",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV"
+    ],
+    "text": "Crime",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 63,
+      "top": 349.25,
+      "right": 147.90625,
+      "bottom": 384.75,
+      "width": 84.90625,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "metadetails",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV"
+    ],
+    "text": "Drama",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 159.15625,
+      "top": 349.25,
+      "right": 247.96875,
+      "bottom": 384.75,
+      "width": 88.8125,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "metadetails",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV"
+    ],
+    "text": "Thriller",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 259.21875,
+      "top": 349.25,
+      "right": 347.625,
+      "bottom": 384.75,
+      "width": 88.40625,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "metadetails",
+    "classes": "label-container-dYN2B",
+    "ancestors": [
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV",
+      "metadetails-container-K_Dqa"
+    ],
+    "text": "Cast",
+    "fontSize": 14.25,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 63,
+      "top": 418.5,
+      "right": 1362,
+      "bottom": 436.5,
+      "width": 1299,
+      "height": 18
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "metadetails",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV"
+    ],
+    "text": "Robert De Niro",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 63,
+      "top": 447.75,
+      "right": 209.296875,
+      "bottom": 483.25,
+      "width": 146.296875,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "metadetails",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV"
+    ],
+    "text": "Michelle Monaghan",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 220.546875,
+      "top": 447.75,
+      "right": 400.171875,
+      "bottom": 483.25,
+      "width": 179.625,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "metadetails",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV"
+    ],
+    "text": "Adam Scott",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 411.421875,
+      "top": 447.75,
+      "right": 537.9375,
+      "bottom": 483.25,
+      "width": 126.515625,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "metadetails",
+    "classes": "label-container-dYN2B",
+    "ancestors": [
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV",
+      "metadetails-container-K_Dqa"
+    ],
+    "text": "Directors",
+    "fontSize": 14.25,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 63,
+      "top": 517,
+      "right": 1362,
+      "bottom": 535,
+      "width": 1299,
+      "height": 18
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "metadetails",
+    "classes": "link-container-gHxPW button-container-zVLH6",
+    "ancestors": [
+      "links-container-C8Mw9",
+      "meta-links-Xiao3 meta-links-container-dh69_",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV"
+    ],
+    "text": "James Ashcroft",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 63,
+      "top": 546.25,
+      "right": 214.5,
+      "bottom": 581.75,
+      "width": 151.5,
+      "height": 35.5
+    },
+    "source": "src/components/MetaPreview/MetaLinks/styles.less",
+    "reason": "Chips e legendas de metadados; preservar a composição das listas de gênero/elenco/direção."
+  },
+  {
+    "route": "metadetails",
+    "classes": "label-container-_VXZt",
+    "ancestors": [
+      "description-container-yi8iU",
+      "meta-info-container-ub8AH",
+      "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+      "metadetails-content-Uz5EV",
+      "metadetails-container-K_Dqa"
+    ],
+    "text": "Summary",
+    "fontSize": 14.25,
+    "lineHeight": "18.525px",
+    "rect": {
+      "left": 63,
+      "top": 608,
+      "right": 1362,
+      "bottom": 626.515625,
+      "width": 1299,
+      "height": 18.515625
+    },
+    "source": "src/components/MetaPreview/styles.less",
+    "reason": "Legenda secundária Summary; a sinopse primária foi aumentada para 22px."
+  },
+  {
+    "route": "player-idle-fixture",
+    "classes": "fixture-label-sQ1PL",
+    "ancestors": [
+      "layer-qalDW video-layer-YO7EU",
+      "player-container-wIELK fixture-uBlPl",
+      "route-content",
+      "route-container",
+      "routes-container"
+    ],
+    "text": "webOS Player fixture",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 836.859375,
+      "top": 514.5,
+      "right": 1083.125,
+      "bottom": 565.5,
+      "width": 246.265625,
+      "height": 51
+    },
+    "source": "src/webos/diagnostics/PlayerDebugPage.less",
+    "reason": "Identificador de diagnóstico do fixture, fora da interface de produção."
+  },
+  {
+    "route": "player-idle-fixture",
+    "classes": "label-QFbsS",
+    "ancestors": [
+      "seek-bar-I7WeY seek-bar-container-JGGTa",
+      "layer-qalDW control-bar-layer-m2jto control-bar-container-xsWA7",
+      "player-container-wIELK fixture-uBlPl",
+      "route-content",
+      "route-container"
+    ],
+    "text": "00:00:00",
+    "fontSize": 16.5,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 78,
+      "top": 956.25,
+      "right": 160.5,
+      "bottom": 977.25,
+      "width": 82.5,
+      "height": 21
+    },
+    "source": "src/routes/Player/ControlBar/SeekBar/styles.less",
+    "reason": "Timestamps compactos na barra de progresso."
+  },
+  {
+    "route": "player-idle-fixture",
+    "classes": "label-QFbsS",
+    "ancestors": [
+      "button-container-zVLH6",
+      "seek-bar-I7WeY seek-bar-container-JGGTa",
+      "layer-qalDW control-bar-layer-m2jto control-bar-container-xsWA7",
+      "player-container-wIELK fixture-uBlPl",
+      "route-content"
+    ],
+    "text": "00:00:00",
+    "fontSize": 16.5,
+    "lineHeight": "21.45px",
+    "rect": {
+      "left": 1759.5,
+      "top": 956.03125,
+      "right": 1842,
+      "bottom": 977.46875,
+      "width": 82.5,
+      "height": 21.4375
+    },
+    "source": "src/routes/Player/ControlBar/SeekBar/styles.less",
+    "reason": "Timestamps compactos na barra de progresso."
+  },
+  {
+    "route": "settings",
+    "classes": "version-info-label-rSTCy",
+    "ancestors": [
+      "menu-xeE06",
+      "settings-content-co5eU animation-fade-in",
+      "nav-content-container-zl9hQ",
+      "settings-container-_g1tS main-nav-bars-container-wNjS5",
+      "route-content"
+    ],
+    "text": "App Version: 5.0.0-beta.39",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 160.5,
+      "top": 947.5,
+      "right": 385.5,
+      "bottom": 966.5,
+      "width": 225,
+      "height": 19
+    },
+    "source": "src/routes/Settings/Menu/Menu.less",
+    "reason": "Diagnóstico de versão/build, com hash longo e elipse."
+  },
+  {
+    "route": "settings",
+    "classes": "version-info-label-rSTCy",
+    "ancestors": [
+      "menu-xeE06",
+      "settings-content-co5eU animation-fade-in",
+      "nav-content-container-zl9hQ",
+      "settings-container-_g1tS main-nav-bars-container-wNjS5",
+      "route-content"
+    ],
+    "text": "Build Version: 4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 160.5,
+      "top": 981.5,
+      "right": 385.5,
+      "bottom": 1000.5,
+      "width": 225,
+      "height": 19
+    },
+    "source": "src/routes/Settings/Menu/Menu.less",
+    "reason": "Diagnóstico de versão/build, com hash longo e elipse."
+  },
+  {
+    "route": "settings",
+    "classes": "label-Yi3xl",
+    "ancestors": [
+      "header-epxi0",
+      "wrapper-mdG7D",
+      "section-hcYuV",
+      "sections-container-ZaZpD",
+      "settings-content-co5eU animation-fade-in"
+    ],
+    "text": "URL",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 498,
+      "top": 514.59375,
+      "right": 526.09375,
+      "bottom": 533.59375,
+      "width": 28.09375,
+      "height": 19
+    },
+    "source": "src/routes/Settings/Streaming/URLsManager",
+    "reason": "Tabela técnica URL/Status, com endereços longos; ação Reload em 22px."
+  },
+  {
+    "route": "settings",
+    "classes": "label-Yi3xl",
+    "ancestors": [
+      "header-epxi0",
+      "wrapper-mdG7D",
+      "section-hcYuV",
+      "sections-container-ZaZpD",
+      "settings-content-co5eU animation-fade-in"
+    ],
+    "text": "Status",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 842.15625,
+      "top": 514.59375,
+      "right": 933,
+      "bottom": 533.59375,
+      "width": 90.84375,
+      "height": 19
+    },
+    "source": "src/routes/Settings/Streaming/URLsManager",
+    "reason": "Tabela técnica URL/Status, com endereços longos; ação Reload em 22px."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WLvfI",
+    "ancestors": [
+      "content-SRbPn",
+      "item-A9qrP",
+      "content-XG6N_",
+      "wrapper-mdG7D",
+      "section-hcYuV"
+    ],
+    "text": "http://127.0.0.1:11470/",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 533.75,
+      "top": 572.21875,
+      "right": 693.796875,
+      "bottom": 591.21875,
+      "width": 160.046875,
+      "height": 19
+    },
+    "source": "src/routes/Settings/Streaming/URLsManager",
+    "reason": "Tabela técnica URL/Status, com endereços longos; ação Reload em 22px."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WLvfI",
+    "ancestors": [
+      "status-crByJ",
+      "actions-QcMQ_",
+      "item-A9qrP",
+      "content-XG6N_",
+      "wrapper-mdG7D"
+    ],
+    "text": "Error",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 859.28125,
+      "top": 572.21875,
+      "right": 893.5,
+      "bottom": 591.21875,
+      "width": 34.21875,
+      "height": 19
+    },
+    "source": "src/routes/Settings/Streaming/URLsManager",
+    "reason": "Tabela técnica URL/Status, com endereços longos; ação Reload em 22px."
+  },
+  {
+    "route": "settings",
+    "classes": "title-eToYZ",
+    "ancestors": [
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD",
+      "settings-content-co5eU animation-fade-in",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "General",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 879.4375,
+      "right": 978,
+      "bottom": 898.4375,
+      "width": 525,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Navigate Between Menus",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 967.6875,
+      "right": 632.75,
+      "bottom": 986.6875,
+      "width": 179.75,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "1",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 864,
+      "top": 958.4375,
+      "right": 901.5,
+      "bottom": 995.9375,
+      "width": 37.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-uSn0j",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "to",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 901.5,
+      "top": 958.4375,
+      "right": 939,
+      "bottom": 995.9375,
+      "width": 37.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "6",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 939,
+      "top": 958.4375,
+      "right": 978,
+      "bottom": 995.9375,
+      "width": 39,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Go to Search",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 1065.1875,
+      "right": 545.609375,
+      "bottom": 1084.1875,
+      "width": 92.609375,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "0",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 937.125,
+      "top": 1055.9375,
+      "right": 978,
+      "bottom": 1093.4375,
+      "width": 40.875,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Navigate History",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 1162.6875,
+      "right": 565,
+      "bottom": 1200.6875,
+      "width": 112,
+      "height": 38
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "Backspace",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 814.5,
+      "top": 1153.4375,
+      "right": 925.5,
+      "bottom": 1190.9375,
+      "width": 111,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-KiYac",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "or",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 925.5,
+      "top": 1153.4375,
+      "right": 978,
+      "bottom": 1190.9375,
+      "width": 52.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "Ctrl",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 773.0625,
+      "top": 1220.9375,
+      "right": 829.5,
+      "bottom": 1258.4375,
+      "width": 56.4375,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-uSn0j",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "+",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 829.5,
+      "top": 1220.9375,
+      "right": 867,
+      "bottom": 1258.4375,
+      "width": 37.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "Backspace",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 867,
+      "top": 1220.9375,
+      "right": 978,
+      "bottom": 1258.4375,
+      "width": 111,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Toggle Fullscreen",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 1327.6875,
+      "right": 577.3125,
+      "bottom": 1346.6875,
+      "width": 124.3125,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "F",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 939.25,
+      "top": 1318.4375,
+      "right": 978,
+      "bottom": 1355.9375,
+      "width": 38.75,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Show Shortcuts",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 1425.1875,
+      "right": 565.21875,
+      "bottom": 1444.1875,
+      "width": 112.21875,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "Ctrl",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 846.5625,
+      "top": 1415.9375,
+      "right": 903,
+      "bottom": 1453.4375,
+      "width": 56.4375,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-uSn0j",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "+",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 903,
+      "top": 1415.9375,
+      "right": 940.5,
+      "bottom": 1453.4375,
+      "width": 37.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "/",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 940.5,
+      "top": 1415.9375,
+      "right": 978,
+      "bottom": 1453.4375,
+      "width": 37.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Gamepad Guide",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 1522.6875,
+      "right": 571.46875,
+      "bottom": 1541.6875,
+      "width": 118.46875,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "Ctrl",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 841.796875,
+      "top": 1513.4375,
+      "right": 898.234375,
+      "bottom": 1550.9375,
+      "width": 56.4375,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-uSn0j",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "+",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 898.234375,
+      "top": 1513.4375,
+      "right": 935.734375,
+      "bottom": 1550.9375,
+      "width": 37.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "G",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 935.734375,
+      "top": 1513.4375,
+      "right": 978,
+      "bottom": 1550.9375,
+      "width": 42.265625,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "title-eToYZ",
+    "ancestors": [
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD",
+      "settings-content-co5eU animation-fade-in",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "Player",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 1595.9375,
+      "right": 978,
+      "bottom": 1614.9375,
+      "width": 525,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Play / Pause",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 1684.1875,
+      "right": 537.328125,
+      "bottom": 1703.1875,
+      "width": 84.328125,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "Space",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 901.390625,
+      "top": 1674.9375,
+      "right": 978,
+      "bottom": 1712.4375,
+      "width": 76.609375,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Seek Forward",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 1781.6875,
+      "right": 550.53125,
+      "bottom": 1800.6875,
+      "width": 97.53125,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "→",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 730.234375,
+      "top": 1772.4375,
+      "right": 771.28125,
+      "bottom": 1809.9375,
+      "width": 41.046875,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-KiYac",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "or",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 771.28125,
+      "top": 1772.4375,
+      "right": 823.78125,
+      "bottom": 1809.9375,
+      "width": 52.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "⇧ Shift",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 823.78125,
+      "top": 1772.4375,
+      "right": 899.453125,
+      "bottom": 1809.9375,
+      "width": 75.671875,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-uSn0j",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "+",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 899.453125,
+      "top": 1772.4375,
+      "right": 936.953125,
+      "bottom": 1809.9375,
+      "width": 37.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "→",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 936.953125,
+      "top": 1772.4375,
+      "right": 978,
+      "bottom": 1809.9375,
+      "width": 41.046875,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Seek Backward",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 1879.1875,
+      "right": 563.421875,
+      "bottom": 1898.1875,
+      "width": 110.421875,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "←",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 730.234375,
+      "top": 1869.9375,
+      "right": 771.28125,
+      "bottom": 1907.4375,
+      "width": 41.046875,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-KiYac",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "or",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 771.28125,
+      "top": 1869.9375,
+      "right": 823.78125,
+      "bottom": 1907.4375,
+      "width": 52.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "⇧ Shift",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 823.78125,
+      "top": 1869.9375,
+      "right": 899.453125,
+      "bottom": 1907.4375,
+      "width": 75.671875,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-uSn0j",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "+",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 899.453125,
+      "top": 1869.9375,
+      "right": 936.953125,
+      "bottom": 1907.4375,
+      "width": 37.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "←",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 936.953125,
+      "top": 1869.9375,
+      "right": 978,
+      "bottom": 1907.4375,
+      "width": 41.046875,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Adjust Volume",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 1976.6875,
+      "right": 554.25,
+      "bottom": 1995.6875,
+      "width": 101.25,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "↑",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 845.625,
+      "top": 1967.4375,
+      "right": 885.5625,
+      "bottom": 2004.9375,
+      "width": 39.9375,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-KiYac",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "or",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 885.5625,
+      "top": 1967.4375,
+      "right": 938.0625,
+      "bottom": 2004.9375,
+      "width": 52.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "↓",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 938.0625,
+      "top": 1967.4375,
+      "right": 978,
+      "bottom": 2004.9375,
+      "width": 39.9375,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Toggle Mute",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 2074.1875,
+      "right": 540.40625,
+      "bottom": 2093.1875,
+      "width": 87.40625,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "M",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 935.171875,
+      "top": 2064.9375,
+      "right": 978,
+      "bottom": 2102.4375,
+      "width": 42.828125,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Adjust Subtitles Size",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 2171.6875,
+      "right": 595.671875,
+      "bottom": 2190.6875,
+      "width": 142.671875,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "-",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 848.140625,
+      "top": 2162.4375,
+      "right": 886.125,
+      "bottom": 2199.9375,
+      "width": 37.984375,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-KiYac",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "or",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 886.125,
+      "top": 2162.4375,
+      "right": 938.625,
+      "bottom": 2199.9375,
+      "width": 52.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "=",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 938.625,
+      "top": 2162.4375,
+      "right": 978,
+      "bottom": 2199.9375,
+      "width": 39.375,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Adjust Subtitles Delay",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 2269.1875,
+      "right": 607,
+      "bottom": 2288.1875,
+      "width": 154,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "G",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 842.203125,
+      "top": 2259.9375,
+      "right": 884.46875,
+      "bottom": 2297.4375,
+      "width": 42.265625,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-KiYac",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "or",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 884.46875,
+      "top": 2259.9375,
+      "right": 936.96875,
+      "bottom": 2297.4375,
+      "width": 52.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "H",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 936.96875,
+      "top": 2259.9375,
+      "right": 978,
+      "bottom": 2297.4375,
+      "width": 41.03125,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Adjust Playback Speed",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 2366.6875,
+      "right": 616.734375,
+      "bottom": 2385.6875,
+      "width": 163.734375,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "[",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 850.5,
+      "top": 2357.4375,
+      "right": 888,
+      "bottom": 2394.9375,
+      "width": 37.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-KiYac",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "or",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 888,
+      "top": 2357.4375,
+      "right": 940.5,
+      "bottom": 2394.9375,
+      "width": 52.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "]",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 940.5,
+      "top": 2357.4375,
+      "right": 978,
+      "bottom": 2394.9375,
+      "width": 37.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Toggle Subtitles",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 2464.1875,
+      "right": 568.046875,
+      "bottom": 2483.1875,
+      "width": 115.046875,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "C",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 936.3125,
+      "top": 2454.9375,
+      "right": 978,
+      "bottom": 2492.4375,
+      "width": 41.6875,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Toggle Subtitles Menu",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 2561.6875,
+      "right": 609.546875,
+      "bottom": 2580.6875,
+      "width": 156.546875,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "S",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 938.296875,
+      "top": 2552.4375,
+      "right": 978,
+      "bottom": 2589.9375,
+      "width": 39.703125,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Toggle Audio Menu",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 2659.1875,
+      "right": 587.53125,
+      "bottom": 2678.1875,
+      "width": 134.53125,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "A",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 937.90625,
+      "top": 2649.9375,
+      "right": 978,
+      "bottom": 2687.4375,
+      "width": 40.09375,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Toggle Info Menu",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 2756.6875,
+      "right": 573.75,
+      "bottom": 2775.6875,
+      "width": 120.75,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "I",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 940.5,
+      "top": 2747.4375,
+      "right": 978,
+      "bottom": 2784.9375,
+      "width": 37.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Toggle Playback Speed Menu",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 2854.1875,
+      "right": 662.25,
+      "bottom": 2873.1875,
+      "width": 209.25,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "R",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 938.265625,
+      "top": 2844.9375,
+      "right": 978,
+      "bottom": 2882.4375,
+      "width": 39.734375,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Toggle Statistics Menu",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 2951.6875,
+      "right": 612.609375,
+      "bottom": 2970.6875,
+      "width": 159.609375,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "D",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 936.875,
+      "top": 2942.4375,
+      "right": 978,
+      "bottom": 2979.9375,
+      "width": 41.125,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Play Next",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 3048.1875,
+      "right": 518.5,
+      "bottom": 3067.1875,
+      "width": 65.5,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "⇧ Shift",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 823.75,
+      "top": 3039.9375,
+      "right": 899.421875,
+      "bottom": 3077.4375,
+      "width": 75.671875,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "separator-uSn0j",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "+",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 899.421875,
+      "top": 3039.9375,
+      "right": 936.921875,
+      "bottom": 3077.4375,
+      "width": 37.5,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "N",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 936.921875,
+      "top": 3039.9375,
+      "right": 978,
+      "bottom": 3077.4375,
+      "width": 41.078125,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "label-WnVj8",
+    "ancestors": [
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT",
+      "section-hcYuV",
+      "sections-container-ZaZpD"
+    ],
+    "text": "Exit Fullscreen / Go Back",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 453,
+      "top": 3146.6875,
+      "right": 626.5,
+      "bottom": 3165.6875,
+      "width": 173.5,
+      "height": 19
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "settings",
+    "classes": "",
+    "ancestors": [
+      "combo-i2l7g",
+      "combos-TF23d",
+      "shortcut-swbky",
+      "shortcuts-tQ93G",
+      "shortcuts-group-lFLEk shortcuts-group-LbRfT"
+    ],
+    "text": "Esc",
+    "fontSize": 15,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 922.1875,
+      "top": 3137.4375,
+      "right": 978,
+      "bottom": 3174.9375,
+      "width": 55.8125,
+      "height": 37.5
+    },
+    "source": "src/components/ShortcutsGroup",
+    "reason": "Referência densa de atalhos/combinações de teclas."
+  },
+  {
+    "route": "addons",
+    "classes": "version-container-zdPyN",
+    "ancestors": [
+      "info-container-AdMB6",
+      "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "addons-list-container-Ovr2Z",
+      "addons-content-zhFBl",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "v.3.0.14",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 439.609375,
+      "top": -152,
+      "right": 1552.5,
+      "bottom": -132.5,
+      "width": 1112.890625,
+      "height": 19.5
+    },
+    "source": "src/routes/Addons/Addon/styles.less",
+    "reason": "Versão e tipos são metadados secundários; nome e descrição primária em pelo menos 22px."
+  },
+  {
+    "route": "addons",
+    "classes": "types-container-DaOrg",
+    "ancestors": [
+      "info-container-AdMB6",
+      "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "addons-list-container-Ovr2Z",
+      "addons-content-zhFBl",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "movie & series",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 312.5,
+      "top": -122.3125,
+      "right": 1552.5,
+      "bottom": -102.8125,
+      "width": 1240,
+      "height": 19.5
+    },
+    "source": "src/routes/Addons/Addon/styles.less",
+    "reason": "Versão e tipos são metadados secundários; nome e descrição primária em pelo menos 22px."
+  },
+  {
+    "route": "addons",
+    "classes": "version-container-zdPyN",
+    "ancestors": [
+      "info-container-AdMB6",
+      "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "addons-list-container-Ovr2Z",
+      "addons-content-zhFBl",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "v.1.30.7",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 425.375,
+      "top": 54.5,
+      "right": 1552.5,
+      "bottom": 74,
+      "width": 1127.125,
+      "height": 19.5
+    },
+    "source": "src/routes/Addons/Addon/styles.less",
+    "reason": "Versão e tipos são metadados secundários; nome e descrição primária em pelo menos 22px."
+  },
+  {
+    "route": "addons",
+    "classes": "types-container-DaOrg",
+    "ancestors": [
+      "info-container-AdMB6",
+      "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "addons-list-container-Ovr2Z",
+      "addons-content-zhFBl",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "channel",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 312.5,
+      "top": 84.1875,
+      "right": 1552.5,
+      "bottom": 103.6875,
+      "width": 1240,
+      "height": 19.5
+    },
+    "source": "src/routes/Addons/Addon/styles.less",
+    "reason": "Versão e tipos são metadados secundários; nome e descrição primária em pelo menos 22px."
+  },
+  {
+    "route": "addons",
+    "classes": "version-container-zdPyN",
+    "ancestors": [
+      "info-container-AdMB6",
+      "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "addons-list-container-Ovr2Z",
+      "addons-content-zhFBl",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "v.1.15.0",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 448.0625,
+      "top": 261,
+      "right": 1552.5,
+      "bottom": 280.5,
+      "width": 1104.4375,
+      "height": 19.5
+    },
+    "source": "src/routes/Addons/Addon/styles.less",
+    "reason": "Versão e tipos são metadados secundários; nome e descrição primária em pelo menos 22px."
+  },
+  {
+    "route": "addons",
+    "classes": "types-container-DaOrg",
+    "ancestors": [
+      "info-container-AdMB6",
+      "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "addons-list-container-Ovr2Z",
+      "addons-content-zhFBl",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "movie & series",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 312.5,
+      "top": 290.6875,
+      "right": 1552.5,
+      "bottom": 310.1875,
+      "width": 1240,
+      "height": 19.5
+    },
+    "source": "src/routes/Addons/Addon/styles.less",
+    "reason": "Versão e tipos são metadados secundários; nome e descrição primária em pelo menos 22px."
+  },
+  {
+    "route": "addons",
+    "classes": "version-container-zdPyN",
+    "ancestors": [
+      "info-container-AdMB6",
+      "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "addons-list-container-Ovr2Z",
+      "addons-content-zhFBl",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "v.1.0.0",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 574.96875,
+      "top": 467.5,
+      "right": 1552.5,
+      "bottom": 487,
+      "width": 977.53125,
+      "height": 19.5
+    },
+    "source": "src/routes/Addons/Addon/styles.less",
+    "reason": "Versão e tipos são metadados secundários; nome e descrição primária em pelo menos 22px."
+  },
+  {
+    "route": "addons",
+    "classes": "types-container-DaOrg",
+    "ancestors": [
+      "info-container-AdMB6",
+      "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "addons-list-container-Ovr2Z",
+      "addons-content-zhFBl",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "movie",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 312.5,
+      "top": 497.1875,
+      "right": 1552.5,
+      "bottom": 516.6875,
+      "width": 1240,
+      "height": 19.5
+    },
+    "source": "src/routes/Addons/Addon/styles.less",
+    "reason": "Versão e tipos são metadados secundários; nome e descrição primária em pelo menos 22px."
+  },
+  {
+    "route": "addons",
+    "classes": "version-container-zdPyN",
+    "ancestors": [
+      "info-container-AdMB6",
+      "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "addons-list-container-Ovr2Z",
+      "addons-content-zhFBl",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "v.1.0.0",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 525.8125,
+      "top": 674,
+      "right": 1552.5,
+      "bottom": 693.5,
+      "width": 1026.6875,
+      "height": 19.5
+    },
+    "source": "src/routes/Addons/Addon/styles.less",
+    "reason": "Versão e tipos são metadados secundários; nome e descrição primária em pelo menos 22px."
+  },
+  {
+    "route": "addons",
+    "classes": "types-container-DaOrg",
+    "ancestors": [
+      "info-container-AdMB6",
+      "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "addons-list-container-Ovr2Z",
+      "addons-content-zhFBl",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "movie & series",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 312.5,
+      "top": 703.6875,
+      "right": 1552.5,
+      "bottom": 723.1875,
+      "width": 1240,
+      "height": 19.5
+    },
+    "source": "src/routes/Addons/Addon/styles.less",
+    "reason": "Versão e tipos são metadados secundários; nome e descrição primária em pelo menos 22px."
+  },
+  {
+    "route": "addons",
+    "classes": "version-container-zdPyN",
+    "ancestors": [
+      "info-container-AdMB6",
+      "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "addons-list-container-Ovr2Z",
+      "addons-content-zhFBl",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "v.1.10.0",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 736.90625,
+      "top": 880.5,
+      "right": 1552.5,
+      "bottom": 900,
+      "width": 815.59375,
+      "height": 19.5
+    },
+    "source": "src/routes/Addons/Addon/styles.less",
+    "reason": "Versão e tipos são metadados secundários; nome e descrição primária em pelo menos 22px."
+  },
+  {
+    "route": "addons",
+    "classes": "types-container-DaOrg",
+    "ancestors": [
+      "info-container-AdMB6",
+      "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "addons-list-container-Ovr2Z",
+      "addons-content-zhFBl",
+      "nav-content-container-zl9hQ"
+    ],
+    "text": "movie, series & other",
+    "fontSize": 15,
+    "lineHeight": "19.5px",
+    "rect": {
+      "left": 312.5,
+      "top": 910.1875,
+      "right": 1552.5,
+      "bottom": 929.6875,
+      "width": 1240,
+      "height": 19.5
+    },
+    "source": "src/routes/Addons/Addon/styles.less",
+    "reason": "Versão e tipos são metadados secundários; nome e descrição primária em pelo menos 22px."
+  },
+  {
+    "route": "intro",
+    "classes": "",
+    "ancestors": [
+      "",
+      "label-UHMAy",
+      "checkbox-_AF32",
+      "form-container-HMlEh",
+      "content-container-A1Drn"
+    ],
+    "text": "I have read and agree with the Stremio",
+    "fontSize": 13.5,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 642,
+      "top": 687.3125,
+      "right": 882.859375,
+      "bottom": 704.3125,
+      "width": 240.859375,
+      "height": 17
+    },
+    "source": "src/components/Checkbox/Checkbox.less",
+    "reason": "Consentimentos densos no formulário de 330px; manter composição vertical. Requer avaliação física de legibilidade."
+  },
+  {
+    "route": "intro",
+    "classes": "link-ih0xx button-container-zVLH6",
+    "ancestors": [
+      "",
+      "label-UHMAy",
+      "checkbox-_AF32",
+      "form-container-HMlEh",
+      "content-container-A1Drn"
+    ],
+    "text": "Terms and Conditions",
+    "fontSize": 13.5,
+    "lineHeight": "17.55px",
+    "rect": {
+      "left": 642,
+      "top": 687.3125,
+      "right": 928.328125,
+      "bottom": 723.859375,
+      "width": 286.328125,
+      "height": 36.546875
+    },
+    "source": "src/components/Checkbox/Checkbox.less",
+    "reason": "Consentimentos densos no formulário de 330px; manter composição vertical. Requer avaliação física de legibilidade."
+  },
+  {
+    "route": "intro",
+    "classes": "",
+    "ancestors": [
+      "",
+      "label-UHMAy",
+      "checkbox-_AF32",
+      "form-container-HMlEh",
+      "content-container-A1Drn"
+    ],
+    "text": "I have read and agree with the Stremio",
+    "fontSize": 13.5,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 642,
+      "top": 741.40625,
+      "right": 829.546875,
+      "bottom": 777.40625,
+      "width": 187.546875,
+      "height": 36
+    },
+    "source": "src/components/Checkbox/Checkbox.less",
+    "reason": "Consentimentos densos no formulário de 330px; manter composição vertical. Requer avaliação física de legibilidade."
+  },
+  {
+    "route": "intro",
+    "classes": "link-ih0xx button-container-zVLH6",
+    "ancestors": [
+      "",
+      "label-UHMAy",
+      "checkbox-_AF32",
+      "form-container-HMlEh",
+      "content-container-A1Drn"
+    ],
+    "text": "Privacy Policy",
+    "fontSize": 13.5,
+    "lineHeight": "17.55px",
+    "rect": {
+      "left": 700.53125,
+      "top": 760.40625,
+      "right": 787.703125,
+      "bottom": 777.40625,
+      "width": 87.171875,
+      "height": 17
+    },
+    "source": "src/components/Checkbox/Checkbox.less",
+    "reason": "Consentimentos densos no formulário de 330px; manter composição vertical. Requer avaliação física de legibilidade."
+  },
+  {
+    "route": "intro",
+    "classes": "",
+    "ancestors": [
+      "",
+      "label-UHMAy",
+      "checkbox-_AF32",
+      "form-container-HMlEh",
+      "content-container-A1Drn"
+    ],
+    "text": "I agree to receive marketing communications from Stremio",
+    "fontSize": 13.5,
+    "lineHeight": "normal",
+    "rect": {
+      "left": 642,
+      "top": 794.953125,
+      "right": 928.546875,
+      "bottom": 830.953125,
+      "width": 286.546875,
+      "height": 36
+    },
+    "source": "src/components/Checkbox/Checkbox.less",
+    "reason": "Consentimentos densos no formulário de 330px; manter composição vertical. Requer avaliação física de legibilidade."
+  }
+]

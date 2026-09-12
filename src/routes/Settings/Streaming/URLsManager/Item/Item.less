@@ -125,3 +125,8 @@
         }
     }
 }
+
+// Preserve hover transitions without animating the TV outline.
+.item .actions .delete when (@webos = true) {
+    transition-property: background-color;
+}

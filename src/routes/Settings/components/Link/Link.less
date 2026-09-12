@@ -1,3 +1,4 @@
+@import (reference) '~stremio/common/screen-sizes.less';
 .link {
     position: relative;
     display: flex;
@@ -12,5 +13,11 @@
         .label {
             text-decoration: underline;
         }
+    }
+}
+& when (@webos = true) {
+    .link .label {
+        font-size: 22px;
+        line-height: 1.3;
     }
 }

@@ -1,0 +1,17 @@
+{
+  "date": "2026-09-09T18:31:31.695Z",
+  "state": {
+    "hash": "#/metadetails/movie/tt123",
+    "events": [
+      {
+        "type": "launch",
+        "detail": {
+          "displayAffinity": 0,
+          "url": "stremio:///metadetails/movie/tt123"
+        }
+      }
+    ],
+    "history": 1
+  },
+  "passed": true
+}

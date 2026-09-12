@@ -19,12 +19,16 @@
     @import (once, less) '~stremio-router/styles.css';
 }
 
-// iOS pads the bottom inset more than needed, so we deduce the actual inset size when using the webapp
-@calculated-bottom-safe-inset: if(@webos = true, 0rem, ~"min(env(safe-area-inset-bottom, 0rem), max(1rem, calc(var(--viewport-height-diff) - env(safe-area-inset-top, 0rem))))");
+// Compile-time TV defaults shared by the two spacing consumers via reference imports.
+@webos-overscan-horizontal: 48px;
+@webos-overscan-vertical: 27px;
+@webos-root-size: 15px;
+// Keep the complete iOS standalone calculation on desktop.
+@calculated-bottom-safe-inset: if(@webos = true, @webos-overscan-vertical, ~"min(env(safe-area-inset-bottom, 0rem), max(1rem, calc(var(--viewport-height-diff) - env(safe-area-inset-top, 0rem))))");
 
 // Viewport sizes
-@viewport-width: ~"100vw";
-@viewport-height: ~"100vh";
+@viewport-width: if(@webos = true, 1920px, ~"100vw");
+@viewport-height: if(@webos = true, 1080px, ~"100vh");
 
 // HTML sizes
 // Chromium 68 does not parse max() in calc(), so the webOS build uses the
@@ -35,12 +39,11 @@
 @html-standalone-height: if(@webos = true, @viewport-height, ~"calc(max(100%, var(--large-viewport-height)))");
 
 // Safe area insets
-// Chromium 68 cannot resolve env() stored in custom properties. TV has no notch;
-// T2.8 can adjust these constants for overscan after validating the TV layout.
-@safe-area-inset-top: if(@webos = true, 0rem, env(safe-area-inset-top, 0rem));
-@safe-area-inset-right: if(@webos = true, 0rem, env(safe-area-inset-right, 0rem));
-@safe-area-inset-bottom: if(@webos = true, 0rem, env(safe-area-inset-bottom, 0rem));
-@safe-area-inset-left: if(@webos = true, 0rem, env(safe-area-inset-left, 0rem));
+// Existing consumers own the padding: do not add a second shell inset.
+@safe-area-inset-top: if(@webos = true, @webos-overscan-vertical, env(safe-area-inset-top, 0rem));
+@safe-area-inset-right: if(@webos = true, @webos-overscan-horizontal, env(safe-area-inset-right, 0rem));
+@safe-area-inset-bottom: if(@webos = true, @webos-overscan-vertical, env(safe-area-inset-bottom, 0rem));
+@safe-area-inset-left: if(@webos = true, @webos-overscan-horizontal, env(safe-area-inset-left, 0rem));
 
 @top-overlay-size: 5.25rem;
 @bottom-overlay-size: 0rem;
@@ -90,25 +93,27 @@
     --large-viewport-height: @viewport-height;
     --small-viewport-width: @viewport-width;
     --small-viewport-height: @viewport-height;
-    --viewport-height-diff: calc(100vh - 100vh);
+    --viewport-height-diff: if(@webos = true, 0px, ~"calc(100vh - 100vh)");
 
-    @supports (height: 100dvh) {
-        --dynamic-viewport-width: 100dvw;
-        --dynamic-viewport-height: 100dvh;
-    }
+    & when (@webos = false) {
+        @supports (height: 100dvh) {
+            --dynamic-viewport-width: 100dvw;
+            --dynamic-viewport-height: 100dvh;
+        }
 
-    @supports (height: 100lvh) {
-        --large-viewport-width: 100lvw;
-        --large-viewport-height: 100lvh;
-    }
+        @supports (height: 100lvh) {
+            --large-viewport-width: 100lvw;
+            --large-viewport-height: 100lvh;
+        }
 
-    @supports (height: 100svh) {
-        --small-viewport-width: 100svw;
-        --small-viewport-height: 100svh;
-    }
+        @supports (height: 100svh) {
+            --small-viewport-width: 100svw;
+            --small-viewport-height: 100svh;
+        }
 
-    @supports (height: 100lvh) and (height: 100svh) {
-        --viewport-height-diff: calc(100lvh - 100svh);
+        @supports (height: 100lvh) and (height: 100svh) {
+            --viewport-height-diff: calc(100lvh - 100svh);
+        }
     }
 
     @media (display-mode: standalone) {
@@ -284,4 +289,8 @@ html {
     :root {
         --bottom-overlay-size: 6rem;
     }
+}
+
+html when (@webos = true) {
+    font-size: @webos-root-size;
 }

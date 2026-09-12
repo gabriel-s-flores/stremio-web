@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from 'stremio/components';
+import { Button, ExternalLink } from 'stremio/components';
 import styles from './Link.less';
 
 type Props = {
@@ -10,10 +10,11 @@ type Props = {
 };
 
 const Link = ({ label, href, target, onClick }: Props) => {
+    const Component = href && !href.startsWith('#') ? ExternalLink : Button;
     return (
-        <Button className={styles['link']} title={label} target={target ?? '_blank'} href={href} onClick={onClick}>
+        <Component className={styles['link']} title={label} target={target ?? '_blank'} href={href} onClick={onClick}>
             <div className={styles['label']}>{ label }</div>
-        </Button>
+        </Component>
     );
 };
 

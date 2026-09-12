@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2025 Smart code 203358507
 
 @import (reference) '~stremio/common/screen-sizes.less';
+@import (reference) '~stremio/common/tv-focus.less';
 
 @height: 4rem;
 @width: 4rem;
@@ -46,9 +47,11 @@
             }
         }
 
-        &:focus-visible {
-            outline: 2px solid var(--primary-foreground-color);
-            outline-offset: -2px;
+        & when (@webos = false) {
+            &:focus-visible {
+                outline: 2px solid var(--primary-foreground-color);
+                outline-offset: -2px;
+            }
         }
 
         &.disabled {
@@ -71,4 +74,9 @@
             }
         }
     }
+}
+
+// Keep the TV cursor visible through local hover/selected overrides.
+.group-container .icon-container {
+    .tv-focus();
 }

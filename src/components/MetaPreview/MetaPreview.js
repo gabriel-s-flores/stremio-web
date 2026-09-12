@@ -1,12 +1,12 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 const React = require('react');
+const { default: ExternalLink } = require('stremio/components/ExternalLink');
 const PropTypes = require('prop-types');
 const classnames = require('classnames');
 const UrlUtils = require('url');
 const { useTranslation } = require('react-i18next');
 const { default: Icon } = require('@stremio/stremio-icons/react');
-const { default: Button } = require('stremio/components/Button');
 const { default: Image } = require('stremio/components/Image');
 const { default: ActionsGroup } = require('stremio/components/ActionsGroup');
 const ModalDialog = require('stremio/components/ModalDialog');
@@ -154,7 +154,7 @@ const MetaPreview = React.forwardRef(({ className, compact, name, logo, backgrou
                             }
                             {
                                 linksGroups.has(CONSTANTS.IMDB_LINK_CATEGORY) ?
-                                    <Button
+                                    <ExternalLink
                                         className={styles['imdb-button-container']}
                                         title={linksGroups.get(CONSTANTS.IMDB_LINK_CATEGORY).label}
                                         href={linksGroups.get(CONSTANTS.IMDB_LINK_CATEGORY).href}
@@ -163,7 +163,7 @@ const MetaPreview = React.forwardRef(({ className, compact, name, logo, backgrou
                                     >
                                         <div className={styles['label']}>{linksGroups.get(CONSTANTS.IMDB_LINK_CATEGORY).label}</div>
                                         <Icon className={styles['icon']} name={'imdb'} />
-                                    </Button>
+                                    </ExternalLink>
                                     :
                                     null
                             }

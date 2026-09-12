@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import classnames from 'classnames';
-import { Button } from 'stremio/components';
+import { Button, ExternalLink } from 'stremio/components';
 import { useCore } from 'stremio/core';
 import useProfile from 'stremio/common/useProfile';
 import { withCoreSuspender } from 'stremio/common/CoreSuspender';
@@ -58,21 +58,17 @@ const StreamingServerWarning = ({ className }: Props) => {
                 {t('SETTINGS_SERVER_UNAVAILABLE')}
             </div>
             <div className={styles['actions']}>
-                <a
+                <ExternalLink
                     href='https://www.stremio.com/download-service'
                     target='_blank'
                     rel='noreferrer'
+                    className={styles['action']}
+                    title={t('SERVICE_INSTALL')}
                 >
-                    <Button
-                        className={styles['action']}
-                        title={t('SERVICE_INSTALL')}
-                        tabIndex={-1}
-                    >
-                        <div className={styles['label']}>
-                            {t('SERVICE_INSTALL')}
-                        </div>
-                    </Button>
-                </a>
+                    <div className={styles['label']}>
+                        {t('SERVICE_INSTALL')}
+                    </div>
+                </ExternalLink>
                 <Button
                     className={styles['action']}
                     title={t('WARNING_STREAMING_SERVER_LATER')}

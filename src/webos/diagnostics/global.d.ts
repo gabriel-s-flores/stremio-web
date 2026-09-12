@@ -1,4 +1,13 @@
 type WebosDiagnosticsSnapshot = {
+    observability: {
+        sentryEnabled: boolean,
+        provider: string,
+        release: string | null,
+        dist: string | null,
+        initState: string,
+        failureKind: string | null,
+        transportState: string,
+    },
     environment: {
         userAgent: string | null,
         origin: string | null,

@@ -2,6 +2,7 @@ import AddonDetailsModal from './AddonDetailsModal';
 import ActionMenu from './ActionMenu';
 import BottomSheet from './BottomSheet';
 import Button from './Button';
+import ExternalLink from './ExternalLink';
 import Checkbox from './Checkbox';
 import Chips from './Chips';
 import ColorInput from './ColorInput';
@@ -35,6 +36,7 @@ import Video from './Video';
 import ActionsGroup from './ActionsGroup';
 
 export {
+    ExternalLink,
     AddonDetailsModal,
     ActionMenu,
     BottomSheet,

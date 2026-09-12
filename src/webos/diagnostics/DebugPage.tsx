@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { usePlatform } from '../../common/Platform/Platform';
+import { webOSAdapter } from '../../common/Platform/webos/adapter';
 import styles from './DebugPage.less';
 
 const LABELS = {
@@ -78,6 +80,7 @@ const getSnapshot = (): WebosDiagnosticsSnapshot | null => {
 };
 
 const DebugPage = () => {
+    const platform = usePlatform();
     const [snapshot, setSnapshot] = useState<WebosDiagnosticsSnapshot | null>(getSnapshot);
 
     useEffect(() => {
@@ -142,6 +145,13 @@ const DebugPage = () => {
                 </header>
 
                 <Section title={LABELS.environment}>
+                    <Metric label={'platform.name'} value={platform.name} />
+                    <Metric label={'isTV'} value={String(platform.isTV)} />
+                    <Metric label={'isMobile'} value={String(platform.isMobile)} />
+                    <Metric label={'webos.active'} value={String(platform.webos.active)} />
+                    <Metric label={'webos.modelName'} value={platform.webos.deviceInfo?.modelName || LABELS.unavailable} />
+                    <Metric label={'webos.sdkVersion'} value={platform.webos.deviceInfo?.sdkVersion || LABELS.unavailable} />
+                    <Metric label={'webos.backAvailable'} value={String(webOSAdapter.backAvailable())} />
                     <Metric label={LABELS.userAgent} value={environment.userAgent || LABELS.unavailable} />
                     <Metric label={LABELS.origin} value={environment.origin || LABELS.unavailable} />
                     <Metric label={LABELS.protocol} value={environment.protocol || LABELS.unavailable} />

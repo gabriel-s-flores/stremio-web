@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-09T18:34:10.060Z",
+  "checksPassed": true,
+  "hostedRelaunchPassed": true,
+  "packagedFixturePassed": true,
+  "coldLaunchFixturePassed": true,
+  "fullPlayerHostedValidated": false,
+  "fullAppPackagedValidated": false,
+  "physicalTVValidated": false,
+  "hashes": {
+    "src/common/Platform/webos/adapter.ts": "79f807725ae61974bb4a7e965169a62bffe2189a17f6dec624d824f7822468e7",
+    "src/common/Platform/webos/useWebOS.ts": "73dd7609e4cec90fd0c5a9ecdb5c0ad78ee22d694e0bf75d1e2145b08e788483",
+    "src/common/parseDeepLink.js": "c6b0d5abcb436f099164e76fbc571b2f7db8309f7715eee650cf2eb1e6c6cf70",
+    "src/App/App.js": "13520a1858136408d55686c332b40b927c50eabf6c42482110340daf254c69ed",
+    "src/routes/Player/Player.js": "4fde06f971df17573196c48f7fbb0862cbba14599c1b51f85450816f2d05a8c5",
+    "tests/webosLifecycle.spec.js": "ec0f52ea781c11ca1c638ed9a2de2fd7a16657ba9e4e52a0118eb03780701778"
+  }
+}

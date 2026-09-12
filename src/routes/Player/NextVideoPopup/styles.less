@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/tv-focus.less';
 @import (reference) '~stremio/common/screen-sizes.less';
 
 .next-video-popup-container {
@@ -24,6 +25,7 @@
 
     .poster-container {
         flex: 1 1 25%;
+        & when (@webos = true) { flex: 0 0 25%; }
         display: flex;
         justify-content: center;
         align-items: center;
@@ -52,6 +54,7 @@
 
     .info-container {
         flex: 1 1 55%;
+        & when (@webos = true) { flex: 1 1 75%; }
         display: flex;
         flex-direction: column;
 
@@ -132,7 +135,7 @@
                 .label {
                     flex: none;
                     max-height: 2.4em;
-                    font-size: 1.1rem;
+                    font-size: if(@webos = true, 22px, 1.1rem);
                     font-weight: 500;
                     color: var(--primary-foreground-color);
                 }
@@ -168,5 +171,17 @@
                 }
             }
         }
+    }
+}
+
+// Keep the TV cursor visible through local hover/selected overrides.
+.next-video-popup-container .info-container .buttons-container .button-container.play-button {
+    .tv-focus();
+}
+
+& when (@webos = true) {
+    .next-video-popup-container .name, .next-video-popup-container .title, .next-video-popup-container .label {
+        font-size: 22px;
+        line-height: 1.3;
     }
 }
