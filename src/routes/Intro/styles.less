@@ -335,6 +335,34 @@
     }
 }
 
+// Auto margins center the form when it fits and keep its top reachable when
+// the virtual keyboard reduces the viewport. Detailed navigation belongs to T4.9.
+.intro-container.tv when (@webos = true) {
+    justify-content: flex-start;
+    padding: 2rem;
+
+    .heading-container {
+        margin-top: auto;
+        margin-bottom: 2rem;
+
+        .logo-container {
+            margin-bottom: 1rem;
+        }
+    }
+
+    .content-container {
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: auto;
+
+        .form-container, .options-container {
+            width: 30rem;
+            max-width: 100%;
+            margin: 0;
+        }
+    }
+}
+
 // Keep the TV cursor visible through local hover/selected overrides.
 .intro-container .content-container .submit-button,
 .intro-container .content-container .guest-login-button,

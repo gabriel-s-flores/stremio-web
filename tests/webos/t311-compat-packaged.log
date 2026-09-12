@@ -1,0 +1,7 @@
+PASS build/fa1d4bfcd17a7072cca3d3e34feab88eb7ba07b5/scripts/203.js
+PASS build/fa1d4bfcd17a7072cca3d3e34feab88eb7ba07b5/scripts/989.js
+PASS build/fa1d4bfcd17a7072cca3d3e34feab88eb7ba07b5/scripts/main.js
+PASS build/fa1d4bfcd17a7072cca3d3e34feab88eb7ba07b5/scripts/worker.js
+PASS build/webos/webOSTV.js
+ES2018 compatibility: 5/5 files passed
+$ node tools/check-es-compat.mjs
