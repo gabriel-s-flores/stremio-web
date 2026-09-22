@@ -16,6 +16,8 @@ const { withCoreSuspender } = require('stremio/common/CoreSuspender');
 const useSearchHistory = require('./useSearchHistory');
 const useLocalSearch = require('./useLocalSearch');
 const styles = require('./styles');
+const SearchTrigger = process.env.WEBOS ? Button : 'div';
+
 const useBinaryState = require('stremio/common/useBinaryState');
 
 const SearchBar = React.memo(({ className, query, active }) => {
@@ -134,9 +136,9 @@ const SearchBar = React.memo(({ className, query, active }) => {
                         onClick={openHistory}
                     />
                     :
-                    <div className={styles['search-input']}>
+                    <SearchTrigger className={styles['search-input']}>
                         <div className={styles['placeholder-label']}>{ t('SEARCH_OR_PASTE_LINK') }</div>
-                    </div>
+                    </SearchTrigger>
             }
             {
                 currentQuery.length > 0 ?
@@ -144,7 +146,7 @@ const SearchBar = React.memo(({ className, query, active }) => {
                         <Icon className={styles['icon']} name={'close'} />
                     </Button>
                     :
-                    <Button className={styles['submit-button-container']}>
+                    <Button className={styles['submit-button-container']} onClick={process.env.WEBOS && active ? () => searchInputRef.current.focus() : undefined}>
                         <Icon className={styles['icon']} name={'search'} />
                     </Button>
             }
@@ -211,7 +213,7 @@ const SearchBarFallback = ({ className }) => {
             <div className={styles['search-input']}>
                 <div className={styles['placeholder-label']}>{ t('SEARCH_OR_PASTE_LINK') }</div>
             </div>
-            <Button className={styles['submit-button-container']} tabIndex={-1}>
+            <Button className={styles['submit-button-container']} disabled={!!process.env.WEBOS} tabIndex={-1}>
                 <Icon className={styles['icon']} name={'search'} />
             </Button>
         </label>

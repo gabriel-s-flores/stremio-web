@@ -1,0 +1,13 @@
+{
+  "name": "player",
+  "tags": [
+    "player"
+  ],
+  "failures": [
+    "State readiness assertion failed"
+  ],
+  "controls": [],
+  "edges": [],
+  "enter": [],
+  "stage": "ready"
+}

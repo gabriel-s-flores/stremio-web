@@ -8,6 +8,9 @@ import { Button } from 'stremio/components';
 import { useGamepad } from 'stremio/services';
 import type { ControllerType } from 'stremio/services/GamepadContext';
 import GamepadDiagram from './GamepadDiagram';
+import FocusLock from 'react-focus-lock';
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
+
 import styles from './styles.less';
 
 const LEFT = '←';
@@ -70,7 +73,7 @@ const GamepadModal = ({ onClose }: Props) => {
     }, [gamepad]);
 
     return createPortal((
-        <div className={styles['gamepad-modal']} data-gamepad-modal>
+        <FocusScope className={styles['gamepad-modal']} {...(process.env.WEBOS ? { lockProps: { 'data-gamepad-modal': true } } : { 'data-gamepad-modal': true })}>
             <div className={styles['backdrop']} onClick={onClose} />
 
             <div className={styles['container']}>
@@ -158,7 +161,7 @@ const GamepadModal = ({ onClose }: Props) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </FocusScope>
     ), document.body);
 };
 

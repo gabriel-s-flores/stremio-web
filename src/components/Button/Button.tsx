@@ -26,11 +26,15 @@ type Props = {
 
 const Button = forwardRef(({ className, href, disabled, children, onLongPress, onDoubleClick, ...props }: Props, ref) => {
     const longPress = useLongPress(onLongPress!, { detect: LongPressEventType.Pointer });
+    // Several legacy callers express disabled through the shared CSS class.
+    const tvDisabled = !!process.env.WEBOS && (disabled || /(^|\s)disabled(\s|$)/.test(className || ''));
 
     const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (process.env.WEBOS && (tvDisabled || event.target !== event.currentTarget || event.repeat)) return;
         if (typeof props.onKeyDown === 'function') {
             props.onKeyDown(event);
         }
+        if (process.env.WEBOS && event.defaultPrevented) return;
 
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -39,7 +43,7 @@ const Button = forwardRef(({ className, href, disabled, children, onLongPress, o
                 event.currentTarget.click();
             }
         }
-    }, [props.onKeyDown]);
+    }, [props.onKeyDown, tvDisabled]);
 
     const onMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
         if (typeof props.onMouseDown === 'function') {
@@ -60,6 +64,7 @@ const Button = forwardRef(({ className, href, disabled, children, onLongPress, o
         {
             tabIndex: 0,
             ...props,
+            ...(process.env.WEBOS ? { tabIndex: tvDisabled ? -1 : 0, 'aria-disabled': !!tvDisabled } : {}),
             ref,
             className: classNames(className, styles['button-container'], { 'disabled': disabled }),
             href,

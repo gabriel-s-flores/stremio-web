@@ -45,7 +45,7 @@
     }
 
     .close-button {
-        display: none;
+        display: if(@webos = true, block, none);
         position: absolute;
         top: calc(1.3rem + var(--safe-area-inset-top));
         right: 1.3rem;

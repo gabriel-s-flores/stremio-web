@@ -8,6 +8,9 @@ const { Button } = require('stremio/components');
 const { useToast } = require('stremio/common');
 const { writeTextToClipboard } = require('stremio/common/clipboard');
 const ClipboardFallbackModal = require('stremio/components/ClipboardFallbackModal');
+const FocusLock = require('react-focus-lock').default;
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
+
 const styles = require('./styles.less');
 
 const StatisticsMenu = React.memo(React.forwardRef(({ className, peers, speed, completed, infoHash }, ref) => {
@@ -51,7 +54,7 @@ const StatisticsMenu = React.memo(React.forwardRef(({ className, peers, speed, c
 
     return (
         <React.Fragment>
-            <div ref={ref} className={classNames(className, styles['statistics-menu-container'])} onMouseDown={onMouseDown}>
+            <FocusScope ref={ref} className={classNames(className, styles['statistics-menu-container'])} {...(process.env.WEBOS ? { lockProps: { onMouseDown } } : { onMouseDown })}>
                 <div className={styles['title']}>
                     {t('PLAYER_STATISTICS')}
                 </div>
@@ -94,7 +97,7 @@ const StatisticsMenu = React.memo(React.forwardRef(({ className, peers, speed, c
                         </div>
                     </Button>
                 </div>
-            </div>
+            </FocusScope>
             {
                 copyFallbackValue !== null ?
                     <ClipboardFallbackModal

@@ -252,6 +252,17 @@
 }
 
 & when (@webos = true) {
+    .addon-container .details-button {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+        align-items: flex-start;
+    }
+
+    .addon-container .buttons-container .uninstall-button-container:focus {
+        opacity: 1;
+    }
+
     .addon-container .info-container .description-container {
         font-size: 22px;
         line-height: 1.3;

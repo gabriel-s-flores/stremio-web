@@ -1,0 +1,50 @@
+{
+    "date":  "2026-09-14T01:54:00.1205351Z",
+    "revision":  "84a18d0c545d8c8a45964d7cff301da973715735",
+    "workingTreeChanges":  true,
+    "technicalAcceptance":  false,
+    "commands":  [
+                     {
+                         "exitCode":  0,
+                         "command":  "corepack pnpm test --runInBand",
+                         "tests":  616,
+                         "log":  "t41-tests.log",
+                         "suites":  30
+                     },
+                     {
+                         "exitCode":  0,
+                         "command":  "corepack pnpm lint",
+                         "log":  "t41-lint.log"
+                     },
+                     {
+                         "exitCode":  0,
+                         "command":  "corepack pnpm build",
+                         "warnings":  2,
+                         "log":  "t41-build-desktop.log"
+                     },
+                     {
+                         "exitCode":  0,
+                         "command":  "corepack pnpm build:webos:debug",
+                         "warnings":  2,
+                         "log":  "t41-build-debug.log"
+                     },
+                     {
+                         "passedFiles":  7,
+                         "exitCode":  0,
+                         "command":  "corepack pnpm check:webos-compat",
+                         "log":  "t41-compat.log"
+                     },
+                     {
+                         "exitCode":  0,
+                         "command":  "git diff --check",
+                         "log":  "t41-diff-check.log"
+                     },
+                     {
+                         "exitCode":  1,
+                         "command":  "node tools/t41-navigation-runner.mjs \u003cconfig-privada\u003e",
+                         "note":  "Native runtime gate passed; complete state coverage remains open"
+                     }
+                 ],
+    "runtimeGatePassed":  true,
+    "runtimeReport":  "t41-native-gate.json"
+}

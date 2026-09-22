@@ -6,6 +6,9 @@ const classnames = require('classnames');
 const { languages } = require('stremio/common');
 const { SUBTITLES_SIZES, DEFAULT_SUBTITLES_LANGUAGE, LOCAL_SUBTITLES_LANGUAGE } = require('stremio/common/CONSTANTS');
 const { Button } = require('stremio/components');
+const FocusLock = require('react-focus-lock').default;
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
+
 const styles = require('./styles');
 const { t } = require('i18next');
 const { default: Stepper } = require('./Stepper');
@@ -156,7 +159,7 @@ const SubtitlesMenu = React.memo(React.forwardRef((props, ref) => {
         }
     }, [props.selectedSubtitlesTrackId, props.selectedExtraSubtitlesTrackId, props.subtitlesOffset, props.extraSubtitlesOffset, props.onSubtitlesOffsetChanged, props.onExtraSubtitlesOffsetChanged]);
     return (
-        <div ref={ref} className={classnames(props.className, styles['subtitles-menu-container'])} onMouseDown={onMouseDown}>
+        <FocusScope ref={ref} className={classnames(props.className, styles['subtitles-menu-container'])} {...(process.env.WEBOS ? { lockProps: { onMouseDown } } : { onMouseDown })}>
             <div className={styles['languages-container']}>
                 <div className={styles['languages-header']}>{ t('PLAYER_SUBTITLES_LANGUAGES') }</div>
                 <div className={styles['languages-list']}>
@@ -244,7 +247,7 @@ const SubtitlesMenu = React.memo(React.forwardRef((props, ref) => {
                     />
                 </div>
             </div>
-        </div>
+        </FocusScope>
     );
 }));
 

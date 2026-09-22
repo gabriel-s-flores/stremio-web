@@ -293,4 +293,8 @@ html {
 
 html when (@webos = true) {
     font-size: @webos-root-size;
+
+    :global([data-focus-lock-disabled="false"]) { --spatial-navigation-contain: contain; }
+    // FocusLock still traps focusin; its sequential Tab sentinels are not TV actions.
+    :global([data-focus-guard]) { display: none; }
 }

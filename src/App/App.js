@@ -22,6 +22,9 @@ const ProtectedRoutes = withCoreSuspender(Routes);
 const NAVIGATE_TABS_ROUTES = ['/', '/discover', '/library', '/calendar', '/addons', '/settings'];
 
 const App = () => {
+    React.useEffect(() => {
+        if (process.env.WEBOS) return require('stremio/common/installTVSpatialNavigation')();
+    }, []);
     const core = useCore();
     const profile = useProfile();
     const { i18n } = useTranslation();

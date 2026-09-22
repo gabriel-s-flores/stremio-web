@@ -1,0 +1,61 @@
+{
+  "name": "player-fixture-cast",
+  "date": "2026-09-13T13:48:07.564Z",
+  "tags": [],
+  "failures": [],
+  "controls": [
+    {
+      "id": "20",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(6) > div:nth-child(1)",
+      "tag": "DIV",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "unsafe",
+      "reason": "Read-only route diagnosis; Enter coverage pending explicit action expectations",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 1635,
+        "y": 900,
+        "width": 210,
+        "height": 52.5
+      },
+      "phase": "initial",
+      "reached": true
+    }
+  ],
+  "edges": [
+    {
+      "phase": "initial",
+      "from": "20",
+      "key": "ArrowUp",
+      "to": "20",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "20",
+      "key": "ArrowDown",
+      "to": "20",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "20",
+      "key": "ArrowLeft",
+      "to": "20",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "20",
+      "key": "ArrowRight",
+      "to": "20",
+      "scrollChanged": false
+    }
+  ],
+  "enter": [],
+  "stage": "graph-initial"
+}

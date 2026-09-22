@@ -90,6 +90,7 @@ const Player = () => {
     const errorRef = React.useRef();
 
     const [immersed, setImmersed] = React.useState(true);
+    const [tvControlFocused, setTVControlFocused] = React.useState(false);
     const setImmersedDebounced = React.useCallback(debounce(setImmersed, 3000), []);
     const [fullscreen, , , toggleFullscreen, , setVideoElement] = useFullscreen();
 
@@ -290,8 +291,8 @@ const Player = () => {
         seekByKeyboard(offset);
     }, [seekByKeyboard]);
     const overlayHidden = React.useMemo(() => {
-        return keyboardSeekTime === null && immersed && !casting && video.state.paused !== null && !video.state.paused && !menusOpen;
-    }, [keyboardSeekTime, immersed, casting, video.state.paused, menusOpen]);
+        return !tvControlFocused && keyboardSeekTime === null && immersed && !casting && video.state.paused !== null && !video.state.paused && !menusOpen;
+    }, [tvControlFocused, keyboardSeekTime, immersed, casting, video.state.paused, menusOpen]);
 
     React.useEffect(() => {
         if (!video.state.manifest?.props.includes('subtitlesOffsetMinimum')) {
@@ -735,12 +736,12 @@ const Player = () => {
     onShortcut('seekForward', (combo) => {
         const seekDuration = combo === 1 ? settings.seekShortTimeDuration : settings.seekTimeDuration;
         onKeyboardSeekRequested(seekDuration);
-    }, [settings.seekShortTimeDuration, settings.seekTimeDuration, onKeyboardSeekRequested], !menusOpen);
+    }, [settings.seekShortTimeDuration, settings.seekTimeDuration, onKeyboardSeekRequested], !menusOpen && !process.env.WEBOS);
 
     onShortcut('seekBackward', (combo) => {
         const seekDuration = combo === 1 ? settings.seekShortTimeDuration : settings.seekTimeDuration;
         onKeyboardSeekRequested(-seekDuration);
-    }, [settings.seekShortTimeDuration, settings.seekTimeDuration, onKeyboardSeekRequested], !menusOpen);
+    }, [settings.seekShortTimeDuration, settings.seekTimeDuration, onKeyboardSeekRequested], !menusOpen && !process.env.WEBOS);
 
     onShortcut('mute', () => {
         video.state.muted === true ? onUnmuteRequested() : onMuteRequested();
@@ -751,7 +752,7 @@ const Player = () => {
             const volume = combo === 0 ? Math.min(video.state.volume + 5, 200) : Math.max(video.state.volume - 5, 0);
             onVolumeChangeRequested(volume);
         }
-    }, [video.state.volume], !menusOpen);
+    }, [video.state.volume], !menusOpen && !process.env.WEBOS);
 
     onShortcut('audioMenu', () => {
         closeMenus();
@@ -991,6 +992,8 @@ const Player = () => {
 
     return (
         <div ref={playerRef} className={classnames(styles['player-container'], { [styles['overlayHidden']]: overlayHidden })}
+            onFocus={process.env.WEBOS ? () => setTVControlFocused(true) : undefined}
+            onBlur={process.env.WEBOS ? (event) => setTVControlFocused(event.currentTarget.contains(event.relatedTarget)) : undefined}
             onMouseDown={onContainerMouseDown}
             onMouseMove={onContainerMouseMove}
             onMouseOver={onContainerMouseMove}

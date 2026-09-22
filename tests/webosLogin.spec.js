@@ -43,7 +43,7 @@ function harness({ isTV = true, isMobile = false, form = 'login', reset = false 
         const source = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
             fileName: file.replace(/\.js$/, '.jsx'), compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React, esModuleInterop: true }
         }).outputText;
-        vm.runInNewContext(source, { module, exports: module.exports, URLSearchParams, fetch, setTimeout, clearTimeout,
+        vm.runInNewContext(source, { module, exports: module.exports, process: { env: { WEBOS: isTV } }, URLSearchParams, fetch, setTimeout, clearTimeout,
             window: { navigate: jest.fn() }, console: { error: jest.fn() }, require: id => {
                 if (id === 'react') return react;
                 if (id === 'stremio/common') return common;
@@ -190,7 +190,7 @@ test.each(['login', 'signup'])('Real input chain preserves native types, masking
     login(h);
     const enter = placeholder => {
         const node = h.input(placeholder), wrapper = Credentials.render(node.props, node.ref);
-        TextInput.render(wrapper.props, node.ref).props.onKeyDown({ key: 'Enter', nativeEvent: {} }); h.render();
+        TextInput.render(wrapper.props, node.ref).props.onKeyDown({ key: 'Enter', nativeEvent: {}, preventDefault: jest.fn() }); h.render();
     };
     enter('EMAIL'); expect(h.input('PASSWORD').ref.current.focus).toHaveBeenCalled();
     enter('PASSWORD');

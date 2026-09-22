@@ -4,6 +4,9 @@ import React, { forwardRef, memo, MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import Option from '../OptionsMenu/Option';
+import FocusLock from 'react-focus-lock';
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
+
 import styles from './styles.less';
 
 type CastDevice = {
@@ -27,7 +30,7 @@ const CastDevicesMenu = memo(forwardRef<HTMLDivElement, Props>(({ className, dev
     }, []);
 
     return (
-        <div ref={ref} className={classNames(className, styles['cast-devices-menu-container'])} onMouseDown={onMouseDown}>
+        <FocusScope ref={ref} className={classNames(className, styles['cast-devices-menu-container'])} {...(process.env.WEBOS ? { lockProps: { onMouseDown } } : { onMouseDown })}>
             {
                 devices.length > 0 ?
                     devices.map(({ id, name }) => (
@@ -49,7 +52,7 @@ const CastDevicesMenu = memo(forwardRef<HTMLDivElement, Props>(({ className, dev
                         }
                     </div>
             }
-        </div>
+        </FocusScope>
     );
 }));
 

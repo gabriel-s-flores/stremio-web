@@ -1,0 +1,435 @@
+{
+  "name": "addons-filters",
+  "date": "2026-09-13T19:15:23.164Z",
+  "tags": [
+    "addons-filters"
+  ],
+  "failures": [],
+  "controls": [
+    {
+      "id": "10",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1)",
+      "tag": "DIV",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "safe",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 160.5,
+        "y": 177,
+        "width": 225,
+        "height": 45
+      },
+      "phase": "initial",
+      "reached": true
+    },
+    {
+      "id": "11",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2)",
+      "tag": "DIV",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "safe",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 160.5,
+        "y": 222,
+        "width": 225,
+        "height": 45
+      },
+      "phase": "initial",
+      "reached": true
+    },
+    {
+      "id": "12",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > div:nth-child(3)",
+      "tag": "DIV",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "safe",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 160.5,
+        "y": 267,
+        "width": 225,
+        "height": 45
+      },
+      "phase": "initial",
+      "reached": true
+    }
+  ],
+  "edges": [
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowUp",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowDown",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowLeft",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowRight",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowUp",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowDown",
+      "to": "12",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowLeft",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowRight",
+      "to": "11",
+      "scrollChanged": true
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowUp",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowDown",
+      "to": "12",
+      "scrollChanged": true
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowLeft",
+      "to": "12",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowRight",
+      "to": "12",
+      "scrollChanged": true
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowUp",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowDown",
+      "to": "12",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowLeft",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowRight",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowUp",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowDown",
+      "to": "12",
+      "scrollChanged": true
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowLeft",
+      "to": "12",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowRight",
+      "to": "12",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowUp",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowDown",
+      "to": "12",
+      "scrollChanged": true
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowLeft",
+      "to": "12",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowRight",
+      "to": "12",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowUp",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowDown",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowLeft",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowRight",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowUp",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowDown",
+      "to": "12",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowLeft",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowRight",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowUp",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowDown",
+      "to": "12",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowLeft",
+      "to": "12",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "12",
+      "key": "ArrowRight",
+      "to": "12",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowUp",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowDown",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowLeft",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowRight",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowUp",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowDown",
+      "to": "12",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowLeft",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "11",
+      "key": "ArrowRight",
+      "to": "11",
+      "scrollChanged": true
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowUp",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowDown",
+      "to": "11",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowLeft",
+      "to": "10",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "10",
+      "key": "ArrowRight",
+      "to": "10",
+      "scrollChanged": true
+    }
+  ],
+  "enter": [
+    {
+      "phase": "initial",
+      "id": "10",
+      "clicks": 1,
+      "submits": 0,
+      "effect": true,
+      "passed": true
+    },
+    {
+      "phase": "initial",
+      "id": "11",
+      "clicks": 1,
+      "submits": 0,
+      "effect": true,
+      "passed": true
+    },
+    {
+      "phase": "initial",
+      "id": "12",
+      "clicks": 1,
+      "submits": 0,
+      "effect": true,
+      "passed": true
+    }
+  ],
+  "stage": "enter-initial"
+}

@@ -1,6 +1,9 @@
 import React, { memo, RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Transition from '../Transition';
+import FocusLock from 'react-focus-lock';
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
+
 import styles from './ContextMenu.less';
 
 const PADDING = 8;
@@ -135,16 +138,14 @@ const ContextMenu = ({ children, on, autoClose, lock }: Props) => {
                 onContextMenu={containerOnContextMenu}
                 onTouchStart={close}
             >
-                <div
+                <FocusScope
                     ref={ref}
                     className={styles['context-menu']}
                     style={style}
-                    onMouseDown={stopPropagation}
-                    onTouchStart={stopPropagation}
-                    onClick={onClick}
+                    {...(process.env.WEBOS ? { lockProps: { onMouseDown: stopPropagation, onTouchStart: stopPropagation, onClick } } : { onMouseDown: stopPropagation, onTouchStart: stopPropagation, onClick })}
                 >
                     {children}
-                </div>
+                </FocusScope>
             </div>
         </Transition>
     ), document.body);

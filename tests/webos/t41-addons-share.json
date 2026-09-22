@@ -1,0 +1,315 @@
+{
+  "name": "addons-share",
+  "tags": [
+    "addons-share"
+  ],
+  "failures": [],
+  "controls": [
+    {
+      "id": "33",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "tag": "DIV",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "safe",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 1162.5,
+        "y": 361,
+        "width": 45,
+        "height": 45
+      },
+      "phase": "initial",
+      "reached": true
+    },
+    {
+      "id": "34",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > a:nth-child(1)",
+      "tag": "A",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "unsafe",
+      "reason": "Read-only route diagnosis; Enter coverage pending explicit action expectations",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 735,
+        "y": 541,
+        "width": 140,
+        "height": 52.5
+      },
+      "phase": "initial",
+      "reached": true
+    },
+    {
+      "id": "35",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > a:nth-child(2)",
+      "tag": "A",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "unsafe",
+      "reason": "Read-only route diagnosis; Enter coverage pending explicit action expectations",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 890,
+        "y": 541,
+        "width": 140,
+        "height": 52.5
+      },
+      "phase": "initial",
+      "reached": true
+    },
+    {
+      "id": "36",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > a:nth-child(3)",
+      "tag": "A",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "unsafe",
+      "reason": "Read-only route diagnosis; Enter coverage pending explicit action expectations",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 1045,
+        "y": 541,
+        "width": 140,
+        "height": 52.5
+      },
+      "phase": "initial",
+      "reached": true
+    },
+    {
+      "id": "37",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(2) > div:nth-child(2) > input:nth-child(1)",
+      "tag": "INPUT",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "unsafe",
+      "reason": "Read-only route diagnosis; Enter coverage pending explicit action expectations",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 735,
+        "y": 608.5,
+        "width": 330,
+        "height": 58
+      },
+      "phase": "initial",
+      "reached": true
+    },
+    {
+      "id": "38",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(2) > div:nth-child(2) > div:nth-child(2)",
+      "tag": "DIV",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "unsafe",
+      "reason": "Read-only route diagnosis; Enter coverage pending explicit action expectations",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 1065,
+        "y": 608.5,
+        "width": 120,
+        "height": 58
+      },
+      "phase": "initial",
+      "reached": true
+    }
+  ],
+  "edges": [
+    {
+      "phase": "initial",
+      "from": "33",
+      "key": "ArrowUp",
+      "to": "33",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "33",
+      "key": "ArrowDown",
+      "to": "36",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "33",
+      "key": "ArrowLeft",
+      "to": "35",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "33",
+      "key": "ArrowRight",
+      "to": "33",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "36",
+      "key": "ArrowUp",
+      "to": "33",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "36",
+      "key": "ArrowDown",
+      "to": "38",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "36",
+      "key": "ArrowLeft",
+      "to": "35",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "36",
+      "key": "ArrowRight",
+      "to": "36",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "35",
+      "key": "ArrowUp",
+      "to": "33",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "35",
+      "key": "ArrowDown",
+      "to": "37",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "35",
+      "key": "ArrowLeft",
+      "to": "34",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "35",
+      "key": "ArrowRight",
+      "to": "36",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "38",
+      "key": "ArrowUp",
+      "to": "36",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "38",
+      "key": "ArrowDown",
+      "to": "38",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "38",
+      "key": "ArrowLeft",
+      "to": "37",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "38",
+      "key": "ArrowRight",
+      "to": "38",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "37",
+      "key": "ArrowUp",
+      "to": "37",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "37",
+      "key": "ArrowDown",
+      "to": "37",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "37",
+      "key": "ArrowLeft",
+      "to": "37",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "37",
+      "key": "ArrowRight",
+      "to": "37",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "34",
+      "key": "ArrowUp",
+      "to": "33",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "34",
+      "key": "ArrowDown",
+      "to": "37",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "34",
+      "key": "ArrowLeft",
+      "to": "34",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "34",
+      "key": "ArrowRight",
+      "to": "35",
+      "scrollChanged": false
+    }
+  ],
+  "enter": [
+    {
+      "phase": "initial",
+      "id": "33",
+      "clicks": 1,
+      "submits": 0,
+      "effect": true,
+      "passed": true
+    }
+  ],
+  "stage": "enter-initial"
+}

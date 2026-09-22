@@ -423,6 +423,13 @@
 
 // The main link delegates its cursor to the poster; menu actions own theirs.
 .meta-item-container when (@webos = true) {
+    &:focus-within .poster-container { box-shadow: none; }
+    .poster-container {
+        .dismiss-icon-layer, .play-icon-layer { z-index: 1; .tv-focus(); }
+        .dismiss-icon-layer { opacity: 1; }
+    }
+    .menu-label-container { opacity: 1; }
+
     .meta-item-link:focus {
         outline: none;
         .poster-container {

@@ -5,6 +5,9 @@ import { createPortal } from 'react-dom';
 import classNames from 'classnames';
 import useBinaryState from 'stremio/common/useBinaryState';
 import useOrientation from 'stremio/common/useOrientation';
+import FocusLock from 'react-focus-lock';
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
+
 import styles from './BottomSheet.less';
 
 const CLOSE_THRESHOLD = 100;
@@ -65,7 +68,7 @@ const BottomSheet = ({ children, title, show, onClose }: Props) => {
     }, [orientation]);
 
     return opened && createPortal((
-        <div className={styles['bottom-sheet']}>
+        <FocusScope className={styles['bottom-sheet']}>
             <div className={styles['backdrop']} onClick={onCloseRequest} />
             <div
                 ref={containerRef}
@@ -86,7 +89,7 @@ const BottomSheet = ({ children, title, show, onClose }: Props) => {
                     {children}
                 </div>
             </div>
-        </div>
+        </FocusScope>
     ), document.body);
 };
 

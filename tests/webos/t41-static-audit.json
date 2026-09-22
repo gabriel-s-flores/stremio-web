@@ -1,0 +1,1553 @@
+{
+  "date": "2026-09-14T01:55:39.709Z",
+  "note": "Static classification only; not a reachability certificate",
+  "samples": [
+    {
+      "file": "App/ExternalLinkFailureModal.js",
+      "line": 70,
+      "tag": "TextInput",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "App/GamepadModal/GamepadModal.tsx",
+      "line": 77,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Backdrop; modal has a separate close action"
+    },
+    {
+      "file": "App/GamepadModal/GamepadModal.tsx",
+      "line": 85,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "App/ShortcutsModal/ShortcutsModal.tsx",
+      "line": 33,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Backdrop; modal has a separate close action"
+    },
+    {
+      "file": "App/ShortcutsModal/ShortcutsModal.tsx",
+      "line": 41,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "App/StreamingServerUrlModal/StreamingServerUrlModal.tsx",
+      "line": 49,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Backdrop; modal has a separate close action"
+    },
+    {
+      "file": "App/StreamingServerUrlModal/StreamingServerUrlModal.tsx",
+      "line": 56,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "App/StreamingServerUrlModal/StreamingServerUrlModal.tsx",
+      "line": 72,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "App/StreamingServerUrlModal/StreamingServerUrlModal.tsx",
+      "line": 76,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "common/Toast/ToastItem/ToastItem.js",
+      "line": 57,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "common/Toast/ToastItem/ToastItem.js",
+      "line": 80,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/ActionMenu/ActionMenu.tsx",
+      "line": 148,
+      "tag": "button",
+      "tabindex": "{process.env.WEBOS ? 0 : tabIndex}",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "components/ActionMenu/ActionMenu.tsx",
+      "line": 164,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Backdrop closes the menu; menu items own actions"
+    },
+    {
+      "file": "components/ActionMenu/ActionMenu.tsx",
+      "line": 174,
+      "tag": "button",
+      "tabindex": "{-1}",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "components/ActionsGroup/ActionsGroup.tsx",
+      "line": 28,
+      "tag": "div",
+      "tabindex": "{process.env.WEBOS && item.disabled ? -1 : 0}",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "components/BottomSheet/BottomSheet.tsx",
+      "line": 72,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Backdrop and delegated dismissal; children own actions"
+    },
+    {
+      "file": "components/BottomSheet/BottomSheet.tsx",
+      "line": 88,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Backdrop and delegated dismissal; children own actions"
+    },
+    {
+      "file": "components/Checkbox/Checkbox.tsx",
+      "line": 54,
+      "tag": "div",
+      "tabindex": "{disabled ? -1 : 0}",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "components/Checkbox/Checkbox.tsx",
+      "line": 86,
+      "tag": "ExternalLink",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/Chips/Chip/Chip.tsx",
+      "line": 32,
+      "tag": "Button",
+      "tabindex": "{0}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/ClipboardFallbackModal/ClipboardFallbackModal.js",
+      "line": 116,
+      "tag": "TextInput",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/ColorInput/ColorInput.tsx",
+      "line": 84,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/ColorInput/ColorInput.tsx",
+      "line": 95,
+      "tag": "ModalDialog",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/ContextMenu/ContextMenu.tsx",
+      "line": 135,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Backdrop/propagation layer; FocusScope children own actions"
+    },
+    {
+      "file": "components/EventModal/EventModal.js",
+      "line": 69,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/ExternalLink/index.tsx",
+      "line": 23,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MetaItem/MetaItem.js",
+      "line": 79,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MetaItem/MetaItem.js",
+      "line": 83,
+      "tag": "TVAction",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MetaItem/MetaItem.js",
+      "line": 108,
+      "tag": "TVAction",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MetaItem/MetaItem.js",
+      "line": 155,
+      "tag": "ActionMenu",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MetaItem/MetaItem.js",
+      "line": 167,
+      "tag": "Multiselect",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MetaPreview/MetaPreview.js",
+      "line": 157,
+      "tag": "ExternalLink",
+      "tabindex": "{0}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MetaPreview/MetaPreview.js",
+      "line": 213,
+      "tag": "ActionButton",
+      "tabindex": "{0}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MetaPreview/MetaPreview.js",
+      "line": 231,
+      "tag": "ActionButton",
+      "tabindex": "{0}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MetaPreview/MetaPreview.js",
+      "line": 253,
+      "tag": "ActionButton",
+      "tabindex": "{0}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MetaRow/MetaRow.js",
+      "line": 55,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MetaRow/MetaRowPlaceholder/MetaRowPlaceholder.js",
+      "line": 22,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/ModalDialog/ModalDialog.js",
+      "line": 63,
+      "tag": "Modal",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/ModalDialog/ModalDialog.js",
+      "line": 64,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Modal pointer propagation guard; close is a Button"
+    },
+    {
+      "file": "components/ModalDialog/ModalDialog.js",
+      "line": 66,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/Multiselect/Multiselect.js",
+      "line": 86,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/Multiselect/Multiselect.js",
+      "line": 116,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Menu event propagation guard"
+    },
+    {
+      "file": "components/Multiselect/Multiselect.js",
+      "line": 120,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/Multiselect/Multiselect.js",
+      "line": 144,
+      "tag": "ModalDialog",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MultiselectMenu/Dropdown/Dropdown.tsx",
+      "line": 60,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MultiselectMenu/Dropdown/Option/Option.tsx",
+      "line": 23,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/MultiselectMenu/MultiselectMenu.tsx",
+      "line": 34,
+      "tag": "Button",
+      "tabindex": "{0}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/HorizontalNavBar.js",
+      "line": 27,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/HorizontalNavBar.js",
+      "line": 37,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/HorizontalNavBar.js",
+      "line": 72,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/NavMenu/NavMenu.js",
+      "line": 32,
+      "tag": "NavMenuContent",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/NavMenu/NavMenuContent.js",
+      "line": 81,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Navigation menu event delegation"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/NavMenu/NavMenuContent.js",
+      "line": 99,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/NavMenu/NavMenuContent.js",
+      "line": 107,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/NavMenu/NavMenuContent.js",
+      "line": 124,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/SearchBar/SearchBar.js",
+      "line": 122,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Search trigger child is the TV action"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/SearchBar/SearchBar.js",
+      "line": 125,
+      "tag": "TextInput",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/SearchBar/SearchBar.js",
+      "line": 145,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/SearchBar/SearchBar.js",
+      "line": 149,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/SearchBar/SearchBar.js",
+      "line": 161,
+      "tag": "button",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/SearchBar/SearchBar.js",
+      "line": 167,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/SearchBar/SearchBar.js",
+      "line": 184,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/SearchBar/SearchBar.js",
+      "line": 216,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/VerticalNavBar/NavTabButton/NavTabButton.js",
+      "line": 28,
+      "tag": "Link",
+      "tabindex": "{process.env.WEBOS ? 0 : -1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NavBar/VerticalNavBar/VerticalNavBar.js",
+      "line": 17,
+      "tag": "NavTabButton",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NumberInput/NumberInput.tsx",
+      "line": 74,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/NumberInput/NumberInput.tsx",
+      "line": 88,
+      "tag": "input",
+      "tabindex": "{0}",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "components/NumberInput/NumberInput.tsx",
+      "line": 101,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/RadioButton/RadioButton.tsx",
+      "line": 32,
+      "tag": "div",
+      "tabindex": "{disabled ? -1 : 0}",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "components/SharePrompt/SharePrompt.js",
+      "line": 99,
+      "tag": "TextInput",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/SharePrompt/SharePrompt.js",
+      "line": 108,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/Slider/Slider.js",
+      "line": 137,
+      "tag": "div",
+      "classification": "slider",
+      "reason": "TV focus stop; detailed editing/Enter belongs to T4.3/T4.7"
+    },
+    {
+      "file": "components/TextInput/TextInput.tsx",
+      "line": 26,
+      "tag": "input",
+      "tabindex": "{0}",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "components/UpdateBanner/UpdateBanner.tsx",
+      "line": 26,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/UpdateBanner/UpdateBanner.tsx",
+      "line": 29,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/Video/Video.js",
+      "line": 181,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/Video/Video.js",
+      "line": 198,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Context-menu event propagation guard"
+    },
+    {
+      "file": "components/Video/Video.js",
+      "line": 202,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/Video/Video.js",
+      "line": 205,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "components/Video/Video.js",
+      "line": 217,
+      "tag": "Popup",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "core/Error/Error.tsx",
+      "line": 37,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Addons/Addon/Addon.js",
+      "line": 124,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Addons/Addon/Addon.js",
+      "line": 130,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Addons/Addon/Addon.js",
+      "line": 139,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Addons/Addons.js",
+      "line": 137,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Addons/Addons.js",
+      "line": 147,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Board/StreamingServerWarning/StreamingServerWarning.tsx",
+      "line": 72,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Board/StreamingServerWarning/StreamingServerWarning.tsx",
+      "line": 82,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Calendar/List/Item/Item.tsx",
+      "line": 50,
+      "tag": "TVAction",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Calendar/List/Item/Item.tsx",
+      "line": 62,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Calendar/List/List.tsx",
+      "line": 29,
+      "tag": "Item",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Calendar/Selector/Selector.tsx",
+      "line": 35,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Calendar/Selector/Selector.tsx",
+      "line": 52,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Calendar/Table/Cell/Cell.tsx",
+      "line": 61,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Calendar/Table/Cell/Cell.tsx",
+      "line": 73,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Calendar/Table/Table.tsx",
+      "line": 48,
+      "tag": "Cell",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Discover/Discover.js",
+      "line": 146,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Discover/Discover.js",
+      "line": 155,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Discover/Discover.js",
+      "line": 191,
+      "tag": "MetaItem",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Intro/Intro.js",
+      "line": 366,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Intro/Intro.js",
+      "line": 375,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Intro/Intro.js",
+      "line": 381,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Intro/Intro.js",
+      "line": 385,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Intro/Intro.js",
+      "line": 392,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Intro/Intro.js",
+      "line": 400,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Intro/Intro.js",
+      "line": 408,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Intro/Intro.js",
+      "line": 428,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/MetaDetails/EpisodePicker/EpisodePicker.tsx",
+      "line": 65,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/MetaDetails/StreamsList/Stream/Stream.js",
+      "line": 200,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/MetaDetails/StreamsList/Stream/Stream.js",
+      "line": 236,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Context-menu event propagation guard"
+    },
+    {
+      "file": "routes/MetaDetails/StreamsList/Stream/Stream.js",
+      "line": 246,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/MetaDetails/StreamsList/Stream/Stream.js",
+      "line": 253,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/MetaDetails/StreamsList/Stream/Stream.js",
+      "line": 260,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/MetaDetails/StreamsList/StreamsList.js",
+      "line": 109,
+      "tag": "Button",
+      "tabindex": "{0}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/MetaDetails/StreamsList/StreamsList.js",
+      "line": 177,
+      "tag": "Stream",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/MetaDetails/VideosList/SeasonsBar/SeasonsBar.js",
+      "line": 59,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/MetaDetails/VideosList/SeasonsBar/SeasonsBar.js",
+      "line": 70,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/MetaDetails/VideosList/VideosList.js",
+      "line": 162,
+      "tag": "Toggle",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/AudioMenu/AudioMenu.tsx",
+      "line": 40,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/CastDevicesMenu/CastDevicesMenu.tsx",
+      "line": 37,
+      "tag": "Option",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/ControlBar.js",
+      "line": 152,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/ControlBar.js",
+      "line": 157,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/ControlBar.js",
+      "line": 163,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/ControlBar.js",
+      "line": 187,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/ControlBar.js",
+      "line": 193,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/ControlBar.js",
+      "line": 197,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/ControlBar.js",
+      "line": 200,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/ControlBar.js",
+      "line": 203,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/ControlBar.js",
+      "line": 206,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/ControlBar.js",
+      "line": 211,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/ControlBar.js",
+      "line": 217,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/ControlBar.js",
+      "line": 220,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/ControlBar/SeekBar/SeekBar.js",
+      "line": 92,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/NextVideoPopup/NextVideoPopup.js",
+      "line": 85,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/NextVideoPopup/NextVideoPopup.js",
+      "line": 89,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/OptionsMenu/Option/Option.js",
+      "line": 17,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/OptionsMenu/OptionsMenu.js",
+      "line": 106,
+      "tag": "Option",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/OptionsMenu/OptionsMenu.js",
+      "line": 117,
+      "tag": "Option",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/OptionsMenu/OptionsMenu.js",
+      "line": 128,
+      "tag": "Option",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/OptionsMenu/OptionsMenu.js",
+      "line": 139,
+      "tag": "Option",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/OptionsMenu/OptionsMenu.js",
+      "line": 150,
+      "tag": "Option",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/Player.js",
+      "line": 994,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Player pointer event delegation"
+    },
+    {
+      "file": "routes/Player/Player.js",
+      "line": 1001,
+      "tag": "Video",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/Player.js",
+      "line": 1072,
+      "tag": "SideDrawerButton",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/SideDrawer/SideDrawer.tsx",
+      "line": 96,
+      "tag": "TVAction",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/SideDrawerButton/SideDrawerButton.tsx",
+      "line": 18,
+      "tag": "TVAction",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/SpeedMenu/SpeedMenu.js",
+      "line": 56,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/StatisticsMenu/StatisticsMenu.js",
+      "line": 91,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/SubtitlesMenu/Stepper/Stepper.tsx",
+      "line": 86,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/SubtitlesMenu/Stepper/Stepper.tsx",
+      "line": 97,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/SubtitlesMenu/SubtitlesMenu.js",
+      "line": 166,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/SubtitlesMenu/SubtitlesMenu.js",
+      "line": 176,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/SubtitlesMenu/SubtitleVariant/SubtitleVariant.tsx",
+      "line": 89,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/SubtitlesMenu/SubtitleVariant/SubtitleVariant.tsx",
+      "line": 126,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/SubtitlesMenu/SubtitleVariant/SubtitleVariant.tsx",
+      "line": 140,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Player/Video/Video.js",
+      "line": 10,
+      "tag": "div",
+      "classification": "structure",
+      "reason": "Pointer video surface; play/pause is represented by ControlBar"
+    },
+    {
+      "file": "routes/Settings/components/Link/Link.tsx",
+      "line": 15,
+      "tag": "Component",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/General/General.tsx",
+      "line": 107,
+      "tag": "Link",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/General/General.tsx",
+      "line": 114,
+      "tag": "Link",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/General/General.tsx",
+      "line": 150,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/General/General.tsx",
+      "line": 157,
+      "tag": "Toggle",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/General/User/User.tsx",
+      "line": 49,
+      "tag": "Link",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Interface/Interface.tsx",
+      "line": 33,
+      "tag": "Toggle",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Interface/Interface.tsx",
+      "line": 42,
+      "tag": "Toggle",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Interface/Interface.tsx",
+      "line": 49,
+      "tag": "Toggle",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Interface/Interface.tsx",
+      "line": 55,
+      "tag": "Toggle",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Menu/Menu.tsx",
+      "line": 27,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Menu/Menu.tsx",
+      "line": 30,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Menu/Menu.tsx",
+      "line": 33,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Menu/Menu.tsx",
+      "line": 36,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Menu/Menu.tsx",
+      "line": 39,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Player/Player.tsx",
+      "line": 70,
+      "tag": "Toggle",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Player/Player.tsx",
+      "line": 84,
+      "tag": "Toggle",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Player/Player.tsx",
+      "line": 104,
+      "tag": "Toggle",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Player/Player.tsx",
+      "line": 113,
+      "tag": "Toggle",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Player/Player.tsx",
+      "line": 135,
+      "tag": "Toggle",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Player/Player.tsx",
+      "line": 144,
+      "tag": "Toggle",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Player/Player.tsx",
+      "line": 162,
+      "tag": "Toggle",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Streaming/Streaming.tsx",
+      "line": 73,
+      "tag": "TextInput",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Streaming/Streaming.tsx",
+      "line": 86,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Streaming/URLsManager/AddItem/AddItem.tsx",
+      "line": 36,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Streaming/URLsManager/AddItem/AddItem.tsx",
+      "line": 39,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Streaming/URLsManager/Item/Item.tsx",
+      "line": 66,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Streaming/URLsManager/URLsManager.tsx",
+      "line": 49,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "routes/Settings/Streaming/URLsManager/URLsManager.tsx",
+      "line": 53,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/CalendarDebugPage.js",
+      "line": 67,
+      "tag": "Cell",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 253,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 254,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 255,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 256,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 257,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 258,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 259,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 260,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 261,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 262,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 263,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 264,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 265,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 266,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 267,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/ClipboardDebugPage.tsx",
+      "line": 268,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/DebugPage.tsx",
+      "line": 141,
+      "tag": "button",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "webos/diagnostics/DebugPage.tsx",
+      "line": 142,
+      "tag": "button",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "webos/diagnostics/DebugPage.tsx",
+      "line": 143,
+      "tag": "button",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "webos/diagnostics/ExternalLinksDebugPage.tsx",
+      "line": 40,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/FocusDebugPage.js",
+      "line": 39,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/FocusDebugPage.js",
+      "line": 40,
+      "tag": "Button",
+      "tabindex": "{-1}",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/FocusDebugPage.js",
+      "line": 65,
+      "tag": "Button",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    },
+    {
+      "file": "webos/diagnostics/FontsIconsDebugPage.js",
+      "line": 27,
+      "tag": "button",
+      "tabindex": "{0}",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "webos/diagnostics/FontsIconsDebugPage.js",
+      "line": 32,
+      "tag": "button",
+      "tabindex": "{0}",
+      "classification": "native-or-keyboard-control",
+      "reason": "Native focus/activation or explicit keyboard owner"
+    },
+    {
+      "file": "webos/diagnostics/PlayerDebugPage.js",
+      "line": 177,
+      "tag": "SideDrawerButton",
+      "classification": "shared-control",
+      "reason": "Component contract; concrete DOM checked by runtime probe"
+    }
+  ],
+  "unresolved": []
+}

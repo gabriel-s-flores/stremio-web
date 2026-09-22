@@ -59,6 +59,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, Props>(({ name, disabled, cl
                         { [styles['error']]: error }
                     )}
                     role={'checkbox'}
+                    aria-disabled={process.env.WEBOS ? !!disabled : undefined}
                     tabIndex={disabled ? -1 : 0}
                     aria-checked={checked}
                     onKeyDown={onKeyDown}

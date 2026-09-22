@@ -45,6 +45,7 @@
     "routes/Settings/General/User/User.less": "55062fc2608eaa0e3ce2c4de441259e2ede8bdd132b92617599e1cd89068a4c6",
     "routes/Settings/Streaming/URLsManager/URLsManager.less": "39f3dc91243594bdebfcb321a6e337098c4f97e38bcadcb4745f5756b17b52f0",
     "routes/Settings/Streaming/URLsManager/AddItem/AddItem.less": "b2e0249d13e0861f8b90a2cc3b6205a075691365fcd61b298ff0a27bcd2f148b",
-    "routes/Settings/Streaming/URLsManager/Item/Item.less": "69052016a88b63ab929769430dbea88d4833dc5fa4129ef9411b5550edb6d176"
+    "routes/Settings/Streaming/URLsManager/Item/Item.less": "69052016a88b63ab929769430dbea88d4833dc5fa4129ef9411b5550edb6d176",
+    "components/Slider/styles.less": "0434293056bb302f8e78e22c990dbd4d6ff6dd3d7fdd727071e0dad9d9c31ca5"
   }
 }

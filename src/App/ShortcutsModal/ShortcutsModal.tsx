@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next';
 import Icon from '@stremio/stremio-icons/react';
 import { useShortcuts } from 'stremio/common';
 import { Button, ShortcutsGroup } from 'stremio/components';
+import FocusLock from 'react-focus-lock';
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
+
 import styles from './styles.less';
 
 type Props = {
@@ -26,7 +29,7 @@ const ShortcutsModal = ({ onClose }: Props) => {
     }, []);
 
     return createPortal((
-        <div className={styles['shortcuts-modal']}>
+        <FocusScope className={styles['shortcuts-modal']}>
             <div className={styles['backdrop']} onClick={onClose} />
 
             <div className={styles['container']}>
@@ -52,7 +55,7 @@ const ShortcutsModal = ({ onClose }: Props) => {
                     }
                 </div>
             </div>
-        </div>
+        </FocusScope>
     ), document.body);
 };
 

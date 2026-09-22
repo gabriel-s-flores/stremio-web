@@ -9,6 +9,9 @@ const { default: usePlayOnDevice } = require('../usePlayOnDevice');
 const { writeTextToClipboard } = require('stremio/common/clipboard');
 const ClipboardFallbackModal = require('stremio/components/ClipboardFallbackModal');
 const Option = require('./Option');
+const FocusLock = require('react-focus-lock').default;
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
+
 const styles = require('./styles');
 
 const OptionsMenu = React.memo(React.forwardRef(({ className, stream, playbackDevices, extraSubtitlesTracks, selectedExtraSubtitlesTrackId }, ref) => {
@@ -97,7 +100,7 @@ const OptionsMenu = React.memo(React.forwardRef(({ className, stream, playbackDe
 
     return (
         <React.Fragment>
-            <div ref={ref} className={classnames(className, styles['options-menu-container'])} onMouseDown={onMouseDown}>
+            <FocusScope ref={ref} className={classnames(className, styles['options-menu-container'])} {...(process.env.WEBOS ? { lockProps: { onMouseDown } } : { onMouseDown })}>
                 {
                     streamingUrl || downloadUrl ?
                         <Option
@@ -154,7 +157,7 @@ const OptionsMenu = React.memo(React.forwardRef(({ className, stream, playbackDe
                         />
                     ))
                 }
-            </div>
+            </FocusScope>
             {
                 copyFallbackValue !== null ?
                     <ClipboardFallbackModal

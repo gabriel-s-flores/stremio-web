@@ -20,7 +20,12 @@ const MetaRow = ({ className, title, catalog, message, itemComponent, notificati
         if (platform.name !== 'webos' || container.scrollWidth <= container.clientWidth) return;
         const item = event.target.closest(`.${styles['meta-item']}`);
         if (item && container.contains(item)) {
-            item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+            // Keep row scrolling on its own axis. scrollIntoView also starts a
+            // vertical animation after the spatial polyfill has revealed focus.
+            const box = container.getBoundingClientRect();
+            const rect = item.getBoundingClientRect();
+            if (rect.left < box.left) container.scrollLeft -= Math.ceil(box.left - rect.left);
+            else if (rect.right > box.right) container.scrollLeft += Math.ceil(rect.right - box.right);
         }
     }, [platform.name]);
 

@@ -77,8 +77,15 @@ const ActionMenu = ({ className, title, tabIndex, options, children, onOpen, onC
             top: Math.max(VIEWPORT_PADDING, Math.min(preferredTop, maxTop)),
             left: Math.max(VIEWPORT_PADDING, Math.min(preferredLeft, maxLeft))
         });
-        menuRef.current.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+        if (!process.env.WEBOS) menuRef.current.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
     }, [open]);
+
+    useLayoutEffect(() => {
+        // The initial hidden positioning pass cannot receive browser focus.
+        if (process.env.WEBOS && open && position) {
+            menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+        }
+    }, [open, position]);
 
     const layerOnClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
         if (event.target === event.currentTarget) {
@@ -99,6 +106,11 @@ const ActionMenu = ({ className, title, tabIndex, options, children, onOpen, onC
         }
 
         const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
+        // Roving items remain -1. Horizontal arrows must not reach the background.
+        if (process.env.WEBOS && event.key.startsWith('Arrow')) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
         const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
         const nextIndex = event.key === 'ArrowDown'
             ? (currentIndex + 1) % items.length
@@ -141,7 +153,7 @@ const ActionMenu = ({ className, title, tabIndex, options, children, onOpen, onC
                 aria-label={title}
                 aria-haspopup={'menu'}
                 aria-expanded={open}
-                tabIndex={tabIndex}
+                tabIndex={process.env.WEBOS ? 0 : tabIndex}
                 onClick={openMenu}
             >
                 {children}

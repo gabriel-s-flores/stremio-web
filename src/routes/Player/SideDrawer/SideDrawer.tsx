@@ -7,6 +7,12 @@ import { useCore } from 'stremio/core';
 import { CONSTANTS } from 'stremio/common';
 import { MetaPreview, Video } from 'stremio/components';
 import SeasonsBar from 'stremio/routes/MetaDetails/VideosList/SeasonsBar';
+import Button from 'stremio/components/Button';
+const TVAction = process.env.WEBOS ? Button : 'div';
+
+import FocusLock from 'react-focus-lock';
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
+
 import styles from './SideDrawer.less';
 
 type Props = {
@@ -86,10 +92,10 @@ const SideDrawer = memo(forwardRef<HTMLDivElement, Props>(({ seriesInfo, classNa
     }, [selected]);
 
     return (
-        <div ref={ref} className={classNames(styles['side-drawer'], className)} onMouseDown={onMouseDown} onTransitionEnd={onTransitionEnd}>
-            <div className={styles['close-button']} onClick={closeSideDrawer}>
+        <FocusScope ref={ref} className={classNames(styles['side-drawer'], className)} {...(process.env.WEBOS ? { lockProps: { onMouseDown, onTransitionEnd } } : { onMouseDown, onTransitionEnd })}>
+            <TVAction className={styles['close-button']} onClick={closeSideDrawer}>
                 <Icon className={styles['icon']} name={'chevron-forward'} />
-            </div>
+            </TVAction>
             <div className={styles['info']}>
                 <MetaPreview
                     className={styles['side-drawer-meta-preview']}
@@ -138,7 +144,7 @@ const SideDrawer = memo(forwardRef<HTMLDivElement, Props>(({ seriesInfo, classNa
                     : null
             }
 
-        </div>
+        </FocusScope>
     );
 }));
 

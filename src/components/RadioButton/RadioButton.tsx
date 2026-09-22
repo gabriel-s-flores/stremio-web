@@ -37,6 +37,7 @@ const RadioButton = ({ disabled, selected, className, onChange, error }: Props) 
                         { [styles['error']]: error }
                     )}
                     role={'radio'}
+                    aria-disabled={process.env.WEBOS ? !!disabled : undefined}
                     tabIndex={disabled ? -1 : 0}
                     aria-checked={selected}
                     onKeyDown={onKeyDown}
