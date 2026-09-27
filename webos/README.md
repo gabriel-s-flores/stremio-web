@@ -74,14 +74,26 @@ git push --force-with-lease origin webos
 | 1 | Build e Compatibilidade JS | 🟡 Em andamento (T1.1–T1.9 implementadas; proteção de merge pendente; packaged aguarda T6.4) |
 | 2 | CSS e Layout | ⬜ Pendente |
 | 3 | Plataforma webOS | ⬜ Pendente |
-| 4 | Navegação TV e Controle Remoto | ⬜ Pendente |
+| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2/T4.3 planejadas) |
 | 5 | Player, Vídeo e Streaming | ⬜ Pendente |
-| 6 | Empacotamento e Pipeline | ⬜ Pendente |
+| 6 | Empacotamento e Pipeline | ⬜ Pendente (T6.1 deve preservar `disableBackHistoryAPI: true`, hand-off de T4.2/T4.3) |
 | 7 | Testes, Performance e Qualidade | ⬜ Pendente |
 | 8 | Distribuição e Lançamento | ⬜ Pendente |
 
 Planejamento detalhado por fase e decisões (D1–D10): vault do projeto em
 `obsidian/stremio/11 - Port webOS 5/`.
+
+## Fase 4 — T4.3: mapa de teclas (planejada)
+
+O [plano T4.3](T4.3%20-%20Plano.md) define os tokens para Back, Play/Pause, Stop,
+FF/RW e cores, sua ligação às ações do Player e os gates futuros. A [página de
+evidências](../tests/webos/T4.3%20-%20Evidências.md) registra o estado de planejamento;
+nenhuma implementação ou validação runtime foi declarada.
+
+Hand-offs: Back depende do dispatcher da T4.2; a validação de mídia continua na
+T5.12; T4.12 deverá mostrar o mapa das cores na ajuda. A Fase 6 mantém
+`disableBackHistoryAPI: true` no `appinfo.json` final e verifica a configuração nos
+artefatos hosted/packaged.
 
 ## T1.2 — Polyfills
 
