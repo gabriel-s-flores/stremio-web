@@ -1,5 +1,7 @@
 import React, { memo, RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { BACK_HANDLER_PRIORITIES, useBackHandler } from 'stremio/common';
+import useRouteFocused from 'stremio/common/useRouteFocused';
 import Transition from '../Transition';
 import FocusLock from 'react-focus-lock';
 const FocusScope = process.env.WEBOS ? FocusLock : 'div';
@@ -20,6 +22,7 @@ type Props = {
 };
 
 const ContextMenu = ({ children, on, autoClose, lock }: Props) => {
+    const routeFocused = useRouteFocused();
     const [active, setActive] = useState(false);
     const [position, setPosition] = useState<Coordinates>([0, 0]);
     const [containerSize, setContainerSize] = useState<Size>([0, 0]);
@@ -81,6 +84,11 @@ const ContextMenu = ({ children, on, autoClose, lock }: Props) => {
     const close = useCallback(() => {
         setActive(false);
     }, []);
+    const backOnRequest = useCallback(() => {
+        close();
+        return true;
+    }, [close]);
+    useBackHandler(backOnRequest, BACK_HANDLER_PRIORITIES.POPUP, routeFocused && active);
 
     const stopPropagation = useCallback((event: React.MouseEvent | React.TouchEvent) => {
         event.stopPropagation();

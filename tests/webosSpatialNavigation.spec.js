@@ -11,6 +11,11 @@ function render(file, webos, props = {}, dependencies = {}) {
     vm.runInNewContext(code, { module, exports: module.exports, document: { body: {} }, process: { env: { WEBOS: webos } }, require: id => {
         if (Object.prototype.hasOwnProperty.call(dependencies, id)) return dependencies[id];
         if (id === 'react') return { ...React, forwardRef: fn => fn, useCallback: fn => fn, useMemo: fn => fn() };
+        if (id === 'stremio/common') return {
+            BACK_HANDLER_PRIORITIES: { MODAL: 500, POPUP: 600 },
+            useBackHandler: () => {},
+            isBackKeyboardEvent: event => event.key === 'Back' || event.key === 'GoBack' || event.key === 'XF86Back' || event.keyCode === 461 || event.which === 461,
+        };
         if (id === 'use-long-press') return { LongPressEventType: {}, useLongPress: () => () => ({}) };
         if (id.endsWith('.less')) return {};
         return require(id);
@@ -22,7 +27,7 @@ const button = (webos, props) => render('src/components/Button/Button.tsx', webo
 
 test.each([true, false])('gamepad modal preserves its DOM marker for background navigation detection: %s', webos => {
     const modal = render('src/App/GamepadModal/GamepadModal.tsx', webos, {}, {
-        react: { ...React, useEffect: () => {} },
+        react: { ...React, useCallback: fn => fn, useEffect: () => {} },
         'react-dom': { createPortal: child => child },
         'react-i18next': { useTranslation: () => ({ t: key => key }) },
         'stremio/components': { Button: 'button' },
@@ -45,12 +50,26 @@ test.each([true, false])('server URL modal lets TV arrows reach spatial navigati
         'react-focus-lock': 'div'
     });
     for (const key of ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']) {
-        const event = { key, stopPropagation: jest.fn(), preventDefault: jest.fn() };
+        const event = { key, nativeEvent: { key }, stopPropagation: jest.fn(), preventDefault: jest.fn() };
         modal.lockProps.onKeyDown(event);
         expect(event.stopPropagation).toHaveBeenCalledTimes(webos ? 0 : 1);
         expect(event.preventDefault).not.toHaveBeenCalled();
     }
-    const escape = { key: 'Escape', stopPropagation: jest.fn(), preventDefault: jest.fn() };
+    const back = {
+        key: 'Unidentified',
+        code: 'Unidentified',
+        keyCode: 461,
+        which: 461,
+        nativeEvent: { key: 'Unidentified', keyCode: 461, which: 461 },
+        stopPropagation: jest.fn(),
+        preventDefault: jest.fn(),
+    };
+    modal.lockProps.onKeyDown(back);
+    expect(back.stopPropagation).toHaveBeenCalledTimes(webos ? 0 : 1);
+    expect(back.preventDefault).not.toHaveBeenCalled();
+    expect(onCancel).not.toHaveBeenCalled();
+
+    const escape = { key: 'Escape', nativeEvent: { key: 'Escape' }, stopPropagation: jest.fn(), preventDefault: jest.fn() };
     modal.lockProps.onKeyDown(escape);
     expect(escape.stopPropagation).toHaveBeenCalledTimes(1);
     expect(escape.preventDefault).toHaveBeenCalledTimes(1);

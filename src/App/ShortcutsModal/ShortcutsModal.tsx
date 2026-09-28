@@ -1,10 +1,10 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import Icon from '@stremio/stremio-icons/react';
-import { useShortcuts } from 'stremio/common';
+import { BACK_HANDLER_PRIORITIES, useBackHandler, useShortcuts } from 'stremio/common';
 import { Button, ShortcutsGroup } from 'stremio/components';
 import FocusLock from 'react-focus-lock';
 const FocusScope = process.env.WEBOS ? FocusLock : 'div';
@@ -18,6 +18,11 @@ type Props = {
 const ShortcutsModal = ({ onClose }: Props) => {
     const { t } = useTranslation();
     const { grouped } = useShortcuts();
+    const backOnRequest = useCallback(() => {
+        onClose();
+        return true;
+    }, [onClose]);
+    useBackHandler(backOnRequest, BACK_HANDLER_PRIORITIES.MODAL);
 
     useEffect(() => {
         const onKeyDown = ({ key }: KeyboardEvent) => {

@@ -1,10 +1,11 @@
 // Copyright (C) 2017-2026 Smart code 203358507
 
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import Icon from '@stremio/stremio-icons/react';
 import { Button } from 'stremio/components';
+import { BACK_HANDLER_PRIORITIES, useBackHandler } from 'stremio/common';
 import { useGamepad } from 'stremio/services';
 import type { ControllerType } from 'stremio/services/GamepadContext';
 import GamepadDiagram from './GamepadDiagram';
@@ -54,6 +55,11 @@ type Props = {
 const GamepadModal = ({ onClose }: Props) => {
     const { t } = useTranslation();
     const gamepad = useGamepad();
+    const backOnRequest = useCallback(() => {
+        onClose();
+        return true;
+    }, [onClose]);
+    useBackHandler(backOnRequest, BACK_HANDLER_PRIORITIES.MODAL);
 
     const labels = LABELS[gamepad?.controllerType ?? 'generic'];
 

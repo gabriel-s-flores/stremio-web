@@ -12,7 +12,7 @@ const { default: useRouteFocused } = require('stremio/common/useRouteFocused');
 const { useCore } = require('stremio/core');
 const { useServices, useGamepad } = require('stremio/services');
 const { useContentGamepadNavigation } = require('stremio/services/GamepadNavigation');
-const { useSettings, useProfile, useFullscreen, useBinaryState, useToast, useStreamingServer, withCoreSuspender, usePlatform, onShortcut, getKeyboardShortcutKey, getKeyboardShortcutKeys, useDiscord, EMPTY_DISCORD_TIMESTAMPS, getPlaybackDiscordActivity } = require('stremio/common');
+const { useSettings, useProfile, useFullscreen, useBinaryState, useToast, useStreamingServer, withCoreSuspender, usePlatform, onShortcut, useBackHandler, BACK_HANDLER_PRIORITIES, getKeyboardShortcutKey, getKeyboardShortcutKeys, useDiscord, EMPTY_DISCORD_TIMESTAMPS, getPlaybackDiscordActivity } = require('stremio/common');
 const { default: toPath } = require('stremio-router/toPath');
 const { HorizontalNavBar, Transition, ContextMenu } = require('stremio/components');
 const { default: Buffering } = require('./Buffering');
@@ -122,6 +122,31 @@ const Player = () => {
         closeCastDevicesMenu();
         closeSideDrawer();
     }, []);
+
+    const handlePlayerBack = React.useCallback(() => {
+        // Match the visual stacking order: the last rendered player menu is on top.
+        if (optionsMenuOpen) closeOptionsMenu();
+        else if (speedMenuOpen) closeSpeedMenu();
+        else if (audioMenuOpen) closeAudioMenu();
+        else if (subtitlesMenuOpen) closeSubtitlesMenu();
+        else if (sideDrawerOpen) closeSideDrawer();
+        else if (castDevicesMenuOpen) closeCastDevicesMenu();
+        else if (statisticsMenuOpen) closeStatisticsMenu();
+        else if (nextVideoPopupOpen) closeNextVideoPopup();
+        else return false;
+
+        return true;
+    }, [
+        optionsMenuOpen, closeOptionsMenu,
+        speedMenuOpen, closeSpeedMenu,
+        audioMenuOpen, closeAudioMenu,
+        subtitlesMenuOpen, closeSubtitlesMenu,
+        sideDrawerOpen, closeSideDrawer,
+        castDevicesMenuOpen, closeCastDevicesMenu,
+        statisticsMenuOpen, closeStatisticsMenu,
+        nextVideoPopupOpen, closeNextVideoPopup,
+    ]);
+    useBackHandler(handlePlayerBack, BACK_HANDLER_PRIORITIES.PLAYER_MENU, routeFocused && menusOpen);
 
     const castDevices = React.useMemo(() => {
         return playbackDevices
@@ -285,6 +310,11 @@ const Player = () => {
         onSeek: commitSeek,
         setSeeking,
     });
+    const cancelSeekOnBack = React.useCallback(() => {
+        cancelKeyboardSeek();
+        return true;
+    }, [cancelKeyboardSeek]);
+    useBackHandler(cancelSeekOnBack, BACK_HANDLER_PRIORITIES.SEEK, routeFocused && keyboardSeekTime !== null);
     const onKeyboardSeekRequested = React.useCallback((offset) => {
         setImmersedDebounced.cancel();
         setImmersed(false);

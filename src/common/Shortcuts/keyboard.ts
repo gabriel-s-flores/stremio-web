@@ -1,6 +1,7 @@
 const KEY_CODE_MAP: Record<number, string> = {
     8: 'Backspace',
     27: 'Escape',
+    461: 'Back',
     32: 'Space',
     37: 'ArrowLeft',
     38: 'ArrowUp',
@@ -22,6 +23,12 @@ const KEY_MAP: Record<string, string> = {
     Up: 'ArrowUp',
     Right: 'ArrowRight',
     Down: 'ArrowDown',
+    Back: 'Back',
+    GoBack: 'Back',
+    XF86Back: 'Back',
+    back: 'Back',
+    goback: 'Back',
+    xf86back: 'Back',
 };
 
 const keyFromKeyCode = (keyCode: number) => {
@@ -63,7 +70,10 @@ const getKeyboardShortcutKeys = (event: KeyboardEvent) => {
     return code && code !== normalizedKey ? [code, normalizedKey] : [normalizedKey];
 };
 
+const isBackKeyboardEvent = (event: KeyboardEvent) => getKeyboardShortcutKeys(event).includes('Back');
+
 export {
     getKeyboardShortcutKey,
     getKeyboardShortcutKeys,
+    isBackKeyboardEvent,
 };

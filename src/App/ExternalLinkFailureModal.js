@@ -18,7 +18,7 @@ const ExternalLinkFailureModal = () => {
         if (!url) return;
         const previous = document.activeElement;
         const onKeyDown = (event) => {
-            if (event.key === 'Escape' || event.key === 'Back' || event.key === 'GoBack' || event.key === 'XF86Back' || event.keyCode === 461 || event.keyCode === 27) {
+            if (event.key === 'Escape' || event.keyCode === 27) {
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 dismiss();

@@ -1,0 +1,8 @@
+PASS tests/webosBack.spec.js (9.21 s)
+PASS tests/webosSpatialNavigation.spec.js
+
+Test Suites: 2 passed, 2 total
+Tests:       33 passed, 33 total
+Snapshots:   0 total
+Time:        12.249 s
+Ran all test suites matching /tests\/webosBack.spec.js|tests\/webosSpatialNavigation.spec.js/i.

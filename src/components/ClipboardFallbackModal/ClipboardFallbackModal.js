@@ -9,13 +9,8 @@ const { ModalsContainerProvider } = require('stremio/router/ModalsContainerConte
 const { writeTextToClipboard, copyTextBySelection } = require('stremio/common/clipboard');
 const styles = require('./styles');
 
-const isDismissKey = (event) => {
-    return event.key === 'Escape'
-        || event.key === 'Back'
-        || event.key === 'GoBack'
-        || event.key === 'XF86Back'
-        || event.keyCode === 461
-        || event.keyCode === 27;
+const isEscapeKey = (event) => {
+    return event.key === 'Escape' || event.keyCode === 27;
 };
 
 // Reusable read-only fallback shown when the Clipboard API fails.
@@ -55,7 +50,7 @@ const ClipboardFallbackModal = ({ value, title, onClose }) => {
         const previous = document.activeElement;
         selectAll();
         const onKeyDown = (event) => {
-            if (isDismissKey(event)) {
+            if (isEscapeKey(event)) {
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 if (typeof onCloseRef.current === 'function') {

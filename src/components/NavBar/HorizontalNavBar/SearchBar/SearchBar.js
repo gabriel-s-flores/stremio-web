@@ -9,6 +9,7 @@ const debounce = require('lodash.debounce');
 const { useTranslation } = require('react-i18next');
 const { default: Icon } = require('@stremio/stremio-icons/react');
 const { default: useRouteFocused } = require('stremio/common/useRouteFocused');
+const { useBackHandler, BACK_HANDLER_PRIORITIES } = require('stremio/common');
 const Button = require('stremio/components/Button').default;
 const TextInput = require('stremio/components/TextInput').default;
 const { default: usePlayUrl } = require('stremio/common/usePlayUrl');
@@ -45,6 +46,15 @@ const SearchBar = React.memo(({ className, query, active }) => {
             closeHistory();
         }
     }, [historyOpen]);
+
+    const closeSearchHistoryOnBack = React.useCallback(() => {
+        closeHistory();
+        return true;
+    }, [closeHistory]);
+    const searchHistoryMenuOpen = active && historyOpen && !!(
+        searchHistory?.items?.length || localSearch?.items?.length
+    );
+    useBackHandler(closeSearchHistoryOnBack, BACK_HANDLER_PRIORITIES.POPUP, routeFocused && searchHistoryMenuOpen);
 
     React.useEffect(() => {
         document.addEventListener('mousedown', searchHistoryOnClose);

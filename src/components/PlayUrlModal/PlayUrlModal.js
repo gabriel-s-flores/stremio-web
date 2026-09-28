@@ -8,13 +8,8 @@ const { default: TextInput } = require('stremio/components/TextInput');
 const { ModalsContainerProvider } = require('stremio/router/ModalsContainerContext');
 const styles = require('./styles');
 
-const isDismissKey = (event) => {
-    return event.key === 'Escape'
-        || event.key === 'Back'
-        || event.key === 'GoBack'
-        || event.key === 'XF86Back'
-        || event.keyCode === 461
-        || event.keyCode === 27;
+const isEscapeKey = (event) => {
+    return event.key === 'Escape' || event.keyCode === 27;
 };
 
 // Editable manual fallback for "Play URL / magnet link" on webOS.
@@ -41,7 +36,7 @@ const PlayUrlModal = ({ initialValue, onSubmit, onClose }) => {
             }
         }
         const onKeyDown = (event) => {
-            if (isDismissKey(event)) {
+            if (isEscapeKey(event)) {
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 if (typeof onCloseRef.current === 'function') {

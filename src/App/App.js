@@ -16,6 +16,7 @@ const { parseDeepLink, parseLaunchDeepLink } = require('../common/parseDeepLink'
 const { default: UpdaterBanner } = require('./UpdaterBanner');
 const { default: ShortcutsModal } = require('./ShortcutsModal');
 const { default: GamepadModal } = require('./GamepadModal');
+const BackNavigation = require('./BackNavigation');
 const styles = require('./styles');
 
 const ProtectedRoutes = withCoreSuspender(Routes);
@@ -184,9 +185,10 @@ const App = () => {
             <ToastProvider className={styles['toasts-container']}>
                 <TooltipProvider className={styles['tooltip-container']}>
                     <GamepadProvider enabled={gamepadSupportEnabled} onGuide={toggleGamepadModal}>
-                        <ShortcutsProvider onShortcut={onShortcut}>
+                        <ShortcutsProvider onShortcut={onShortcut} backEnabled={!!process.env.WEBOS}>
                             <FullscreenProvider>
                                 <DiscordProvider>
+                                    <BackNavigation />
                                     {
                                         shortcutModalOpen && <ShortcutsModal onClose={closeShortcutsModal}/>
                                     }

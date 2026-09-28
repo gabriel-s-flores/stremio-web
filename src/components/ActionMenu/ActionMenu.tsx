@@ -3,6 +3,8 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import classNames from 'classnames';
+import { BACK_HANDLER_PRIORITIES, useBackHandler } from 'stremio/common';
+import useRouteFocused from 'stremio/common/useRouteFocused';
 import styles from './ActionMenu.less';
 
 const VIEWPORT_PADDING = 8;
@@ -38,6 +40,7 @@ type Position = {
 };
 
 const ActionMenu = ({ className, title, tabIndex, options, children, onOpen, onClose, onSelect }: Props) => {
+    const routeFocused = useRouteFocused();
     const triggerRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
     const [open, setOpen] = useState(false);
@@ -58,6 +61,11 @@ const ActionMenu = ({ className, title, tabIndex, options, children, onOpen, onC
         closeMenu();
         triggerRef.current?.focus();
     }, [closeMenu]);
+    const backOnRequest = useCallback(() => {
+        closeMenuAndRestoreFocus();
+        return true;
+    }, [closeMenuAndRestoreFocus]);
+    useBackHandler(backOnRequest, BACK_HANDLER_PRIORITIES.POPUP, routeFocused && open);
 
     useLayoutEffect(() => {
         if (!open || !triggerRef.current || !menuRef.current) return;
