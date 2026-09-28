@@ -74,7 +74,7 @@ git push --force-with-lease origin webos
 | 1 | Build e Compatibilidade JS | 🟡 Em andamento (T1.1–T1.9 implementadas; proteção de merge pendente; packaged aguarda T6.4) |
 | 2 | CSS e Layout | ⬜ Pendente |
 | 3 | Plataforma webOS | ⬜ Pendente |
-| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2 em `origin/webos`; T4.3 em branch de tarefa, gates pós-rebase pendentes) |
+| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2 em `origin/webos`; T4.3 parcial em branch de tarefa; T4.4 em branch própria empilhada sobre T4.3, gates pendentes) |
 | 5 | Player, Vídeo e Streaming | ⬜ Pendente |
 | 6 | Empacotamento e Pipeline | ⬜ Pendente (T6.1 deve preservar `disableBackHistoryAPI: true`, hand-off de T4.2/T4.3) |
 | 7 | Testes, Performance e Qualidade | ⬜ Pendente |
@@ -103,6 +103,15 @@ Hand-offs: Back depende do dispatcher da T4.2; validação de mídia continua na
 T5.12; T4.12 deverá mostrar o mapa das cores na ajuda. A Fase 6 mantém
 `disableBackHistoryAPI: true` no `appinfo.json` final e verifica a configuração nos
 artefatos hosted/packaged.
+
+## Fase 4 — T4.4: long press de OK e seek pelas setas
+
+O [plano T4.4](T4.4%20-%20Plano.md) e a [página de evidências](../tests/webos/T4.4%20-%20Evid%C3%AAncias.md)
+registram a implementação parcial na branch `t3code/implement-t4-4`, empilhada sobre
+`t3code/implement-t4-3` porque reutiliza seu dispatcher remoto. OK longo aciona os menus já
+existentes em Video/Stream cards; no Player webOS, esquerda/direita fazem seek quando
+nenhum controle está focado e preservam a navegação espacial nos demais estados.
+Testes, builds, gate ES2018 e runtime Chromium 68 continuam pendentes.
 
 ## T1.2 — Polyfills
 

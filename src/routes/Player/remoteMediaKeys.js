@@ -20,6 +20,16 @@ const dispatchRemoteMediaKey = (key, state, actions) => {
             return playbackAvailable && state.paused === false && invoke(actions.pause);
         case 'MediaStop':
             return invokeAll([actions.closeOverlays, actions.cancelSeek, actions.exit]);
+        case 'ArrowRight':
+            return playbackAvailable && !state.tvControlFocused && state.time !== null &&
+                typeof state.seekTimeDuration === 'number' &&
+                typeof actions.seek === 'function' &&
+                invoke(() => actions.seek(state.seekTimeDuration));
+        case 'ArrowLeft':
+            return playbackAvailable && !state.tvControlFocused && state.time !== null &&
+                typeof state.seekTimeDuration === 'number' &&
+                typeof actions.seek === 'function' &&
+                invoke(() => actions.seek(-state.seekTimeDuration));
         case 'MediaFastForward':
             return playbackAvailable && state.time !== null &&
                 typeof state.seekTimeDuration === 'number' &&
