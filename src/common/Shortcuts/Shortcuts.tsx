@@ -1,12 +1,20 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef } from 'react';
-import { getKeyboardShortcutKey, getKeyboardShortcutKeys, isBackKeyboardEvent } from './keyboard';
 import { BackHandler, RegisteredBackHandler, consumeBackEvent, dispatchBackHandlers } from './backHandlers';
+import {
+    getKeyboardShortcutKey,
+    getKeyboardShortcutKeys,
+    getWebOSShortcut,
+    isBackKeyboardEvent,
+    isWebOSShortcutRepeatable,
+    shouldThrottleRepeatedKey,
+} from './keyboard';
+import dispatchWebOSShortcut from './dispatchWebOSShortcut';
 import shortcuts from './shortcuts.json';
 
 const SHORTCUTS = shortcuts.map(({ shortcuts }) => shortcuts).flat();
 
 export type ShortcutName = string;
-export type ShortcutListener = (combo: number, key: string) => void;
+export type ShortcutListener = (combo: number, key: string) => boolean | void;
 
 interface ShortcutsContext {
     grouped: ShortcutGroup[],
@@ -24,7 +32,7 @@ const ShortcutsContext = createContext<ShortcutsContext>({
 
 type Props = {
     children: JSX.Element,
-    onShortcut: (name: ShortcutName, combo: number, key: string) => void,
+    onShortcut: (name: ShortcutName, combo: number, key: string) => boolean | void,
     backEnabled?: boolean,
 };
 
@@ -66,15 +74,30 @@ const ShortcutsProvider = ({ children, onShortcut, backEnabled = false }: Props)
             return;
         }
 
-        if (isInputFocused()) return;
-
         const shortcutKeys = getKeyboardShortcutKeys(event);
         const repeatKey = getKeyboardShortcutKey(event);
+        const inputFocused = isInputFocused();
+        const webOSShortcut = process.env.WEBOS ? getWebOSShortcut(shortcutKeys, inputFocused) : undefined;
+
+        if (webOSShortcut === 'Back') {
+            dispatchWebOSShortcut(event, webOSShortcut, [], onShortcut);
+            return;
+        }
+
+        if (inputFocused) return;
+
+        if (webOSShortcut) {
+            if (repeat && !isWebOSShortcutRepeatable(webOSShortcut)) return;
+            if (repeat) {
+                if (shouldThrottleRepeatedKey(lastRepeatTime.current, repeatKey, Date.now(), REPEAT_THROTTLE_MS)) return;
+            }
+
+            dispatchWebOSShortcut(event, webOSShortcut, listeners.current.get(webOSShortcut), onShortcut);
+            return;
+        }
+
         if (repeat) {
-            const now = Date.now();
-            const last = lastRepeatTime.current.get(repeatKey) ?? 0;
-            if (now - last < REPEAT_THROTTLE_MS) return;
-            lastRepeatTime.current.set(repeatKey, now);
+            if (shouldThrottleRepeatedKey(lastRepeatTime.current, repeatKey, Date.now(), REPEAT_THROTTLE_MS)) return;
         }
 
         SHORTCUTS.forEach(({ name, combos }) => combos.forEach((keys) => {

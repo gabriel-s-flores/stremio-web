@@ -74,7 +74,7 @@ git push --force-with-lease origin webos
 | 1 | Build e Compatibilidade JS | 🟡 Em andamento (T1.1–T1.9 implementadas; proteção de merge pendente; packaged aguarda T6.4) |
 | 2 | CSS e Layout | ⬜ Pendente |
 | 3 | Plataforma webOS | ⬜ Pendente |
-| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2/T4.3 planejadas) |
+| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2 em implementação no worktree `webos`; T4.3 parcial, aguardando integrar Back) |
 | 5 | Player, Vídeo e Streaming | ⬜ Pendente |
 | 6 | Empacotamento e Pipeline | ⬜ Pendente (T6.1 deve preservar `disableBackHistoryAPI: true`, hand-off de T4.2/T4.3) |
 | 7 | Testes, Performance e Qualidade | ⬜ Pendente |
@@ -83,14 +83,17 @@ git push --force-with-lease origin webos
 Planejamento detalhado por fase e decisões (D1–D10): vault do projeto em
 `obsidian/stremio/11 - Port webOS 5/`.
 
-## Fase 4 — T4.3: mapa de teclas (planejada)
+## Fase 4 — T4.3: teclas de mídia e cores (implementação parcial)
 
 O [plano T4.3](T4.3%20-%20Plano.md) define os tokens para Back, Play/Pause, Stop,
-FF/RW e cores, sua ligação às ações do Player e os gates futuros. A [página de
-evidências](../tests/webos/T4.3%20-%20Evidências.md) registra o estado de planejamento;
-nenhuma implementação ou validação runtime foi declarada.
+FF/RW e cores. Normalização, despacho TV, ações do Player e testes determinísticos
+estão implementados neste worktree. Back (461) chega ao callback global; as alterações
+da máquina central T4.2 ainda estão no worktree `webos` e aguardam integração. Esta
+tarefa não adiciona navegação ou fallback próprio.
+A [página de evidências](../tests/webos/T4.3%20-%20Evidências.md) registra os gates
+executados e os que ainda dependem de build/runtime.
 
-Hand-offs: Back depende do dispatcher da T4.2; a validação de mídia continua na
+Hand-offs: Back depende do dispatcher da T4.2; validação de mídia continua na
 T5.12; T4.12 deverá mostrar o mapa das cores na ajuda. A Fase 6 mantém
 `disableBackHistoryAPI: true` no `appinfo.json` final e verifica a configuração nos
 artefatos hosted/packaged.
