@@ -74,7 +74,7 @@ git push --force-with-lease origin webos
 | 1 | Build e Compatibilidade JS | 🟡 Em andamento (T1.1–T1.9 implementadas; proteção de merge pendente; packaged aguarda T6.4) |
 | 2 | CSS e Layout | ⬜ Pendente |
 | 3 | Plataforma webOS | ⬜ Pendente |
-| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2 em implementação no worktree `webos`; T4.3 parcial, aguardando integrar Back) |
+| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2 em `origin/webos`; T4.3 em branch de tarefa, gates pós-rebase pendentes) |
 | 5 | Player, Vídeo e Streaming | ⬜ Pendente |
 | 6 | Empacotamento e Pipeline | ⬜ Pendente (T6.1 deve preservar `disableBackHistoryAPI: true`, hand-off de T4.2/T4.3) |
 | 7 | Testes, Performance e Qualidade | ⬜ Pendente |
@@ -83,13 +83,19 @@ git push --force-with-lease origin webos
 Planejamento detalhado por fase e decisões (D1–D10): vault do projeto em
 `obsidian/stremio/11 - Port webOS 5/`.
 
+## Fluxo de desenvolvimento por tarefa
+
+Cada tarefa webOS usa uma branch separada `t3code/implement-<task-id>` e commits com o ID da tarefa. A branch começa no `origin/webos` atualizado; se depender de uma tarefa ainda não integrada, pode ser empilhada sobre a branch dessa dependência, que deve ficar registrada no plano e na evidência. O push vai para `origin/<task-branch>`; a integração à `webos` acontece após revisão. Não desenvolver nem publicar commits de tarefa diretamente em `webos`. O [AGENTS.md](../AGENTS.md) mantém esse fluxo como instrução para agentes.
+
+Planos, evidências, status de fase e hand-offs fazem parte do commit. Critérios sem evidência permanecem abertos, inclusive gates não executados.
+
 ## Fase 4 — T4.3: teclas de mídia e cores (implementação parcial)
 
 O [plano T4.3](T4.3%20-%20Plano.md) define os tokens para Back, Play/Pause, Stop,
 FF/RW e cores. Normalização, despacho TV, ações do Player e testes determinísticos
-estão implementados neste worktree. Back (461) chega ao callback global; as alterações
-da máquina central T4.2 ainda estão no worktree `webos` e aguardam integração. Esta
-tarefa não adiciona navegação ou fallback próprio.
+estão implementados na branch `t3code/implement-t4-3`. T4.2 está na base atual após
+rebase; a validação do Back central deve ser repetida. T4.3 não adiciona navegação ou
+fallback próprio.
 A [página de evidências](../tests/webos/T4.3%20-%20Evidências.md) registra os gates
 executados e os que ainda dependem de build/runtime.
 
