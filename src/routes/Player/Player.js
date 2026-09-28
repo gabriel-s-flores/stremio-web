@@ -774,6 +774,7 @@ const Player = () => {
         return dispatchRemoteMediaKey(key, {
             menusOpen,
             nextVideoPopupOpen,
+            tvControlFocused,
             paused: video.state.paused,
             time: video.state.time,
             seekTimeDuration: settings.seekTimeDuration,
@@ -796,11 +797,11 @@ const Player = () => {
             openDetails: () => openRemoteMenu(openSideDrawer),
             openSpeed: () => openRemoteMenu(openSpeedMenu),
         });
-    }, [menusOpen, nextVideoPopupOpen, video.state.paused, video.state.time, video.state.audioTracks, video.state.playbackSpeed, settings.seekTimeDuration, allSubtitleTracks.length, player.metaItem, onPlayRequested, onPauseRequested, closeRemoteOverlays, openRemoteMenu, cancelKeyboardSeek, navigate, onKeyboardSeekRequested, openSubtitlesMenu, openAudioMenu, openSideDrawer, openSpeedMenu]);
+    }, [menusOpen, nextVideoPopupOpen, tvControlFocused, video.state.paused, video.state.time, video.state.audioTracks, video.state.playbackSpeed, settings.seekTimeDuration, allSubtitleTracks.length, player.metaItem, onPlayRequested, onPauseRequested, closeRemoteOverlays, openRemoteMenu, cancelKeyboardSeek, navigate, onKeyboardSeekRequested, openSubtitlesMenu, openAudioMenu, openSideDrawer, openSpeedMenu]);
 
     const onRemoteMediaShortcut = React.useCallback((combo, key) => {
         const handled = dispatchRemotePlayerKey(key);
-        if (handled && (key === 'MediaFastForward' || key === 'MediaRewind')) {
+        if (handled && (key === 'MediaFastForward' || key === 'MediaRewind' || key === 'ArrowLeft' || key === 'ArrowRight')) {
             remoteSeekKeys.current.add(key);
         }
         return handled;
@@ -841,6 +842,10 @@ const Player = () => {
     onShortcut('MediaFastForward', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
 
     onShortcut('MediaRewind', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
+
+    onShortcut('ArrowLeft', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
+
+    onShortcut('ArrowRight', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
 
     onShortcut('ColorRed', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
 

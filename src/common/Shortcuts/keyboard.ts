@@ -55,6 +55,8 @@ const KEY_MAP: Record<string, string> = {
 
 const WEBOS_REMOTE_SHORTCUTS = new Set([
     'Back',
+    'ArrowLeft',
+    'ArrowRight',
     'MediaPlay',
     'MediaPause',
     'MediaStop',
@@ -66,7 +68,7 @@ const WEBOS_REMOTE_SHORTCUTS = new Set([
     'ColorBlue',
 ]);
 
-const REPEATABLE_WEBOS_SHORTCUTS = new Set(['MediaFastForward', 'MediaRewind']);
+const REPEATABLE_WEBOS_SHORTCUTS = new Set(['ArrowLeft', 'ArrowRight', 'MediaFastForward', 'MediaRewind']);
 
 const keyFromKeyCode = (keyCode: number) => {
     if (KEY_CODE_MAP[keyCode]) {
