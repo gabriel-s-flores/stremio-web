@@ -1,8 +1,9 @@
-import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { WHITELISTED_HOSTS } from 'stremio/common/CONSTANTS';
 import safeOpenExternal from './safeOpenExternal';
 import resolveExternalUrl from './resolveExternalUrl';
 import { webOSAdapter } from './webos/adapter';
+import { installTVWheelScrolling } from './webos/pointer';
 import { name, isMobile, isTV } from './device';
 import useShell from './shell/useShell';
 import { useWebOS, WebOSPlatform } from './webos';
@@ -27,11 +28,28 @@ type Props = {
 const PlatformProvider = ({ children }: Props) => {
     const shell = useShell();
     const webos = useWebOS();
+    const cursorVisible = useSyncExternalStore(webOSAdapter.subscribeCursorVisibility, webOSAdapter.getCursorVisible, () => null);
     const [externalLinkFailure, setExternalLinkFailure] = useState<string | null>(null);
     const requestId = useRef(0);
     const dismissExternalLinkFailure = useCallback(() => {
         requestId.current++;
         setExternalLinkFailure(null);
+    }, []);
+
+    useEffect(() => {
+        const root = document.documentElement;
+        if (!process.env.WEBOS || !webos.active || cursorVisible === null) {
+            root.removeAttribute('data-webos-cursor-visible');
+            return undefined;
+        }
+
+        root.setAttribute('data-webos-cursor-visible', String(cursorVisible));
+        return () => root.removeAttribute('data-webos-cursor-visible');
+    }, [webos.active, cursorVisible]);
+
+    useEffect(() => {
+        if (!process.env.WEBOS) return undefined;
+        return installTVWheelScrolling(document);
     }, []);
 
     const openExternal = useCallback((url: string) => {

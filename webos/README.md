@@ -74,7 +74,7 @@ git push --force-with-lease origin webos
 | 1 | Build e Compatibilidade JS | 🟡 Em andamento (T1.1–T1.9 implementadas; proteção de merge pendente; packaged aguarda T6.4) |
 | 2 | CSS e Layout | ⬜ Pendente |
 | 3 | Plataforma webOS | ⬜ Pendente |
-| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2 em `origin/webos`; T4.3 parcial em branch de tarefa; T4.4 em branch própria empilhada sobre T4.3, gates pendentes) |
+| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2–T4.5 integradas em `webos`; validação runtime e gates restantes abertos por tarefa) |
 | 5 | Player, Vídeo e Streaming | ⬜ Pendente |
 | 6 | Empacotamento e Pipeline | ⬜ Pendente (T6.1 deve preservar `disableBackHistoryAPI: true`, hand-off de T4.2/T4.3) |
 | 7 | Testes, Performance e Qualidade | ⬜ Pendente |
@@ -89,15 +89,15 @@ Cada tarefa webOS usa uma branch separada `t3code/implement-<task-id>` e commits
 
 Planos, evidências, status de fase e hand-offs fazem parte do commit. Critérios sem evidência permanecem abertos, inclusive gates não executados.
 
-## Fase 4 — T4.3: teclas de mídia e cores (implementação parcial)
+## Fase 4 — T4.3: teclas de mídia e cores
 
 O [plano T4.3](T4.3%20-%20Plano.md) define os tokens para Back, Play/Pause, Stop,
 FF/RW e cores. Normalização, despacho TV, ações do Player e testes determinísticos
-estão implementados na branch `t3code/implement-t4-3`. T4.2 está na base atual após
-rebase; a validação do Back central deve ser repetida. T4.3 não adiciona navegação ou
-fallback próprio.
-A [página de evidências](../tests/webos/T4.3%20-%20Evidências.md) registra os gates
-executados e os que ainda dependem de build/runtime.
+estão integrados em `webos`. Os logs registram testes, lint, builds desktop/webOS e
+compatibilidade ES2018 aprovados no ramo de tarefa; a revalidação do conjunto integrado
+e o runtime Chromium 68 permanecem pendentes. T4.3 encaminha Back ao dispatcher central
+da T4.2, sem navegação ou fallback próprio. A
+[página de evidências](../tests/webos/T4.3%20-%20Evidências.md) registra resultados e limites.
 
 Hand-offs: Back depende do dispatcher da T4.2; validação de mídia continua na
 T5.12; T4.12 deverá mostrar o mapa das cores na ajuda. A Fase 6 mantém
@@ -107,11 +107,24 @@ artefatos hosted/packaged.
 ## Fase 4 — T4.4: long press de OK e seek pelas setas
 
 O [plano T4.4](T4.4%20-%20Plano.md) e a [página de evidências](../tests/webos/T4.4%20-%20Evid%C3%AAncias.md)
-registram a implementação parcial na branch `t3code/implement-t4-4`, empilhada sobre
-`t3code/implement-t4-3` porque reutiliza seu dispatcher remoto. OK longo aciona os menus já
-existentes em Video/Stream cards; no Player webOS, esquerda/direita fazem seek quando
-nenhum controle está focado e preservam a navegação espacial nos demais estados.
-Testes, builds, gate ES2018 e runtime Chromium 68 continuam pendentes.
+registram a implementação integrada com T4.3. OK longo aciona os menus existentes em
+Video/Stream cards; no Player webOS, esquerda/direita fazem seek quando nenhum controle
+está focado e preservam a navegação espacial nos demais estados. Testes, builds, gate
+ES2018 e runtime Chromium 68 continuam pendentes.
+
+## Fase 4 — T4.5: pointer mode (gates pendentes)
+
+O [plano T4.5](T4.5%20-%20Plano.md) mantém hover/click do Magic Remote, acompanha
+`cursorStateChange` para ocultar o cursor CSS da página durante o 5-way e permite
+que a roda vertical role listas verticais nativamente ou avance uma lista horizontal
+quando ela for a superfície rolável sob o ponteiro. O listener só consome a roda se
+conseguir mover a lista; a roda de volume do Player continua ativa fora dessas áreas.
+
+A implementação e seus limites estão em [T4.5 — Evidências](../tests/webos/T4.5%20-%20Evid%C3%AAncias.md).
+Ainda falta validar a troca pointer/5-way e a roda no emulador webOS 5 / Chromium 68.
+O hand-off para T4.7 é confirmar a navegação por setas e os estados de scroll depois
+da roda; o aceite das demais rotas permanece dentro de T4.1. Testes, lint, builds e
+runtime ainda precisam ser executados sobre o conjunto integrado.
 
 ## T1.2 — Polyfills
 

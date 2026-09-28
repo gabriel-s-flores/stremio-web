@@ -169,6 +169,13 @@ svg {
 }
 
 html {
+    & when (@webos = true) {
+        &[data-webos-cursor-visible='false'],
+        &[data-webos-cursor-visible='false'] * {
+            cursor: none !important;
+        }
+    }
+
     width: @html-width;
     height: @html-height;
     font-family: 'PlusJakartaSans', 'Arial', 'Helvetica', 'TwemojiFlags', 'sans-serif';

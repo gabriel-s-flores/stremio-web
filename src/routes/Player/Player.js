@@ -1037,8 +1037,9 @@ const Player = () => {
             }
         };
 
-        const onWheel = ({ deltaY }) => {
-            if (menusOpen || video.state.volume === null) return;
+        const onWheel = (event) => {
+            if (event.defaultPrevented || event.tvWheelScrollTarget || menusOpen || video.state.volume === null) return;
+            const { deltaY } = event;
 
             if (deltaY > 0) {
                 onVolumeChangeRequested(Math.max(video.state.volume - 5, 0));

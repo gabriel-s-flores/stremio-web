@@ -47,9 +47,11 @@ export const createWebOSAdapter = (
     };
     const lifecycle = new Set<(event: WebOSLaunchEvent) => void>();
     const visibility = new Set<() => void>();
+    const cursorVisibility = new Set<() => void>();
     let pending: WebOSLaunchEvent | null = null;
     let launched = false;
     let hidden = enabled && target?.hidden === true;
+    let cursorVisible: boolean | null = null;
     const fallback = () => {
         try {
             const current = host();
@@ -78,10 +80,18 @@ export const createWebOSAdapter = (
         hidden = next;
         visibility.forEach((listener) => listener());
     };
+    const onCursorStateChange = (event: Event) => {
+        let next: unknown;
+        try { next = (event as CustomEvent).detail?.visibility; } catch { return; }
+        if (typeof next !== 'boolean' || next === cursorVisible) return;
+        cursorVisible = next;
+        cursorVisibility.forEach((listener) => listener());
+    };
     if (enabled && target) {
         target.addEventListener('webOSLaunch', onLaunch, true);
         target.addEventListener('webOSRelaunch', onRelaunch, true);
         target.addEventListener('visibilitychange', onVisibility, true);
+        target.addEventListener('cursorStateChange', onCursorStateChange, true);
     }
     return {
         openBrowser: (url: string, onFailure: () => void) => {
@@ -102,9 +112,15 @@ export const createWebOSAdapter = (
             } catch { fail(); }
         },
         getHidden: () => hidden,
+        getCursorVisible: () => cursorVisible,
         subscribeVisibility: (listener: () => void) => {
             visibility.add(listener);
             return () => { visibility.delete(listener); };
+        },
+        subscribeCursorVisibility: (listener: () => void) => {
+            if (!enabled) return () => { /* Disabled build has no subscription. */ };
+            cursorVisibility.add(listener);
+            return () => { cursorVisibility.delete(listener); };
         },
         subscribeLifecycle: (listener: (event: WebOSLaunchEvent) => void) => {
             if (!enabled) return () => { /* Disabled build has no subscription. */ };
@@ -123,9 +139,11 @@ export const createWebOSAdapter = (
                 target.removeEventListener('webOSLaunch', onLaunch, true);
                 target.removeEventListener('webOSRelaunch', onRelaunch, true);
                 target.removeEventListener('visibilitychange', onVisibility, true);
+                target.removeEventListener('cursorStateChange', onCursorStateChange, true);
             }
             lifecycle.clear();
             visibility.clear();
+            cursorVisibility.clear();
             pending = null;
         },
         isActive: () => {
