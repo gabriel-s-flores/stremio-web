@@ -117,7 +117,7 @@ const SearchBar = React.memo(({ className, query, active }) => {
     }, [currentQuery]);
 
     React.useEffect(() => {
-        if (routeFocused && active) {
+        if (routeFocused && active && !process.env.WEBOS) {
             searchInputRef.current.focus();
         }
     }, [routeFocused, active]);
@@ -140,6 +140,7 @@ const SearchBar = React.memo(({ className, query, active }) => {
                         placeholder={t('SEARCH_OR_PASTE_LINK')}
                         defaultValue={query}
                         tabIndex={-1}
+                        data-webos-initial-focus={process.env.WEBOS ? 'search' : undefined}
                         onChange={queryInputOnChange}
                         onPaste={queryInputOnPaste}
                         onSubmit={queryInputOnSubmit}

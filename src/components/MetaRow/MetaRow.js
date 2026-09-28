@@ -12,7 +12,7 @@ const { usePlatform } = require('stremio/common/Platform');
 const MetaRowPlaceholder = require('./MetaRowPlaceholder');
 const styles = require('./styles');
 
-const MetaRow = ({ className, title, catalog, message, itemComponent, notifications }) => {
+const MetaRow = ({ className, title, catalog, message, itemComponent, notifications, initialFocus }) => {
     const t = useTranslate();
     const platform = usePlatform();
     const onFocusCapture = React.useCallback((event) => {
@@ -64,7 +64,11 @@ const MetaRow = ({ className, title, catalog, message, itemComponent, notificati
                 typeof message === 'string' && message.length > 0 ?
                     <div className={styles['message-container']} title={message}>{message}</div>
                     :
-                    <div className={styles['meta-items-container']} onFocusCapture={onFocusCapture}>
+                    <div
+                        className={styles['meta-items-container']}
+                        onFocusCapture={onFocusCapture}
+                        {...(process.env.WEBOS && typeof initialFocus === 'string' ? { 'data-webos-initial-focus': initialFocus } : {})}
+                    >
                         {
                             ReactIs.isValidElementType(itemComponent) ?
                                 items.slice(0, CONSTANTS.CATALOG_PREVIEW_SIZE).map((item, index) => {
@@ -121,6 +125,7 @@ MetaRow.propTypes = {
     }),
     itemComponent: PropTypes.elementType,
     notifications: PropTypes.object,
+    initialFocus: PropTypes.string,
 };
 
 module.exports = MetaRow;

@@ -145,7 +145,11 @@ const MetaDetails = () => {
                 navMenu={true}
                 originPath={originPath}
             />
-            <div ref={contentRef} className={styles['metadetails-content']}>
+            <div
+                ref={contentRef}
+                className={styles['metadetails-content']}
+                {...(process.env.WEBOS ? { 'data-webos-initial-focus': 'meta-details' } : {})}
+            >
                 {
                     metaPath === null ?
                         <DelayedRenderer delay={500}>

@@ -20,6 +20,12 @@ const Board = () => {
     const [board, loadBoardRows] = useBoard();
     const notifications = useNotifications();
     const profile = useProfile();
+    const hasContinueWatchingItems = continueWatchingPreview.items.length > 0;
+    const firstReadyCatalogIndex = board.catalogs.findIndex((catalog) => (
+        catalog.content?.type === 'Ready' &&
+        Array.isArray(catalog.content.content) &&
+        catalog.content.content.length > 0
+    ));
     const boardCatalogsOffset = continueWatchingPreview.items.length > 0 ? 1 : 0;
     const scrollContainerRef = React.useRef();
     const showStreamingServerWarning = React.useMemo(() => {
@@ -58,6 +64,7 @@ const Board = () => {
                                 catalog={continueWatchingPreview}
                                 itemComponent={ContinueWatchingItem}
                                 notifications={notifications}
+                                initialFocus={hasContinueWatchingItems ? 'board' : undefined}
                             />
                             :
                             null
@@ -71,6 +78,7 @@ const Board = () => {
                                         className={classnames(styles['board-row'], styles[`board-row-${catalog.content.content[0].posterShape}`], 'animation-fade-in')}
                                         catalog={catalog}
                                         itemComponent={MetaItem}
+                                        initialFocus={!hasContinueWatchingItems && index === firstReadyCatalogIndex ? 'board' : undefined}
                                     />
                                 );
                             }

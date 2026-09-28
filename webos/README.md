@@ -74,7 +74,7 @@ git push --force-with-lease origin webos
 | 1 | Build e Compatibilidade JS | 🟡 Em andamento (T1.1–T1.9 implementadas; proteção de merge pendente; packaged aguarda T6.4) |
 | 2 | CSS e Layout | ⬜ Pendente |
 | 3 | Plataforma webOS | ⬜ Pendente |
-| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2–T4.5 integradas em `webos`; validação runtime e gates restantes abertos por tarefa) |
+| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2–T4.5 integradas em `webos`; T4.6 implementada no branch de tarefa, pendente de revisão; validação runtime e gates restantes abertos) |
 | 5 | Player, Vídeo e Streaming | ⬜ Pendente |
 | 6 | Empacotamento e Pipeline | ⬜ Pendente (T6.1 deve preservar `disableBackHistoryAPI: true`, hand-off de T4.2/T4.3) |
 | 7 | Testes, Performance e Qualidade | ⬜ Pendente |
@@ -127,6 +127,23 @@ Testes, lint, builds desktop/webOS normal/debug/packaged e compatibilidade ES201
 passaram na árvore integrada. Ainda falta validar a troca pointer/5-way e a roda no
 emulador webOS 5 / Chromium 68. O hand-off para T4.7 é confirmar a navegação por setas
 e os estados de scroll depois da roda; o aceite das demais rotas permanece em T4.1.
+
+## Fase 4 — T4.6: foco inicial e restauração por rota
+
+O [plano T4.6](T4.6%20-%20Plano.md) estabelece Board → primeiro card da primeira
+linha disponível, Search → input, MetaDetails → primeiro controle de vídeos/streams,
+Player → Play/Pause habilitado e um primeiro controle de conteúdo nas demais rotas.
+O wrapper de rota mantém a referência do último elemento focado/ativado e a restaura ao
+retornar a uma tela mantida em cache. Alvos Board/Player podem aparecer depois do
+carregamento, e a espera termina quando a pessoa move o foco ou interage com a tela.
+A implementação está na branch `t3code/implement-t4.6`, ainda pendente
+de revisão e integração em `webos`.
+
+Veja o [registro de evidências T4.6](../tests/webos/T4.6%20-%20Evid%C3%AAncias.md).
+Testes, lint, builds, compatibilidade ES2018 e runtime Chromium 68 hosted/packaged não
+foram executados nesta tarefa e permanecem gates abertos. T4.7 deve revalidar o foco
+restaurado após scroll/paginação; T4.8 continua responsável pela restauração ao
+abrir/fechar modais. A T4.6 não altera `appinfo.json` nem o hand-off de Fase 6.
 
 ## T1.2 — Polyfills
 

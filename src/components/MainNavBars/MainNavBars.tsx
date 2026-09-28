@@ -47,10 +47,15 @@ const MainNavBars = memo(({ className, route, query, children }: Props) => {
                 selected={route}
                 tabs={TABS}
             />
-            <div ref={contentRef} className={styles['nav-content-container']}>{children}</div>
+            <div
+                ref={contentRef}
+                className={styles['nav-content-container']}
+                {...(process.env.WEBOS ? { 'data-webos-focus-content': '' } : {})}
+            >
+                {children}
+            </div>
         </div>
     );
 });
 
 export default MainNavBars;
-
