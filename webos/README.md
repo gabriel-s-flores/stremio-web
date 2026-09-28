@@ -74,7 +74,7 @@ git push --force-with-lease origin webos
 | 1 | Build e Compatibilidade JS | 🟡 Em andamento (T1.1–T1.9 implementadas; proteção de merge pendente; packaged aguarda T6.4) |
 | 2 | CSS e Layout | ⬜ Pendente |
 | 3 | Plataforma webOS | ⬜ Pendente |
-| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2/T4.3 planejadas) |
+| 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2 em `origin/webos`; T4.3 parcial em branch de tarefa; T4.4 em branch própria empilhada sobre T4.3, gates pendentes) |
 | 5 | Player, Vídeo e Streaming | ⬜ Pendente |
 | 6 | Empacotamento e Pipeline | ⬜ Pendente (T6.1 deve preservar `disableBackHistoryAPI: true`, hand-off de T4.2/T4.3) |
 | 7 | Testes, Performance e Qualidade | ⬜ Pendente |
@@ -83,17 +83,35 @@ git push --force-with-lease origin webos
 Planejamento detalhado por fase e decisões (D1–D10): vault do projeto em
 `obsidian/stremio/11 - Port webOS 5/`.
 
-## Fase 4 — T4.3: mapa de teclas (planejada)
+## Fluxo de desenvolvimento por tarefa
+
+Cada tarefa webOS usa uma branch separada `t3code/implement-<task-id>` e commits com o ID da tarefa. A branch começa no `origin/webos` atualizado; se depender de uma tarefa ainda não integrada, pode ser empilhada sobre a branch dessa dependência, que deve ficar registrada no plano e na evidência. O push vai para `origin/<task-branch>`; a integração à `webos` acontece após revisão. Não desenvolver nem publicar commits de tarefa diretamente em `webos`. O [AGENTS.md](../AGENTS.md) mantém esse fluxo como instrução para agentes.
+
+Planos, evidências, status de fase e hand-offs fazem parte do commit. Critérios sem evidência permanecem abertos, inclusive gates não executados.
+
+## Fase 4 — T4.3: teclas de mídia e cores (implementação parcial)
 
 O [plano T4.3](T4.3%20-%20Plano.md) define os tokens para Back, Play/Pause, Stop,
-FF/RW e cores, sua ligação às ações do Player e os gates futuros. A [página de
-evidências](../tests/webos/T4.3%20-%20Evidências.md) registra o estado de planejamento;
-nenhuma implementação ou validação runtime foi declarada.
+FF/RW e cores. Normalização, despacho TV, ações do Player e testes determinísticos
+estão implementados na branch `t3code/implement-t4-3`. T4.2 está na base atual após
+rebase; a validação do Back central deve ser repetida. T4.3 não adiciona navegação ou
+fallback próprio.
+A [página de evidências](../tests/webos/T4.3%20-%20Evidências.md) registra os gates
+executados e os que ainda dependem de build/runtime.
 
-Hand-offs: Back depende do dispatcher da T4.2; a validação de mídia continua na
+Hand-offs: Back depende do dispatcher da T4.2; validação de mídia continua na
 T5.12; T4.12 deverá mostrar o mapa das cores na ajuda. A Fase 6 mantém
 `disableBackHistoryAPI: true` no `appinfo.json` final e verifica a configuração nos
 artefatos hosted/packaged.
+
+## Fase 4 — T4.4: long press de OK e seek pelas setas
+
+O [plano T4.4](T4.4%20-%20Plano.md) e a [página de evidências](../tests/webos/T4.4%20-%20Evid%C3%AAncias.md)
+registram a implementação parcial na branch `t3code/implement-t4-4`, empilhada sobre
+`t3code/implement-t4-3` porque reutiliza seu dispatcher remoto. OK longo aciona os menus já
+existentes em Video/Stream cards; no Player webOS, esquerda/direita fazem seek quando
+nenhum controle está focado e preservam a navegação espacial nos demais estados.
+Testes, builds, gate ES2018 e runtime Chromium 68 continuam pendentes.
 
 ## T1.2 — Polyfills
 

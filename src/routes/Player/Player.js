@@ -34,6 +34,7 @@ const { default: useKeyboardSeek } = require('./useKeyboardSeek');
 const { default: useStatistics } = require('./useStatistics');
 const useVideo = require('./useVideo');
 const { default: useSubtitles } = require('./useSubtitles');
+const { dispatchRemoteMediaKey, shouldDeduplicateMediaCommand } = require('./remoteMediaKeys');
 const styles = require('./styles');
 const Video = require('./Video');
 const { default: Indicator } = require('./Indicator/Indicator');
@@ -101,13 +102,13 @@ const Player = () => {
     }, [video.state.manifest]);
 
     const [optionsMenuOpen, , closeOptionsMenu, toggleOptionsMenu] = useBinaryState(false);
-    const [subtitlesMenuOpen, , closeSubtitlesMenu, toggleSubtitlesMenu] = useBinaryState(false);
-    const [audioMenuOpen, , closeAudioMenu, toggleAudioMenu] = useBinaryState(false);
-    const [speedMenuOpen, , closeSpeedMenu, toggleSpeedMenu] = useBinaryState(false);
+    const [subtitlesMenuOpen, openSubtitlesMenu, closeSubtitlesMenu, toggleSubtitlesMenu] = useBinaryState(false);
+    const [audioMenuOpen, openAudioMenu, closeAudioMenu, toggleAudioMenu] = useBinaryState(false);
+    const [speedMenuOpen, openSpeedMenu, closeSpeedMenu, toggleSpeedMenu] = useBinaryState(false);
     const [statisticsMenuOpen, openStatisticsMenu, closeStatisticsMenu, toggleStatisticsMenu] = useBinaryState(false);
     const [castDevicesMenuOpen, , closeCastDevicesMenu, toggleCastDevicesMenu] = useBinaryState(false);
     const [nextVideoPopupOpen, openNextVideoPopup, closeNextVideoPopup] = useBinaryState(false);
-    const [sideDrawerOpen, , closeSideDrawer, toggleSideDrawer] = useBinaryState(false);
+    const [sideDrawerOpen, openSideDrawer, closeSideDrawer, toggleSideDrawer] = useBinaryState(false);
 
     const menusOpen = React.useMemo(() => {
         return optionsMenuOpen || subtitlesMenuOpen || audioMenuOpen || speedMenuOpen || statisticsMenuOpen || castDevicesMenuOpen || sideDrawerOpen || nextVideoPopupOpen;
@@ -217,6 +218,8 @@ const Player = () => {
     const pressTimer = React.useRef(null);
     const longPress = React.useRef(false);
     const detailsHold = React.useRef(null);
+    const remoteSeekKeys = React.useRef(new Set());
+    const lastMediaPlaybackCommand = React.useRef(null);
     const controlBarRef = React.useRef(null);
 
     const HOLD_DELAY = 400;
@@ -737,19 +740,86 @@ const Player = () => {
 
     useMediaSession(video.state, player, fullscreen, onPlayRequested, onPauseRequested, onNextVideoRequested);
 
+    const onMediaPlaybackCommand = React.useCallback((command, source) => {
+        const commandAvailable = !menusOpen && !nextVideoPopupOpen && (
+            command === 'play' ? video.state.paused === true : video.state.paused === false
+        );
+        if (!commandAvailable) return false;
+
+        const timestamp = Date.now();
+        if (shouldDeduplicateMediaCommand(lastMediaPlaybackCommand.current, command, source, timestamp)) {
+            return true;
+        }
+
+        lastMediaPlaybackCommand.current = { command, source, timestamp };
+        if (command === 'play') {
+            onPlayRequested();
+        } else {
+            onPauseRequested();
+        }
+        return true;
+    }, [menusOpen, nextVideoPopupOpen, video.state.paused, onPlayRequested, onPauseRequested]);
+
+    const closeRemoteOverlays = React.useCallback(() => {
+        closeMenus();
+        closeNextVideoPopup();
+    }, [closeMenus, closeNextVideoPopup]);
+
+    const openRemoteMenu = React.useCallback((openMenu) => {
+        closeRemoteOverlays();
+        openMenu();
+    }, [closeRemoteOverlays]);
+
+    const dispatchRemotePlayerKey = React.useCallback((key) => {
+        return dispatchRemoteMediaKey(key, {
+            menusOpen,
+            nextVideoPopupOpen,
+            tvControlFocused,
+            paused: video.state.paused,
+            time: video.state.time,
+            seekTimeDuration: settings.seekTimeDuration,
+            hasSubtitles: allSubtitleTracks.length > 0,
+            hasAudioTracks: video.state.audioTracks.length > 0,
+            hasDetails: player.metaItem?.type === 'Ready',
+            playbackSpeed: video.state.playbackSpeed,
+        }, {
+            play: () => onPlayRequested(),
+            pause: () => onPauseRequested(),
+            closeOverlays: closeRemoteOverlays,
+            cancelSeek: () => {
+                remoteSeekKeys.current.clear();
+                cancelKeyboardSeek();
+            },
+            exit: () => navigate(-1),
+            seek: (offset) => onKeyboardSeekRequested(offset),
+            openSubtitles: () => openRemoteMenu(openSubtitlesMenu),
+            openAudio: () => openRemoteMenu(openAudioMenu),
+            openDetails: () => openRemoteMenu(openSideDrawer),
+            openSpeed: () => openRemoteMenu(openSpeedMenu),
+        });
+    }, [menusOpen, nextVideoPopupOpen, tvControlFocused, video.state.paused, video.state.time, video.state.audioTracks, video.state.playbackSpeed, settings.seekTimeDuration, allSubtitleTracks.length, player.metaItem, onPlayRequested, onPauseRequested, closeRemoteOverlays, openRemoteMenu, cancelKeyboardSeek, navigate, onKeyboardSeekRequested, openSubtitlesMenu, openAudioMenu, openSideDrawer, openSpeedMenu]);
+
+    const onRemoteMediaShortcut = React.useCallback((combo, key) => {
+        const handled = dispatchRemotePlayerKey(key);
+        if (handled && (key === 'MediaFastForward' || key === 'MediaRewind' || key === 'ArrowLeft' || key === 'ArrowRight')) {
+            remoteSeekKeys.current.add(key);
+        }
+        return handled;
+    }, [dispatchRemotePlayerKey]);
+
     React.useEffect(() => {
         const onMediaKey = (action) => {
             switch (action) {
                 case 'play-pause':
                     if (video.state.paused !== null) {
-                        video.state.paused ? onPlayRequested() : onPauseRequested();
+                        onMediaPlaybackCommand(video.state.paused ? 'play' : 'pause', 'shell');
                     }
                     break;
                 case 'play':
-                    onPlayRequested();
+                    onMediaPlaybackCommand('play', 'shell');
                     break;
                 case 'pause':
-                    onPauseRequested();
+                    onMediaPlaybackCommand('pause', 'shell');
                     break;
                 case 'next-track':
                     if (player.nextVideo !== null) {
@@ -761,7 +831,29 @@ const Player = () => {
         };
         platform.shell.on('media-key', onMediaKey);
         return () => platform.shell.off('media-key', onMediaKey);
-    }, [video.state.paused, player.nextVideo, onPlayRequested, onPauseRequested, onNextVideoRequested]);
+    }, [video.state.paused, player.nextVideo, onMediaPlaybackCommand, onNextVideoRequested]);
+
+    onShortcut('MediaPlay', () => onMediaPlaybackCommand('play', 'keyboard'), [onMediaPlaybackCommand], !!process.env.WEBOS && routeFocused);
+
+    onShortcut('MediaPause', () => onMediaPlaybackCommand('pause', 'keyboard'), [onMediaPlaybackCommand], !!process.env.WEBOS && routeFocused);
+
+    onShortcut('MediaStop', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
+
+    onShortcut('MediaFastForward', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
+
+    onShortcut('MediaRewind', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
+
+    onShortcut('ArrowLeft', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
+
+    onShortcut('ArrowRight', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
+
+    onShortcut('ColorRed', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
+
+    onShortcut('ColorGreen', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
+
+    onShortcut('ColorYellow', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
+
+    onShortcut('ColorBlue', onRemoteMediaShortcut, [onRemoteMediaShortcut], !!process.env.WEBOS && routeFocused);
 
     onShortcut('seekForward', (combo) => {
         const seekDuration = combo === 1 ? settings.seekShortTimeDuration : settings.seekTimeDuration;
@@ -883,6 +975,10 @@ const Player = () => {
             clearTimeout(pressTimer.current);
             pressTimer.current = null;
             longPress.current = false;
+            if (remoteSeekKeys.current.size > 0) {
+                remoteSeekKeys.current.clear();
+                cancelKeyboardSeek();
+            }
         }
 
         const onKeyDown = (e) => {
@@ -903,6 +999,15 @@ const Player = () => {
 
             if (keyboardKeys.includes('KeyD') || keyboardKeys.includes('D')) {
                 releaseDetailsHold();
+                return;
+            }
+
+            const remoteSeekKey = keyboardKeys.find((keyboardKey) => remoteSeekKeys.current.has(keyboardKey));
+            if (remoteSeekKey) {
+                remoteSeekKeys.current.delete(remoteSeekKey);
+                releaseKeyboardSeek();
+                e.preventDefault();
+                e.stopPropagation();
                 return;
             }
 
@@ -989,6 +1094,7 @@ const Player = () => {
             window.addEventListener('mouseup', onMouseUp);
             window.addEventListener('blur', onBlur);
         } else {
+            remoteSeekKeys.current.clear();
             cancelKeyboardSeek();
         }
         return () => {

@@ -70,7 +70,7 @@ const Stream = ({ className, videoId, videoReleased, addonName, name, descriptio
         }
     }, [toggleMenu]);
     const popupLabelOnLongPress = React.useCallback((event) => {
-        if (event.nativeEvent.pointerType !== 'mouse' && !event.nativeEvent.togglePopupPrevented) {
+        if (event?.nativeEvent?.pointerType !== 'mouse' && !event?.nativeEvent?.togglePopupPrevented) {
             toggleMenu();
         }
     }, [toggleMenu]);
