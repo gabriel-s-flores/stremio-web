@@ -10,7 +10,14 @@ function render(file, webos, props = {}, dependencies = {}) {
     }).outputText;
     vm.runInNewContext(code, { module, exports: module.exports, document: { body: {} }, process: { env: { WEBOS: webos } }, require: id => {
         if (Object.prototype.hasOwnProperty.call(dependencies, id)) return dependencies[id];
-        if (id === 'react') return { ...React, forwardRef: fn => fn, useCallback: fn => fn, useMemo: fn => fn() };
+        if (id === 'react') return {
+            ...React,
+            forwardRef: fn => fn,
+            useCallback: fn => fn,
+            useMemo: fn => fn(),
+            useRef: current => ({ current }),
+            useEffect: () => {},
+        };
         if (id === 'stremio/common') return {
             BACK_HANDLER_PRIORITIES: { MODAL: 500, POPUP: 600 },
             useBackHandler: () => {},

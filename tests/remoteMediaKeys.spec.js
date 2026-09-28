@@ -1,5 +1,7 @@
 const {
     dispatchRemoteMediaKey,
+    dispatchRemotePlaybackCommand,
+    releaseRemoteSeekKey,
     shouldDeduplicateMediaCommand,
 } = require('../src/routes/Player/remoteMediaKeys');
 
@@ -59,6 +61,30 @@ test('FF and RW use the configured duration and do not seek through open overlay
     expect(callbacks.seek).toHaveBeenCalledTimes(2);
 });
 
+test('ArrowLeft and ArrowRight seek only when no spatial control or overlay owns focus', () => {
+    const callbacks = actions();
+    expect(dispatchRemoteMediaKey('ArrowRight', state, callbacks)).toBe(true);
+    expect(callbacks.seek).toHaveBeenLastCalledWith(10000);
+    expect(dispatchRemoteMediaKey('ArrowLeft', state, callbacks)).toBe(true);
+    expect(callbacks.seek).toHaveBeenLastCalledWith(-10000);
+    expect(dispatchRemoteMediaKey('ArrowRight', { ...state, tvControlFocused: true }, callbacks)).toBe(false);
+    expect(dispatchRemoteMediaKey('ArrowLeft', { ...state, nextVideoPopupOpen: true }, callbacks)).toBe(false);
+    expect(callbacks.seek).toHaveBeenCalledTimes(2);
+});
+
+test('remote seek keyup releases only a key that started a remote seek', () => {
+    const remoteSeekKeys = new Set(['ArrowRight', 'MediaFastForward']);
+    const releaseSeek = jest.fn();
+
+    expect(releaseRemoteSeekKey(['ArrowLeft'], remoteSeekKeys, releaseSeek)).toBe(false);
+    expect(remoteSeekKeys).toEqual(new Set(['ArrowRight', 'MediaFastForward']));
+    expect(releaseSeek).not.toHaveBeenCalled();
+
+    expect(releaseRemoteSeekKey(['ArrowRight'], remoteSeekKeys, releaseSeek)).toBe(true);
+    expect(remoteSeekKeys).toEqual(new Set(['MediaFastForward']));
+    expect(releaseSeek).toHaveBeenCalledTimes(1);
+});
+
 test.each([
     ['ColorRed', { hasSubtitles: true }, 'openSubtitles'],
     ['ColorGreen', { hasAudioTracks: true }, 'openAudio'],
@@ -88,6 +114,29 @@ test('cross-source duplicate playback commands are suppressed without hiding opp
     const lastCommand = { command: 'play', source: 'keyboard', timestamp: 1000 };
     expect(shouldDeduplicateMediaCommand(lastCommand, 'play', 'shell', 1100)).toBe(true);
     expect(shouldDeduplicateMediaCommand(lastCommand, 'pause', 'shell', 1100)).toBe(false);
+    expect(shouldDeduplicateMediaCommand(lastCommand, 'pause', 'shell', 1100, true)).toBe(true);
+    expect(shouldDeduplicateMediaCommand({ ...lastCommand, source: 'shell' }, 'pause', 'shell', 1100, true)).toBe(false);
     expect(shouldDeduplicateMediaCommand(lastCommand, 'play', 'keyboard', 1100)).toBe(false);
     expect(shouldDeduplicateMediaCommand(lastCommand, 'play', 'shell', 1300)).toBe(false);
+});
+
+test('idempotent keyboard Play consumes a paired shell toggle when playback already runs', () => {
+    const lastCommand = { current: null };
+    const callbacks = actions();
+
+    expect(dispatchRemotePlaybackCommand('play', { ...state, paused: false }, 'keyboard', lastCommand, 1000, callbacks)).toBe(true);
+    expect(lastCommand.current).toEqual({ command: 'play', source: 'keyboard', timestamp: 1000 });
+    expect(callbacks.play).not.toHaveBeenCalled();
+
+    expect(dispatchRemotePlaybackCommand('pause', { ...state, paused: false }, 'shell', lastCommand, 1100, callbacks, true)).toBe(true);
+    expect(callbacks.pause).not.toHaveBeenCalled();
+});
+
+test('explicit shell Play/Pause commands stay idempotent and are not treated as toggles', () => {
+    const lastCommand = { current: null };
+    const callbacks = actions();
+
+    expect(dispatchRemotePlaybackCommand('pause', state, 'shell', lastCommand, 1000, callbacks)).toBe(false);
+    expect(callbacks.pause).not.toHaveBeenCalled();
+    expect(lastCommand.current).toBe(null);
 });

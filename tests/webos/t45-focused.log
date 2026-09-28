@@ -1,0 +1,13 @@
+PASS tests/webosSpatialNavigation.spec.js (7.286 s)
+PASS tests/remoteMediaKeys.spec.js
+PASS tests/webosButton.spec.js
+PASS tests/webosPointer.spec.js
+PASS tests/webosBack.spec.js
+PASS tests/externalLinks.spec.js
+PASS tests/webosRemoteKeyboard.spec.js
+
+Test Suites: 7 passed, 7 total
+Tests:       110 passed, 110 total
+Snapshots:   0 total
+Time:        14.317 s, estimated 25 s
+Ran all test suites matching /tests\/remoteMediaKeys.spec.js|tests\/webosRemoteKeyboard.spec.js|tests\/webosButton.spec.js|tests\/webosPointer.spec.js|tests\/webosBack.spec.js|tests\/webosSpatialNavigation.spec.js|tests\/externalLinks.spec.js/i.

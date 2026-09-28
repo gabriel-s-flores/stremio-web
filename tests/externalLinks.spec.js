@@ -103,7 +103,11 @@ test('Platform keeps safe failure URLs and ignores stale native callbacks', () =
             return [state[index], value => { state[index] = value; }];
         },
         useRef: initial => { const index = refIndex++; return refs[index] || (refs[index] = { current: initial }); },
-        useCallback: fn => fn
+        useCallback: fn => fn,
+        useEffect: () => {},
+        useSyncExternalStore: (_subscribe, getSnapshot, getServerSnapshot) => (
+            typeof getSnapshot === 'function' ? getSnapshot() : getServerSnapshot()
+        ),
     };
     const context = { exports: {}, require: id => {
         if (id === 'react') return mockReact;
@@ -111,7 +115,14 @@ test('Platform keeps safe failure URLs and ignores stale native callbacks', () =
         if (id === './resolveExternalUrl') return resolve;
         if (id === './safeOpenExternal') return safeOpen;
         if (id === './device') return { name: 'webos', isTV: true, isMobile: false };
-        if (id === './webos/adapter') return { webOSAdapter: { openBrowser } };
+        if (id === './webos/adapter') return {
+            webOSAdapter: {
+                openBrowser,
+                subscribeCursorVisibility: () => () => {},
+                getCursorVisible: () => null,
+            },
+        };
+        if (id === './webos/pointer') return { installTVWheelScrolling: jest.fn(() => jest.fn()) };
         if (id === './webos') return { useWebOS: () => ({}) };
         if (id === './shell/useShell') return () => ({});
         throw Error(id);

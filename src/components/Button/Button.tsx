@@ -57,7 +57,11 @@ const Button = forwardRef(({ className, href, disabled, children, onLongPress, o
     useEffect(() => clearKeyboardPress, [clearKeyboardPress]);
 
     const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (process.env.WEBOS && (tvDisabled || event.target !== event.currentTarget || event.repeat)) return;
+        if (process.env.WEBOS && (tvDisabled || event.target !== event.currentTarget)) return;
+        if (process.env.WEBOS && event.repeat) {
+            if (isOKKey(event)) event.preventDefault();
+            return;
+        }
         if (typeof props.onKeyDown === 'function') {
             props.onKeyDown(event);
         }
@@ -74,7 +78,7 @@ const Button = forwardRef(({ className, href, disabled, children, onLongPress, o
                         timer: null,
                         longPressed: false,
                         target: event.currentTarget,
-                        onKeyUp: () => {},
+                        onKeyUp: () => undefined,
                     };
                     press.onKeyUp = (keyUpEvent) => {
                         if (!isOKKey(keyUpEvent)) return;

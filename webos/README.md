@@ -89,15 +89,17 @@ Cada tarefa webOS usa uma branch separada `t3code/implement-<task-id>` e commits
 
 Planos, evidências, status de fase e hand-offs fazem parte do commit. Critérios sem evidência permanecem abertos, inclusive gates não executados.
 
+**Consolidação local em 28/09/2026:** a pedido do usuário, T4.3, T4.4 e T4.5 foram integradas na branch local `webos` nos commits `9d5d1832` e `d661c25f`, com correções e evidências versionadas no commit de consolidação posterior. Não houve push para `origin/webos`; os gates de runtime Chromium 68 permanecem abertos.
+
 ## Fase 4 — T4.3: teclas de mídia e cores
 
 O [plano T4.3](T4.3%20-%20Plano.md) define os tokens para Back, Play/Pause, Stop,
 FF/RW e cores. Normalização, despacho TV, ações do Player e testes determinísticos
-estão integrados em `webos`. Os logs registram testes, lint, builds desktop/webOS e
-compatibilidade ES2018 aprovados no ramo de tarefa; a revalidação do conjunto integrado
-e o runtime Chromium 68 permanecem pendentes. T4.3 encaminha Back ao dispatcher central
-da T4.2, sem navegação ou fallback próprio. A
-[página de evidências](../tests/webos/T4.3%20-%20Evidências.md) registra resultados e limites.
+estão integrados em `webos`. A árvore integrada passou 35 suites/693 testes, lint,
+builds desktop/webOS e compatibilidade ES2018; os logs estão na
+[página de evidências](../tests/webos/T4.3%20-%20Evidências.md). O teste de Back
+confirma despacho único pelo handler central T4.2, sem navegação ou fallback próprio.
+O runtime Chromium 68 hosted/packaged permanece pendente.
 
 Hand-offs: Back depende do dispatcher da T4.2; validação de mídia continua na
 T5.12; T4.12 deverá mostrar o mapa das cores na ajuda. A Fase 6 mantém
@@ -110,9 +112,9 @@ O [plano T4.4](T4.4%20-%20Plano.md) e a [página de evidências](../tests/webos/
 registram a implementação integrada com T4.3. OK longo aciona os menus existentes em
 Video/Stream cards; no Player webOS, esquerda/direita fazem seek quando nenhum controle
 está focado e preservam a navegação espacial nos demais estados. Testes, builds, gate
-ES2018 e runtime Chromium 68 continuam pendentes.
+ES2018 passaram na árvore integrada; runtime Chromium 68 hosted/packaged continua pendente.
 
-## Fase 4 — T4.5: pointer mode (gates pendentes)
+## Fase 4 — T4.5: pointer mode
 
 O [plano T4.5](T4.5%20-%20Plano.md) mantém hover/click do Magic Remote, acompanha
 `cursorStateChange` para ocultar o cursor CSS da página durante o 5-way e permite
@@ -121,10 +123,10 @@ quando ela for a superfície rolável sob o ponteiro. O listener só consome a r
 conseguir mover a lista; a roda de volume do Player continua ativa fora dessas áreas.
 
 A implementação e seus limites estão em [T4.5 — Evidências](../tests/webos/T4.5%20-%20Evid%C3%AAncias.md).
-Ainda falta validar a troca pointer/5-way e a roda no emulador webOS 5 / Chromium 68.
-O hand-off para T4.7 é confirmar a navegação por setas e os estados de scroll depois
-da roda; o aceite das demais rotas permanece dentro de T4.1. Testes, lint, builds e
-runtime ainda precisam ser executados sobre o conjunto integrado.
+Testes, lint, builds desktop/webOS normal/debug/packaged e compatibilidade ES2018
+passaram na árvore integrada. Ainda falta validar a troca pointer/5-way e a roda no
+emulador webOS 5 / Chromium 68. O hand-off para T4.7 é confirmar a navegação por setas
+e os estados de scroll depois da roda; o aceite das demais rotas permanece em T4.1.
 
 ## T1.2 — Polyfills
 

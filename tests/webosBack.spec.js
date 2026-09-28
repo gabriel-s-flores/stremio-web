@@ -22,6 +22,7 @@ const loadTypeScriptModule = (file, dependencies = {}, globals = {}) => {
 
 const keyboard = loadTypeScriptModule('src/common/Shortcuts/keyboard.ts');
 const backHandlers = loadTypeScriptModule('src/common/Shortcuts/backHandlers.ts');
+const dispatchWebOSShortcut = loadTypeScriptModule('src/common/Shortcuts/dispatchWebOSShortcut.ts');
 const { getBackNavigationAction } = require('../src/common/Shortcuts/backNavigation');
 
 const makeEvent = (properties = {}) => ({
@@ -179,15 +180,21 @@ test('ShortcutsProvider handles Back before its focused-input shortcut filter an
         react: fakeReact,
         './keyboard': keyboard,
         './backHandlers': backHandlers,
+        './dispatchWebOSShortcut': dispatchWebOSShortcut,
         './shortcuts.json': [],
     }, { document: fakeDocument, HTMLElement: FakeHTMLElement });
-    const provider = providerModule.ShortcutsProvider({ children: 'app', onShortcut: jest.fn(), backEnabled: true });
+    const onShortcut = jest.fn();
+    const provider = providerModule.ShortcutsProvider({ children: 'app', onShortcut, backEnabled: true });
     const handler = jest.fn(() => true);
+    const mediaBackShortcut = jest.fn(() => true);
+    provider.props.value.on('Back', mediaBackShortcut);
     const unregister = provider.props.value.registerBackHandler(handler, 100);
 
     const first = makeEvent({ keyCode: 461, which: 461 });
     onKeyDown(first);
     expect(handler).toHaveBeenCalledTimes(1);
+    expect(mediaBackShortcut).not.toHaveBeenCalled();
+    expect(onShortcut).not.toHaveBeenCalled();
     expect(first.preventDefault).toHaveBeenCalledTimes(1);
 
     const repeat = makeEvent({ keyCode: 461, which: 461, repeat: true });

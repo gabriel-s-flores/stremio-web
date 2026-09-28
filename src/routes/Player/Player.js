@@ -34,7 +34,7 @@ const { default: useKeyboardSeek } = require('./useKeyboardSeek');
 const { default: useStatistics } = require('./useStatistics');
 const useVideo = require('./useVideo');
 const { default: useSubtitles } = require('./useSubtitles');
-const { dispatchRemoteMediaKey, shouldDeduplicateMediaCommand } = require('./remoteMediaKeys');
+const { dispatchRemoteMediaKey, dispatchRemotePlaybackCommand, releaseRemoteSeekKey } = require('./remoteMediaKeys');
 const styles = require('./styles');
 const Video = require('./Video');
 const { default: Indicator } = require('./Indicator/Indicator');
@@ -740,24 +740,15 @@ const Player = () => {
 
     useMediaSession(video.state, player, fullscreen, onPlayRequested, onPauseRequested, onNextVideoRequested);
 
-    const onMediaPlaybackCommand = React.useCallback((command, source) => {
-        const commandAvailable = !menusOpen && !nextVideoPopupOpen && (
-            command === 'play' ? video.state.paused === true : video.state.paused === false
-        );
-        if (!commandAvailable) return false;
-
-        const timestamp = Date.now();
-        if (shouldDeduplicateMediaCommand(lastMediaPlaybackCommand.current, command, source, timestamp)) {
-            return true;
-        }
-
-        lastMediaPlaybackCommand.current = { command, source, timestamp };
-        if (command === 'play') {
-            onPlayRequested();
-        } else {
-            onPauseRequested();
-        }
-        return true;
+    const onMediaPlaybackCommand = React.useCallback((command, source, isToggle = false) => {
+        return dispatchRemotePlaybackCommand(command, {
+            menusOpen,
+            nextVideoPopupOpen,
+            paused: video.state.paused,
+        }, source, lastMediaPlaybackCommand, Date.now(), {
+            play: onPlayRequested,
+            pause: onPauseRequested,
+        }, isToggle);
     }, [menusOpen, nextVideoPopupOpen, video.state.paused, onPlayRequested, onPauseRequested]);
 
     const closeRemoteOverlays = React.useCallback(() => {
@@ -812,7 +803,7 @@ const Player = () => {
             switch (action) {
                 case 'play-pause':
                     if (video.state.paused !== null) {
-                        onMediaPlaybackCommand(video.state.paused ? 'play' : 'pause', 'shell');
+                        onMediaPlaybackCommand(video.state.paused ? 'play' : 'pause', 'shell', true);
                     }
                     break;
                 case 'play':
@@ -1002,10 +993,7 @@ const Player = () => {
                 return;
             }
 
-            const remoteSeekKey = keyboardKeys.find((keyboardKey) => remoteSeekKeys.current.has(keyboardKey));
-            if (remoteSeekKey) {
-                remoteSeekKeys.current.delete(remoteSeekKey);
-                releaseKeyboardSeek();
+            if (releaseRemoteSeekKey(keyboardKeys, remoteSeekKeys.current, releaseKeyboardSeek)) {
                 e.preventDefault();
                 e.stopPropagation();
                 return;
@@ -1015,6 +1003,7 @@ const Player = () => {
             if (e.ctrlKey || e.metaKey || e.altKey) return;
 
             if (keyboardKeys.includes('ArrowRight') || keyboardKeys.includes('ArrowLeft')) {
+                if (process.env.WEBOS) return;
                 releaseKeyboardSeek();
                 setImmersed(false);
                 setImmersedDebounced(true);

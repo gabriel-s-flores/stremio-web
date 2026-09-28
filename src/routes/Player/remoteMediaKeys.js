@@ -53,15 +53,48 @@ const dispatchRemoteMediaKey = (key, state, actions) => {
     }
 };
 
-const shouldDeduplicateMediaCommand = (lastCommand, command, source, timestamp, windowMs = 250) => {
+const shouldDeduplicateMediaCommand = (lastCommand, command, source, timestamp, isToggle = false, windowMs = 250) => {
+    const commandMatches = lastCommand?.command === command;
+    // The platform can emit a keyboard MediaPlay/MediaPause and a shell
+    // play-pause event for one press. The shell event is a toggle, so React may
+    // have already updated `paused` and made its derived command look opposite.
+    const shellToggleEcho = isToggle && source === 'shell' && lastCommand?.source === 'keyboard';
     return !!lastCommand &&
-        lastCommand.command === command &&
+        (commandMatches || shellToggleEcho) &&
         lastCommand.source !== source &&
         timestamp >= lastCommand.timestamp &&
         timestamp - lastCommand.timestamp <= windowMs;
 };
 
+const dispatchRemotePlaybackCommand = (command, state, source, lastCommand, timestamp, actions, isToggle = false) => {
+    if (shouldDeduplicateMediaCommand(lastCommand.current, command, source, timestamp, isToggle)) return true;
+
+    const commandAvailable = !state.menusOpen && !state.nextVideoPopupOpen && (
+        command === 'play' ? state.paused === true : state.paused === false
+    );
+    if (!commandAvailable) {
+        if (source !== 'keyboard') return false;
+        // Consume a recognized key even when it is already in the requested
+        // state, so a paired shell toggle cannot perform the opposite action.
+        lastCommand.current = { command, source, timestamp };
+        return true;
+    }
+
+    lastCommand.current = { command, source, timestamp };
+    return invoke(actions[command]);
+};
+
+const releaseRemoteSeekKey = (keyboardKeys, remoteSeekKeys, releaseSeek) => {
+    const key = keyboardKeys.find((keyboardKey) => remoteSeekKeys.has(keyboardKey));
+    if (!key) return false;
+    remoteSeekKeys.delete(key);
+    releaseSeek();
+    return true;
+};
+
 module.exports = {
     dispatchRemoteMediaKey,
+    dispatchRemotePlaybackCommand,
+    releaseRemoteSeekKey,
     shouldDeduplicateMediaCommand,
 };
