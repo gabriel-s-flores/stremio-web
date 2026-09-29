@@ -1,0 +1,23 @@
+{
+    "TV_REMOTE_TITLE": "Ajuda do comando remoto",
+    "TV_REMOTE_OPEN": "Abrir ajuda do comando remoto",
+    "TV_REMOTE_INTRO": "Use as setas para percorrer esta ajuda. Os botões de reprodução e cores atuam no player quando a ação correspondente está disponível.",
+    "TV_REMOTE_ARROWS": "↑ ↓ ← →",
+    "TV_REMOTE_NAVIGATE": "Mover o foco entre comandos e percorrer listas.",
+    "TV_REMOTE_OK": "OK / Enter",
+    "TV_REMOTE_SELECT": "Ativar o comando selecionado. No player, selecione Reproduzir/Pausar para controlar a reprodução.",
+    "TV_REMOTE_BACK": "Voltar",
+    "TV_REMOTE_GO_BACK": "Fechar o menu ou diálogo superior, cancelar a procura de posição ou voltar à ecrã anterior. Na ecrã inicial, retornar ao Home da TV.",
+    "TV_REMOTE_SEEK_KEYS": "← → / ⏪ ⏩",
+    "TV_REMOTE_SEEK": "Avançar/retroceder com esquerda/direita quando nenhum comando ou menu do player estiver selecionado; caso contrário, usar a barra de progresso. Os botões de avanço e retrocesso também mudam a posição.",
+    "TV_REMOTE_PLAY_KEYS": "▶ / ⏸",
+    "TV_REMOTE_PLAY": "Reproduzir / pausar (se o comando tiver esses botões).",
+    "TV_REMOTE_STOP_KEY": "■",
+    "TV_REMOTE_STOP": "Parar e sair do player.",
+    "TV_REMOTE_RED": "Vermelho",
+    "TV_REMOTE_GREEN": "Verde",
+    "TV_REMOTE_YELLOW": "Amarelo",
+    "TV_REMOTE_BLUE": "Azul",
+    "TV_REMOTE_DETAILS": "Mostrar detalhes / episódios do vídeo.",
+    "TV_REMOTE_OPTIONAL": "Sem botões de cores ou multimédia? Use os comandos do player com setas e OK. Ajuste o volume pelo comando da TV. Pesquisa, navegação e esta ajuda também estão disponíveis na ecrã; os atalhos de teclado são opcionais."
+}

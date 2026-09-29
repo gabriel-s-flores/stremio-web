@@ -1,0 +1,23 @@
+{
+    "TV_REMOTE_TITLE": "Remote control help",
+    "TV_REMOTE_OPEN": "Open remote control help",
+    "TV_REMOTE_INTRO": "Use the arrows to move through this help. Playback and color buttons act in the player when the corresponding action is available.",
+    "TV_REMOTE_ARROWS": "↑ ↓ ← →",
+    "TV_REMOTE_NAVIGATE": "Move focus between controls and scroll through lists.",
+    "TV_REMOTE_OK": "OK / Enter",
+    "TV_REMOTE_SELECT": "Activate the focused control. In the player, select Play/Pause to control playback.",
+    "TV_REMOTE_BACK": "Back",
+    "TV_REMOTE_GO_BACK": "Close the top menu or dialog, cancel seeking, or return to the previous screen. On Home, return to the TV launcher.",
+    "TV_REMOTE_SEEK_KEYS": "← → / ⏪ ⏩",
+    "TV_REMOTE_SEEK": "Seek using left/right when no player control or menu is focused; otherwise use the seek bar. Fast-forward and rewind buttons also seek.",
+    "TV_REMOTE_PLAY_KEYS": "▶ / ⏸",
+    "TV_REMOTE_PLAY": "Play / pause (if your remote has these buttons).",
+    "TV_REMOTE_STOP_KEY": "■",
+    "TV_REMOTE_STOP": "Stop and leave the player.",
+    "TV_REMOTE_RED": "Red",
+    "TV_REMOTE_GREEN": "Green",
+    "TV_REMOTE_YELLOW": "Yellow",
+    "TV_REMOTE_BLUE": "Blue",
+    "TV_REMOTE_DETAILS": "Show video details / episodes.",
+    "TV_REMOTE_OPTIONAL": "No color or media buttons? Use the player controls with arrows and OK. Use the TV remote for volume. Search, navigation and this help are also available on screen; keyboard shortcuts are optional."
+}

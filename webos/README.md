@@ -338,3 +338,18 @@ memória nativa precisam ser confirmados por CDP/hardware nas fases T1.6 e T7.4.
 O baseline principal ainda depende da compatibilidade do app completo com Chromium 68
 (Fase 1) e do empacotamento `.ipk` (Fase 6); o `hello` permanece o instrumento para
 falhas anteriores ao React/CoreProvider.
+
+
+## T4.6–T4.12 — Foco, listas, teclado e ajuda do controle
+
+Implementação na branch `t3code/implement-t4.6-t4.12`, base `407f981e`:
+foco inicial/restauração de rota, retorno dos modais, paginação e posters lazy no
+Chromium 68, revelação de inputs, Gamepad API protegida e ajuda do controle por
+Settings/setas/OK. Traduções en-US, pt-BR e pt-PT; teclado físico opcional.
+
+[Plano](T4.6-T4.12%20-%20Plano.md) e
+[evidências/gates](../tests/webos/T4.6-T4.12%20-%20Evid%C3%AAncias.md).
+O aceite nativo hosted/packaged, teclado/gamepad na TV e roteiro do sofá seguem
+abertos; a implementação não fecha os gates anteriores de T4.1, T5.12 ou T6.1.
+O vault persistente em `../stremio` contém o status e o registro de plataformas
+em `07 - Serviços/Chromecast e Gamepad.md`.

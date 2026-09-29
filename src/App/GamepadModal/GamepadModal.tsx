@@ -79,7 +79,7 @@ const GamepadModal = ({ onClose }: Props) => {
     }, [gamepad]);
 
     return createPortal((
-        <FocusScope className={styles['gamepad-modal']} {...(process.env.WEBOS ? { lockProps: { 'data-gamepad-modal': true } } : { 'data-gamepad-modal': true })}>
+        <FocusScope {...(process.env.WEBOS ? { returnFocus: true, autoFocus: true } : {})} className={styles['gamepad-modal']} {...(process.env.WEBOS ? { lockProps: { 'data-gamepad-modal': true } } : { 'data-gamepad-modal': true })}>
             <div className={styles['backdrop']} onClick={onClose} />
 
             <div className={styles['container']}>

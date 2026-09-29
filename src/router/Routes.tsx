@@ -93,7 +93,7 @@ const Routes = () => {
                     <RRoutes key={view.key} location={view.location}>
                         <RRoute
                             path={view.route.path}
-                            element={<Route component={view.route.element} focused={index === visibleViews.length - 1} />}
+                            element={<Route locationKey={view.location.key} pathname={view.location.pathname} component={view.route.element} focused={index === visibleViews.length - 1} />}
                         />
                     </RRoutes>
                 ))

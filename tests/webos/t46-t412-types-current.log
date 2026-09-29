@@ -1,0 +1,72 @@
+node_modules/.pnpm/react-i18next@15.7.4_i18next@24.2.3_typescript@5.9.3__react-dom@18.3.1_react@18.3.1__react@18.3.1_typescript@5.9.3/node_modules/react-i18next/TransWithoutContext.d.ts(3,3): error TS2614: Module '"i18next"' has no exported member 'ApplyTarget'. Did you mean to use 'import ApplyTarget from "i18next"' instead?
+node_modules/.pnpm/react-i18next@15.7.4_i18next@24.2.3_typescript@5.9.3__react-dom@18.3.1_react@18.3.1__react@18.3.1_typescript@5.9.3/node_modules/react-i18next/TransWithoutContext.d.ts(4,3): error TS2614: Module '"i18next"' has no exported member 'ConstrainTarget'. Did you mean to use 'import ConstrainTarget from "i18next"' instead?
+node_modules/.pnpm/react-i18next@15.7.4_i18next@24.2.3_typescript@5.9.3__react-dom@18.3.1_react@18.3.1__react@18.3.1_typescript@5.9.3/node_modules/react-i18next/TransWithoutContext.d.ts(5,3): error TS2724: '"i18next"' has no exported member named 'GetSource'. Did you mean 'Resource'?
+node_modules/.pnpm/react-i18next@15.7.4_i18next@24.2.3_typescript@5.9.3__react-dom@18.3.1_react@18.3.1__react@18.3.1_typescript@5.9.3/node_modules/react-i18next/TransWithoutContext.d.ts(8,3): error TS2614: Module '"i18next"' has no exported member 'SelectorFn'. Did you mean to use 'import SelectorFn from "i18next"' instead?
+node_modules/.pnpm/react-i18next@15.7.4_i18next@24.2.3_typescript@5.9.3__react-dom@18.3.1_react@18.3.1__react@18.3.1_typescript@5.9.3/node_modules/react-i18next/TransWithoutContext.d.ts(16,36): error TS2339: Property 'enableSelector' does not exist on type 'TypeOptions'.
+src/common/Fullscreen/FullscreenProvider.tsx(16,39): error TS2339: Property 'webkitEnterFullscreen' does not exist on type 'HTMLVideoElement'.
+src/common/Platform/device.ts(13,9): error TS2339: Property 'userAgent' does not exist on type '{}'.
+src/common/Platform/device.ts(13,25): error TS2339: Property 'platform' does not exist on type '{}'.
+src/common/Platform/device.ts(13,40): error TS2339: Property 'maxTouchPoints' does not exist on type '{}'.
+src/common/useInterval.ts(12,43): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(timeout: string | number | Timeout | undefined): void', gave the following error.
+    Argument of type 'Timer' is not assignable to parameter of type 'string | number | Timeout | undefined'.
+      Type 'Timer' is missing the following properties from type 'Timeout': close, _onTimeout, [Symbol.dispose]
+  Overload 2 of 2, '(id: number | undefined): void', gave the following error.
+    Argument of type 'Timer' is not assignable to parameter of type 'number'.
+src/components/TextInput/TextInput.tsx(32,13): error TS2783: 'tabIndex' is specified more than once, so this usage will be overwritten.
+src/core/Error/Error.tsx(23,14): error TS2739: Type '{ className: string; src: any; alt: string; }' is missing the following properties from type 'Props': fallbackSrc, renderFallback, onError
+src/routes/Calendar/Placeholder/Placeholder.tsx(18,18): error TS2739: Type '{ className: string; src: any; alt: string; }' is missing the following properties from type 'Props': fallbackSrc, renderFallback, onError
+src/routes/Calendar/Table/Cell/Cell.tsx(55,28): error TS18047: 'element' is possibly 'null'.
+src/routes/Calendar/Table/Cell/Cell.tsx(56,13): error TS18047: 'element' is possibly 'null'.
+src/routes/Calendar/Table/Cell/Cell.tsx(77,33): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/routes/Library/Placeholder/Placeholder.tsx(18,18): error TS2739: Type '{ className: string; src: any; alt: string; }' is missing the following properties from type 'Props': fallbackSrc, renderFallback, onError
+src/routes/Player/Buffering/Buffering.tsx(23,17): error TS2322: Type '{ className: string; style: { clipPath: string; }; src: string; alt: string; fallbackSrc: any; }' is not assignable to type 'IntrinsicAttributes & Props'.
+  Property 'style' does not exist on type 'IntrinsicAttributes & Props'.
+src/routes/Player/Buffering/Buffering.tsx(28,14): error TS2739: Type '{ className: string; src: string; alt: string; fallbackSrc: any; }' is missing the following properties from type 'Props': renderFallback, onError
+src/routes/Player/Indicator/Indicator.tsx(26,32): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/routes/Player/SideDrawer/SideDrawer.tsx(101,21): error TS2322: Type '{ className: string; compact: boolean; name: string; logo: string | null; runtime: string | null; releaseInfo: string | null; released: Date | null | undefined; description: string | null; links: Link[]; }' is not assignable to type 'IntrinsicAttributes & RefAttributes<any>'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & RefAttributes<any>'.
+src/routes/Player/SideDrawer/SideDrawer.tsx(122,34): error TS2741: Property 'onSelect' is missing in type '{ key: number; className: string; id: string; title: string; thumbnail: string | null; season: number | undefined; episode: number | undefined; released: string | null; upcoming: boolean; ... 7 more ...; onMarkSeasonAsWatched: (season: number, watched: boolean) => void; }' but required in type '{ [x: string]: any; className: any; id: any; title: any; thumbnail: any; season: any; episode: any; released: any; upcoming: any; watched: any; progress: any; scheduled: any; seasonWatched: any; selected: any; deepLinks: any; onSelect: any; onMarkVideoAsWatched: any; onMarkSeasonAsWatched: any; }'.
+src/routes/Player/useKeyboardSeek.ts(41,33): error TS18048: 'currentTime' is possibly 'undefined'.
+src/routes/Player/useKeyboardSeek.ts(42,70): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'number'.
+src/routes/Player/useKeyboardSeek.ts(43,30): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'number'.
+src/routes/Player/useKeyboardSeek.ts(49,9): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/routes/Player/useKeyboardSeek.ts(60,13): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/routes/Player/useKeyboardSeek.ts(61,13): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/routes/Player/useKeyboardSeek.ts(74,13): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/routes/Player/useKeyboardSeek.ts(83,9): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/routes/Player/useKeyboardSeek.ts(94,9): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/routes/Player/useKeyboardSeek.ts(106,45): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'number'.
+src/routes/Player/useKeyboardSeek.ts(106,58): error TS18048: 'duration' is possibly 'undefined'.
+src/routes/Player/useKeyboardSeek.ts(107,132): error TS18048: 'duration' is possibly 'undefined'.
+src/routes/Player/useSubtitles.ts(8,38): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(8,63): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(19,32): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(38,38): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(56,12): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(62,12): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(73,22): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(74,27): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(140,22): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(141,27): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(157,12): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(172,4): error TS2304: Cannot find name 'UseSubtitlesArgs'.
+src/routes/Player/useSubtitles.ts(172,23): error TS2304: Cannot find name 'UseSubtitlesResult'.
+src/routes/Player/useSubtitles.ts(179,38): error TS2304: Cannot find name 'SelectedSubtitleTrack'.
+src/routes/Player/useSubtitles.ts(208,47): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(256,53): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(268,50): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(389,13): error TS18047: 'appliedTrack.current' is possibly 'null'.
+src/routes/Player/useSubtitles.ts(405,13): error TS2322: Type 'string' is not assignable to type 'SubtitleSource'.
+src/routes/Player/useSubtitles.ts(455,53): error TS2304: Cannot find name 'SubtitleTrack'.
+src/routes/Player/useSubtitles.ts(470,52): error TS2304: Cannot find name 'SubtitleTrack'.
+src/services/GamepadContext/GamepadProvider.tsx(92,9): error TS2578: Unused '@ts-expect-error' directive.
+src/services/GamepadContext/GamepadProvider.tsx(103,9): error TS2578: Unused '@ts-expect-error' directive.
+src/services/GamepadNavigation/useContentGamepadNavigation.tsx(89,32): error TS2339: Property 'focus' does not exist on type 'never'.
+src/services/GamepadNavigation/useContentGamepadNavigation.tsx(134,49): error TS2345: Argument of type '(direction: "left" | "right" | "up" | "down") => void' is not assignable to parameter of type '(data?: string | undefined) => void'.
+  Types of parameters 'direction' and 'data' are incompatible.
+    Type 'string | undefined' is not assignable to type '"left" | "right" | "up" | "down"'.
+      Type 'undefined' is not assignable to type '"left" | "right" | "up" | "down"'.
+src/webos/diagnostics/DebugPage.tsx(78,25): error TS2304: Cannot find name 'WebosDiagnosticsSnapshot'.
+src/webos/diagnostics/DebugPage.tsx(84,46): error TS2304: Cannot find name 'WebosDiagnosticsSnapshot'.

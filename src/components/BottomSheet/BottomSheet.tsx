@@ -8,6 +8,7 @@ import useOrientation from 'stremio/common/useOrientation';
 import FocusLock from 'react-focus-lock';
 const FocusScope = process.env.WEBOS ? FocusLock : 'div';
 
+import { BACK_HANDLER_PRIORITIES, useBackHandler } from 'stremio/common/Shortcuts';
 import styles from './BottomSheet.less';
 
 const CLOSE_THRESHOLD = 100;
@@ -26,6 +27,11 @@ const BottomSheet = ({ children, title, show, onClose }: Props) => {
     const [offset, setOffset] = useState(0);
 
     const [opened, open, close] = useBinaryState();
+    const backOnRequest = useCallback(() => {
+        close();
+        return true;
+    }, [close]);
+    useBackHandler(backOnRequest, BACK_HANDLER_PRIORITIES.MODAL, !!process.env.WEBOS && opened);
 
     const containerStyle = useMemo(() => ({
         transform: `translateY(${offset}px)`
@@ -68,7 +74,7 @@ const BottomSheet = ({ children, title, show, onClose }: Props) => {
     }, [orientation]);
 
     return opened && createPortal((
-        <FocusScope className={styles['bottom-sheet']}>
+        <FocusScope {...(process.env.WEBOS ? { returnFocus: true, autoFocus: true } : {})} className={styles['bottom-sheet']}>
             <div className={styles['backdrop']} onClick={onCloseRequest} />
             <div
                 ref={containerRef}

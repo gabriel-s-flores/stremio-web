@@ -13,10 +13,10 @@ const revealTarget = (target) => {
         const style = getComputedStyle(parent);
         const box = parent.getBoundingClientRect();
         const rect = target.getBoundingClientRect();
-        const top = box.top + (parseFloat(style.borderTopWidth) || 0);
-        const bottom = box.bottom - (parseFloat(style.borderBottomWidth) || 0);
-        const left = box.left + (parseFloat(style.borderLeftWidth) || 0);
-        const right = box.right - (parseFloat(style.borderRightWidth) || 0);
+        const top = box.top + (parseFloat(style.borderTopWidth) || 0) + 4;
+        const bottom = box.bottom - (parseFloat(style.borderBottomWidth) || 0) - 4;
+        const left = box.left + (parseFloat(style.borderLeftWidth) || 0) + 4;
+        const right = box.right - (parseFloat(style.borderRightWidth) || 0) - 4;
         if (/(auto|scroll)/.test(style.overflowY) && parent.scrollHeight > parent.clientHeight && rect.bottom - rect.top <= bottom - top) {
             if (rect.top < top) parent.scrollTop -= Math.ceil(top - rect.top);
             else if (rect.bottom > bottom) parent.scrollTop += Math.ceil(rect.bottom - bottom);
@@ -40,3 +40,4 @@ const installTVSpatialNavigation = () => {
 };
 
 module.exports = installTVSpatialNavigation;
+module.exports.revealTarget = revealTarget;

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useToast from 'stremio/common/Toast/useToast';
 import GamepadContext from './GamepadContext';
+import readGamepads from './readGamepads';
 import type { ControllerType } from './GamepadContext';
 
 type GamepadEventHandlers = Map<string, Map<string, (data?: string) => void>>;
@@ -97,9 +98,7 @@ const GamepadProvider = ({ enabled, onGuide, children }: GamepadProviderProps) =
     }, [toast, t]);
 
     const onGamepadDisconnected = useCallback(() => {
-        const remaining = Array.from(navigator.getGamepads()).filter(
-            (gp) => gp !== null
-        ) as Gamepad[];
+        const remaining = readGamepads();
         setControllerType(remaining.length > 0 ? detectControllerType(remaining[0]) : 'generic');
         // @ts-expect-error show() expects no arguments
         toast.show({
@@ -113,9 +112,7 @@ const GamepadProvider = ({ enabled, onGuide, children }: GamepadProviderProps) =
         if (!enabled) return;
 
         if (typeof navigator.getGamepads === 'function') {
-            const existing = Array.from(navigator.getGamepads()).filter(
-                (gp) => gp !== null
-            ) as Gamepad[];
+            const existing = readGamepads();
             if (existing.length > 0) {
                 setControllerType(detectControllerType(existing[0]));
             }
@@ -147,9 +144,7 @@ const GamepadProvider = ({ enabled, onGuide, children }: GamepadProviderProps) =
         const updateStatus = () => {
             if (document.hasFocus()) {
                 const currentTime = Date.now();
-                const controllers = Array.from(navigator.getGamepads()).filter(
-                    (gp) => gp !== null
-                ) as Gamepad[];
+                const controllers = readGamepads();
 
                 connectedGamepads.current = controllers.length;
 

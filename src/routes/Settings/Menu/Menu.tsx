@@ -24,7 +24,7 @@ const Menu = ({ selected, streamingServer, onSelect }: Props) => {
 
     return (
         <div className={styles['menu']}>
-            <Button className={classNames(styles['button'], { [styles['selected']]: selected === SECTIONS.GENERAL })} title={t('SETTINGS_NAV_GENERAL')} data-section={SECTIONS.GENERAL} onClick={onSelect}>
+            <Button data-focus-priority={process.env.WEBOS ? 10 : undefined} className={classNames(styles['button'], { [styles['selected']]: selected === SECTIONS.GENERAL })} title={t('SETTINGS_NAV_GENERAL')} data-section={SECTIONS.GENERAL} onClick={onSelect}>
                 { t('SETTINGS_NAV_GENERAL') }
             </Button>
             <Button className={classNames(styles['button'], { [styles['selected']]: selected === SECTIONS.INTERFACE })} title={t('INTERFACE')} data-section={SECTIONS.INTERFACE} onClick={onSelect}>
@@ -36,8 +36,8 @@ const Menu = ({ selected, streamingServer, onSelect }: Props) => {
             <Button className={classNames(styles['button'], { [styles['selected']]: selected === SECTIONS.STREAMING })} title={t('SETTINGS_NAV_STREAMING')} data-section={SECTIONS.STREAMING} onClick={onSelect}>
                 { t('SETTINGS_NAV_STREAMING') }
             </Button>
-            { !platform.isMobile && !platform.isTV && <Button className={classNames(styles['button'], { [styles['selected']]: selected === SECTIONS.SHORTCUTS })} title={t('SETTINGS_NAV_SHORTCUTS')} data-section={SECTIONS.SHORTCUTS} onClick={onSelect}>
-                { t('SETTINGS_NAV_SHORTCUTS') }
+            { (process.env.WEBOS || (!platform.isMobile && !platform.isTV)) && <Button className={classNames(styles['button'], { [styles['selected']]: selected === SECTIONS.SHORTCUTS })} title={t(process.env.WEBOS ? 'TV_REMOTE_TITLE' : 'SETTINGS_NAV_SHORTCUTS')} data-section={SECTIONS.SHORTCUTS} onClick={onSelect}>
+                { t(process.env.WEBOS ? 'TV_REMOTE_TITLE' : 'SETTINGS_NAV_SHORTCUTS') }
             </Button> }
 
             <div className={styles['spacing']} />

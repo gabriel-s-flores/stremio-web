@@ -68,9 +68,13 @@ const Settings = () => {
         });
 
         const container = sectionsContainerRef.current;
+        if (process.env.WEBOS && section?.ref.current) {
+            const target = section.ref.current.querySelector<HTMLElement>('[tabindex="0"],button,input');
+            target?.focus();
+        }
         section && container?.scrollTo({
             top: section.ref.current!.offsetTop - container!.offsetTop,
-            behavior: 'smooth'
+            behavior: process.env.WEBOS ? 'auto' : 'smooth'
         });
     }, [sections]);
 
@@ -112,7 +116,7 @@ const Settings = () => {
                         streamingServer={streamingServer}
                     />
                     {
-                        !platform.isMobile && !platform.isTV && <Shortcuts ref={shortcutsSectionRef} />
+                        (process.env.WEBOS || (!platform.isMobile && !platform.isTV)) && <Shortcuts ref={shortcutsSectionRef} />
                     }
                     <Info streamingServer={streamingServer} />
                 </div>

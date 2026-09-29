@@ -1,0 +1,33 @@
+{
+  "base": "407f981e7b3fb1c9443fbbe351ad958a0c32078c",
+  "branch": "t3code/implement-t4.6-t4.12",
+  "node": "22.23.3",
+  "pnpm": "11.8.0",
+  "jest": {
+    "suites": 38,
+    "tests": 724,
+    "result": "passed"
+  },
+  "lint": "passed",
+  "frozenLockfile": "passed",
+  "builds": {
+    "desktop": "passed",
+    "webos": "passed",
+    "debug": "passed",
+    "packaged": "passed"
+  },
+  "es2018": {
+    "webos": "7/7",
+    "debug": "7/7",
+    "packaged": "5/5"
+  },
+  "buildWarnings": "asset and entrypoint size (2 per build)",
+  "typescript": {
+    "baseline": 61,
+    "current": 61,
+    "added": 0,
+    "removed": 0
+  },
+  "nativeWebos5": "not available; acceptance gates remain open",
+  "vault": "/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5"
+}

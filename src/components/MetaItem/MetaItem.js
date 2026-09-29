@@ -76,7 +76,7 @@ const MetaItem = React.memo(({ className, type, name, poster, posterShape, poste
     const hasOptions = Array.isArray(options) && options.length > 0;
     return (
         <div className={classnames(className, styles['meta-item-container'], styles['poster-shape-poster'], styles[`poster-shape-${posterShape}`], { 'active': menuOpen })}>
-            <Button title={name} href={href} {...filterInvalidDOMProps(props)} className={styles['meta-item-link']} onClick={metaItemOnClick}>
+            <Button data-focus-priority={process.env.WEBOS ? 10 : undefined} title={name} href={href} {...filterInvalidDOMProps(props)} className={styles['meta-item-link']} onClick={metaItemOnClick}>
                 <div className={classnames(styles['poster-container'], { 'poster-change-cursor': posterChangeCursor })}>
                     {
                         onDismissClick ?
