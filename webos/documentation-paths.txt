@@ -1,0 +1,80 @@
+/data/data/com.termux/files/home/projects/stremio/01 - Visão Geral/Arquitetura em Camadas.md
+/data/data/com.termux/files/home/projects/stremio/01 - Visão Geral/Ecossistema Stremio.md
+/data/data/com.termux/files/home/projects/stremio/01 - Visão Geral/Tecnologias.md
+/data/data/com.termux/files/home/projects/stremio/01 - Visão Geral/Visão Geral do Projeto.md
+/data/data/com.termux/files/home/projects/stremio/02 - Desenvolvimento/Convenções de Código.md
+/data/data/com.termux/files/home/projects/stremio/02 - Desenvolvimento/Docker e Servidor HTTP.md
+/data/data/com.termux/files/home/projects/stremio/02 - Desenvolvimento/Preparar Ambiente e Scripts.md
+/data/data/com.termux/files/home/projects/stremio/02 - Desenvolvimento/Webpack (Build).md
+/data/data/com.termux/files/home/projects/stremio/03 - Arquitetura/Core (WASM) e Transport.md
+/data/data/com.termux/files/home/projects/stremio/03 - Arquitetura/Fluxo de Estado (useModelState e Suspense).md
+/data/data/com.termux/files/home/projects/stremio/03 - Arquitetura/Modais e Overlays.md
+/data/data/com.termux/files/home/projects/stremio/03 - Arquitetura/PWA e Service Worker.md
+/data/data/com.termux/files/home/projects/stremio/03 - Arquitetura/Plataforma e Shell.md
+/data/data/com.termux/files/home/projects/stremio/03 - Arquitetura/Roteamento em Camadas.md
+/data/data/com.termux/files/home/projects/stremio/04 - Rotas/Addons.md
+/data/data/com.termux/files/home/projects/stremio/04 - Rotas/Board.md
+/data/data/com.termux/files/home/projects/stremio/04 - Rotas/Calendar.md
+/data/data/com.termux/files/home/projects/stremio/04 - Rotas/Discover.md
+/data/data/com.termux/files/home/projects/stremio/04 - Rotas/Intro.md
+/data/data/com.termux/files/home/projects/stremio/04 - Rotas/Library.md
+/data/data/com.termux/files/home/projects/stremio/04 - Rotas/Mapa de Rotas.md
+/data/data/com.termux/files/home/projects/stremio/04 - Rotas/MetaDetails.md
+/data/data/com.termux/files/home/projects/stremio/04 - Rotas/Player.md
+/data/data/com.termux/files/home/projects/stremio/04 - Rotas/Search.md
+/data/data/com.termux/files/home/projects/stremio/04 - Rotas/Settings.md
+/data/data/com.termux/files/home/projects/stremio/05 - Componentes/Catálogo de Componentes.md
+/data/data/com.termux/files/home/projects/stremio/05 - Componentes/Componentes Base em Detalhe.md
+/data/data/com.termux/files/home/projects/stremio/05 - Componentes/Convenções de Estilo.md
+/data/data/com.termux/files/home/projects/stremio/06 - Common/CONSTANTS.md
+/data/data/com.termux/files/home/projects/stremio/06 - Common/Hooks e Helpers.md
+/data/data/com.termux/files/home/projects/stremio/06 - Common/Providers e Feedback.md
+/data/data/com.termux/files/home/projects/stremio/07 - Serviços/Chromecast e Gamepad.md
+/data/data/com.termux/files/home/projects/stremio/08 - Deploy/CI-CD (GitHub Actions).md
+/data/data/com.termux/files/home/projects/stremio/09 - Testes/Testes e Qualidade.md
+/data/data/com.termux/files/home/projects/stremio/10 - Referências/Assets e index.html.md
+/data/data/com.termux/files/home/projects/stremio/10 - Referências/Configurações.md
+/data/data/com.termux/files/home/projects/stremio/10 - Referências/Dependências.md
+/data/data/com.termux/files/home/projects/stremio/10 - Referências/Modelos do Core (Tipos).md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Ambiente Alvo — webOS TV 5.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Análise de Compatibilidade Chromium 68.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Decisões Arquiteturais do Port.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Fase 0 — Fundação e Setup.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Fase 1 — Build e Compatibilidade JS.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Fase 2 — CSS e Layout.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Fase 3 — Plataforma webOS.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Fase 4 — Navegação TV e Controle Remoto.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Fase 5 — Player, Vídeo e Streaming.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Fase 6 — Empacotamento e Pipeline.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Fase 7 — Testes, Performance e Qualidade.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Fase 8 — Distribuição e Lançamento.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Matriz de Paridade de Funcionalidades.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Matriz de Riscos.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/Port webOS 5 — Índice.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T0.8 - Evidencias.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T2.1 - Evidencias.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T2.10 - Evidências.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T2.2 - Evidencias.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T2.3 - Evidencias.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T2.4 - Evidencias.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T2.5 - Evidencias.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T2.6 - Evidencias.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T2.7 - Evidências.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T2.8 - Evidências.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T2.9 - Evidências.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.1 - Evidências.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.1 - Plano.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.10 - Plano.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.11 - Plano.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.2 - Evidências.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.3 - Evidências.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.3 - Plano.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.4 - Evidências.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.5 - Evidências.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.6 - Plano.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.7 - Plano.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.8 - Evidências.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T3.9 - Evidências.md
+/data/data/com.termux/files/home/projects/stremio/11 - Port webOS 5/T4.1 - Evidências.md
+/data/data/com.termux/files/home/projects/stremio/Bem-vindo.md
+/data/data/com.termux/files/home/projects/stremio/Índice.md
