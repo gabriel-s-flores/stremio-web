@@ -1,0 +1,58 @@
+$ webpack --mode production --env WEBOS=1 --env WEBOS_DEBUG=1
+
+
+
+
+assets by path images/ 4.63 MiB 62 assets
+assets by status 9.96 MiB [emitted]
+  assets by path 407f981e7b3fb1c9443fbbe351ad958a0c32078c/ 9.91 MiB 3 assets
+  + 4 assets
+assets by chunk 8.09 MiB (id hint: vendors)
+  asset 407f981e7b3fb1c9443fbbe351ad958a0c32078c/scripts/575.js 8.07 MiB [compared for emit] [minimized] [big] (id hint: vendors) 1 related asset
+  asset 407f981e7b3fb1c9443fbbe351ad958a0c32078c/scripts/101.js 18.5 KiB [compared for emit] [minimized] (id hint: vendors) 1 related asset
+assets by path fonts/ 249 KiB
+  asset fonts/PlusJakartaSans.ttf 172 KiB [compared for emit] [from: assets/fonts/PlusJakartaSans.ttf] (auxiliary name: main)
+  asset fonts/TwemojiFlags.woff2 76.5 KiB [compared for emit] [from: assets/fonts/TwemojiFlags.woff2] (auxiliary name: main)
+assets by path screenshots/*.webp 220 KiB
+  asset screenshots/board_wide.webp 159 KiB [compared for emit] [from: assets/screenshots/board_wide.webp] [copied]
+  asset screenshots/board_narrow.webp 60.6 KiB [compared for emit] [from: assets/screenshots/board_narrow.webp] [copied]
++ 6 assets
+Entrypoint main [big] 9.68 MiB (13.1 MiB) = 407f981e7b3fb1c9443fbbe351ad958a0c32078c/styles/main.css 297 KiB 407f981e7b3fb1c9443fbbe351ad958a0c32078c/scripts/main.js 9.39 MiB 13 auxiliary assets
+Entrypoint worker 241 KiB (6.15 MiB) = 407f981e7b3fb1c9443fbbe351ad958a0c32078c/scripts/worker.js 2 auxiliary assets
+orphan modules 1.16 MiB (javascript) 251 KiB (asset) 212 bytes (runtime) [orphan] 232 modules
+runtime modules 9.78 KiB 16 modules
+javascript modules 14 MiB
+  modules by path ./node_modules/.pnpm/ 12.9 MiB 987 modules
+  modules by path ./src/ 1.06 MiB 566 modules
+  ./util.inspect (ignored) 15 bytes [built] [code generated]
+css modules 297 KiB 142 modules
+json modules 5.99 MiB
+  modules by path ./node_modules/.pnpm/ 5.98 MiB 51 modules
+  modules by path ./src/ 11.7 KiB 6 modules
+asset modules 8.2 MiB (asset) 336 bytes (javascript)
+  ./node_modules/.pnpm/@stremio+stremio-core-web@0.57.0/node_modules/@stremio/stre...(truncated) 4.95 MiB (asset) 42 bytes (javascript) [built] [code generated]
+  ./assets/images/stremio_symbol.png 16.1 KiB (asset) 42 bytes (javascript) [built] [code generated]
+  ./assets/images/empty.png 95.7 KiB (asset) 42 bytes (javascript) [built] [code generated]
+  + 5 modules
+
+LOG from GenerateSW
+<i> The service worker at service-worker.js will precache
+<i>         77 URLs, totaling 29.5 MB.
+
+WARNING in asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets:
+  407f981e7b3fb1c9443fbbe351ad958a0c32078c/styles/main.css (297 KiB)
+  407f981e7b3fb1c9443fbbe351ad958a0c32078c/scripts/main.js (9.39 MiB)
+  images/anonymous.png (652 KiB)
+  images/default_avatar.png (2.1 MiB)
+  407f981e7b3fb1c9443fbbe351ad958a0c32078c/binaries/stremio_core_web_bg.wasm (4.95 MiB)
+  407f981e7b3fb1c9443fbbe351ad958a0c32078c/scripts/575.js (8.07 MiB)
+
+WARNING in entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+Entrypoints:
+  main (9.68 MiB)
+      407f981e7b3fb1c9443fbbe351ad958a0c32078c/styles/main.css
+      407f981e7b3fb1c9443fbbe351ad958a0c32078c/scripts/main.js
+
+webpack 5.106.2 compiled with 2 warnings in 98199 ms

@@ -4,10 +4,15 @@ const React = require('react');
 
 const useOnScrollToBottom = (cb, threshold = 0) => {
     const triggeredRef = React.useRef(false);
+    const triggeredHeightRef = React.useRef(null);
     const onScroll = React.useCallback((event) => {
+        if (process.env.WEBOS && triggeredHeightRef.current !== event.target.scrollHeight) {
+            triggeredRef.current = false;
+        }
         if (event.target.scrollTop + event.target.clientHeight >= event.target.scrollHeight - threshold) {
             if (!triggeredRef.current) {
                 triggeredRef.current = true;
+                triggeredHeightRef.current = event.target.scrollHeight;
                 if (typeof cb === 'function') {
                     cb(event);
                 }
@@ -15,7 +20,7 @@ const useOnScrollToBottom = (cb, threshold = 0) => {
         } else {
             triggeredRef.current = false;
         }
-    }, [cb]);
+    }, [cb, threshold]);
     return onScroll;
 };
 

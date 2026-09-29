@@ -89,7 +89,19 @@ Cada tarefa webOS usa uma branch separada `t3code/implement-<task-id>` e commits
 
 Planos, evidências, status de fase e hand-offs fazem parte do commit. Critérios sem evidência permanecem abertos, inclusive gates não executados.
 
-**Consolidação local em 28/09/2026:** a pedido do usuário, T4.3, T4.4 e T4.5 foram integradas na branch local `webos` nos commits `9d5d1832` e `d661c25f`, com correções e evidências versionadas no commit de consolidação posterior. Não houve push para `origin/webos`; os gates de runtime Chromium 68 permanecem abertos.
+**Consolidação até T4.5, verificada em 29/09/2026:** T4.3/T4.4 foram integradas em `9d5d1832`, T4.5 em `d661c25f`, e as correções integradas com as evidências estão em `407f981e`. A consulta a `origin/webos` confirmou o mesmo commit `407f981e7b3fb1c9443fbbe351ad958a0c32078c`. Os gates de runtime Chromium 68 continuam abertos.
+
+### Resumo de entrega e pendências até T4.5
+
+| Tarefa | Feito na branch | Pendente |
+|---|---|---|
+| T4.1 — Navegação espacial | Política de foco TV e ajustes dos controles/rotas com cobertura nativa parcial; ver [evidências T4.1](../tests/webos/T4.1%20-%20Evid%C3%AAncias.md). | Fechar cobertura de Discover, estados autenticados de Library/Continue Watching e Player, Enter nas rotas e overlays, scroll/lazy-load e verificação interativa desktop. O aceite permanece parcial. |
+| T4.2 — Back | Dispatcher central, prioridades e fallback implementados; testes, lint e builds hosted/packaged registrados em [evidências T4.2](../tests/webos/T4.2%20-%20Evid%C3%AAncias.md). | Validar no webOS 5 a entrega de Back, Home e ausência de navegação duplicada (`history`/`popstate`). T6.1 ainda deve verificar `disableBackHistoryAPI: true` no manifesto final. |
+| T4.3 — Teclas de mídia e cores | Normalização e despacho de mídia/cores integrados com T4.4/T4.5; testes, lint, builds e ES2018 aprovados. [Plano](T4.3%20-%20Plano.md) · [evidências](../tests/webos/T4.3%20-%20Evid%C3%AAncias.md). | Validar os eventos reais no Chromium 68 hosted/packaged; T4.12 mostra o mapa na ajuda, T5.12 confirma os efeitos no Player e T6.1 verifica o manifesto final. |
+| T4.4 — OK longo e seek | OK curto/longo e seek por setas no Player webOS integrados e cobertos por testes. [Plano](T4.4%20-%20Plano.md) · [evidências](../tests/webos/T4.4%20-%20Evid%C3%AAncias.md). | Validar OK, foco espacial e seek por setas no Chromium 68 hosted/packaged; T5.12 verifica playback/seek com mídia real. |
+| T4.5 — Magic Remote | Alternância de cursor CSS por `cursorStateChange` e wheel para listas horizontais implementados; testes, lint, builds normal/debug/packaged e ES2018 aprovados. [Plano](T4.5%20-%20Plano.md) · [evidências](../tests/webos/T4.5%20-%20Evid%C3%AAncias.md). | Validar pointer/5-way, foco, hover/click e wheel no Chromium 68 hosted/packaged; T4.7 revalida MetaRow e scroll após a roda. |
+
+As validações automatizadas integradas de T4.3–T4.5 passaram em 35 suítes/693 testes, lint, builds desktop e webOS normal/debug/packaged e ES2018. O typecheck manteve 61 diagnósticos já presentes no baseline T4.2, nenhum nos arquivos alterados. A implementação está consolidada e publicada em `origin/webos`; o aceite funcional das tarefas com gates nativos segue aberto até haver evidências no alvo webOS 5.
 
 ## Fase 4 — T4.3: teclas de mídia e cores
 
@@ -338,3 +350,18 @@ memória nativa precisam ser confirmados por CDP/hardware nas fases T1.6 e T7.4.
 O baseline principal ainda depende da compatibilidade do app completo com Chromium 68
 (Fase 1) e do empacotamento `.ipk` (Fase 6); o `hello` permanece o instrumento para
 falhas anteriores ao React/CoreProvider.
+
+
+## T4.6–T4.12 — Foco, listas, teclado e ajuda do controle
+
+Implementação na branch `t3code/implement-t4.6-t4.12`, base `407f981e`:
+foco inicial/restauração de rota, retorno dos modais, paginação e posters lazy no
+Chromium 68, revelação de inputs, Gamepad API protegida e ajuda do controle por
+Settings/setas/OK. Traduções en-US, pt-BR e pt-PT; teclado físico opcional.
+
+[Plano](T4.6-T4.12%20-%20Plano.md) e
+[evidências/gates](../tests/webos/T4.6-T4.12%20-%20Evid%C3%AAncias.md).
+O aceite nativo hosted/packaged, teclado/gamepad na TV e roteiro do sofá seguem
+abertos; a implementação não fecha os gates anteriores de T4.1, T5.12 ou T6.1.
+O vault persistente em `../stremio` contém o status e o registro de plataformas
+em `07 - Serviços/Chromecast e Gamepad.md`.

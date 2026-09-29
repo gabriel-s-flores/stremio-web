@@ -145,7 +145,7 @@ const MetaDetails = () => {
                 navMenu={true}
                 originPath={originPath}
             />
-            <div ref={contentRef} className={styles['metadetails-content']}>
+            <div data-tv-content={process.env.WEBOS ? true : undefined} ref={contentRef} className={styles['metadetails-content']}>
                 {
                     metaPath === null ?
                         <DelayedRenderer delay={500}>

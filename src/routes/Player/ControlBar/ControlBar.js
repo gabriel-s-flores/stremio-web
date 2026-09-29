@@ -149,7 +149,7 @@ const ControlBar = React.forwardRef(({
                 playbackSpeed={playbackSpeed}
             />
             <div className={styles['control-bar-buttons-container']}>
-                <Button {...debugAction('play-pause')} className={classnames(styles['control-bar-button'], { 'disabled': typeof paused !== 'boolean' })} title={paused ? t('PLAYER_PLAY') : t('PLAYER_PAUSE')} tabIndex={-1} onClick={onPlayPauseButtonClick}>
+                <Button data-focus-priority={process.env.WEBOS ? 20 : undefined} {...debugAction('play-pause')} className={classnames(styles['control-bar-button'], { 'disabled': typeof paused !== 'boolean' })} title={paused ? t('PLAYER_PLAY') : t('PLAYER_PAUSE')} tabIndex={-1} onClick={onPlayPauseButtonClick}>
                     <Icon className={styles['icon']} name={typeof paused !== 'boolean' || paused ? 'play' : 'pause'} />
                 </Button>
                 {

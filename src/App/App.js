@@ -24,7 +24,10 @@ const NAVIGATE_TABS_ROUTES = ['/', '/discover', '/library', '/calendar', '/addon
 
 const App = () => {
     React.useEffect(() => {
-        if (process.env.WEBOS) return require('stremio/common/installTVSpatialNavigation')();
+        if (!process.env.WEBOS) return;
+        const spatial = require('stremio/common/installTVSpatialNavigation')();
+        const keyboard = require('stremio/common/TV/keyboard')();
+        return () => { spatial(); keyboard(); };
     }, []);
     const core = useCore();
     const profile = useProfile();
@@ -193,7 +196,7 @@ const App = () => {
                                         shortcutModalOpen && <ShortcutsModal onClose={closeShortcutsModal}/>
                                     }
                                     {
-                                        gamepadModalOpen && <GamepadModal onClose={closeGamepadModal}/>
+                                        gamepadModalOpen && (process.env.WEBOS ? <ShortcutsModal onClose={closeGamepadModal}/> : <GamepadModal onClose={closeGamepadModal}/>)
                                     }
                                     <ServicesToaster />
                                     <SearchParamsHandler />

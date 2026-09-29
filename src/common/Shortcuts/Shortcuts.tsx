@@ -85,6 +85,7 @@ const ShortcutsProvider = ({ children, onShortcut, backEnabled = false }: Props)
         }
 
         if (inputFocused) return;
+        if (process.env.WEBOS && document.querySelector('[data-tv-remote-help]')) return;
 
         if (webOSShortcut) {
             if (repeat && !isWebOSShortcutRepeatable(webOSShortcut)) return;
@@ -100,7 +101,11 @@ const ShortcutsProvider = ({ children, onShortcut, backEnabled = false }: Props)
             if (shouldThrottleRepeatedKey(lastRepeatTime.current, repeatKey, Date.now(), REPEAT_THROTTLE_MS)) return;
         }
 
+        // Remote navigation must not also change volume or switch the route
+        // behind a modal. Physical keyboard shortcuts remain optional on TV.
+        const overlayOpen = !!process.env.WEBOS && !!document.querySelector('[data-focus-lock-disabled="false"],[role="menu"]');
         SHORTCUTS.forEach(({ name, combos }) => combos.forEach((keys) => {
+            if (process.env.WEBOS && (overlayOpen || name === 'volume')) return;
             const modifers = (keys.includes('Ctrl') === ctrlKey)
                 && (keys.includes('Shift') === shiftKey)
                 && !altKey
@@ -113,9 +118,9 @@ const ShortcutsProvider = ({ children, onShortcut, backEnabled = false }: Props)
 
             if (modifers && keyMatched) {
                 const combo = combos.indexOf(keys);
-                listeners.current.get(name)?.forEach((listener) => listener(combo, key));
+                listeners.current.get(name)?.forEach((listener) => listener(combo, process.env.WEBOS ? shortcutKeys[shortcutKeys.length - 1] : key));
 
-                onShortcut(name as ShortcutName, combo, key);
+                onShortcut(name as ShortcutName, combo, process.env.WEBOS ? shortcutKeys[shortcutKeys.length - 1] : key);
             }
         }));
     }, [backEnabled, onShortcut]);

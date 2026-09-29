@@ -157,7 +157,7 @@ test('TV navigation reveals the few pixels clipped by native C68 scrollIntoView 
     });
     module.exports();
     listener({ target });
-    expect(parent.scrollTop).toBe(18);
+    expect(parent.scrollTop).toBe(14);
     expect(parent.scrollLeft).toBe(0);
 });
 

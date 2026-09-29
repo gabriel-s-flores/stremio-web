@@ -3,6 +3,12 @@ const path = require('path');
 const crypto = require('crypto');
 const { compile, root } = require('./helpers/compileFocusLess');
 const baseline = require('./webos/t25-desktop-css-baseline.json');
+const webosOnly = ['components/RemoteControlHelp/RemoteControlHelp.less'];
+
+test.each(webosOnly)('new TV-only surface emits no desktop CSS: %s', async (file) => {
+    expect(await compile(file, false)).toBe('');
+    expect(await compile(file, true)).toMatch(/\.mapping:focus\s*\{\s*outline: 4px solid #fff;/);
+});
 
 test.each(Object.keys(baseline.files))('desktop CSS is unchanged: %s', async (file) => {
     const css = await compile(file, false);
@@ -52,5 +58,5 @@ test('all TV focus users are covered by the desktop baseline', () => {
         .filter((file) => file.endsWith('.less'))
         .map((file) => file.replaceAll('\\', '/'))
         .filter((file) => /~stremio\/common\/tv-focus.less|without animating the TV outline/.test(fs.readFileSync(path.join(root, 'src', file), 'utf8')));
-    expect(users.sort()).toEqual(Object.keys(baseline.files).sort());
+    expect(users.sort()).toEqual([...Object.keys(baseline.files), ...webosOnly].sort());
 });

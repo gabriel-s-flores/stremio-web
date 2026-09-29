@@ -35,6 +35,17 @@ markWebosDebug('i18n-resources-start');
 const translations = Object.fromEntries(Object.entries(stremioTranslations()).map(([key, value]) => [key, {
     translation: value
 }]));
+if (process.env.WEBOS) {
+    const remoteTranslations = {
+        'en-US': require('./common/TV/translations/en-US.json'),
+        'pt-BR': require('./common/TV/translations/pt-BR.json'),
+        'pt-PT': require('./common/TV/translations/pt-PT.json'),
+    };
+    Object.entries(remoteTranslations).forEach(([language, resources]) => {
+        if (!translations[language]) translations[language] = { translation: {} };
+        Object.assign(translations[language].translation, resources);
+    });
+}
 markWebosDebug('i18n-resources-ready');
 
 const markI18nReady = () => {

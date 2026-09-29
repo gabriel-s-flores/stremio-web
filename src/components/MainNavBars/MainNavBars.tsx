@@ -47,7 +47,7 @@ const MainNavBars = memo(({ className, route, query, children }: Props) => {
                 selected={route}
                 tabs={TABS}
             />
-            <div ref={contentRef} className={styles['nav-content-container']}>{children}</div>
+            <div data-tv-content={process.env.WEBOS ? true : undefined} ref={contentRef} className={styles['nav-content-container']}>{children}</div>
         </div>
     );
 });
