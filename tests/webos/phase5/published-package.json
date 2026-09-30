@@ -1,0 +1,10 @@
+{
+  "package": "@stremio/stremio-video",
+  "version": "0.0.96",
+  "tarball": "https://registry.npmjs.org/@stremio/stremio-video/-/stremio-video-0.0.96.tgz",
+  "filesField": null,
+  "webOsVideoIncluded": true,
+  "integrityMatches": true,
+  "installedSourceMatchesPublished": true,
+  "sourceSHA256": "06affab1de1a16f717623607df608ef6671c92b48f9b94508c773f3c40399633"
+}

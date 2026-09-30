@@ -35,6 +35,7 @@ function loader(webos = true, mocks = {}) {
         }).outputText;
         vm.runInNewContext(code, {
             module, exports: module.exports, process: { env: { WEBOS: webos } },
+            URL: window.URL, URLSearchParams: window.URLSearchParams,
             window, document, navigator, HTMLElement, HTMLInputElement, MutationObserver, getComputedStyle,
             IntersectionObserver: global.IntersectionObserver, KeyboardEvent: window.KeyboardEvent,
             setTimeout, clearTimeout, requestAnimationFrame: global.requestAnimationFrame, cancelAnimationFrame: global.cancelAnimationFrame,

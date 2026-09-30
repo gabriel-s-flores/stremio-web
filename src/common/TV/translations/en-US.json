@@ -19,5 +19,13 @@
     "TV_REMOTE_YELLOW": "Yellow",
     "TV_REMOTE_BLUE": "Blue",
     "TV_REMOTE_DETAILS": "Show video details / episodes.",
-    "TV_REMOTE_OPTIONAL": "No color or media buttons? Use the player controls with arrows and OK. Use the TV remote for volume. Search, navigation and this help are also available on screen; keyboard shortcuts are optional."
+    "TV_REMOTE_OPTIONAL": "No color or media buttons? Use the player controls with arrows and OK. Use the TV remote for volume. Search, navigation and this help are also available on screen; keyboard shortcuts are optional.",
+    "TV_STREAMING_GUIDE": "Torrents need a streaming server on another device. In Streaming settings, add its HTTP(S) address (for example http://192.168.1.10:11470), select it and check that it is online. Keep that device running. Direct HTTP videos do not require a server.",
+    "TV_STREAMING_CONFIGURE": "Configure streaming server",
+    "TV_PLAYER_CODEC_ERROR": "This TV cannot decode this video or audio format. Try another stream or enable transcoding on your remote server.",
+    "TV_PLAYER_NETWORK_ERROR": "Check the TV connection and the remote streaming server, then try again.",
+    "TV_PLAYER_SUBTITLE_ERROR": "Subtitles could not be loaded. Try an SRT or VTT track.",
+    "TV_PLAYER_OTHER_STREAM": "Try another stream",
+    "TV_PLAYER_ASS_NOTICE": "ASS/SSA styling is unavailable on this TV. Plain text conversion is used when possible; use SRT or VTT if it fails.",
+    "TV_STREAMING_WARNING": "Torrents need a streaming server on another device. Configure its address in Streaming settings."
 }

@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 const React = require('react');
+const { getTVPlayerErrorKey } = require('./tvPlaybackPolicy');
 const { toVideoPlatform, getVideoPlatformError } = require('stremio/common/Platform/videoPlatform');
 const { useParams, useNavigate } = require('react-router');
 const { useSearchParams } = require('react-router-dom');
@@ -75,6 +76,11 @@ const Player = () => {
     const routeFocused = useRouteFocused();
     const platform = usePlatform();
     const videoPlatform = toVideoPlatform(platform.name);
+    // Native rate reports are optimistic; enable only after a hardware spike.
+    const speedSupported = platform.name !== 'webos';
+    const [retryAttempt, setRetryAttempt] = React.useState(0);
+    const retryPlayback = React.useCallback(() => setRetryAttempt((attempt) => attempt + 1), []);
+    const chooseAnotherStream = React.useCallback(() => navigate(-1), [navigate]);
     const toast = useToast();
     const discord = useDiscord();
     const discordTimestamps = React.useRef(EMPTY_DISCORD_TIMESTAMPS);
@@ -265,11 +271,11 @@ const Player = () => {
             toast.show({
                 type: 'error',
                 title: t('ERROR'),
-                message: error.message,
+                message: platform.name === 'webos' && getTVPlayerErrorKey(error.code) ? t(getTVPlayerErrorKey(error.code)) : error.message,
                 timeout: 3000
             });
         }
-    }, []);
+    }, [platform.name, t]);
 
     const onPlayRequested = React.useCallback(() => {
         playingOnExternalDevice.current = false;
@@ -359,13 +365,14 @@ const Player = () => {
     }, [overlayHidden, video.state.manifest, video.setSubtitlesOffsetMinimum]);
 
     const onPlaybackSpeedChanged = React.useCallback((rate, skipUpdate) => {
+        if (!speedSupported) return;
         video.setPlaybackSpeed(rate);
 
         if (skipUpdate) return;
 
         playbackSpeed.current = rate;
 
-    }, []);
+    }, [speedSupported]);
 
     const onVideoScaleChanged = React.useCallback(() => {
         const currentScale = video.state.videoScale || 'contain';
@@ -545,6 +552,12 @@ const Player = () => {
                 onError(platformError);
                 return;
             }
+            const requestedStream = player.stream.content;
+            if (videoPlatform === 'webOS' && !streamingServer.baseUrl &&
+                (typeof requestedStream.infoHash === 'string' || requestedStream.url?.startsWith('magnet:'))) {
+                onError({ code: 10001, critical: true, message: t('TV_STREAMING_GUIDE') });
+                return;
+            }
             video.load({
                 stream: {
                     ...player.stream.content,
@@ -561,7 +574,7 @@ const Player = () => {
                 forceTranscoding: forceTranscoding || casting,
                 maxAudioChannels: settings.surroundSound ? 32 : 2,
                 hardwareDecoding: settings.hardwareDecoding,
-                assSubtitlesStyling: settings.assSubtitlesStyling,
+                assSubtitlesStyling: platform.name !== 'webos' && settings.assSubtitlesStyling,
                 gpuVideoProcessing: settings.gpuVideoProcessing && platform.shell.capabilities.gpuVideoProcessing,
                 videoMode: settings.videoMode,
                 platform: videoPlatform,
@@ -578,7 +591,7 @@ const Player = () => {
                 shellTransport: platform.shell.active ? platform.shell : null,
             });
         }
-    }, [streamingServer.baseUrl, player.selected, player.stream, streamSubtitles, forceTranscoding, casting, cancelKeyboardSeek, videoPlatform]);
+    }, [streamingServer.baseUrl, streamingServer.selected?.transportUrl, streamingServer.settings?.type, player.selected, player.stream, streamSubtitles, forceTranscoding, casting, cancelKeyboardSeek, videoPlatform, retryAttempt]);
 
     React.useEffect(() => {
         !seeking && timeChanged(video.state.time, video.state.duration, video.state.manifest?.name);
@@ -772,7 +785,7 @@ const Player = () => {
             hasSubtitles: allSubtitleTracks.length > 0,
             hasAudioTracks: video.state.audioTracks.length > 0,
             hasDetails: player.metaItem?.type === 'Ready',
-            playbackSpeed: video.state.playbackSpeed,
+            playbackSpeed: speedSupported ? video.state.playbackSpeed : null,
         }, {
             play: () => onPlayRequested(),
             pause: () => onPauseRequested(),
@@ -788,7 +801,7 @@ const Player = () => {
             openDetails: () => openRemoteMenu(openSideDrawer),
             openSpeed: () => openRemoteMenu(openSpeedMenu),
         });
-    }, [menusOpen, nextVideoPopupOpen, tvControlFocused, video.state.paused, video.state.time, video.state.audioTracks, video.state.playbackSpeed, settings.seekTimeDuration, allSubtitleTracks.length, player.metaItem, onPlayRequested, onPauseRequested, closeRemoteOverlays, openRemoteMenu, cancelKeyboardSeek, navigate, onKeyboardSeekRequested, openSubtitlesMenu, openAudioMenu, openSideDrawer, openSpeedMenu]);
+    }, [speedSupported, menusOpen, nextVideoPopupOpen, tvControlFocused, video.state.paused, video.state.time, video.state.audioTracks, video.state.playbackSpeed, settings.seekTimeDuration, allSubtitleTracks.length, player.metaItem, onPlayRequested, onPauseRequested, closeRemoteOverlays, openRemoteMenu, cancelKeyboardSeek, navigate, onKeyboardSeekRequested, openSubtitlesMenu, openAudioMenu, openSideDrawer, openSpeedMenu]);
 
     const onRemoteMediaShortcut = React.useCallback((combo, key) => {
         const handled = dispatchRemotePlayerKey(key);
@@ -883,17 +896,17 @@ const Player = () => {
 
     onShortcut('speedMenu', () => {
         closeMenus();
-        if (video.state.playbackSpeed !== null) {
+        if (speedSupported && video.state.playbackSpeed !== null) {
             toggleSpeedMenu();
         }
-    }, [video.state.playbackSpeed, toggleSpeedMenu]);
+    }, [speedSupported, video.state.playbackSpeed, toggleSpeedMenu]);
 
     onShortcut('speed', (combo) => {
-        if (video.state.playbackSpeed !== null) {
+        if (speedSupported && video.state.playbackSpeed !== null) {
             const speed = combo === 0 ? Math.max(video.state.playbackSpeed - 0.25, 0.25) : Math.min(video.state.playbackSpeed + 0.25, 2);
             onPlaybackSpeedChanged(speed);
         }
-    }, [video.state.playbackSpeed, onPlaybackSpeedChanged], !menusOpen);
+    }, [speedSupported, video.state.playbackSpeed, onPlaybackSpeedChanged], !menusOpen);
 
     const selectedStream = player.selected?.stream;
     const statisticsMenuAvailable = streamingServer?.statistics?.type !== 'Err'
@@ -975,7 +988,7 @@ const Player = () => {
         const onKeyDown = (e) => {
             const keyboardKey = getKeyboardShortcutKey(e);
             if (keyboardKey !== 'Space' || e.repeat) return;
-            if (menusOpen || detailsHold.current !== null || e.ctrlKey || e.metaKey || e.altKey) return;
+            if (!speedSupported || menusOpen || detailsHold.current !== null || e.ctrlKey || e.metaKey || e.altKey) return;
 
             longPress.current = false;
 
@@ -1027,7 +1040,7 @@ const Player = () => {
         };
 
         const onWheel = (event) => {
-            if (event.defaultPrevented || event.tvWheelScrollTarget || menusOpen || video.state.volume === null) return;
+            if (platform.name === 'webos' || event.defaultPrevented || event.tvWheelScrollTarget || menusOpen || video.state.volume === null) return;
             const { deltaY } = event;
 
             if (deltaY > 0) {
@@ -1041,7 +1054,7 @@ const Player = () => {
 
         const onMouseDownHold = (e) => {
             if (e.button !== 0) return; // left mouse button only
-            if (menusOpen || detailsHold.current !== null) return;
+            if (!speedSupported || menusOpen || detailsHold.current !== null) return;
             if (controlBarRef.current && controlBarRef.current.contains(e.target)) return;
 
             longPress.current = false;
@@ -1095,7 +1108,7 @@ const Player = () => {
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('blur', onBlur);
         };
-    }, [routeFocused, menusOpen, video.state.volume, video.state.paused, finishDetailsHold, releaseDetailsHold, cancelKeyboardSeek, flushKeyboardSeek, releaseKeyboardSeek]);
+    }, [speedSupported, platform.name, routeFocused, menusOpen, video.state.volume, video.state.paused, finishDetailsHold, releaseDetailsHold, cancelKeyboardSeek, flushKeyboardSeek, releaseKeyboardSeek]);
 
     React.useEffect(() => {
         video.events.on('error', onError);
@@ -1156,6 +1169,8 @@ const Player = () => {
                         className={classnames(styles['layer'], styles['error-layer'])}
                         stream={video.state.stream}
                         {...error}
+                        onRetry={retryPlayback}
+                        onChooseStream={chooseAnotherStream}
                     />
                     :
                     null
@@ -1167,7 +1182,7 @@ const Player = () => {
                     null
             }
             {
-                video.state.volume !== null && overlayHidden ?
+                platform.name !== 'webos' && video.state.volume !== null && overlayHidden ?
                     <VolumeChangeIndicator
                         muted={video.state.muted}
                         volume={video.state.volume}
@@ -1211,6 +1226,7 @@ const Player = () => {
                 buffered={video.state.buffered}
                 volume={video.state.volume}
                 muted={video.state.muted}
+                speedSupported={speedSupported}
                 playbackSpeed={video.state.playbackSpeed}
                 subtitlesTracks={allSubtitleTracks}
                 audioTracks={video.state.audioTracks}
@@ -1294,7 +1310,7 @@ const Player = () => {
                     onAudioTrackSelected={onAudioTrackSelected}
                 />
             </Transition>
-            <Transition when={speedMenuOpen} name={'fade'}>
+            <Transition when={speedSupported && speedMenuOpen} name={'fade'}>
                 <SpeedMenu
                     className={classnames(styles['layer'], styles['menu-layer'])}
                     playbackSpeed={video.state.playbackSpeed}

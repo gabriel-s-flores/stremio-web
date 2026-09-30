@@ -31,6 +31,7 @@ function harness({ isTV = false, isMobile = false, active = false, name = 'windo
             if (id === 'stremio/common' || id === '../Platform') return common;
             if (id === '../useProfile') return common.useProfile;
             if (id === 'react-i18next') return { useTranslation: () => ({ t: key => key }) };
+            if (id === 'react-router-dom') return { useSearchParams: () => [new URLSearchParams()] };
             if (id === 'react-router') return { useMatch: () => null };
             if (id.endsWith('.less')) return new Proxy({}, { get: (_, key) => key });
             if (id === 'stremio/components') return { Button: 'button', MainNavBars: 'main', UpdateBanner: 'update-banner', Toggle: 'toggle', MultiselectMenu: 'select', ColorInput: 'color' };
@@ -161,5 +162,5 @@ test.each([false, true])('Apple script is rendered only for desktop HTML (webos=
     vm.runInNewContext(source, { module, require });
     const html = module.exports({ htmlWebpackPlugin: { options: { webos }, tags: { headTags: '', bodyTags: '' } } });
     expect(html.includes('appleid.auth.js')).toBe(!webos);
-    expect(html.includes('cast_sender.js')).toBe(true);
+    expect(html.includes('cast_sender.js')).toBe(!webos);
 });

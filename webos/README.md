@@ -75,7 +75,7 @@ git push --force-with-lease origin webos
 | 2 | CSS e Layout | ⬜ Pendente |
 | 3 | Plataforma webOS | ⬜ Pendente |
 | 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2–T4.5 integradas em `webos`; validação runtime e gates restantes abertos por tarefa) |
-| 5 | Player, Vídeo e Streaming | ⬜ Pendente |
+| 5 | Player, Vídeo e Streaming | 🟡 Implementação entregue; aceite nativo/soak e spikes pendentes |
 | 6 | Empacotamento e Pipeline | ⬜ Pendente (T6.1 deve preservar `disableBackHistoryAPI: true`, hand-off de T4.2/T4.3) |
 | 7 | Testes, Performance e Qualidade | ⬜ Pendente |
 | 8 | Distribuição e Lançamento | ⬜ Pendente |
@@ -365,3 +365,12 @@ O aceite nativo hosted/packaged, teclado/gamepad na TV e roteiro do sofá seguem
 abertos; a implementação não fecha os gates anteriores de T4.1, T5.12 ou T6.1.
 O vault persistente em `../stremio` contém o status e o registro de plataformas
 em `07 - Serviços/Chromecast e Gamepad.md`.
+
+## Fase 5 — Player e streaming remoto
+
+[Plano](Fase%205%20-%20Plano.md), [evidências](../tests/webos/Fase%205%20-%20Evidências.md)
+e [matriz/roteiro físico](../tests/webos/Fase%205%20-%20Roteiro%20TV.md).
+Branch `t3code/implement-phase-5`. Guia do servidor, erros/retry, isolamento de
+eventos e teardown nativo adaptados. Cast/player externo/download/DLNA ocultos
+na TV; velocidade aguardando spike, volume pelo SO e mute preservado.
+Contrato automatizado não comprova codec/EDID/HDR ou soak de 30 minutos.

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import magnet from 'magnet-uri';
+import { decodeMagnet } from './decodeMagnet';
+import { useTranslation } from 'react-i18next';
 import { useCore } from 'stremio/core';
 import useToast from 'stremio/common/Toast/useToast';
 import useTorrent from 'stremio/common/useTorrent';
@@ -10,6 +11,7 @@ const HTTP_REGEX = /^https?:\/\/.+/i;
 
 const usePlayUrl = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const core = useCore();
     const toast = useToast();
     const { createTorrentFromMagnet } = useTorrent();
@@ -46,14 +48,14 @@ const usePlayUrl = () => {
             return false;
         }
 
-        const parsed = magnet.decode(trimmed);
+        const parsed = decodeMagnet(trimmed);
         if (parsed && typeof parsed.infoHash === 'string') {
             const serverReady = streamingServer.settings !== null
                 && streamingServer.settings.type === 'Ready';
             if (!serverReady) {
                 toast.show({
                     type: 'error',
-                    title: 'Streaming server is not available. Cannot play magnet links.',
+                    title: process.env.WEBOS ? t('TV_STREAMING_GUIDE') : 'Streaming server is not available. Cannot play magnet links.',
                     timeout: 5000
                 });
                 return false;
@@ -63,7 +65,7 @@ const usePlayUrl = () => {
         }
 
         return false;
-    }, [streamingServer.settings, createTorrentFromMagnet]);
+    }, [streamingServer.settings, createTorrentFromMagnet, core, navigate, toast, t]);
 
     return { handlePlayUrl };
 };
