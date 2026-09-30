@@ -1,0 +1,41 @@
+{
+  "files": [
+    {
+      "file": "d2201bea356f9b5cf7a19d29d553b93417db9c5b/binaries/stremio_core_web_bg.wasm",
+      "bytes": 5187435,
+      "gzipBytes": 1525085
+    },
+    {
+      "file": "d2201bea356f9b5cf7a19d29d553b93417db9c5b/scripts/101.js",
+      "bytes": 18972,
+      "gzipBytes": 5591
+    },
+    {
+      "file": "d2201bea356f9b5cf7a19d29d553b93417db9c5b/scripts/575.js",
+      "bytes": 8465009,
+      "gzipBytes": 2915759
+    },
+    {
+      "file": "d2201bea356f9b5cf7a19d29d553b93417db9c5b/scripts/main.js",
+      "bytes": 9808770,
+      "gzipBytes": 2921370
+    },
+    {
+      "file": "d2201bea356f9b5cf7a19d29d553b93417db9c5b/scripts/worker.js",
+      "bytes": 246570,
+      "gzipBytes": 81518
+    },
+    {
+      "file": "d2201bea356f9b5cf7a19d29d553b93417db9c5b/styles/main.css",
+      "bytes": 297281,
+      "gzipBytes": 37045
+    },
+    {
+      "file": "webos/webOSTV.js",
+      "bytes": 15209,
+      "gzipBytes": 4835
+    }
+  ],
+  "bytes": 24039246,
+  "gzipBytes": 7491203
+}

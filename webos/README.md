@@ -461,3 +461,11 @@ webpack/pnpm. Se ocorrer o mesmo erro, configure o launcher `ares-package` no PA
 para executar o `bin/ares-package.js` da CLI com seu binário Node 20; não pule
 a validação de schema. Essa separação de runtimes é uma limitação do ambiente
 validado, não um requisito do app instalado.
+
+### Fase 7 — Qualidade
+
+Plano: [Fase 7 - Plano.md](Fase%207%20-%20Plano.md). Roteiro de aceite:
+[rotas, performance, soak e dispositivos](../tests/webos/Fase%207%20-%20Roteiro.md).
+`pnpm quality:webos --help` descreve coleta CDP e tamanho raw/gzip do bundle.
+Resultados locais e gates pendentes ficam em
+[Fase 7 - Evidências](../tests/webos/Fase%207%20-%20Evid%C3%AAncias.md).

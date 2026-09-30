@@ -1,0 +1,32 @@
+{
+  "baseCommit": "d2201bea356f9b5cf7a19d29d553b93417db9c5b",
+  "jest": {
+    "suites": 40,
+    "tests": 754,
+    "status": "pass"
+  },
+  "nodeTests": {
+    "tests": 7,
+    "status": "pass"
+  },
+  "lint": "pass",
+  "desktopBuild": "pass",
+  "packagedBuild": {
+    "status": "pass",
+    "references": 53
+  },
+  "es2018": {
+    "status": "pass",
+    "files": 5
+  },
+  "desktopEquivalence": {
+    "status": "pass",
+    "files": 85,
+    "differences": 0,
+    "normalized": [
+      "service-worker.js.map"
+    ]
+  },
+  "runtime": "blocked",
+  "hardwareAcceptance": "pending"
+}
