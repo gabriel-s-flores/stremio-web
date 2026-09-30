@@ -1,0 +1,11 @@
+{
+  "status": "blocked",
+  "startedAt": "2026-09-30T03:14:54.503Z",
+  "durationMs": 0,
+  "action": "observe",
+  "samples": [],
+  "exceptionCount": 0,
+  "crashCount": 0,
+  "limits": "Page heap excludes worker/WASM, native and GPU memory. Synthetic arrows are not native RCU. No automatic E2E pass.",
+  "error": "fetch failed"
+}

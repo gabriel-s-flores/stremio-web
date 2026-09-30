@@ -29,7 +29,8 @@
         "inspect:tv": "node scripts/webos-device.mjs inspect",
         "close:tv": "node scripts/webos-device.mjs close",
         "package:webos:hosted": "node scripts/package-webos.mjs --hosted",
-        "test:webos-package": "node --test tests/webosPackaging.test.mjs"
+        "test:webos-package": "node --test tests/webosPackaging.test.mjs",
+        "quality:webos": "node tools/webos-phase7.mjs"
     },
     "engines": {
         "node": ">=22",

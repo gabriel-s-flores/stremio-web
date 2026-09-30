@@ -1,0 +1,46 @@
+{
+  "files": [
+    {
+      "file": "d2201bea356f9b5cf7a19d29d553b93417db9c5b/binaries/stremio_core_web_bg.wasm",
+      "bytes": 5187435,
+      "gzipBytes": 1525085
+    },
+    {
+      "file": "d2201bea356f9b5cf7a19d29d553b93417db9c5b/scripts/101.js",
+      "bytes": 18972,
+      "gzipBytes": 5591
+    },
+    {
+      "file": "d2201bea356f9b5cf7a19d29d553b93417db9c5b/scripts/575.js",
+      "bytes": 8465009,
+      "gzipBytes": 2915759
+    },
+    {
+      "file": "d2201bea356f9b5cf7a19d29d553b93417db9c5b/scripts/main.js",
+      "bytes": 9287353,
+      "gzipBytes": 2731171
+    },
+    {
+      "file": "d2201bea356f9b5cf7a19d29d553b93417db9c5b/scripts/worker.js",
+      "bytes": 24317,
+      "gzipBytes": 7944
+    },
+    {
+      "file": "d2201bea356f9b5cf7a19d29d553b93417db9c5b/styles/main.css",
+      "bytes": 280828,
+      "gzipBytes": 35926
+    },
+    {
+      "file": "service-worker.js",
+      "bytes": 7570,
+      "gzipBytes": 2843
+    },
+    {
+      "file": "workbox-ee13fbdc.js",
+      "bytes": 14485,
+      "gzipBytes": 5011
+    }
+  ],
+  "bytes": 23285969,
+  "gzipBytes": 7229330
+}
