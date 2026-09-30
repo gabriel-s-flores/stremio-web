@@ -21,7 +21,15 @@
         "verify:hosted-build": "node scripts/verify-hosted-build.mjs",
         "verify:webos-core": "node scripts/verify-webos-core.mjs",
         "verify:webos-ui": "node scripts/verify-webos-ui.mjs",
-        "verify:hosted-deploy": "node scripts/verify-hosted-deploy.mjs"
+        "verify:hosted-deploy": "node scripts/verify-hosted-deploy.mjs",
+        "package:webos": "pnpm build:webos:packaged && node scripts/package-webos.mjs",
+        "sync:webos-version": "node scripts/webos-appinfo.mjs",
+        "deploy:tv": "node scripts/webos-device.mjs deploy",
+        "launch:tv": "node scripts/webos-device.mjs launch",
+        "inspect:tv": "node scripts/webos-device.mjs inspect",
+        "close:tv": "node scripts/webos-device.mjs close",
+        "package:webos:hosted": "node scripts/package-webos.mjs --hosted",
+        "test:webos-package": "node --test tests/webosPackaging.test.mjs"
     },
     "engines": {
         "node": ">=22",

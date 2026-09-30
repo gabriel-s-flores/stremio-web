@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CONSTANTS, languages, onFileDrop, onShortcut, useToast } from 'stremio/common';
+import { isASSSubtitle } from './tvPlaybackPolicy';
 import { snapSubtitleDelay, SUBTITLES_DELAY_STEP_MS } from './subtitleDelay';
 
 const withFallbackLabels = (tracks?: SubtitleTrack[] | null): SubtitleTrack[] => {
@@ -271,11 +272,14 @@ const useSubtitles = ({
             return;
         }
 
+        if (process.env.WEBOS && isASSSubtitle(track)) {
+            toast.show({ type: 'info', title: t('TV_PLAYER_ASS_NOTICE'), timeout: 6000 });
+        }
         trackSelectionLocked.current = true;
         appliedTrack.current = { id: track.id, source: 'external' };
         video.setExtraSubtitlesTrack(track.id);
         rememberTrack(track, false);
-    }, [disableSubtitles, rememberTrack, video]);
+    }, [disableSubtitles, rememberTrack, video, toast, t]);
 
     const changeDelay = useCallback((delay: number) => {
         video.setSubtitlesDelay(delay);

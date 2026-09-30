@@ -19,5 +19,13 @@
     "TV_REMOTE_YELLOW": "Amarelo",
     "TV_REMOTE_BLUE": "Azul",
     "TV_REMOTE_DETAILS": "Mostrar detalhes / episódios do vídeo.",
-    "TV_REMOTE_OPTIONAL": "Sem botões de cores ou multimédia? Use os comandos do player com setas e OK. Ajuste o volume pelo comando da TV. Pesquisa, navegação e esta ajuda também estão disponíveis na ecrã; os atalhos de teclado são opcionais."
+    "TV_REMOTE_OPTIONAL": "Sem botões de cores ou multimédia? Use os comandos do player com setas e OK. Ajuste o volume pelo comando da TV. Pesquisa, navegação e esta ajuda também estão disponíveis na ecrã; os atalhos de teclado são opcionais.",
+    "TV_STREAMING_GUIDE": "Os torrents precisam de um servidor de streaming noutro dispositivo. Em Streaming, adicione o endereço HTTP(S) dele (por exemplo http://192.168.1.10:11470), selecione-o e confirme que está online. Mantenha esse dispositivo ligado. Vídeos HTTP diretos não precisam de servidor.",
+    "TV_STREAMING_CONFIGURE": "Configurar servidor de streaming",
+    "TV_PLAYER_CODEC_ERROR": "Esta TV não consegue descodificar este formato de vídeo ou áudio. Experimente outro stream ou ative a transcodificação no servidor remoto.",
+    "TV_PLAYER_NETWORK_ERROR": "Verifique a ligação da TV e o servidor de streaming remoto e tente novamente.",
+    "TV_PLAYER_SUBTITLE_ERROR": "Não foi possível carregar as legendas. Experimente uma faixa SRT ou VTT.",
+    "TV_PLAYER_OTHER_STREAM": "Experimentar outro stream",
+    "TV_PLAYER_ASS_NOTICE": "A estilização ASS/SSA não está disponível nesta TV. A conversão para texto simples será usada quando possível; use SRT ou VTT se falhar.",
+    "TV_STREAMING_WARNING": "Os torrents precisam de um servidor noutro dispositivo. Configure o endereço dele em Streaming."
 }

@@ -66,12 +66,12 @@ const Player = forwardRef<HTMLDivElement, Props>(({ profile }: Props, ref) => {
                         {...subtitlesOutlineColorInput}
                     />
                 </Option>
-                <Option label={'SETTINGS_ASS_SUBTITLES_STYLING'}>
+                {platform.name !== 'webos' && <Option label={'SETTINGS_ASS_SUBTITLES_STYLING'}>
                     <Toggle
                         tabIndex={-1}
                         {...assSubtitlesStylingToggle}
                     />
-                </Option>
+                </Option>}
             </Category>
             <Category icon={'volume-medium'} label={'SETTINGS_SECTION_AUDIO'}>
                 <Option label={'SETTINGS_DEFAULT_AUDIO_TRACK'}>

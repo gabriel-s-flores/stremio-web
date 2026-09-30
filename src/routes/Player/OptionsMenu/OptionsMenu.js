@@ -124,7 +124,7 @@ const OptionsMenu = React.memo(React.forwardRef(({ className, stream, playbackDe
                         null
                 }
                 {
-                    downloadUrl ?
+                    downloadUrl && platform.name !== 'webos' ?
                         <Option
                             icon={'download'}
                             label={t('CTX_DOWNLOAD_VIDEO')}
@@ -135,7 +135,7 @@ const OptionsMenu = React.memo(React.forwardRef(({ className, stream, playbackDe
                         null
                 }
                 {
-                    subtitlesTrackUrl ?
+                    subtitlesTrackUrl && platform.name !== 'webos' ?
                         <Option
                             icon={'download'}
                             label={t('CTX_DOWNLOAD_SUBS')}
@@ -146,7 +146,7 @@ const OptionsMenu = React.memo(React.forwardRef(({ className, stream, playbackDe
                         null
                 }
                 {
-                    streamingUrl && externalDevices.map(({ id, name }) => (
+                    platform.name !== 'webos' && streamingUrl && externalDevices.map(({ id, name }) => (
                         <Option
                             key={id}
                             icon={'vlc'}

@@ -104,7 +104,7 @@ const App = () => {
             }
         };
         services.chromecast.on('stateChanged', onChromecastStateChange);
-        services.chromecast.start();
+        if (!process.env.WEBOS) services.chromecast.start();
 
         window.services = services;
         return () => {

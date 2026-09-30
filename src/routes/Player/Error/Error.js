@@ -6,10 +6,18 @@ const { useTranslation } = require('react-i18next');
 const PropTypes = require('prop-types');
 const classNames = require('classnames');
 const { default: Icon } = require('@stremio/stremio-icons/react');
+const FocusLock = require('react-focus-lock').default;
+const { Button } = require('stremio/components');
+const { usePlatform } = require('stremio/common');
+const { getTVPlayerErrorKey } = require('../tvPlaybackPolicy');
 const styles = require('./styles');
 
-const Error = React.forwardRef(({ className, code, message, stream }, ref) => {
+const Error = React.forwardRef(({ className, code, message, stream, onRetry, onChooseStream }, ref) => {
     const { t } = useTranslation();
+    const platform = usePlatform();
+    const isTV = platform.name === 'webos';
+    const ErrorScope = isTV ? FocusLock : 'div';
+    const displayMessage = isTV && getTVPlayerErrorKey(code) ? t(getTVPlayerErrorKey(code)) : message;
 
     const [playlist, fileName] = React.useMemo(() => {
         return [
@@ -19,16 +27,20 @@ const Error = React.forwardRef(({ className, code, message, stream }, ref) => {
     }, [stream]);
 
     return (
-        <div ref={ref} className={classNames(className, styles['error'])}>
-            <div className={styles['error-label']} title={message}>{message}</div>
+        <ErrorScope ref={ref} className={classNames(className, styles['error'])} {...(isTV ? { returnFocus: true, autoFocus: true } : {})}>
+            <div className={styles['error-label']} title={displayMessage}>{displayMessage}</div>
+            {isTV && <>
+                <Button className={styles['playlist-button']} onClick={onRetry}><div className={styles['label']}>{t('RELOAD')}</div></Button>
+                <Button className={styles['playlist-button']} onClick={onChooseStream}><div className={styles['label']}>{t('TV_PLAYER_OTHER_STREAM')}</div></Button>
+            </>}
             {
-                code === 2 ?
+                !isTV && code === 2 ?
                     <div className={styles['error-sub']} title={t('EXTERNAL_PLAYER_HINT')}>{t('EXTERNAL_PLAYER_HINT')}</div>
                     :
                     null
             }
             {
-                playlist && fileName ?
+                !isTV && playlist && fileName ?
                     <ExternalLink
                         className={styles['playlist-button']}
                         title={t('PLAYER_OPEN_IN_EXTERNAL')}
@@ -42,7 +54,7 @@ const Error = React.forwardRef(({ className, code, message, stream }, ref) => {
                     :
                     null
             }
-        </div>
+        </ErrorScope>
     );
 });
 
@@ -51,6 +63,8 @@ Error.propTypes = {
     code: PropTypes.number,
     message: PropTypes.string,
     stream: PropTypes.object,
+    onRetry: PropTypes.func,
+    onChooseStream: PropTypes.func,
 };
 
 module.exports = Error;

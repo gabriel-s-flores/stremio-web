@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const recast = require('recast');
-const babelParser = require('@babel/parser');
+// Resolve Babel's parser through its declared owner under pnpm's strict layout.
+const babelParser = require('module').createRequire(require.resolve('@babel/core'))('@babel/parser');
 
 const directoryToScan = './src';
 

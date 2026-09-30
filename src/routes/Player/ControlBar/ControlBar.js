@@ -29,6 +29,7 @@ const ControlBar = React.forwardRef(({
     volume,
     muted,
     playbackSpeed,
+    speedSupported = true,
     subtitlesTracks,
     audioTracks,
     metaItem,
@@ -61,6 +62,7 @@ const ControlBar = React.forwardRef(({
     const platform = usePlatform();
     const [chromecastServiceActive, setChromecastServiceActive] = React.useState(() => chromecast.active);
     const [buttonsMenuOpen, , , toggleButtonsMenu] = useBinaryState(false);
+    const isTV = platform.name === 'webos';
     const isDebugCastFixture = process.env.WEBOS_DEBUG && debugCastSupported === true;
     const onSubtitlesButtonMouseDown = React.useCallback((event) => {
         event.nativeEvent.subtitlesMenuClosePrevented = true;
@@ -174,7 +176,7 @@ const ControlBar = React.forwardRef(({
                     />
                 </Button>
                 {
-                    !platform.isMobile ?
+                    !platform.isMobile && !isTV ?
                         <VolumeSlider
                             className={styles['volume-slider']}
                             volume={volume}
@@ -194,12 +196,12 @@ const ControlBar = React.forwardRef(({
                                 <Icon className={styles['icon']} name={'network'} />
                             </Button>
                     }
-                    <Button {...debugAction('speed')} className={classnames(styles['control-bar-button'], { 'disabled': playbackSpeed === null })} tabIndex={-1} onMouseDown={onSpeedButtonMouseDown} onClick={onToggleSpeedMenu}>
+                    {speedSupported && <Button {...debugAction('speed')} className={classnames(styles['control-bar-button'], { 'disabled': playbackSpeed === null })} tabIndex={-1} onMouseDown={onSpeedButtonMouseDown} onClick={onToggleSpeedMenu}>
                         <Icon className={styles['icon']} name={'speed'} />
-                    </Button>
-                    <Button {...debugAction('cast')} className={classnames(styles['control-bar-button'], { 'disabled': castButtonDisabled })} tabIndex={-1} onMouseDown={onCastDevicesButtonMouseDown} onClick={onChromecastButtonClick}>
+                    </Button>}
+                    {(!isTV || isDebugCastFixture) && <Button {...debugAction('cast')} className={classnames(styles['control-bar-button'], { 'disabled': castButtonDisabled })} tabIndex={-1} onMouseDown={onCastDevicesButtonMouseDown} onClick={onChromecastButtonClick}>
                         <Icon className={styles['icon']} name={'cast'} />
-                    </Button>
+                    </Button>}
                     <Button {...debugAction('subtitles')} className={classnames(styles['control-bar-button'], { 'disabled': !Array.isArray(subtitlesTracks) || subtitlesTracks.length === 0 })} tabIndex={-1} onMouseDown={onSubtitlesButtonMouseDown} onClick={onToggleSubtitlesMenu}>
                         <Icon className={styles['icon']} name={'subtitles'} />
                     </Button>
@@ -235,6 +237,7 @@ ControlBar.propTypes = {
     volume: PropTypes.number,
     muted: PropTypes.bool,
     playbackSpeed: PropTypes.number,
+    speedSupported: PropTypes.bool,
     videoScale: PropTypes.string,
     videoScaleLabel: PropTypes.string,
     onVideoScaleChanged: PropTypes.func,

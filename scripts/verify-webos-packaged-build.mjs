@@ -21,6 +21,8 @@ try {
 
     const index = fs.readFileSync(indexPath, 'utf8');
     assert(!/<%=?/.test(index), 'index.html contains unresolved template markers');
+    assert(!/cast_sender\.js|appleid\.auth\.js/.test(index), 'desktop-only remote script present');
+    assert(![...index.matchAll(/<script[^>]+src=["']([^"']+)/gi)].some(match => /^(?:[a-z]+:|\/\/|\/)/i.test(match[1])), 'script URL must be relative and self-contained');
 
     const commitDirectories = fs.readdirSync(buildDirectory, { withFileTypes: true })
         .filter((entry) => entry.isDirectory() && /^[a-f0-9]{40}$/i.test(entry.name));

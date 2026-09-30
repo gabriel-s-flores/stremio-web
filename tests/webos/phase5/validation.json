@@ -1,0 +1,106 @@
+{
+  "recordedUTC": "2026-09-30T02:10:29.636269+00:00",
+  "branch": "t3code/implement-phase-5",
+  "baseCommit": "fe41143ec76774ee2526477427cefa35c878cb83",
+  "workingTreeChanges": true,
+  "node": "22.23.3",
+  "testSuites": 39,
+  "testsPassed": 742,
+  "lint": {
+    "command": "node node_modules/eslint/bin/eslint.js src",
+    "exitCode": 0
+  },
+  "buildGates": {
+    "build-webos": 0,
+    "cast-webos": {
+      "senderPresent": false,
+      "expected": false
+    },
+    "compat-webos": 0,
+    "build-debug": 0,
+    "cast-debug": {
+      "senderPresent": false,
+      "expected": false
+    },
+    "compat-debug": 0,
+    "verify-debug": 0,
+    "build-packaged": 0,
+    "cast-packaged": {
+      "senderPresent": false,
+      "expected": false
+    },
+    "compat-packaged": 0,
+    "verify-packaged": 0,
+    "build-desktop": 0,
+    "cast-desktop": {
+      "senderPresent": true,
+      "expected": true
+    },
+    "player-webos": 0,
+    "server-transition-webos": true,
+    "player-debug": 0,
+    "server-transition-debug": true,
+    "player-packaged": 0,
+    "server-transition-packaged": true
+  },
+  "es2018": {
+    "webos": "ES2018 compatibility: 7/7 files passed",
+    "debug": "ES2018 compatibility: 7/7 files passed",
+    "packaged": "ES2018 compatibility: 5/5 files passed"
+  },
+  "desktopPlayerArtifact": {
+    "target": "desktop",
+    "castSender": true,
+    "implementation": "WebOsVideo",
+    "lifecyclePatch": false,
+    "passed": true
+  },
+  "typecheck": {
+    "baselineErrors": 61,
+    "currentErrors": 61,
+    "sameNormalizedDiagnostics": true,
+    "status": "preexisting-errors"
+  },
+  "nativeAcceptance": {
+    "status": "pending",
+    "cdp": "known endpoint connection refused",
+    "preview": "Electron/automation navigation failure",
+    "required": [
+      "Chromium 68 hosted/packaged",
+      "physical TV codec/HDR/EDID/audio/subtitles",
+      "30 minute direct HTTP/HLS/torrent soak",
+      "3 episode binge and resume",
+      "progressive/HLS playback speed spike"
+    ]
+  },
+  "sourceSHA256": {
+    "src/App/App.js": "de0477b36c139ffb4ed1ab548fe08bcd309e255d26024ceba9b1816791206356",
+    "src/common/TV/translations/en-US.json": "51d8771b6ff5f9515e2a68015db6792906edfcec53d1c9711683dd01029311c8",
+    "src/common/TV/translations/pt-BR.json": "94e11dc4cc0c7bfc26194f1426ce07c47021ba230e7a6ac5ae5b0c7e344d7327",
+    "src/common/TV/translations/pt-PT.json": "dd2d2e419c041e7d84cebdea6f227fcf7561529e45419fcad6ee3d0022a4b14d",
+    "src/common/decodeMagnet.js": "cbfa4f309832e9b2124ef4b7e84066e1174855ff132298b1727003bff1f9392e",
+    "src/common/usePlayUrl.ts": "2a79285851be46864abe66ac792ca2b6bf2193c053852aab29a077a8f820ca20",
+    "src/common/useTorrent.js": "d22f0869afa880c719098c03167fe1eb83db4b509e0aa916f389274923b88c20",
+    "src/index.html": "e953af0ce1ccd89e832d3b13ed662f720b002ea591ed1f80af4cc24e49ef0b78",
+    "src/routes/Board/StreamingServerWarning/StreamingServerWarning.tsx": "a05b4b9130d774253b5e0624b55c28f29b3cc940fc0814ec480cc7279122cbf2",
+    "src/routes/Player/ControlBar/ControlBar.js": "2be96a85a897c6c360979a78853e317126255a026dbb50309004ce4b6c156663",
+    "src/routes/Player/Error/Error.js": "4de7bc0c2f456c4fb3b958eb16a49dbde21786dd371164d952c605de1c03045b",
+    "src/routes/Player/OptionsMenu/OptionsMenu.js": "91cf0fec3817d212d20d79517c2af7a4ab9d2ee3ceedab57f1ed688303228d32",
+    "src/routes/Player/Player.js": "956050d54a1f0e4a93293f7c87af68d9a25bf1d6e3dacaf411458b951b6cc9d9",
+    "src/routes/Player/tvPlaybackPolicy.js": "fb6e7593d37cdd867ddbd4f08beb4b616a1a9890e8989b492781971db7218d95",
+    "src/routes/Player/useSubtitles.ts": "2799ddf69e6b7c56197a747f7a380834c79000ef28472416911a7e1e72699a0e",
+    "src/routes/Player/useVideo.js": "9d4a61b06312d6adb0136749d56bd3d5511bac190621dbe106be629668eca450",
+    "src/routes/Settings/Player/Player.tsx": "024d5a47e1458d3e8dcc43e06f61021d03281c8b70b34c019852561460cb807b",
+    "src/routes/Settings/Settings.tsx": "5d8ea5343bebc3ca69924714a16db65f36eaf5eb43096c301b1e1f375dc583fb",
+    "src/routes/Settings/Streaming/Streaming.less": "9dfdef05893e514ba644bf533f5d9604531854497938a9efa1f4e562932e0310",
+    "src/routes/Settings/Streaming/Streaming.tsx": "a039654a1af120f48e8625f4a8edff9e05a131c4783073e3d5ba0751888ab6f6",
+    "src/routes/Settings/Streaming/URLsManager/useStreamingServerUrls.js": "f0e68d1ecfe568cc7b181018a82e78d26123d4ae6c8e2d84175bae055ceb65f2",
+    "tests/desktopFeatures.spec.js": "fb6d0bd0da26157d7cbb0605fd1c13eaf40560a77fc67f25db64bc7072b033f9",
+    "tests/helpers/tvDom.js": "c5f6a232484790ba6cf9efa8caae7d8066468e018f876e01d0e933a6998a174d",
+    "tests/i18nScan.test.js": "7444141808a5074d943990e66e152e333b0ee694b93f0e94d1fdcc6d0d539c89",
+    "tests/webosPhase5.spec.js": "8fd1651dcde74f42b35d898bd2f69f548ffcea2c921ec5bc46b669bb65254f35",
+    "tools/verify-webos-player.mjs": "5cc090adc2e30b3d56c50e769fdcdb8f201e16d5a5fefaf356bbbc6daaa2602d",
+    "tools/webos-video-lifecycle-loader.cjs": "72294b3e962260e32a5253d2303bda04a11bb7c93afef0579f8c380e5dcea57f",
+    "webpack.config.js": "efc69fc2aa2309bf6b008393038ebe0f8fedf66b32fd1332153619c285a25126"
+  }
+}

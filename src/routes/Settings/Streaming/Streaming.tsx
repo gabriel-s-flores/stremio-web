@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import Icon from '@stremio/stremio-icons/react';
 import { Button, MultiselectMenu } from 'stremio/components';
 import TextInput from 'stremio/components/TextInput';
-import { useToast } from 'stremio/common';
+import { useToast, usePlatform } from 'stremio/common';
 import writeTextToClipboard from 'stremio/common/writeTextToClipboard';
 import { Section, Option } from '../components';
 import URLsManager from './URLsManager';
@@ -18,6 +18,7 @@ type Props = {
 const Streaming = forwardRef<HTMLDivElement, Props>(({ profile, streamingServer }: Props, ref) => {
     const { t } = useTranslation();
     const toast = useToast();
+    const platform = usePlatform();
     const remoteUrlInputRef = useRef<HTMLInputElement>(null);
     const [copyFallbackUrl, setCopyFallbackUrl] = useState<string | null>(null);
 
@@ -64,6 +65,7 @@ const Streaming = forwardRef<HTMLDivElement, Props>(({ profile, streamingServer 
 
     return (
         <Section ref={ref} label={'SETTINGS_NAV_STREAMING'}>
+            {platform.name === 'webos' && <p className={styles['tv-guide']}>{t('TV_STREAMING_GUIDE')}</p>}
             <URLsManager />
             {
                 streamingServerRemoteUrlInput.value !== null &&

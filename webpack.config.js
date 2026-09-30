@@ -82,6 +82,10 @@ module.exports = (env = {}, argv) => {
     },
     module: {
         rules: [
+            ...(webos ? [{
+                test: /[\\/]WebOsVideo[\\/]WebOsVideo\.js$/,
+                use: [path.resolve(__dirname, 'tools/webos-video-lifecycle-loader.cjs')]
+            }] : []),
             {
                 test: /\.js$/,
                 exclude: nodeModulesExclude,
