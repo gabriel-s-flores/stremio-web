@@ -76,7 +76,7 @@ git push --force-with-lease origin webos
 | 3 | Plataforma webOS | ⬜ Pendente |
 | 4 | Navegação TV e Controle Remoto | 🟡 Em andamento (T4.1 com aceite parcial; T4.2–T4.5 integradas em `webos`; validação runtime e gates restantes abertos por tarefa) |
 | 5 | Player, Vídeo e Streaming | 🟡 Implementação entregue; aceite nativo/soak e spikes pendentes |
-| 6 | Empacotamento e Pipeline | ⬜ Pendente (T6.1 deve preservar `disableBackHistoryAPI: true`, hand-off de T4.2/T4.3) |
+| 6 | Empacotamento e Pipeline | 🟡 Pipeline local implementado; instalação/boot/persistência no alvo pendentes; CI público adiado |
 | 7 | Testes, Performance e Qualidade | ⬜ Pendente |
 | 8 | Distribuição e Lançamento | ⬜ Pendente |
 
@@ -374,3 +374,90 @@ Branch `t3code/implement-phase-5`. Guia do servidor, erros/retry, isolamento de
 eventos e teardown nativo adaptados. Cast/player externo/download/DLNA ocultos
 na TV; velocidade aguardando spike, volume pelo SO e mute preservado.
 Contrato automatizado não comprova codec/EDID/HDR ou soak de 30 minutos.
+
+## Fase 6 — pacote instalável e hosted LAN
+
+[Plano](Fase%206%20-%20Plano.md) · [Evidências](../tests/webos/Fase%206%20-%20Evidências.md).
+Node 22 e pnpm 11.8.0; `pnpm install --frozen-lockfile`. Instale a
+[CLI oficial webOS](https://webostv.developer.lge.com/develop/tools/cli-introduction)
+com `npm install -g @webos-tools/cli@3.2.6` e disponibilize `ares-*` no PATH.
+O SDK/emulador webOS TV 5 e a TV com Developer Mode são configurados separadamente.
+
+```sh
+pnpm build:webos
+pnpm package:webos
+# package:webos refaz o build com SW desligado e verifica antes de empacotar.
+# Saída: dist-webos/packages/packaged/com.stremio.webos_5.0.0_all.ipk
+
+ares-setup-device --list
+# Configure a TV com ares-setup-device; habilite Developer Mode e Key Server.
+# Obtenha a chave: ares-novacom --device myTV --getkey
+pnpm deploy:tv emulator
+pnpm launch:tv emulator
+pnpm inspect:tv emulator
+pnpm close:tv emulator
+# Os mesmos comandos recebem myTV no lugar de emulator.
+```
+
+O staging `dist-webos/packaged` copia somente o build e os assets finais;
+planos, probes, source maps e a biblioteca-fonte não entram no pacote.
+`ares-package --no-minify` preserva os bundles já transpilados/minificados pelo
+webpack. O verificador exige scripts locais relativos, pasta COMMIT_HASH, worker,
+WASM, SDK vendored e ausência de SW/updater/Cast/Apple auth. O hash permanece
+como pasta para cache busting. `build/` não é modificado pelo staging.
+`dist-webos/` e `.ipk` são artefatos ignorados pelo Git.
+
+`pnpm sync:webos-version` sincroniza o manifesto-fonte com os três inteiros de
+`package.json`; o empacotamento também sincroniza o manifesto emitido. Por exemplo,
+`5.0.0-beta.39` vira `5.0.0`: pré-release/build metadata não são versões LG.
+Betas da mesma versão base reutilizam a versão de sideload. Antes de um release
+externo, incremente major/minor/patch em package.json; não publique uma versão LG
+já utilizada. `requiredMemory: 384` é provisório até a medição T7.4.
+O ID local é `com.stremio.webos`; disponibilidade/reserva de ID na loja é futura.
+
+### Hosted opcional
+
+```sh
+pnpm build:webos
+# Sirva build/ na raiz HTTPS da LAN (certificado confiável pela TV).
+pnpm package:webos:hosted https://host-da-lan:8443/
+pnpm deploy:tv emulator --hosted
+pnpm launch:tv emulator --hosted
+pnpm inspect:tv emulator --hosted
+```
+
+O wrapper tem ID separado `com.stremio.webos.hosted`, usa `location.replace` e
+não inclui os bundles. A URL deve terminar em `/`, sem credenciais/query/fragment.
+Os paths COMMIT_HASH resolvem contra a URL final, inclusive sob um subdiretório.
+HTTP é aceito para testes LAN, mas não garante SW/secure context. Valide headers,
+primeiro load e SW com os verificadores hosted existentes quando esse modo for usado.
+O wrapper não publica o build nem configura servidor/TLS. CI de produção, deploy
+público, assinatura para loja e submissão permanecem adiados conforme T6.6.
+Sideload não requer keystore de assinatura do app; a distribuição da loja tem
+seu próprio fluxo de revisão e assinatura.
+
+### Aceite no alvo e troubleshooting
+
+Depois de instalar, confirme Intro/Board, core e playback em webOS 5. Em Web
+Inspector, grave uma chave de teste em `localStorage`, feche com `close:tv`, relance
+e confirme a leitura; remova a chave ao terminar. Isto valida persistência do app
+real, além dos probes T0.4/T3.5. Não marque o aceite sem executar esse ciclo.
+
+- `ares-package` ausente: instalar CLI e corrigir PATH.
+- Verificador acusa SW: usar `package:webos` ou `build:webos:packaged`.
+- Dispositivo inacessível: conferir IP/porta no `ares-setup-device --list`, VM ou
+  Developer Mode, chave e sessão válida. O nome default não prova conectividade.
+- `file://` não usa cookies nem SW; atualizações exigem reinstalação de `.ipk`.
+  Addons/API precisam aceitar origem file/null (R12); não desabilitar segurança.
+- Sem boot do core/WASM: coletar console/network pelo Inspector. As evidências
+  anteriores reportam bloqueio WASM packaged; este pipeline não comprova sua resolução.
+
+Validação local do pipeline: `pnpm test:webos-package`.
+
+Nesta sessão ARM64, a CLI 3.2.6 falhou no schema com Node 22.23.3/22.16.0
+(`Unexpected token extends`, SIGSEGV), apesar do manifesto válido. A geração
+foi validada executando somente a CLI com Node 20.19.2, mantendo Node 22 para
+webpack/pnpm. Se ocorrer o mesmo erro, configure o launcher `ares-package` no PATH
+para executar o `bin/ares-package.js` da CLI com seu binário Node 20; não pule
+a validação de schema. Essa separação de runtimes é uma limitação do ambiente
+validado, não um requisito do app instalado.
