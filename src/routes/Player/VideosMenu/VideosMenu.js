@@ -6,6 +6,8 @@ const classnames = require('classnames');
 const { useCore } = require('stremio/core');
 const { Video } = require('stremio/components');
 const styles = require('./styles');
+const FocusLock = require('react-focus-lock').default;
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
 
 const VideosMenu = ({ className, metaItem, seriesInfo }) => {
     const core = useCore();
@@ -32,7 +34,7 @@ const VideosMenu = ({ className, metaItem, seriesInfo }) => {
     };
 
     return (
-        <div className={classnames(className, styles['videos-menu-container'])} onMouseDown={onMouseDown}>
+        <FocusScope className={classnames(className, styles['videos-menu-container'])} {...(process.env.WEBOS ? { lockProps: { onMouseDown } } : { onMouseDown })}>
             {
                 videos.map((video, index) => (
                     <Video
@@ -51,7 +53,7 @@ const VideosMenu = ({ className, metaItem, seriesInfo }) => {
                     />
                 ))
             }
-        </div>
+        </FocusScope>
     );
 };
 

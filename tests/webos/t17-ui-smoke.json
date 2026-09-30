@@ -1,0 +1,843 @@
+{
+  "date": "2026-09-06T16:53:12.019Z",
+  "target": {
+    "platform": "webOS TV 5",
+    "chromium": "68.0.3440.106",
+    "firmware": "02.00.30",
+    "mode": "hosted HTTP",
+    "cdp": "http://127.0.0.1:9998",
+    "route": "#/intro",
+    "runs": 5,
+    "reload": true
+  },
+  "results": [
+    {
+      "run": 1,
+      "route": "#/intro",
+      "artifacts": {
+        "commitHash": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+        "mainBytes": 9344206,
+        "cssBytes": 279283
+      },
+      "ui": {
+        "path": "/intro",
+        "appChildren": 6,
+        "hasIntroControls": true,
+        "hasBoard": false,
+        "focusableCount": 17,
+        "hasRawTranslationKey": false,
+        "queueMicrotaskAvailable": true,
+        "objectFreezeAvailable": true
+      },
+      "queueMicrotask": {
+        "available": true,
+        "order": [
+          "microtask",
+          "timer"
+        ],
+        "correctOrder": true
+      },
+      "deepFreeze": {
+        "objectFreezeAvailable": true,
+        "shallowFreezeLeavesNestedMutable": true,
+        "playerDeepFreezeExercised": false
+      },
+      "snapshot": {
+        "environment": {
+          "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+          "protocol": "http:",
+          "viewport": {
+            "width": 1920,
+            "height": 1080,
+            "devicePixelRatio": 0
+          },
+          "version": "5.0.0-beta.39",
+          "commit": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+          "performanceMemoryAvailable": true
+        },
+        "marks": {
+          "entry": 765.3000000000247,
+          "i18n-resources-start": 972.1999999997024,
+          "i18n-resources-ready": 1120.1000000000931,
+          "i18n-init-start": 1120.1999999998407,
+          "i18n-ready": 1124.4999999998981,
+          "i18n-init-called": 1124.6000000001004,
+          "app-render": 3525.2999999997883,
+          "core-ready": 3525.2999999997883
+        },
+        "paints": {
+          "first-paint": 103.09999999981301,
+          "first-contentful-paint": 3580.500000000029
+        },
+        "navigation": {
+          "navigationStart": 1788713571612,
+          "domInteractive": 1215,
+          "domContentLoaded": 1215,
+          "load": 1228
+        },
+        "memory": {
+          "current": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 3757.999999999811
+          },
+          "peak": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 765.4999999999745
+          }
+        },
+        "fps": {
+          "running": false,
+          "durationMs": 0,
+          "frames": 0,
+          "averageFps": null,
+          "p95FrameMs": null,
+          "scrollEvents": 0
+        }
+      },
+      "console": [
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : false"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires webOSMouse event : Enter"
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  DOMException: Only secure origins are allowed (see: <url>"
+        },
+        {
+          "type": "error",
+          "message": "Error: window.cast api not available\n    at E (<url>\n    at Promise (<url>\n    at new Promise (<anonymous>)\n    at new e.exports (<url>\n    at e.exports.start (<url>\n    at a.useEffect (<url>\n    at tn (<url>\n    at LS (<url>\n    at rS (<url>\n    at Hi (<url>"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : true"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires webOSMouse event : Leave"
+        },
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : false"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires webOSMouse event : Enter"
+        },
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>"
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  DOMException: Only secure origins are allowed (see: <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "error",
+          "message": "Error: window.cast api not available\n    at E (<url>\n    at Promise (<url>\n    at new Promise (<anonymous>)\n    at new e.exports (<url>\n    at e.exports.start (<url>\n    at a.useEffect (<url>\n    at tn (<url>\n    at LS (<url>\n    at rS (<url>\n    at Hi (<url>"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : true"
+        }
+      ],
+      "networkErrors": [],
+      "unexpectedErrors": []
+    },
+    {
+      "run": 2,
+      "route": "#/intro",
+      "artifacts": {
+        "commitHash": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+        "mainBytes": 9344206,
+        "cssBytes": 279283
+      },
+      "ui": {
+        "path": "/intro",
+        "appChildren": 6,
+        "hasIntroControls": true,
+        "hasBoard": false,
+        "focusableCount": 17,
+        "hasRawTranslationKey": false,
+        "queueMicrotaskAvailable": true,
+        "objectFreezeAvailable": true
+      },
+      "queueMicrotask": {
+        "available": true,
+        "order": [
+          "microtask",
+          "timer"
+        ],
+        "correctOrder": true
+      },
+      "deepFreeze": {
+        "objectFreezeAvailable": true,
+        "shallowFreezeLeavesNestedMutable": true,
+        "playerDeepFreezeExercised": false
+      },
+      "snapshot": {
+        "environment": {
+          "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+          "protocol": "http:",
+          "viewport": {
+            "width": 1920,
+            "height": 1080,
+            "devicePixelRatio": 0
+          },
+          "version": "5.0.0-beta.39",
+          "commit": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+          "performanceMemoryAvailable": true
+        },
+        "marks": {
+          "entry": 654.3000000001484,
+          "i18n-resources-start": 893.500000000131,
+          "i18n-resources-ready": 1034.1000000003078,
+          "i18n-init-start": 1034.2000000000553,
+          "i18n-ready": 1037.6000000001113,
+          "i18n-init-called": 1037.6000000001113,
+          "app-render": 3501.800000000003,
+          "core-ready": 3501.800000000003
+        },
+        "paints": {
+          "first-paint": 112.39999999997963,
+          "first-contentful-paint": 3555.4000000001906
+        },
+        "navigation": {
+          "navigationStart": 1788713575402,
+          "domInteractive": 1122,
+          "domContentLoaded": 1122,
+          "load": 1135
+        },
+        "memory": {
+          "current": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 3662.2000000002117
+          },
+          "peak": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 654.700000000048
+          }
+        },
+        "fps": {
+          "running": false,
+          "durationMs": 0,
+          "frames": 0,
+          "averageFps": null,
+          "p95FrameMs": null,
+          "scrollEvents": 0
+        }
+      },
+      "console": [
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : false"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires webOSMouse event : Enter"
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  DOMException: Only secure origins are allowed (see: <url>"
+        },
+        {
+          "type": "error",
+          "message": "Error: window.cast api not available\n    at E (<url>\n    at Promise (<url>\n    at new Promise (<anonymous>)\n    at new e.exports (<url>\n    at e.exports.start (<url>\n    at a.useEffect (<url>\n    at tn (<url>\n    at LS (<url>\n    at rS (<url>\n    at Hi (<url>"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : true"
+        },
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : false"
+        },
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>"
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  DOMException: Only secure origins are allowed (see: <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "error",
+          "message": "Error: window.cast api not available\n    at E (<url>\n    at Promise (<url>\n    at new Promise (<anonymous>)\n    at new e.exports (<url>\n    at e.exports.start (<url>\n    at a.useEffect (<url>\n    at tn (<url>\n    at LS (<url>\n    at rS (<url>\n    at Hi (<url>"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : true"
+        }
+      ],
+      "networkErrors": [],
+      "unexpectedErrors": []
+    },
+    {
+      "run": 3,
+      "route": "#/intro",
+      "artifacts": {
+        "commitHash": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+        "mainBytes": 9344206,
+        "cssBytes": 279283
+      },
+      "ui": {
+        "path": "/intro",
+        "appChildren": 6,
+        "hasIntroControls": true,
+        "hasBoard": false,
+        "focusableCount": 17,
+        "hasRawTranslationKey": false,
+        "queueMicrotaskAvailable": true,
+        "objectFreezeAvailable": true
+      },
+      "queueMicrotask": {
+        "available": true,
+        "order": [
+          "microtask",
+          "timer"
+        ],
+        "correctOrder": true
+      },
+      "deepFreeze": {
+        "objectFreezeAvailable": true,
+        "shallowFreezeLeavesNestedMutable": true,
+        "playerDeepFreezeExercised": false
+      },
+      "snapshot": {
+        "environment": {
+          "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+          "protocol": "http:",
+          "viewport": {
+            "width": 1920,
+            "height": 1080,
+            "devicePixelRatio": 0
+          },
+          "version": "5.0.0-beta.39",
+          "commit": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+          "performanceMemoryAvailable": true
+        },
+        "marks": {
+          "entry": 648.0000000001382,
+          "i18n-resources-start": 885.6999999998152,
+          "i18n-resources-ready": 1034.6999999997024,
+          "i18n-init-start": 1034.900000000107,
+          "i18n-ready": 1038.1999999999607,
+          "i18n-init-called": 1038.2999999997082,
+          "app-render": 3468.2999999999993,
+          "core-ready": 3468.2999999999993
+        },
+        "paints": {
+          "first-paint": 104.89999999981592,
+          "first-contentful-paint": 3519.6999999998297
+        },
+        "navigation": {
+          "navigationStart": 1788713579090,
+          "domInteractive": 1123,
+          "domContentLoaded": 1123,
+          "load": 1135
+        },
+        "memory": {
+          "current": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 3664.099999999962
+          },
+          "peak": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 648.200000000088
+          }
+        },
+        "fps": {
+          "running": false,
+          "durationMs": 0,
+          "frames": 0,
+          "averageFps": null,
+          "p95FrameMs": null,
+          "scrollEvents": 0
+        }
+      },
+      "console": [
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : false"
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  DOMException: Only secure origins are allowed (see: <url>"
+        },
+        {
+          "type": "error",
+          "message": "Error: window.cast api not available\n    at E (<url>\n    at Promise (<url>\n    at new Promise (<anonymous>)\n    at new e.exports (<url>\n    at e.exports.start (<url>\n    at a.useEffect (<url>\n    at tn (<url>\n    at LS (<url>\n    at rS (<url>\n    at Hi (<url>"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : true"
+        },
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : false"
+        },
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  DOMException: Only secure origins are allowed (see: <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "error",
+          "message": "Error: window.cast api not available\n    at E (<url>\n    at Promise (<url>\n    at new Promise (<anonymous>)\n    at new e.exports (<url>\n    at e.exports.start (<url>\n    at a.useEffect (<url>\n    at tn (<url>\n    at LS (<url>\n    at rS (<url>\n    at Hi (<url>"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : true"
+        }
+      ],
+      "networkErrors": [],
+      "unexpectedErrors": []
+    },
+    {
+      "run": 4,
+      "route": "#/intro",
+      "artifacts": {
+        "commitHash": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+        "mainBytes": 9344206,
+        "cssBytes": 279283
+      },
+      "ui": {
+        "path": "/intro",
+        "appChildren": 6,
+        "hasIntroControls": true,
+        "hasBoard": false,
+        "focusableCount": 17,
+        "hasRawTranslationKey": false,
+        "queueMicrotaskAvailable": true,
+        "objectFreezeAvailable": true
+      },
+      "queueMicrotask": {
+        "available": true,
+        "order": [
+          "microtask",
+          "timer"
+        ],
+        "correctOrder": true
+      },
+      "deepFreeze": {
+        "objectFreezeAvailable": true,
+        "shallowFreezeLeavesNestedMutable": true,
+        "playerDeepFreezeExercised": false
+      },
+      "snapshot": {
+        "environment": {
+          "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+          "protocol": "http:",
+          "viewport": {
+            "width": 1920,
+            "height": 1080,
+            "devicePixelRatio": 0
+          },
+          "version": "5.0.0-beta.39",
+          "commit": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+          "performanceMemoryAvailable": true
+        },
+        "marks": {
+          "entry": 673.9000000002306,
+          "i18n-resources-start": 907.2000000001026,
+          "i18n-resources-ready": 1046.2000000002263,
+          "i18n-init-start": 1046.2999999999738,
+          "i18n-ready": 1049.6000000002823,
+          "i18n-init-called": 1049.7000000000298,
+          "app-render": 3534.5000000002074,
+          "core-ready": 3534.599999999955
+        },
+        "paints": {
+          "first-paint": 97.60000000005675,
+          "first-contentful-paint": 3589.8999999999432
+        },
+        "navigation": {
+          "navigationStart": 1788713582784,
+          "domInteractive": 1134,
+          "domContentLoaded": 1134,
+          "load": 1146
+        },
+        "memory": {
+          "current": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 3673.8000000000284
+          },
+          "peak": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 674.199999999928
+          }
+        },
+        "fps": {
+          "running": false,
+          "durationMs": 0,
+          "frames": 0,
+          "averageFps": null,
+          "p95FrameMs": null,
+          "scrollEvents": 0
+        }
+      },
+      "console": [
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : false"
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  DOMException: Only secure origins are allowed (see: <url>"
+        },
+        {
+          "type": "error",
+          "message": "Error: window.cast api not available\n    at E (<url>\n    at Promise (<url>\n    at new Promise (<anonymous>)\n    at new e.exports (<url>\n    at e.exports.start (<url>\n    at a.useEffect (<url>\n    at tn (<url>\n    at LS (<url>\n    at rS (<url>\n    at Hi (<url>"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : true"
+        },
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : false"
+        },
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  DOMException: Only secure origins are allowed (see: <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "error",
+          "message": "Error: window.cast api not available\n    at E (<url>\n    at Promise (<url>\n    at new Promise (<anonymous>)\n    at new e.exports (<url>\n    at e.exports.start (<url>\n    at a.useEffect (<url>\n    at tn (<url>\n    at LS (<url>\n    at rS (<url>\n    at Hi (<url>"
+        }
+      ],
+      "networkErrors": [],
+      "unexpectedErrors": []
+    },
+    {
+      "run": 5,
+      "route": "#/intro",
+      "artifacts": {
+        "commitHash": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+        "mainBytes": 9344206,
+        "cssBytes": 279283
+      },
+      "ui": {
+        "path": "/intro",
+        "appChildren": 6,
+        "hasIntroControls": true,
+        "hasBoard": false,
+        "focusableCount": 17,
+        "hasRawTranslationKey": false,
+        "queueMicrotaskAvailable": true,
+        "objectFreezeAvailable": true
+      },
+      "queueMicrotask": {
+        "available": true,
+        "order": [
+          "microtask",
+          "timer"
+        ],
+        "correctOrder": true
+      },
+      "deepFreeze": {
+        "objectFreezeAvailable": true,
+        "shallowFreezeLeavesNestedMutable": true,
+        "playerDeepFreezeExercised": false
+      },
+      "snapshot": {
+        "environment": {
+          "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+          "protocol": "http:",
+          "viewport": {
+            "width": 1920,
+            "height": 1080,
+            "devicePixelRatio": 0
+          },
+          "version": "5.0.0-beta.39",
+          "commit": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+          "performanceMemoryAvailable": true
+        },
+        "marks": {
+          "entry": 709.6000000001368,
+          "i18n-resources-start": 901.6999999998916,
+          "i18n-resources-ready": 1031.1000000001513,
+          "i18n-init-start": 1031.1000000001513,
+          "i18n-ready": 1034.2999999998028,
+          "i18n-init-called": 1034.400000000005,
+          "app-render": 3495.4999999999927,
+          "core-ready": 3495.4999999999927
+        },
+        "paints": {
+          "first-paint": 115.49999999988358,
+          "first-contentful-paint": 3554.9000000000888
+        },
+        "navigation": {
+          "navigationStart": 1788713586486,
+          "domInteractive": 1121,
+          "domContentLoaded": 1122,
+          "load": 1133
+        },
+        "memory": {
+          "current": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 3660.6000000001586
+          },
+          "peak": {
+            "usedJSHeapSize": 18200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 709.8000000000866
+          }
+        },
+        "fps": {
+          "running": false,
+          "durationMs": 0,
+          "frames": 0,
+          "averageFps": null,
+          "p95FrameMs": null,
+          "scrollEvents": 0
+        }
+      },
+      "console": [
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : false"
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  DOMException: Only secure origins are allowed (see: <url>"
+        },
+        {
+          "type": "error",
+          "message": "Error: window.cast api not available\n    at E (<url>\n    at Promise (<url>\n    at new Promise (<anonymous>)\n    at new e.exports (<url>\n    at e.exports.start (<url>\n    at a.useEffect (<url>\n    at tn (<url>\n    at LS (<url>\n    at rS (<url>\n    at Hi (<url>"
+        },
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : true"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : false"
+        },
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  DOMException: Only secure origins are allowed (see: <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "error",
+          "message": "Error: window.cast api not available\n    at E (<url>\n    at Promise (<url>\n    at new Promise (<anonymous>)\n    at new e.exports (<url>\n    at e.exports.start (<url>\n    at a.useEffect (<url>\n    at tn (<url>\n    at LS (<url>\n    at rS (<url>\n    at Hi (<url>"
+        }
+      ],
+      "networkErrors": [],
+      "unexpectedErrors": []
+    }
+  ]
+}

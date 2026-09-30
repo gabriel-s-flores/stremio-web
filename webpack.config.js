@@ -13,6 +13,20 @@ const TerserPlugin = require('terser-webpack-plugin');
 const packageJson = require('./package.json');
 
 const COMMIT_HASH = execSync('git rev-parse HEAD').toString().trim();
+const WEBOS_TRANSPILE_PACKAGES = ['i18next', 'react-i18next', 'use-long-press'];
+
+const isEnabled = (value) => value === true || value === '1' || value === 'true';
+
+const shouldExcludeNodeModule = (resourcePath) => {
+    const normalizedPath = `/${resourcePath.replace(/\\/g, '/')}`;
+
+    if (!normalizedPath.includes('/node_modules/')) return false;
+
+    return !WEBOS_TRANSPILE_PACKAGES.some((packageName) => (
+        normalizedPath.includes(`/node_modules/${packageName}/`)
+        || normalizedPath.endsWith(`/node_modules/${packageName}`)
+    ));
+};
 
 const THREAD_LOADER = {
     loader: 'thread-loader',
@@ -33,12 +47,33 @@ threadLoader.warmup(
     ],
 );
 
-module.exports = (env, argv) => ({
+module.exports = (env = {}, argv) => {
+    const webos = isEnabled(env.WEBOS);
+    const serviceWorkerDisabled = isEnabled(env.SERVICE_WORKER_DISABLED);
+    for (const [key, limit] of [['WEBOS_OVERSCAN_HORIZONTAL', 960], ['WEBOS_OVERSCAN_VERTICAL', 540]]) {
+        if (webos && env[key] !== undefined && (!Number.isFinite(Number(env[key])) || Number(env[key]) < 0 || Number(env[key]) >= limit)) {
+            throw new Error(`${key} must be a non-negative pixel value below ${limit}`);
+        }
+    }
+    const webosDebug = webos && isEnabled(env.WEBOS_DEBUG);
+    const nodeModulesExclude = webos ? shouldExcludeNodeModule : /node_modules/;
+    const mainEntry = webos ? [
+        // Workers have their own global scope, so each webOS entry needs this first.
+        'core-js/stable',
+        ...(webosDebug ? ['./src/webos/diagnostics/bootstrap.js'] : []),
+        './src/index.js',
+    ] : './src/index.js';
+    const workerEntry = webos ? [
+        'core-js/stable',
+        './node_modules/@stremio/stremio-core-web/worker.js',
+    ] : './node_modules/@stremio/stremio-core-web/worker.js';
+
+    return {
     mode: argv.mode,
     devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
     entry: {
-        main: './src/index.js',
-        worker: './node_modules/@stremio/stremio-core-web/worker.js'
+        main: mainEntry,
+        worker: workerEntry,
     },
     output: {
         path: path.join(__dirname, 'build'),
@@ -47,16 +82,23 @@ module.exports = (env, argv) => ({
     },
     module: {
         rules: [
+            ...(webos ? [{
+                test: /[\\/]WebOsVideo[\\/]WebOsVideo\.js$/,
+                use: [path.resolve(__dirname, 'tools/webos-video-lifecycle-loader.cjs')]
+            }] : []),
             {
                 test: /\.js$/,
-                exclude: /node_modules/,
+                exclude: nodeModulesExclude,
                 use: [
                     THREAD_LOADER,
                     {
                         loader: 'babel-loader',
                         options: {
                             presets: [
-                                '@babel/preset-env',
+                                ['@babel/preset-env', {
+                                    browserslistEnv: webos ? 'webos' : undefined,
+                                    ignoreBrowserslistConfig: !webos,
+                                }],
                                 '@babel/preset-react'
                             ],
                         }
@@ -71,6 +113,7 @@ module.exports = (env, argv) => ({
                     {
                         loader: 'ts-loader',
                         options: {
+                            configFile: path.resolve(__dirname, webos ? 'tsconfig.webos.json' : 'tsconfig.json'),
                             happyPackMode: true,
                         }
                     }
@@ -108,6 +151,7 @@ module.exports = (env, argv) => ({
                                             'advanced',
                                             {
                                                 autoprefixer: {
+                                                    env: webos ? 'webos' : undefined,
                                                     add: true,
                                                     remove: true,
                                                     flexbox: false,
@@ -143,7 +187,16 @@ module.exports = (env, argv) => ({
                         options: {
                             lessOptions: {
                                 strictMath: true,
-                                ieCompat: false
+                                ieCompat: false,
+                                modifyVars: {
+                                    webos: webos ? 'true' : 'false',
+                                    ...(webos && env.WEBOS_OVERSCAN_HORIZONTAL !== undefined ? {
+                                        'webos-overscan-horizontal': `${Number(env.WEBOS_OVERSCAN_HORIZONTAL)}px`
+                                    } : {}),
+                                    ...(webos && env.WEBOS_OVERSCAN_VERTICAL !== undefined ? {
+                                        'webos-overscan-vertical': `${Number(env.WEBOS_OVERSCAN_VERTICAL)}px`
+                                    } : {})
+                                }
                             }
                         }
                     }
@@ -178,7 +231,15 @@ module.exports = (env, argv) => ({
         extensions: ['.tsx', '.ts', '.js', '.json', '.less', '.wasm'],
         alias: {
             'stremio': path.resolve(__dirname, 'src'),
-            'stremio-router': path.resolve(__dirname, 'src', 'router')
+            'stremio-router': path.resolve(__dirname, 'src', 'router'),
+            ...(webosDebug ? {
+                'stremio-router-base-paths$': path.resolve(
+                    __dirname,
+                    'src',
+                    'router',
+                    'routerPaths.tsx'
+                )
+            } : {})
         }
     },
     devServer: {
@@ -212,19 +273,30 @@ module.exports = (env, argv) => ({
         new webpack.EnvironmentPlugin({
             SENTRY_DSN: null,
             ...env,
-            SERVICE_WORKER_DISABLED: false,
+            SERVICE_WORKER_DISABLED: serviceWorkerDisabled,
             DEBUG: argv.mode !== 'production',
             VERSION: packageJson.version,
-            COMMIT_HASH
+            COMMIT_HASH,
+            WEBOS: webos,
+            WEBOS_DEBUG: webosDebug
         }),
+        serviceWorkerDisabled && new webpack.NormalModuleReplacementPlugin(
+            /[\\/]App[\\/]WebUpdateScreen$/,
+            path.resolve(__dirname, 'src', 'App', 'WebUpdateScreen', 'disabled.js')
+        ),
+        webosDebug && new webpack.NormalModuleReplacementPlugin(
+            /[\\/]routerPaths$/,
+            path.resolve(__dirname, 'src', 'router', 'routerPaths.webos.tsx')
+        ),
         new webpack.ProvidePlugin({
             Buffer: ['buffer', 'Buffer']
         }),
-        argv.mode === 'production' &&
+        argv.mode === 'production' && !serviceWorkerDisabled &&
             new WorkboxPlugin.GenerateSW({
                 maximumFileSizeToCacheInBytes: 20000000,
                 clientsClaim: true,
-                skipWaiting: true
+                // webOS applies updates through the banner; desktop keeps its existing policy.
+                skipWaiting: !webos
             }),
         new CopyWebpackPlugin({
             patterns: [
@@ -233,6 +305,13 @@ module.exports = (env, argv) => ({
                 { from: 'assets/screenshots/*.webp', to: 'screenshots/[name][ext]' },
                 { from: '.well-known', to: '.well-known' },
                 { from: 'manifest.json', to: 'manifest.json' },
+                ...(webos ? [
+                    {
+                        from: 'webos/lib/webOSTVjs-1.2.10/webOSTV.js',
+                        to: 'webos/webOSTV.js',
+                        info: { minimized: true },
+                    },
+                ] : []),
             ]
         }),
         new MiniCssExtractPlugin({
@@ -244,6 +323,8 @@ module.exports = (env, argv) => ({
             scriptLoading: 'blocking',
             faviconsPath: 'favicons',
             imagesPath: 'images',
+            webos,
         }),
     ].filter(Boolean)
-});
+    };
+};

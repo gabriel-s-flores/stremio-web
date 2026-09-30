@@ -43,6 +43,7 @@ const ToastItem = ({ title, message, dataset, onSelect, onClose, ...props }) => 
     }, [dataset, onSelect, onClose]);
     const closeButtonOnClick = React.useCallback((event) => {
         event.nativeEvent.selectToastPrevented = true;
+        if (process.env.WEBOS) event.nativeEvent.closeToastPrevented = true;
         if (typeof onClose === 'function') {
             onClose({
                 type: 'close',

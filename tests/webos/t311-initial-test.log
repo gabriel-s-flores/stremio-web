@@ -1,0 +1,73 @@
+[ELIFECYCLE] Test failed. See above for more details.
+$ jest "--runInBand"
+PASS tests/webosTranspilation.spec.js (12.904 s)
+PASS tests/webosLogin.spec.js
+PASS tests/webosCssPipeline.spec.js (13.887 s)
+FAIL tests/webosCssFocus.spec.js
+  ● desktop CSS is unchanged: routes/Intro/styles.less
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "2c293f19cdcf2cf08bcaa518df90022660b51d5189d8a2c1fa2513f90511d69a"
+    Received: "aa9c68e1fdf800c27fb5c150b760875ce3082da018ada4d88ce2094e3bd65f73"
+
+       7 | test.each(Object.keys(baseline.files))('desktop CSS is unchanged: %s', async (file) => {
+       8 |     const css = await compile(file, false);
+    >  9 |     expect(crypto.createHash('sha256').update(css).digest('hex')).toBe(baseline.files[file]);
+         |                                                                   ^
+      10 | });
+      11 |
+      12 | test('TV mixin is build gated and does not change the shared border token', async () => {
+
+      at toBe (tests/webosCssFocus.spec.js:9:67)
+
+PASS tests/webosLayout1080.spec.js
+PASS tests/webosServiceWorker.spec.js
+PASS tests/i18nScan.test.js
+PASS tests/webosCssSafeAreas.spec.js
+PASS tests/webosCssBackdrop.spec.js
+PASS tests/webosCssGap.spec.js
+PASS tests/webosStorage.spec.js
+PASS tests/externalLinksAudit.spec.js
+PASS tests/videoPlatform.spec.js
+PASS tests/desktopFeatures.spec.js
+PASS tests/webosCssResidual.spec.js
+PASS tests/platformPlayers.spec.js
+PASS tests/webosLifecycle.spec.js
+PASS tests/externalLinks.spec.js
+PASS tests/platformDevice.spec.js
+PASS tests/webosCssAspectRatio.spec.js
+PASS tests/webosPlatform.spec.js
+PASS tests/clipboardAudit.spec.js
+PASS tests/copyright.spec.js
+PASS tests/webosApiGuards.spec.js
+PASS tests/routesRegexp.spec.js
+PASS tests/webosObservability.spec.js
+PASS tests/webosDiagnostics.spec.js
+PASS tests/httpServer.spec.js
+
+Summary of all failing tests
+FAIL tests/webosCssFocus.spec.js
+  ● desktop CSS is unchanged: routes/Intro/styles.less
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "2c293f19cdcf2cf08bcaa518df90022660b51d5189d8a2c1fa2513f90511d69a"
+    Received: "aa9c68e1fdf800c27fb5c150b760875ce3082da018ada4d88ce2094e3bd65f73"
+
+       7 | test.each(Object.keys(baseline.files))('desktop CSS is unchanged: %s', async (file) => {
+       8 |     const css = await compile(file, false);
+    >  9 |     expect(crypto.createHash('sha256').update(css).digest('hex')).toBe(baseline.files[file]);
+         |                                                                   ^
+      10 | });
+      11 |
+      12 | test('TV mixin is build gated and does not change the shared border token', async () => {
+
+      at toBe (tests/webosCssFocus.spec.js:9:67)
+
+
+Test Suites: 1 failed, 27 passed, 28 total
+Tests:       1 failed, 591 passed, 592 total
+Snapshots:   0 total
+Time:        40.915 s
+Ran all test suites.

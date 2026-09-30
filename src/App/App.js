@@ -11,19 +11,28 @@ const { FullscreenProvider, ToastProvider, TooltipProvider, ShortcutsProvider, D
 const ServicesToaster = require('./ServicesToaster');
 const SearchParamsHandler = require('./SearchParamsHandler');
 const DeepLinkHandler = require('./DeepLinkHandler');
+const ExternalLinkFailureModal = require('./ExternalLinkFailureModal');
+const { parseDeepLink, parseLaunchDeepLink } = require('../common/parseDeepLink');
 const { default: UpdaterBanner } = require('./UpdaterBanner');
 const { default: ShortcutsModal } = require('./ShortcutsModal');
 const { default: GamepadModal } = require('./GamepadModal');
+const BackNavigation = require('./BackNavigation');
 const styles = require('./styles');
 
 const ProtectedRoutes = withCoreSuspender(Routes);
 const NAVIGATE_TABS_ROUTES = ['/', '/discover', '/library', '/calendar', '/addons', '/settings'];
 
 const App = () => {
+    React.useEffect(() => {
+        if (!process.env.WEBOS) return;
+        const spatial = require('stremio/common/installTVSpatialNavigation')();
+        const keyboard = require('stremio/common/TV/keyboard')();
+        return () => { spatial(); keyboard(); };
+    }, []);
     const core = useCore();
     const profile = useProfile();
     const { i18n } = useTranslation();
-    const { shell } = usePlatform();
+    const { shell, webos } = usePlatform();
     const navigate = useNavigate();
     const [gamepadSupportEnabled, setGamepadSupportEnabled] = React.useState(false);
     const services = React.useMemo(() => {
@@ -95,7 +104,7 @@ const App = () => {
             }
         };
         services.chromecast.on('stateChanged', onChromecastStateChange);
-        services.chromecast.start();
+        if (!process.env.WEBOS) services.chromecast.start();
 
         window.services = services;
         return () => {
@@ -106,19 +115,8 @@ const App = () => {
 
     React.useEffect(() => {
         const onOpenMedia = (data) => {
-            try {
-                const { protocol, hostname, pathname, searchParams } = new URL(data);
-                if (protocol === CONSTANTS.PROTOCOL) {
-                    if (hostname.length) {
-                        const transportUrl = `https://${hostname}${pathname}`;
-                        navigate(`/addons?addon=${encodeURIComponent(transportUrl)}`);
-                    } else {
-                        navigate(`${pathname}?${searchParams.toString()}`);
-                    }
-                }
-            } catch (e) {
-                console.error('Failed to open media:', e);
-            }
+            const path = parseDeepLink(data);
+            if (path !== null) navigate(path);
         };
 
         shell.on('open-media', onOpenMedia);
@@ -128,6 +126,11 @@ const App = () => {
 
         return () => shell.off('open-media', onOpenMedia);
     }, [shell.state.initialized]);
+
+    React.useEffect(() => webos.subscribeLifecycle(({ params }) => {
+        const path = parseLaunchDeepLink(params);
+        if (path !== null) navigate(path, { replace: true });
+    }), [webos.subscribeLifecycle, navigate]);
 
     React.useEffect(() => {
         if (typeof profile.settings?.interfaceLanguage === 'string') {
@@ -185,20 +188,22 @@ const App = () => {
             <ToastProvider className={styles['toasts-container']}>
                 <TooltipProvider className={styles['tooltip-container']}>
                     <GamepadProvider enabled={gamepadSupportEnabled} onGuide={toggleGamepadModal}>
-                        <ShortcutsProvider onShortcut={onShortcut}>
+                        <ShortcutsProvider onShortcut={onShortcut} backEnabled={!!process.env.WEBOS}>
                             <FullscreenProvider>
                                 <DiscordProvider>
+                                    <BackNavigation />
                                     {
                                         shortcutModalOpen && <ShortcutsModal onClose={closeShortcutsModal}/>
                                     }
                                     {
-                                        gamepadModalOpen && <GamepadModal onClose={closeGamepadModal}/>
+                                        gamepadModalOpen && (process.env.WEBOS ? <ShortcutsModal onClose={closeGamepadModal}/> : <GamepadModal onClose={closeGamepadModal}/>)
                                     }
                                     <ServicesToaster />
                                     <SearchParamsHandler />
                                     <DeepLinkHandler />
                                     <UpdaterBanner className={styles['updater-banner-container']} />
                                     <ProtectedRoutes />
+                                    <ExternalLinkFailureModal />
                                 </DiscordProvider>
                             </FullscreenProvider>
                         </ShortcutsProvider>

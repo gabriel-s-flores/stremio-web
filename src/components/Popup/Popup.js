@@ -5,6 +5,7 @@ const PropTypes = require('prop-types');
 const classnames = require('classnames');
 const FocusLock = require('react-focus-lock').default;
 const { default: useRouteFocused } = require('stremio/common/useRouteFocused');
+const { useBackHandler, BACK_HANDLER_PRIORITIES } = require('stremio/common');
 const styles = require('./styles');
 
 const getAnchorElement = (element) => {
@@ -25,6 +26,13 @@ const Popup = ({ open, direction, renderLabel, renderMenu, dataset, onCloseReque
     const labelRef = React.useRef(null);
     const menuRef = React.useRef(null);
     const [autoDirection, setAutoDirection] = React.useState(null);
+    const backOnRequest = React.useCallback((event) => {
+        if (typeof onCloseRequest === 'function') {
+            onCloseRequest({ type: 'close', nativeEvent: event, dataset });
+        }
+        return true;
+    }, [dataset, onCloseRequest]);
+    useBackHandler(backOnRequest, BACK_HANDLER_PRIORITIES.POPUP, routeFocused && open);
     const menuOnMouseDown = React.useCallback((event) => {
         event.nativeEvent.closePopupPrevented = true;
     }, []);
@@ -111,7 +119,7 @@ const Popup = ({ open, direction, renderLabel, renderMenu, dataset, onCloseReque
         ref: labelRef,
         className: classnames(styles['label-container'], props.className, { 'active': open }),
         children: open ?
-            <FocusLock ref={menuRef} className={classnames(styles['menu-container'], { [styles[`menu-direction-${autoDirection}`]]: !direction }, { [styles[`menu-direction-${direction}`]]: direction })} autoFocus={false} lockProps={{ onMouseDown: menuOnMouseDown }}>
+            <FocusLock returnFocus={!!process.env.WEBOS} ref={menuRef} className={classnames(styles['menu-container'], { [styles[`menu-direction-${autoDirection}`]]: !direction }, { [styles[`menu-direction-${direction}`]]: direction })} autoFocus={!!process.env.WEBOS} lockProps={{ onMouseDown: menuOnMouseDown }}>
                 {renderMenu()}
             </FocusLock>
             :

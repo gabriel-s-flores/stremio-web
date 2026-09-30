@@ -1,5 +1,6 @@
 import React, { ChangeEvent, createContext, useContext, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
+import { usePlatform } from '../Platform';
 import { isFileType, isFileTypeSupported } from './utils';
 import styles from './styles.less';
 
@@ -17,7 +18,24 @@ type Props = {
     children: React.ReactNode,
 };
 
+const inactiveContext: FileDropContext = {
+    on: () => undefined,
+    off: () => undefined,
+};
+
 const FileDropProvider = ({ children }: Props) => {
+    const platform = usePlatform();
+
+    return platform.isTV ? (
+        <FileDropContext.Provider value={inactiveContext}>
+            { children }
+        </FileDropContext.Provider>
+    ) : (
+        <ActiveFileDropProvider>{ children }</ActiveFileDropProvider>
+    );
+};
+
+const ActiveFileDropProvider = ({ children }: Props) => {
     const listeners = useRef<[FileType, FileDropListener][]>([]);
     const [active, setActive] = useState(false);
 

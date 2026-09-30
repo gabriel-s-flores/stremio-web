@@ -1,0 +1,78 @@
+FAIL tests/webosTranspilation.spec.js (555.108 s)
+  ● webos source compatibility › js survives the production loader/minifier pipeline as ES2018
+
+    thrown: "Exceeded timeout of 30000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      126 |     ['webos-debug', { WEBOS: '1', WEBOS_DEBUG: '1' }],
+      127 | ])('%s source compatibility', (name, env) => {
+    > 128 |     test.each(fixtures)('%s survives the production loader/minifier pipeline as ES2018', async (extension, code) => {
+          |                        ^
+      129 |         const filename = path.join(directory, `${name}.${extension}`);
+      130 |         const outputDirectory = path.join(directory, `${name}-${extension}`);
+      131 |         fs.writeFileSync(filename, code);
+
+      at node_modules/.pnpm/jest-each@29.7.0/node_modules/jest-each/build/bind.js:47:15
+          at Array.forEach (<anonymous>)
+      at tests/webosTranspilation.spec.js:128:24
+          at Array.forEach (<anonymous>)
+      at Object.<anonymous> (tests/webosTranspilation.spec.js:127:3)
+
+PASS tests/webosCssPipeline.spec.js (72.082 s)
+PASS tests/webosLogin.spec.js (7.511 s)
+PASS tests/webosSpatialNavigation.spec.js
+PASS tests/webosCssFocus.spec.js (19.041 s)
+PASS tests/webosServiceWorker.spec.js (13.287 s)
+PASS tests/i18nScan.test.js (20.201 s)
+PASS tests/webosCssGap.spec.js (17.821 s)
+PASS tests/webosLayout1080.spec.js (18.753 s)
+PASS tests/webosCssBackdrop.spec.js (44.041 s)
+PASS tests/webosCssSafeAreas.spec.js (16.099 s)
+PASS tests/webosStorage.spec.js (18.57 s)
+PASS tests/externalLinksAudit.spec.js (5.701 s)
+PASS tests/videoPlatform.spec.js
+PASS tests/desktopFeatures.spec.js (5.23 s)
+PASS tests/webosCssResidual.spec.js
+PASS tests/webosCssAspectRatio.spec.js
+PASS tests/clipboardAudit.spec.js
+PASS tests/platformPlayers.spec.js
+PASS tests/webosBack.spec.js
+PASS tests/webosLifecycle.spec.js
+PASS tests/externalLinks.spec.js
+PASS tests/webosApiGuards.spec.js
+PASS tests/webosPlatform.spec.js
+PASS tests/routesRegexp.spec.js
+PASS tests/platformDevice.spec.js
+PASS tests/copyright.spec.js
+PASS tests/webosObservability.spec.js
+PASS tests/webosDiagnostics.spec.js
+PASS tests/webosNavigationRuntime.spec.js
+PASS tests/httpServer.spec.js
+
+Summary of all failing tests
+FAIL tests/webosTranspilation.spec.js (555.108 s)
+  ● webos source compatibility › js survives the production loader/minifier pipeline as ES2018
+
+    thrown: "Exceeded timeout of 30000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      126 |     ['webos-debug', { WEBOS: '1', WEBOS_DEBUG: '1' }],
+      127 | ])('%s source compatibility', (name, env) => {
+    > 128 |     test.each(fixtures)('%s survives the production loader/minifier pipeline as ES2018', async (extension, code) => {
+          |                        ^
+      129 |         const filename = path.join(directory, `${name}.${extension}`);
+      130 |         const outputDirectory = path.join(directory, `${name}-${extension}`);
+      131 |         fs.writeFileSync(filename, code);
+
+      at node_modules/.pnpm/jest-each@29.7.0/node_modules/jest-each/build/bind.js:47:15
+          at Array.forEach (<anonymous>)
+      at tests/webosTranspilation.spec.js:128:24
+          at Array.forEach (<anonymous>)
+      at Object.<anonymous> (tests/webosTranspilation.spec.js:127:3)
+
+
+Test Suites: 1 failed, 30 passed, 31 total
+Tests:       1 failed, 632 passed, 633 total
+Snapshots:   0 total
+Time:        855.165 s
+Ran all test suites.

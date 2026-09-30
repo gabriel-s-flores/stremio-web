@@ -1,0 +1,141 @@
+{
+  "mode": "hosted",
+  "date": "2026-09-10T22:27:17.003Z",
+  "checks": {
+    "allowedPayload": true,
+    "allowedSingleEnter": true,
+    "allowedSafeFallback": true,
+    "allowedSelection": true,
+    "allowedDismissAndFocus": true,
+    "warningPayload": true,
+    "warningSingleEnter": true,
+    "warningSafeFallback": true,
+    "warningSelection": true,
+    "copyFeedback": true,
+    "warningDismissAndFocus": true,
+    "failurePayload": true,
+    "failureSingleEnter": true,
+    "failureSafeFallback": true,
+    "failureSelection": true,
+    "failureDismissAndFocus": true,
+    "lifecycleWithSiblingApp": true,
+    "routePreserved": true,
+    "internalRoute": true
+  },
+  "browserLaunch": "blocked-browser-not-installed",
+  "allowed": {
+    "calls": [
+      {
+        "uri": "luna://com.webos.applicationManager",
+        "method": "launch",
+        "parameters": {
+          "id": "com.webos.app.browser",
+          "params": {
+            "target": "https://www.stremio.com/tos"
+          }
+        },
+        "failure": {
+          "errorCode": -101,
+          "returnValue": false,
+          "errorText": "not exist"
+        }
+      }
+    ],
+    "modal": true,
+    "url": "https://www.stremio.com/tos",
+    "hash": "#/debug/external-links"
+  },
+  "warning": {
+    "calls": [
+      {
+        "uri": "luna://com.webos.applicationManager",
+        "method": "launch",
+        "parameters": {
+          "id": "com.webos.app.browser",
+          "params": {
+            "target": "https://www.stremio.com/tos"
+          }
+        },
+        "failure": {
+          "errorCode": -101,
+          "returnValue": false,
+          "errorText": "not exist"
+        }
+      },
+      {
+        "uri": "luna://com.webos.applicationManager",
+        "method": "launch",
+        "parameters": {
+          "id": "com.webos.app.browser",
+          "params": {
+            "target": "https://www.stremio.com/warning#https%3A%2F%2Fexample.org%2Ft38%3Ftest%3D1"
+          }
+        },
+        "failure": {
+          "errorCode": -101,
+          "returnValue": false,
+          "errorText": "not exist"
+        }
+      }
+    ],
+    "modal": true,
+    "url": "https://www.stremio.com/warning#https%3A%2F%2Fexample.org%2Ft38%3Ftest%3D1",
+    "hash": "#/debug/external-links"
+  },
+  "copyStatus": "Unable to copy. Select the link below to copy it manually.",
+  "failure": {
+    "calls": [
+      {
+        "uri": "luna://com.webos.applicationManager",
+        "method": "launch",
+        "parameters": {
+          "id": "com.webos.app.browser",
+          "params": {
+            "target": "https://www.stremio.com/tos"
+          }
+        },
+        "failure": {
+          "errorCode": -101,
+          "returnValue": false,
+          "errorText": "not exist"
+        }
+      },
+      {
+        "uri": "luna://com.webos.applicationManager",
+        "method": "launch",
+        "parameters": {
+          "id": "com.webos.app.browser",
+          "params": {
+            "target": "https://www.stremio.com/warning#https%3A%2F%2Fexample.org%2Ft38%3Ftest%3D1"
+          }
+        },
+        "failure": {
+          "errorCode": -101,
+          "returnValue": false,
+          "errorText": "not exist"
+        }
+      },
+      {
+        "uri": "luna://com.webos.applicationManager",
+        "method": "launch",
+        "parameters": {
+          "id": "com.stremio.t38.nonexistent",
+          "params": {
+            "target": "https://www.stremio.com/tos"
+          }
+        },
+        "failure": {
+          "errorCode": -101,
+          "returnValue": false,
+          "errorText": "not exist"
+        }
+      }
+    ],
+    "modal": true,
+    "url": "https://www.stremio.com/tos",
+    "hash": "#/debug/external-links"
+  },
+  "visibility": "visible → hidden → visible",
+  "seamPassed": true,
+  "acceptance": "incomplete"
+}

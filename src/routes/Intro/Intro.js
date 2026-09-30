@@ -7,7 +7,7 @@ const classnames = require('classnames');
 const { default: Icon } = require('@stremio/stremio-icons/react');
 const Modal = require('stremio/router/Modal');
 const { useCore } = require('stremio/core');
-const { useBinaryState } = require('stremio/common');
+const { useBinaryState, usePlatform } = require('stremio/common');
 const { default: useRouteFocused } = require('stremio/common/useRouteFocused');
 const { Button, Image, Checkbox } = require('stremio/components');
 const CredentialsTextInput = require('./CredentialsTextInput');
@@ -24,6 +24,7 @@ const Intro = () => {
     const [queryParams, setQueryParams] = useSearchParams();
     const navigate = useNavigate();
     const core = useCore();
+    const { isTV } = usePlatform();
     const { t } = useTranslation();
     const routeFocused = useRouteFocused();
     const [startFacebookLogin, stopFacebookLogin] = useFacebookLogin();
@@ -292,7 +293,7 @@ const Intro = () => {
         };
     }, [routeFocused]);
     return (
-        <div className={styles['intro-container']}>
+        <div className={classnames(styles['intro-container'], { [styles['tv']]: isTV })}>
             <div className={styles['background-container']} />
             <div className={styles['heading-container']}>
                 <div className={styles['logo-container']}>
@@ -376,14 +377,16 @@ const Intro = () => {
                     </Button>
                 </div>
                 <div className={styles['options-container']}>
-                    <Button className={classnames(styles['form-button'], styles['facebook-button'])} onClick={loginWithFacebook}>
-                        <Icon className={styles['icon']} name={'facebook'} />
-                        <div className={styles['label']}>{t('FB_LOGIN')}</div>
-                    </Button>
-                    <Button className={classnames(styles['form-button'], styles['apple-button'])} onClick={loginWithApple}>
-                        <Icon className={styles['icon']} name={'macos'} />
-                        <div className={styles['label']}>{t('APPLE_LOGIN')}</div>
-                    </Button>
+                    {isTV === false ? <React.Fragment>
+                        <Button className={classnames(styles['form-button'], styles['facebook-button'])} onClick={loginWithFacebook}>
+                            <Icon className={styles['icon']} name={'facebook'} />
+                            <div className={styles['label']}>{t('FB_LOGIN')}</div>
+                        </Button>
+                        <Button className={classnames(styles['form-button'], styles['apple-button'])} onClick={loginWithApple}>
+                            <Icon className={styles['icon']} name={'macos'} />
+                            <div className={styles['label']}>{t('APPLE_LOGIN')}</div>
+                        </Button>
+                    </React.Fragment> : null}
                     {
                         state.form === SIGNUP_FORM ?
                             <Button className={classnames(styles['form-button'], styles['login-form-button'])} onClick={switchFormOnClick}>

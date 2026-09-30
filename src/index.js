@@ -1,6 +1,8 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
-if (typeof process.env.SENTRY_DSN === 'string') {
+if (process.env.WEBOS === true || process.env.WEBOS === 'true' || process.env.WEBOS === '1') {
+    require('./webos/diagnostics/observability').initialize();
+} else if (typeof process.env.SENTRY_DSN === 'string') {
     const Sentry = require('@sentry/browser');
     Sentry.init({ dsn: process.env.SENTRY_DSN });
 }
@@ -22,10 +24,42 @@ const { default: WebUpdateScreen } = require('./App/WebUpdateScreen');
 const { CoreProvider } = require('./core');
 const { FileDropProvider, PlatformProvider } = require('./common');
 
+const isWebosDebug = process.env.WEBOS_DEBUG === true || process.env.WEBOS_DEBUG === 'true' || process.env.WEBOS_DEBUG === '1';
+const markWebosDebug = (name) => {
+    if (isWebosDebug && window.__stremioWebosDebug) {
+        window.__stremioWebosDebug.mark(name);
+    }
+};
+
+markWebosDebug('i18n-resources-start');
 const translations = Object.fromEntries(Object.entries(stremioTranslations()).map(([key, value]) => [key, {
     translation: value
 }]));
+if (process.env.WEBOS) {
+    const remoteTranslations = {
+        'en-US': require('./common/TV/translations/en-US.json'),
+        'pt-BR': require('./common/TV/translations/pt-BR.json'),
+        'pt-PT': require('./common/TV/translations/pt-PT.json'),
+    };
+    Object.entries(remoteTranslations).forEach(([language, resources]) => {
+        if (!translations[language]) translations[language] = { translation: {} };
+        Object.assign(translations[language].translation, resources);
+    });
+}
+markWebosDebug('i18n-resources-ready');
 
+const markI18nReady = () => {
+    markWebosDebug('i18n-ready');
+    if (isWebosDebug) {
+        i18n.off('initialized', markI18nReady);
+    }
+};
+
+if (isWebosDebug) {
+    i18n.on('initialized', markI18nReady);
+}
+
+markWebosDebug('i18n-init-start');
 i18n
     .use(initReactI18next)
     .init({
@@ -36,6 +70,10 @@ i18n
             escapeValue: false
         }
     });
+markWebosDebug('i18n-init-called');
+if (i18n.isInitialized) {
+    markI18nReady();
+}
 
 const appInfo = {
     appVersion: process.env.VERSION,

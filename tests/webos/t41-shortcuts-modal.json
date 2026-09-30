@@ -1,0 +1,80 @@
+{
+  "name": "shortcuts-modal",
+  "date": "2026-09-14T01:53:25.369Z",
+  "tags": [
+    "shortcuts-modal"
+  ],
+  "failures": [],
+  "controls": [
+    {
+      "id": "44",
+      "selector": "body > div:nth-child(6) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "tag": "DIV",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "safe",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 1485,
+        "y": 123,
+        "width": 45,
+        "height": 45
+      },
+      "phase": "initial",
+      "reached": true
+    }
+  ],
+  "edges": [
+    {
+      "phase": "initial",
+      "from": "44",
+      "key": "ArrowUp",
+      "to": "44",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "44",
+      "key": "ArrowDown",
+      "to": "44",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "44",
+      "key": "ArrowLeft",
+      "to": "44",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "44",
+      "key": "ArrowRight",
+      "to": "44",
+      "scrollChanged": false
+    }
+  ],
+  "enter": [
+    {
+      "phase": "initial",
+      "id": "44",
+      "clicks": 1,
+      "submits": 0,
+      "effect": true,
+      "passed": true
+    }
+  ],
+  "stage": "enter-initial",
+  "graphs": [
+    {
+      "phase": "initial",
+      "explored": 1,
+      "discovered": 1,
+      "limit": 1500,
+      "stabilized": true
+    }
+  ]
+}

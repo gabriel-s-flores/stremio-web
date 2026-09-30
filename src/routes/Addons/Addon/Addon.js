@@ -7,6 +7,8 @@ const { useTranslation } = require('react-i18next');
 const { default: Icon } = require('@stremio/stremio-icons/react');
 const { Button, Image } = require('stremio/components');
 const styles = require('./styles');
+const Card = process.env.WEBOS ? 'div' : Button;
+const Details = process.env.WEBOS ? Button : React.Fragment;
 
 const Addon = ({ className, id, name, version, logo, description, types, behaviorHints, installed, onInstall, onUninstall, onConfigure, onOpen, onShare, dataset }) => {
     const { t } = useTranslation();
@@ -74,45 +76,47 @@ const Addon = ({ className, id, name, version, logo, description, types, behavio
         <Icon className={styles['icon']} name={'addons'} />
     ), []);
     return (
-        <Button className={classnames(className, styles['addon-container'])} onKeyDown={onKeyDown} onClick={onOpenClick}>
-            <div className={styles['logo-container']}>
-                <Image
-                    className={styles['logo']}
-                    src={logo}
-                    alt={' '}
-                    renderFallback={renderLogoFallback}
-                />
-            </div>
-            <div className={styles['info-container']}>
-                <div className={styles['name-container']} title={typeof name === 'string' && name.length > 0 ? name : id}>
-                    {typeof name === 'string' && name.length > 0 ? name : id}
+        <Card className={classnames(className, styles['addon-container'])} {...(process.env.WEBOS ? {} : { onKeyDown, onClick: onOpenClick })}>
+            <Details {...(process.env.WEBOS ? { className: styles['details-button'], onClick: onOpenClick } : {})}>
+                <div className={styles['logo-container']}>
+                    <Image
+                        className={styles['logo']}
+                        src={logo}
+                        alt={' '}
+                        renderFallback={renderLogoFallback}
+                    />
                 </div>
-                {
-                    typeof version === 'string' && version.length > 0 ?
-                        <div className={styles['version-container']} title={t('ADDON_VERSION_SHORT', {version})}>{t('ADDON_VERSION_SHORT', {version})}</div>
-                        :
-                        null
-                }
-                {
-                    Array.isArray(types) && types.length > 0 ?
-                        <div className={styles['types-container']}>
-                            {
-                                types.length === 1 ?
-                                    types.join('')
-                                    :
-                                    types.slice(0, -1).join(', ') + ' & ' + types[types.length - 1]
-                            }
-                        </div>
-                        :
-                        null
-                }
-                {
-                    typeof description === 'string' && description.length > 0 ?
-                        <div className={styles['description-container']} title={description}>{description}</div>
-                        :
-                        null
-                }
-            </div>
+                <div className={styles['info-container']}>
+                    <div className={styles['name-container']} title={typeof name === 'string' && name.length > 0 ? name : id}>
+                        {typeof name === 'string' && name.length > 0 ? name : id}
+                    </div>
+                    {
+                        typeof version === 'string' && version.length > 0 ?
+                            <div className={styles['version-container']} title={t('ADDON_VERSION_SHORT', {version})}>{t('ADDON_VERSION_SHORT', {version})}</div>
+                            :
+                            null
+                    }
+                    {
+                        Array.isArray(types) && types.length > 0 ?
+                            <div className={styles['types-container']}>
+                                {
+                                    types.length === 1 ?
+                                        types.join('')
+                                        :
+                                        types.slice(0, -1).join(', ') + ' & ' + types[types.length - 1]
+                                }
+                            </div>
+                            :
+                            null
+                    }
+                    {
+                        typeof description === 'string' && description.length > 0 ?
+                            <div className={styles['description-container']} title={description}>{description}</div>
+                            :
+                            null
+                    }
+                </div>
+            </Details>
             <div className={styles['buttons-container']}>
                 <div className={styles['action-buttons-container']}>
                     {
@@ -137,7 +141,7 @@ const Addon = ({ className, id, name, version, logo, description, types, behavio
                     <div className={styles['label']}>{ t('SHARE_ADDON') }</div>
                 </Button>
             </div>
-        </Button>
+        </Card>
     );
 };
 

@@ -1,0 +1,1548 @@
+{
+  "url": "http://127.0.0.1:8098/#/addons",
+  "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "visualWidth": 1920,
+    "visualHeight": 1080,
+    "scale": 1,
+    "devicePixelRatio": 1,
+    "root": {
+      "left": 0,
+      "top": 0,
+      "right": 1920,
+      "bottom": 1080,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "insets": {
+    "top": 27,
+    "right": 48,
+    "bottom": 27,
+    "left": 48
+  },
+  "safeFrame": {
+    "left": 48,
+    "top": 27,
+    "right": 1872,
+    "bottom": 1053
+  },
+  "documentOverflowX": false,
+  "samples": [
+    {
+      "tag": "DIV",
+      "classes": "button-container-xT9_L button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1737,
+        "top": 42,
+        "right": 1789.5,
+        "bottom": 94.5,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "button-container-xT9_L button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "label-container-XOyzm nav-menu-popup-label-XmUBo button-container-xT9_L menu-button-container-DtW4v button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1804.5,
+        "top": 42,
+        "right": 1857,
+        "bottom": 94.5,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "label-container-XOyzm nav-menu-popup-label-XmUBo button-container-xT9_L menu-button-container-DtW4v button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Board",
+      "rect": {
+        "left": 57,
+        "top": 97.5,
+        "right": 129,
+        "bottom": 169.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Discover",
+      "rect": {
+        "left": 57,
+        "top": 199.5,
+        "right": 129,
+        "bottom": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Library",
+      "rect": {
+        "left": 57,
+        "top": 301.5,
+        "right": 129,
+        "bottom": 373.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Calendar",
+      "rect": {
+        "left": 57,
+        "top": 403.5,
+        "right": 129,
+        "bottom": 475.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0 selected",
+      "text": "Addons",
+      "rect": {
+        "left": 57,
+        "top": 505.5,
+        "right": 129,
+        "bottom": 577.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0 selected",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Settings",
+      "rect": {
+        "left": 57,
+        "top": 607.5,
+        "right": 129,
+        "bottom": 679.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "multiselect-button-XXdgA button-container-zVLH6",
+      "text": "Installed",
+      "rect": {
+        "left": 160.5,
+        "top": 132,
+        "right": 385.5,
+        "bottom": 177,
+        "width": 225,
+        "height": 45
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "multiselect-button-XXdgA button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "multiselect-button-XXdgA button-container-zVLH6",
+      "text": "All",
+      "rect": {
+        "left": 408,
+        "top": 132,
+        "right": 633,
+        "bottom": 177,
+        "width": 225,
+        "height": 45
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "multiselect-button-XXdgA button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "add-button-container-SkafT button-container-zVLH6",
+      "text": "Add addon",
+      "rect": {
+        "left": 1368.0625,
+        "top": 132,
+        "right": 1557,
+        "bottom": 177,
+        "width": 188.9375,
+        "height": 45
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "add-button-container-SkafT button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "INPUT",
+      "classes": "search-input-bAgAh text-input-hnLiz",
+      "text": "Search addons",
+      "rect": {
+        "left": 1604,
+        "top": 140.203125,
+        "right": 1787.5,
+        "bottom": 168.796875,
+        "width": 183.5,
+        "height": 28.59375
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "search-bar-k7MXd search-bar-container-p4tSt",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "text": "Cinemeta\nv.3.0.14\nMovie & Series\nThe official addon for movie and series catalogs\nUninstall\nShare addon",
+      "rect": {
+        "left": 160.5,
+        "top": 199.5,
+        "right": 1839.5,
+        "bottom": 383.5,
+        "width": 1679,
+        "height": 184
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "uninstall-button-container-oV4Yo button-container-zVLH6",
+      "text": "Uninstall",
+      "rect": {
+        "left": 1560,
+        "top": 224,
+        "right": 1815,
+        "bottom": 276.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "uninstall-button-container-oV4Yo button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "share-button-container-s3gwP button-container-zVLH6",
+      "text": "Share addon",
+      "rect": {
+        "left": 1560,
+        "top": 306.5,
+        "right": 1815,
+        "bottom": 359,
+        "width": 255,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "share-button-container-s3gwP button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "text": "YouTube\nv.1.30.7\nChannel\nWatch your favourite YouTube channels ad-free and get notified when they upload new videos.\nUninstall\nShare addon",
+      "rect": {
+        "left": 160.5,
+        "top": 406,
+        "right": 1839.5,
+        "bottom": 590,
+        "width": 1679,
+        "height": 184
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "uninstall-button-container-oV4Yo button-container-zVLH6",
+      "text": "Uninstall",
+      "rect": {
+        "left": 1560,
+        "top": 430.5,
+        "right": 1815,
+        "bottom": 483,
+        "width": 255,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "uninstall-button-container-oV4Yo button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "share-button-container-s3gwP button-container-zVLH6",
+      "text": "Share addon",
+      "rect": {
+        "left": 1560,
+        "top": 513,
+        "right": 1815,
+        "bottom": 565.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "share-button-container-s3gwP button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "text": "WatchHub\nv.1.15.0\nMovie & Series\nFind where to stream your favorite movies and shows amongst Netflix, iTunes, Hulu, Amazon, HBO GO and many others. Supports man",
+      "rect": {
+        "left": 160.5,
+        "top": 612.5,
+        "right": 1839.5,
+        "bottom": 796.5,
+        "width": 1679,
+        "height": 184
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "uninstall-button-container-oV4Yo button-container-zVLH6",
+      "text": "Uninstall",
+      "rect": {
+        "left": 1560,
+        "top": 637,
+        "right": 1815,
+        "bottom": 689.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "uninstall-button-container-oV4Yo button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "share-button-container-s3gwP button-container-zVLH6",
+      "text": "Share addon",
+      "rect": {
+        "left": 1560,
+        "top": 719.5,
+        "right": 1815,
+        "bottom": 772,
+        "width": 255,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "share-button-container-s3gwP button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "text": "Public Domain Movies\nv.1.0.0\nMovie\nTorrents for public domain movies. Includes a collection of more then 500 public domain movies.\nUninstall\nShare addon",
+      "rect": {
+        "left": 160.5,
+        "top": 819,
+        "right": 1839.5,
+        "bottom": 1003,
+        "width": 1679,
+        "height": 184
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "uninstall-button-container-oV4Yo button-container-zVLH6",
+      "text": "Uninstall",
+      "rect": {
+        "left": 1560,
+        "top": 843.5,
+        "right": 1815,
+        "bottom": 896,
+        "width": 255,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "uninstall-button-container-oV4Yo button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "share-button-container-s3gwP button-container-zVLH6",
+      "text": "Share addon",
+      "rect": {
+        "left": 1560,
+        "top": 926,
+        "right": 1815,
+        "bottom": 978.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "share-button-container-s3gwP button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "text": "OpenSubtitles v3\nv.1.0.0\nMovie & Series\nOpenSubtitles v3 Addon for Stremio\nUninstall\nShare addon",
+      "rect": {
+        "left": 160.5,
+        "top": 866.5,
+        "right": 1839.5,
+        "bottom": 1050.5,
+        "width": 1679,
+        "height": 184
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "uninstall-button-container-oV4Yo button-container-zVLH6",
+      "text": "Uninstall",
+      "rect": {
+        "left": 1560,
+        "top": 891,
+        "right": 1815,
+        "bottom": 943.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "uninstall-button-container-oV4Yo button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "share-button-container-s3gwP button-container-zVLH6",
+      "text": "Share addon",
+      "rect": {
+        "left": 1560,
+        "top": 973.5,
+        "right": 1815,
+        "bottom": 1026,
+        "width": 255,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "share-button-container-s3gwP button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "text": "Local Files (without catalog support)\nv.1.10.0\nMovie, Series & Other\nLocal add-on to find playable files: .torrent, .mp4, .mkv and .avi\nUninstall\nShare addon",
+      "rect": {
+        "left": 160.5,
+        "top": 847,
+        "right": 1839.5,
+        "bottom": 1031,
+        "width": 1679,
+        "height": 184
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "uninstall-button-container-oV4Yo button-container-zVLH6",
+      "text": "Uninstall",
+      "rect": {
+        "left": 1560,
+        "top": 871.5,
+        "right": 1815,
+        "bottom": 924,
+        "width": 255,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "uninstall-button-container-oV4Yo button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "share-button-container-s3gwP button-container-zVLH6",
+      "text": "Share addon",
+      "rect": {
+        "left": 1560,
+        "top": 954,
+        "right": 1815,
+        "bottom": 1006.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "share-button-container-s3gwP button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    }
+  ],
+  "typography": [
+    {
+      "classes": "label-SoEGc",
+      "ancestors": [
+        "multiselect-button-XXdgA button-container-zVLH6",
+        "multiselect-menu-qMdaj select-input-container-KqG8N",
+        "selectable-inputs-container-tUul1",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "Installed",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 183,
+        "top": 140.203125,
+        "right": 271.625,
+        "bottom": 168.796875,
+        "width": 88.625,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-SoEGc",
+      "ancestors": [
+        "multiselect-button-XXdgA button-container-zVLH6",
+        "multiselect-menu-qMdaj select-input-container-KqG8N",
+        "selectable-inputs-container-tUul1",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "All",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 430.5,
+        "top": 140.203125,
+        "right": 454.921875,
+        "bottom": 168.796875,
+        "width": 24.421875,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "add-button-label-NN6bu",
+      "ancestors": [
+        "add-button-container-SkafT button-container-zVLH6",
+        "selectable-inputs-container-tUul1",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ",
+        "addons-container-ogGYu main-nav-bars-container-wNjS5"
+      ],
+      "text": "Add addon",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1416.0625,
+        "top": 140.203125,
+        "right": 1534.5,
+        "bottom": 168.796875,
+        "width": 118.4375,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "name-container-qIAg8",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "Cinemeta",
+      "fontSize": 24,
+      "lineHeight": "31.2px",
+      "rect": {
+        "left": 312.5,
+        "top": -161,
+        "right": 439.609375,
+        "bottom": -129.8125,
+        "width": 127.109375,
+        "height": 31.1875
+      }
+    },
+    {
+      "classes": "version-container-zdPyN",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "v.3.0.14",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 439.609375,
+        "top": -152,
+        "right": 1552.5,
+        "bottom": -132.5,
+        "width": 1112.890625,
+        "height": 19.5
+      }
+    },
+    {
+      "classes": "types-container-DaOrg",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "movie & series",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 312.5,
+        "top": -122.3125,
+        "right": 1552.5,
+        "bottom": -102.8125,
+        "width": 1240,
+        "height": 19.5
+      }
+    },
+    {
+      "classes": "description-container-v7Jhe",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "The official addon for movie and series catalogs",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 312.5,
+        "top": -95.3125,
+        "right": 1552.5,
+        "bottom": -66.71875,
+        "width": 1240,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-OnWh2",
+      "ancestors": [
+        "uninstall-button-container-oV4Yo button-container-zVLH6",
+        "action-buttons-container-xMVmz",
+        "buttons-container-g0xXr",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z"
+      ],
+      "text": "Uninstall",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1641.6875,
+        "top": -149.046875,
+        "right": 1733.3125,
+        "bottom": -120.453125,
+        "width": 91.625,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-OnWh2",
+      "ancestors": [
+        "share-button-container-s3gwP button-container-zVLH6",
+        "buttons-container-g0xXr",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl"
+      ],
+      "text": "Share addon",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1646.0625,
+        "top": -66.546875,
+        "right": 1781.4375,
+        "bottom": -37.953125,
+        "width": 135.375,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "name-container-qIAg8",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "YouTube",
+      "fontSize": 24,
+      "lineHeight": "31.2px",
+      "rect": {
+        "left": 312.5,
+        "top": 45.5,
+        "right": 425.375,
+        "bottom": 76.6875,
+        "width": 112.875,
+        "height": 31.1875
+      }
+    },
+    {
+      "classes": "version-container-zdPyN",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "v.1.30.7",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 425.375,
+        "top": 54.5,
+        "right": 1552.5,
+        "bottom": 74,
+        "width": 1127.125,
+        "height": 19.5
+      }
+    },
+    {
+      "classes": "types-container-DaOrg",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "channel",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 312.5,
+        "top": 84.1875,
+        "right": 1552.5,
+        "bottom": 103.6875,
+        "width": 1240,
+        "height": 19.5
+      }
+    },
+    {
+      "classes": "description-container-v7Jhe",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "Watch your favourite YouTube channels ad-free and get notified when they upload new videos.",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 312.5,
+        "top": 111.1875,
+        "right": 1552.5,
+        "bottom": 139.78125,
+        "width": 1240,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-OnWh2",
+      "ancestors": [
+        "uninstall-button-container-oV4Yo button-container-zVLH6",
+        "action-buttons-container-xMVmz",
+        "buttons-container-g0xXr",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z"
+      ],
+      "text": "Uninstall",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1641.6875,
+        "top": 57.453125,
+        "right": 1733.3125,
+        "bottom": 86.046875,
+        "width": 91.625,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-OnWh2",
+      "ancestors": [
+        "share-button-container-s3gwP button-container-zVLH6",
+        "buttons-container-g0xXr",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl"
+      ],
+      "text": "Share addon",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1646.0625,
+        "top": 139.953125,
+        "right": 1781.4375,
+        "bottom": 168.546875,
+        "width": 135.375,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "name-container-qIAg8",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "WatchHub",
+      "fontSize": 24,
+      "lineHeight": "31.2px",
+      "rect": {
+        "left": 312.5,
+        "top": 252,
+        "right": 448.0625,
+        "bottom": 283.1875,
+        "width": 135.5625,
+        "height": 31.1875
+      }
+    },
+    {
+      "classes": "version-container-zdPyN",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "v.1.15.0",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 448.0625,
+        "top": 261,
+        "right": 1552.5,
+        "bottom": 280.5,
+        "width": 1104.4375,
+        "height": 19.5
+      }
+    },
+    {
+      "classes": "types-container-DaOrg",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "movie & series",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 312.5,
+        "top": 290.6875,
+        "right": 1552.5,
+        "bottom": 310.1875,
+        "width": 1240,
+        "height": 19.5
+      }
+    },
+    {
+      "classes": "description-container-v7Jhe",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "Find where to stream your favorite movies and shows amongst Netflix, iTunes, Hulu, Amazon, HBO GO and many others. Suppo",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 312.5,
+        "top": 317.6875,
+        "right": 1552.5,
+        "bottom": 374.875,
+        "width": 1240,
+        "height": 57.1875
+      }
+    },
+    {
+      "classes": "label-OnWh2",
+      "ancestors": [
+        "uninstall-button-container-oV4Yo button-container-zVLH6",
+        "action-buttons-container-xMVmz",
+        "buttons-container-g0xXr",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z"
+      ],
+      "text": "Uninstall",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1641.6875,
+        "top": 263.953125,
+        "right": 1733.3125,
+        "bottom": 292.546875,
+        "width": 91.625,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-OnWh2",
+      "ancestors": [
+        "share-button-container-s3gwP button-container-zVLH6",
+        "buttons-container-g0xXr",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl"
+      ],
+      "text": "Share addon",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1646.0625,
+        "top": 346.453125,
+        "right": 1781.4375,
+        "bottom": 375.046875,
+        "width": 135.375,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "name-container-qIAg8",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "Public Domain Movies",
+      "fontSize": 24,
+      "lineHeight": "31.2px",
+      "rect": {
+        "left": 312.5,
+        "top": 458.5,
+        "right": 574.96875,
+        "bottom": 489.6875,
+        "width": 262.46875,
+        "height": 31.1875
+      }
+    },
+    {
+      "classes": "version-container-zdPyN",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "v.1.0.0",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 574.96875,
+        "top": 467.5,
+        "right": 1552.5,
+        "bottom": 487,
+        "width": 977.53125,
+        "height": 19.5
+      }
+    },
+    {
+      "classes": "types-container-DaOrg",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "movie",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 312.5,
+        "top": 497.1875,
+        "right": 1552.5,
+        "bottom": 516.6875,
+        "width": 1240,
+        "height": 19.5
+      }
+    },
+    {
+      "classes": "description-container-v7Jhe",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "Torrents for public domain movies. Includes a collection of more then 500 public domain movies.",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 312.5,
+        "top": 524.1875,
+        "right": 1552.5,
+        "bottom": 552.78125,
+        "width": 1240,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-OnWh2",
+      "ancestors": [
+        "uninstall-button-container-oV4Yo button-container-zVLH6",
+        "action-buttons-container-xMVmz",
+        "buttons-container-g0xXr",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z"
+      ],
+      "text": "Uninstall",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1641.6875,
+        "top": 470.453125,
+        "right": 1733.3125,
+        "bottom": 499.046875,
+        "width": 91.625,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-OnWh2",
+      "ancestors": [
+        "share-button-container-s3gwP button-container-zVLH6",
+        "buttons-container-g0xXr",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl"
+      ],
+      "text": "Share addon",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1646.0625,
+        "top": 552.953125,
+        "right": 1781.4375,
+        "bottom": 581.546875,
+        "width": 135.375,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "name-container-qIAg8",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "OpenSubtitles v3",
+      "fontSize": 24,
+      "lineHeight": "31.2px",
+      "rect": {
+        "left": 312.5,
+        "top": 665,
+        "right": 525.8125,
+        "bottom": 696.1875,
+        "width": 213.3125,
+        "height": 31.1875
+      }
+    },
+    {
+      "classes": "version-container-zdPyN",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "v.1.0.0",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 525.8125,
+        "top": 674,
+        "right": 1552.5,
+        "bottom": 693.5,
+        "width": 1026.6875,
+        "height": 19.5
+      }
+    },
+    {
+      "classes": "types-container-DaOrg",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "movie & series",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 312.5,
+        "top": 703.6875,
+        "right": 1552.5,
+        "bottom": 723.1875,
+        "width": 1240,
+        "height": 19.5
+      }
+    },
+    {
+      "classes": "description-container-v7Jhe",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "OpenSubtitles v3 Addon for Stremio",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 312.5,
+        "top": 730.6875,
+        "right": 1552.5,
+        "bottom": 759.28125,
+        "width": 1240,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-OnWh2",
+      "ancestors": [
+        "uninstall-button-container-oV4Yo button-container-zVLH6",
+        "action-buttons-container-xMVmz",
+        "buttons-container-g0xXr",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z"
+      ],
+      "text": "Uninstall",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1641.6875,
+        "top": 676.953125,
+        "right": 1733.3125,
+        "bottom": 705.546875,
+        "width": 91.625,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-OnWh2",
+      "ancestors": [
+        "share-button-container-s3gwP button-container-zVLH6",
+        "buttons-container-g0xXr",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl"
+      ],
+      "text": "Share addon",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1646.0625,
+        "top": 759.453125,
+        "right": 1781.4375,
+        "bottom": 788.046875,
+        "width": 135.375,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "name-container-qIAg8",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "Local Files (without catalog support)",
+      "fontSize": 24,
+      "lineHeight": "31.2px",
+      "rect": {
+        "left": 312.5,
+        "top": 871.5,
+        "right": 736.90625,
+        "bottom": 902.6875,
+        "width": 424.40625,
+        "height": 31.1875
+      }
+    },
+    {
+      "classes": "version-container-zdPyN",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "v.1.10.0",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 736.90625,
+        "top": 880.5,
+        "right": 1552.5,
+        "bottom": 900,
+        "width": 815.59375,
+        "height": 19.5
+      }
+    },
+    {
+      "classes": "types-container-DaOrg",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "movie, series & other",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 312.5,
+        "top": 910.1875,
+        "right": 1552.5,
+        "bottom": 929.6875,
+        "width": 1240,
+        "height": 19.5
+      }
+    },
+    {
+      "classes": "description-container-v7Jhe",
+      "ancestors": [
+        "info-container-AdMB6",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "Local add-on to find playable files: .torrent, .mp4, .mkv and .avi",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 312.5,
+        "top": 937.1875,
+        "right": 1552.5,
+        "bottom": 965.78125,
+        "width": 1240,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-OnWh2",
+      "ancestors": [
+        "uninstall-button-container-oV4Yo button-container-zVLH6",
+        "action-buttons-container-xMVmz",
+        "buttons-container-g0xXr",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z"
+      ],
+      "text": "Uninstall",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1641.6875,
+        "top": 883.453125,
+        "right": 1733.3125,
+        "bottom": 912.046875,
+        "width": 91.625,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-OnWh2",
+      "ancestors": [
+        "share-button-container-s3gwP button-container-zVLH6",
+        "buttons-container-g0xXr",
+        "addon-whmdO animation-fade-in addon-container-lC5KN button-container-zVLH6",
+        "addons-list-container-Ovr2Z",
+        "addons-content-zhFBl"
+      ],
+      "text": "Share addon",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1646.0625,
+        "top": 965.953125,
+        "right": 1781.4375,
+        "bottom": 994.546875,
+        "width": 135.375,
+        "height": 28.59375
+      }
+    }
+  ],
+  "failures": [],
+  "requestedRoute": "/addons"
+}

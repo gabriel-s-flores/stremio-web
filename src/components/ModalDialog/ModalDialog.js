@@ -4,6 +4,7 @@ const React = require('react');
 const { useTranslation } = require('react-i18next');
 const PropTypes = require('prop-types');
 const classnames = require('classnames');
+const { useBackHandler, BACK_HANDLER_PRIORITIES } = require('stremio/common');
 const { useModalsContainer } = require('stremio/router/ModalsContainerContext');
 const Modal = require('stremio/router/Modal');
 const { default: useRouteFocused } = require('stremio/common/useRouteFocused');
@@ -39,6 +40,16 @@ const ModalDialog = ({ className, title, buttons, children, dataset, onCloseRequ
     const onModalDialogContainerMouseDown = React.useCallback((event) => {
         event.nativeEvent.closeModalDialogPrevented = true;
     }, []);
+    const backOnRequest = React.useCallback((event) => {
+        const lastModal = modalsContainer && modalsContainer.childNodes[modalsContainer.childElementCount - 2];
+        if (lastModal !== modalContainerRef.current) return false;
+
+        if (typeof onCloseRequest === 'function') {
+            onCloseRequest({ type: 'close', dataset, nativeEvent: event });
+        }
+        return true;
+    }, [dataset, modalsContainer, onCloseRequest]);
+    useBackHandler(backOnRequest, BACK_HANDLER_PRIORITIES.MODAL, routeFocused);
     React.useEffect(() => {
         const onKeyDown = (event) => {
             // its `-2` because focus lock render locking divs around its content

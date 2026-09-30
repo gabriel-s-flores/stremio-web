@@ -1,0 +1,3374 @@
+{
+  "date": "2026-09-06T22:09:23.698Z",
+  "target": {
+    "cdp": "http://127.0.0.1:9998",
+    "route": "#/debug/player",
+    "runs": 1,
+    "reload": true,
+    "player": true,
+    "strictPlayer": true,
+    "expectedPlayerImplementation": null,
+    "screenshots": "C:\\Users\\gabri\\Documents\\Projects\\Stremio\\stremio-web\\tests\\webos\\t22-player-screenshots"
+  },
+  "results": [
+    {
+      "run": 1,
+      "route": "#/debug/player",
+      "artifacts": {
+        "commitHash": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+        "mainBytes": 9350837,
+        "cssBytes": 291716
+      },
+      "ui": {
+        "path": "/debug/player",
+        "appChildren": 6,
+        "hasIntroControls": false,
+        "hasBoard": false,
+        "focusableCount": 4,
+        "hasRawTranslationKey": false,
+        "queueMicrotaskAvailable": true,
+        "objectFreezeAvailable": true
+      },
+      "queueMicrotask": {
+        "available": true,
+        "order": [
+          "microtask",
+          "timer"
+        ],
+        "correctOrder": true
+      },
+      "deepFreeze": {
+        "objectFreezeAvailable": true,
+        "shallowFreezeLeavesNestedMutable": true,
+        "playerDeepFreezeExercised": false
+      },
+      "player": {
+        "implementation": "PlayerDebugFixture",
+        "history": [
+          "PlayerDebugFixture"
+        ],
+        "fixture": true,
+        "states": [
+          {
+            "name": "baseline",
+            "status": "observed",
+            "layout": [
+              {
+                "name": "control-bar-buttons",
+                "selector": "[class*=\"control-bar-buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 7.5,
+                    "marginBottom": 0,
+                    "marginLeft": 7.5
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "control-bar-overflow",
+                "selector": "[class*=\"control-bar-buttons-menu-container\"].open",
+                "mode": "row",
+                "present": false
+              },
+              {
+                "name": "speed-options",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"options-container\"]",
+                "mode": "wrap",
+                "present": false
+              },
+              {
+                "name": "speed-top",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"top-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-list",
+                "selector": "[class*=\"audio-menu\"] [class*=\"list\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-info",
+                "selector": "[class*=\"audio-menu\"] [class*=\"info\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-container",
+                "selector": "[class*=\"statistics-menu-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-detail",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"detail\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-copy",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"copyable-value\"]",
+                "mode": "row",
+                "present": false
+              },
+              {
+                "name": "next-details",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"details-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 15,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-buttons",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-button",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"button-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              }
+            ],
+            "player": {
+              "implementation": null,
+              "history": []
+            },
+            "screenshot": "tests\\webos\\t22-player-screenshots\\baseline.png"
+          },
+          {
+            "name": "buttons-menu",
+            "status": "opened",
+            "buttonVisible": false,
+            "buttonDisplay": "none",
+            "targetSelector": "[class*=\"control-bar-buttons-menu-container\"]",
+            "targetVisible": true,
+            "layout": [
+              {
+                "name": "control-bar-buttons",
+                "selector": "[class*=\"control-bar-buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 7.5,
+                    "marginBottom": 0,
+                    "marginLeft": 7.5
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "control-bar-overflow",
+                "selector": "[class*=\"control-bar-buttons-menu-container\"].open",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 8,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "speed-options",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"options-container\"]",
+                "mode": "wrap",
+                "present": false
+              },
+              {
+                "name": "speed-top",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"top-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-list",
+                "selector": "[class*=\"audio-menu\"] [class*=\"list\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-info",
+                "selector": "[class*=\"audio-menu\"] [class*=\"info\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-container",
+                "selector": "[class*=\"statistics-menu-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-detail",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"detail\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-copy",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"copyable-value\"]",
+                "mode": "row",
+                "present": false
+              },
+              {
+                "name": "next-details",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"details-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 15,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-buttons",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-button",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"button-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              }
+            ],
+            "player": {
+              "implementation": null,
+              "history": []
+            },
+            "screenshot": "tests\\webos\\t22-player-screenshots\\buttons-menu.png"
+          },
+          {
+            "name": "speed",
+            "status": "opened",
+            "buttonVisible": true,
+            "buttonDisplay": "flex",
+            "targetSelector": "[class*=\"speed-menu-container\"]",
+            "targetVisible": true,
+            "layout": [
+              {
+                "name": "control-bar-buttons",
+                "selector": "[class*=\"control-bar-buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 7.5,
+                    "marginBottom": 0,
+                    "marginLeft": 7.5
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "control-bar-overflow",
+                "selector": "[class*=\"control-bar-buttons-menu-container\"].open",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 8,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "speed-options",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"options-container\"]",
+                "mode": "wrap",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 3.75,
+                    "marginBottom": 3.75,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 3.75,
+                    "marginBottom": 3.75,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 3.75,
+                    "marginBottom": 3.75,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 3.75,
+                    "marginBottom": 3.75,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 3.75,
+                    "marginBottom": 3.75,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 3.75,
+                    "marginBottom": 3.75,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 3.75,
+                    "marginBottom": 3.75,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "speed-top",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"top-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "7.5px 7.5px",
+                "rowGap": "7.5px",
+                "columnGap": "7.5px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 7.5,
+                    "marginRight": 15,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "audio-list",
+                "selector": "[class*=\"audio-menu\"] [class*=\"list\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-info",
+                "selector": "[class*=\"audio-menu\"] [class*=\"info\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-container",
+                "selector": "[class*=\"statistics-menu-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-detail",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"detail\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-copy",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"copyable-value\"]",
+                "mode": "row",
+                "present": false
+              },
+              {
+                "name": "next-details",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"details-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 15,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-buttons",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-button",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"button-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              }
+            ],
+            "player": {
+              "implementation": null,
+              "history": []
+            },
+            "screenshot": "tests\\webos\\t22-player-screenshots\\speed.png"
+          },
+          {
+            "name": "options",
+            "status": "opened",
+            "buttonVisible": true,
+            "buttonDisplay": "flex",
+            "targetSelector": "[class*=\"options-menu-container\"]",
+            "targetVisible": true,
+            "layout": [
+              {
+                "name": "control-bar-buttons",
+                "selector": "[class*=\"control-bar-buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 7.5,
+                    "marginBottom": 0,
+                    "marginLeft": 7.5
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "control-bar-overflow",
+                "selector": "[class*=\"control-bar-buttons-menu-container\"].open",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 8,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "speed-options",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"options-container\"]",
+                "mode": "wrap",
+                "present": false
+              },
+              {
+                "name": "speed-top",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"top-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-list",
+                "selector": "[class*=\"audio-menu\"] [class*=\"list\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-info",
+                "selector": "[class*=\"audio-menu\"] [class*=\"info\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-container",
+                "selector": "[class*=\"statistics-menu-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-detail",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"detail\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-copy",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"copyable-value\"]",
+                "mode": "row",
+                "present": false
+              },
+              {
+                "name": "next-details",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"details-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 15,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-buttons",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-button",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"button-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              }
+            ],
+            "player": {
+              "implementation": null,
+              "history": []
+            },
+            "screenshot": "tests\\webos\\t22-player-screenshots\\options.png"
+          },
+          {
+            "name": "subtitles",
+            "status": "opened",
+            "buttonVisible": true,
+            "buttonDisplay": "flex",
+            "targetSelector": "[class*=\"subtitles-menu-container\"]",
+            "targetVisible": true,
+            "layout": [
+              {
+                "name": "control-bar-buttons",
+                "selector": "[class*=\"control-bar-buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 7.5,
+                    "marginBottom": 0,
+                    "marginLeft": 7.5
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "control-bar-overflow",
+                "selector": "[class*=\"control-bar-buttons-menu-container\"].open",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 8,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "speed-options",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"options-container\"]",
+                "mode": "wrap",
+                "present": false
+              },
+              {
+                "name": "speed-top",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"top-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-list",
+                "selector": "[class*=\"audio-menu\"] [class*=\"list\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-info",
+                "selector": "[class*=\"audio-menu\"] [class*=\"info\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-container",
+                "selector": "[class*=\"statistics-menu-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-detail",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"detail\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-copy",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"copyable-value\"]",
+                "mode": "row",
+                "present": false
+              },
+              {
+                "name": "next-details",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"details-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 15,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-buttons",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-button",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"button-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              }
+            ],
+            "player": {
+              "implementation": null,
+              "history": []
+            },
+            "screenshot": "tests\\webos\\t22-player-screenshots\\subtitles.png"
+          },
+          {
+            "name": "audio",
+            "status": "opened",
+            "buttonVisible": true,
+            "buttonDisplay": "flex",
+            "targetSelector": "[class*=\"audio-menu\"]",
+            "targetVisible": true,
+            "layout": [
+              {
+                "name": "control-bar-buttons",
+                "selector": "[class*=\"control-bar-buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 7.5,
+                    "marginBottom": 0,
+                    "marginLeft": 7.5
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "control-bar-overflow",
+                "selector": "[class*=\"control-bar-buttons-menu-container\"].open",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 8,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "speed-options",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"options-container\"]",
+                "mode": "wrap",
+                "present": false
+              },
+              {
+                "name": "speed-top",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"top-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-list",
+                "selector": "[class*=\"audio-menu\"] [class*=\"list\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "7.5px 7.5px",
+                "rowGap": "7.5px",
+                "columnGap": "7.5px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 7.5,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "audio-info",
+                "selector": "[class*=\"audio-menu\"] [class*=\"info\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 3.75,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "statistics-container",
+                "selector": "[class*=\"statistics-menu-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-detail",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"detail\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-copy",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"copyable-value\"]",
+                "mode": "row",
+                "present": false
+              },
+              {
+                "name": "next-details",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"details-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 15,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-buttons",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-button",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"button-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              }
+            ],
+            "player": {
+              "implementation": null,
+              "history": []
+            },
+            "screenshot": "tests\\webos\\t22-player-screenshots\\audio.png"
+          },
+          {
+            "name": "statistics",
+            "status": "opened",
+            "buttonVisible": true,
+            "buttonDisplay": "flex",
+            "targetSelector": "[class*=\"statistics-menu-container\"]",
+            "targetVisible": true,
+            "layout": [
+              {
+                "name": "control-bar-buttons",
+                "selector": "[class*=\"control-bar-buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 7.5,
+                    "marginBottom": 0,
+                    "marginLeft": 7.5
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "control-bar-overflow",
+                "selector": "[class*=\"control-bar-buttons-menu-container\"].open",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 8,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "speed-options",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"options-container\"]",
+                "mode": "wrap",
+                "present": false
+              },
+              {
+                "name": "speed-top",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"top-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-list",
+                "selector": "[class*=\"audio-menu\"] [class*=\"list\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-info",
+                "selector": "[class*=\"audio-menu\"] [class*=\"info\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-container",
+                "selector": "[class*=\"statistics-menu-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "22.5px 22.5px",
+                "rowGap": "22.5px",
+                "columnGap": "22.5px",
+                "childCount": 3,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 22.5,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 22.5,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "statistics-detail",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"detail\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "7.5px 7.5px",
+                "rowGap": "7.5px",
+                "columnGap": "7.5px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 7.5,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "statistics-copy",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"copyable-value\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "11.25px 11.25px",
+                "rowGap": "11.25px",
+                "columnGap": "11.25px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 11.25
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-details",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"details-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 15,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-buttons",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-button",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"button-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              }
+            ],
+            "player": {
+              "implementation": null,
+              "history": []
+            },
+            "screenshot": "tests\\webos\\t22-player-screenshots\\statistics.png"
+          },
+          {
+            "name": "cast",
+            "status": "opened",
+            "buttonVisible": true,
+            "buttonDisplay": "flex",
+            "targetSelector": "[class*=\"cast-devices-menu-container\"]",
+            "targetVisible": true,
+            "layout": [
+              {
+                "name": "control-bar-buttons",
+                "selector": "[class*=\"control-bar-buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 7.5,
+                    "marginBottom": 0,
+                    "marginLeft": 7.5
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "control-bar-overflow",
+                "selector": "[class*=\"control-bar-buttons-menu-container\"].open",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 8,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "speed-options",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"options-container\"]",
+                "mode": "wrap",
+                "present": false
+              },
+              {
+                "name": "speed-top",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"top-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-list",
+                "selector": "[class*=\"audio-menu\"] [class*=\"list\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-info",
+                "selector": "[class*=\"audio-menu\"] [class*=\"info\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-container",
+                "selector": "[class*=\"statistics-menu-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-detail",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"detail\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-copy",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"copyable-value\"]",
+                "mode": "row",
+                "present": false
+              },
+              {
+                "name": "next-details",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"details-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 15,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-buttons",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-button",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"button-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              }
+            ],
+            "player": {
+              "implementation": null,
+              "history": []
+            },
+            "screenshot": "tests\\webos\\t22-player-screenshots\\cast.png"
+          },
+          {
+            "name": "next-video",
+            "status": "visible",
+            "buttonVisible": true,
+            "buttonDisplay": "flex",
+            "targetSelector": "[class*=\"next-video-popup-container\"]",
+            "targetVisible": true,
+            "layout": [
+              {
+                "name": "control-bar-buttons",
+                "selector": "[class*=\"control-bar-buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 7.5,
+                    "marginBottom": 0,
+                    "marginLeft": 7.5
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "control-bar-overflow",
+                "selector": "[class*=\"control-bar-buttons-menu-container\"].open",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 8,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "speed-options",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"options-container\"]",
+                "mode": "wrap",
+                "present": false
+              },
+              {
+                "name": "speed-top",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"top-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-list",
+                "selector": "[class*=\"audio-menu\"] [class*=\"list\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-info",
+                "selector": "[class*=\"audio-menu\"] [class*=\"info\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-container",
+                "selector": "[class*=\"statistics-menu-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-detail",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"detail\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-copy",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"copyable-value\"]",
+                "mode": "row",
+                "present": false
+              },
+              {
+                "name": "next-details",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"details-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 15,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-buttons",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-button",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"button-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              }
+            ],
+            "player": {
+              "implementation": null,
+              "history": []
+            },
+            "screenshot": "tests\\webos\\t22-player-screenshots\\next-video.png"
+          },
+          {
+            "name": "videos",
+            "status": "opened",
+            "buttonVisible": true,
+            "buttonDisplay": "flex",
+            "targetSelector": "[class*=\"side-drawer-layer\"]",
+            "targetVisible": true,
+            "layout": [
+              {
+                "name": "control-bar-buttons",
+                "selector": "[class*=\"control-bar-buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 7.5,
+                    "marginBottom": 0,
+                    "marginLeft": 7.5
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "control-bar-overflow",
+                "selector": "[class*=\"control-bar-buttons-menu-container\"].open",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 8,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "speed-options",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"options-container\"]",
+                "mode": "wrap",
+                "present": false
+              },
+              {
+                "name": "speed-top",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"top-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-list",
+                "selector": "[class*=\"audio-menu\"] [class*=\"list\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-info",
+                "selector": "[class*=\"audio-menu\"] [class*=\"info\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-container",
+                "selector": "[class*=\"statistics-menu-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-detail",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"detail\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-copy",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"copyable-value\"]",
+                "mode": "row",
+                "present": false
+              },
+              {
+                "name": "next-details",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"details-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 15,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-buttons",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-button",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"button-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              }
+            ],
+            "player": {
+              "implementation": null,
+              "history": []
+            },
+            "screenshot": "tests\\webos\\t22-player-screenshots\\videos.png"
+          },
+          {
+            "name": "side-drawer",
+            "status": "opened",
+            "buttonVisible": true,
+            "buttonDisplay": "flex",
+            "targetSelector": "[class*=\"side-drawer-layer\"]",
+            "targetVisible": true,
+            "layout": [
+              {
+                "name": "control-bar-buttons",
+                "selector": "[class*=\"control-bar-buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 7.5,
+                    "marginBottom": 0,
+                    "marginLeft": 7.5
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "control-bar-overflow",
+                "selector": "[class*=\"control-bar-buttons-menu-container\"].open",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 8,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "speed-options",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"options-container\"]",
+                "mode": "wrap",
+                "present": false
+              },
+              {
+                "name": "speed-top",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"top-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-list",
+                "selector": "[class*=\"audio-menu\"] [class*=\"list\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-info",
+                "selector": "[class*=\"audio-menu\"] [class*=\"info\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-container",
+                "selector": "[class*=\"statistics-menu-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-detail",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"detail\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-copy",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"copyable-value\"]",
+                "mode": "row",
+                "present": false
+              },
+              {
+                "name": "next-details",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"details-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 15,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-buttons",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-button",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"button-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              }
+            ],
+            "player": {
+              "implementation": null,
+              "history": []
+            },
+            "screenshot": "tests\\webos\\t22-player-screenshots\\side-drawer.png"
+          },
+          {
+            "name": "video-scale",
+            "status": "acted-no-target",
+            "buttonVisible": true,
+            "buttonDisplay": "flex",
+            "targetSelector": "[class*=\"indicator-container\"]",
+            "targetVisible": false,
+            "layout": [
+              {
+                "name": "control-bar-buttons",
+                "selector": "[class*=\"control-bar-buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 7,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 7.5,
+                    "marginBottom": 0,
+                    "marginLeft": 7.5
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "control-bar-overflow",
+                "selector": "[class*=\"control-bar-buttons-menu-container\"].open",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "3.75px 3.75px",
+                "rowGap": "3.75px",
+                "columnGap": "3.75px",
+                "childCount": 8,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 3.75
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "speed-options",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"options-container\"]",
+                "mode": "wrap",
+                "present": false
+              },
+              {
+                "name": "speed-top",
+                "selector": "[class*=\"speed-menu-container\"] [class*=\"top-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-list",
+                "selector": "[class*=\"audio-menu\"] [class*=\"list\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "audio-info",
+                "selector": "[class*=\"audio-menu\"] [class*=\"info\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-container",
+                "selector": "[class*=\"statistics-menu-container\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-detail",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"detail\"]",
+                "mode": "column",
+                "present": false
+              },
+              {
+                "name": "statistics-copy",
+                "selector": "[class*=\"statistics-menu-container\"] [class*=\"copyable-value\"]",
+                "mode": "row",
+                "present": false
+              },
+              {
+                "name": "next-details",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"details-container\"]",
+                "mode": "column",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 15,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-buttons",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"buttons-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              },
+              {
+                "name": "next-button",
+                "selector": "[class*=\"next-video-popup-container\"] [class*=\"button-container\"]",
+                "mode": "row",
+                "present": true,
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "15px 15px",
+                "rowGap": "15px",
+                "columnGap": "15px",
+                "childCount": 2,
+                "childStyles": [
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 0
+                  },
+                  {
+                    "marginTop": 0,
+                    "marginRight": 0,
+                    "marginBottom": 0,
+                    "marginLeft": 15
+                  }
+                ],
+                "fallbackApplied": true
+              }
+            ],
+            "player": {
+              "implementation": null,
+              "history": []
+            }
+          }
+        ],
+        "screenshots": "tests\\webos\\t22-player-screenshots"
+      },
+      "snapshot": {
+        "environment": {
+          "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+          "protocol": "http:",
+          "viewport": {
+            "width": 1920,
+            "height": 1080,
+            "devicePixelRatio": 0
+          },
+          "version": "5.0.0-beta.39",
+          "commit": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+          "performanceMemoryAvailable": true
+        },
+        "marks": {
+          "entry": 612.3999999981606,
+          "i18n-resources-start": 803.1999999984691,
+          "i18n-resources-ready": 974.1999999969266,
+          "i18n-init-start": 974.3999999991502,
+          "i18n-ready": 978.0999999966298,
+          "i18n-init-called": 978.0999999966298,
+          "app-render": 3546.999999998661,
+          "core-ready": 3547.099999999773
+        },
+        "paints": {
+          "first-paint": 110.49999999886495,
+          "first-contentful-paint": 110.49999999886495
+        },
+        "navigation": {
+          "navigationStart": 1788732547004,
+          "domInteractive": 1071,
+          "domContentLoaded": 1071,
+          "load": 1082
+        },
+        "memory": {
+          "current": {
+            "usedJSHeapSize": 31200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 3619.799999996758
+          },
+          "peak": {
+            "usedJSHeapSize": 31200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 612.7999999989697
+          }
+        },
+        "fps": {
+          "running": false,
+          "durationMs": 0,
+          "frames": 0,
+          "averageFps": null,
+          "p95FrameMs": null,
+          "scrollEvents": 0
+        },
+        "player": {
+          "implementation": null,
+          "history": []
+        }
+      },
+      "console": [
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>",
+          "sourceUrl": "http://10.0.2.2:8090"
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  {code=18,name=SecurityError,message=Only secure origins are allowed (see: <url>",
+          "sourceUrl": "http://10.0.2.2:8090"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> ",
+          "sourceUrl": "http://10.0.2.2:8090"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> ",
+          "sourceUrl": "http://10.0.2.2:8090"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> ",
+          "sourceUrl": "http://10.0.2.2:8090"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> ",
+          "sourceUrl": "http://10.0.2.2:8090"
+        },
+        {
+          "type": "error",
+          "message": "{stack=Error: window.cast api not available\n    at E (htt…f96df01bbbbe5eb28c82c31/scripts/main.js:1:883498),message=window.cast api not available,cause=castAPIAvailable is null.}",
+          "sourceUrl": "http://10.0.2.2:8090"
+        }
+      ],
+      "externalPlayerErrors": [],
+      "networkErrors": [],
+      "unexpectedErrors": []
+    }
+  ]
+}

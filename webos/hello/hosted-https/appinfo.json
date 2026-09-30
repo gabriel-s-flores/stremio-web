@@ -1,0 +1,12 @@
+{
+  "id": "com.stremio.webos.hello.t04.https",
+  "version": "1.0.0",
+  "vendor": "Stremio webOS port",
+  "type": "web",
+  "main": "index.html",
+  "title": "Stremio T0.4 Hosted HTTPS",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": true,
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png"
+}

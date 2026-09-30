@@ -1,0 +1,105 @@
+{
+  "date": "2026-09-13T13:42:54.707Z",
+  "accepted": false,
+  "failures": [
+    "diagnostic-only: acceptance disabled",
+    "Native 1920x1080 / scale 1 required",
+    "required-coverage-missing"
+  ],
+  "reports": [
+    {
+      "name": "addons",
+      "controls": 29,
+      "reached": 29,
+      "enter": 12,
+      "failures": []
+    },
+    {
+      "name": "addons-share",
+      "controls": 6,
+      "reached": 6,
+      "enter": 1,
+      "failures": []
+    },
+    {
+      "name": "addons-add-form",
+      "controls": 4,
+      "reached": 4,
+      "enter": 1,
+      "failures": []
+    }
+  ],
+  "runtime": {
+    "product": "",
+    "revision": "@cbd6ac4848a540ea6646d4f79700cf531e4eb9f9",
+    "jsVersion": "6.8.275.26",
+    "browserUA": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36",
+    "ua": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+    "width": 1920,
+    "height": 1080,
+    "scale": 0,
+    "pageScale": 1,
+    "debugBuild": true,
+    "overridesIssued": [],
+    "launchArgumentsChecked": true
+  },
+  "missing": [
+    "board",
+    "discover",
+    "library",
+    "continuewatching",
+    "calendar",
+    "detail",
+    "search",
+    "settings",
+    "intro",
+    "player",
+    "episodes",
+    "streams",
+    "library-authenticated",
+    "continuewatching-authenticated",
+    "settings-urls",
+    "settings-add-form",
+    "addons-filters",
+    "addons-details",
+    "addons-remove-confirm",
+    "player-controlbar",
+    "player-options",
+    "player-speed",
+    "player-subtitles",
+    "player-audio",
+    "player-statistics",
+    "player-cast",
+    "player-sidedrawer",
+    "player-nextvideo",
+    "horizontal-scroll",
+    "grid-scroll",
+    "lazy-load",
+    "shortcuts-modal",
+    "gamepad-modal",
+    "toast",
+    "update-banner"
+  ],
+  "optional": [
+    {
+      "tag": "shortcuts-modal",
+      "tested": false,
+      "unavailableVerified": false
+    },
+    {
+      "tag": "gamepad-modal",
+      "tested": false,
+      "unavailableVerified": false
+    },
+    {
+      "tag": "toast",
+      "tested": false,
+      "unavailableVerified": false
+    },
+    {
+      "tag": "update-banner",
+      "tested": false,
+      "unavailableVerified": false
+    }
+  ]
+}

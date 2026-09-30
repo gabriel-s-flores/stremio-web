@@ -1,0 +1,30 @@
+@import (reference) '~stremio/common/tv-focus.less';
+
+.help when (@webos = true) {
+    width: 100%;
+    color: var(--primary-foreground-color);
+
+    p {
+        padding: 0.75rem;
+        line-height: 1.5;
+        .tv-focus();
+    }
+
+    .mapping {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid var(--primary-foreground-color);
+        .tv-focus();
+
+        strong {
+            flex: 0 0 13rem;
+            padding-right: 1rem;
+        }
+
+        span {
+            flex: 1;
+            line-height: 1.5;
+        }
+    }
+}

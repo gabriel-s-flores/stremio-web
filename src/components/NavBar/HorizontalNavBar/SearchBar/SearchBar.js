@@ -9,6 +9,7 @@ const debounce = require('lodash.debounce');
 const { useTranslation } = require('react-i18next');
 const { default: Icon } = require('@stremio/stremio-icons/react');
 const { default: useRouteFocused } = require('stremio/common/useRouteFocused');
+const { useBackHandler, BACK_HANDLER_PRIORITIES } = require('stremio/common');
 const Button = require('stremio/components/Button').default;
 const TextInput = require('stremio/components/TextInput').default;
 const { default: usePlayUrl } = require('stremio/common/usePlayUrl');
@@ -16,6 +17,8 @@ const { withCoreSuspender } = require('stremio/common/CoreSuspender');
 const useSearchHistory = require('./useSearchHistory');
 const useLocalSearch = require('./useLocalSearch');
 const styles = require('./styles');
+const SearchTrigger = process.env.WEBOS ? Button : 'div';
+
 const useBinaryState = require('stremio/common/useBinaryState');
 
 const SearchBar = React.memo(({ className, query, active }) => {
@@ -44,6 +47,15 @@ const SearchBar = React.memo(({ className, query, active }) => {
         }
     }, [historyOpen]);
 
+    const closeSearchHistoryOnBack = React.useCallback(() => {
+        closeHistory();
+        return true;
+    }, [closeHistory]);
+    const searchHistoryMenuOpen = active && historyOpen && !!(
+        searchHistory?.items?.length || localSearch?.items?.length
+    );
+    useBackHandler(closeSearchHistoryOnBack, BACK_HANDLER_PRIORITIES.POPUP, routeFocused && searchHistoryMenuOpen);
+
     React.useEffect(() => {
         document.addEventListener('mousedown', searchHistoryOnClose);
         return () => {
@@ -58,9 +70,24 @@ const SearchBar = React.memo(({ className, query, active }) => {
     }, []);
 
     const queryInputOnPaste = React.useCallback((event) => {
-        const pasted = event.clipboardData.getData('text');
-        if (pasted) {
-            handlePlayUrl(pasted);
+        // Native paste only: guard clipboardData access for Chromium 68 /
+        // webOS hardening. No modal here; failures are intentionally silent
+        // and never log the pasted value.
+        let pasted = null;
+        try {
+            const clipboardData = event && event.clipboardData;
+            pasted = clipboardData && typeof clipboardData.getData === 'function'
+                ? clipboardData.getData('text')
+                : null;
+        } catch (_) {
+            pasted = null;
+        }
+        if (typeof pasted === 'string' && pasted) {
+            try {
+                Promise.resolve(handlePlayUrl(pasted)).catch(() => undefined);
+            } catch (_) {
+                // Never surface pasted content.
+            }
         }
     }, [handlePlayUrl]);
 
@@ -119,9 +146,9 @@ const SearchBar = React.memo(({ className, query, active }) => {
                         onClick={openHistory}
                     />
                     :
-                    <div className={styles['search-input']}>
+                    <SearchTrigger className={styles['search-input']}>
                         <div className={styles['placeholder-label']}>{ t('SEARCH_OR_PASTE_LINK') }</div>
-                    </div>
+                    </SearchTrigger>
             }
             {
                 currentQuery.length > 0 ?
@@ -129,7 +156,7 @@ const SearchBar = React.memo(({ className, query, active }) => {
                         <Icon className={styles['icon']} name={'close'} />
                     </Button>
                     :
-                    <Button className={styles['submit-button-container']}>
+                    <Button className={styles['submit-button-container']} onClick={process.env.WEBOS && active ? () => searchInputRef.current.focus() : undefined}>
                         <Icon className={styles['icon']} name={'search'} />
                     </Button>
             }
@@ -196,7 +223,7 @@ const SearchBarFallback = ({ className }) => {
             <div className={styles['search-input']}>
                 <div className={styles['placeholder-label']}>{ t('SEARCH_OR_PASTE_LINK') }</div>
             </div>
-            <Button className={styles['submit-button-container']} tabIndex={-1}>
+            <Button className={styles['submit-button-container']} disabled={!!process.env.WEBOS} tabIndex={-1}>
                 <Icon className={styles['icon']} name={'search'} />
             </Button>
         </label>

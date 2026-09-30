@@ -7,6 +7,9 @@ const { useTranslation } = require('react-i18next');
 const Button = require('stremio/components/Button').default;
 const Slider = require('stremio/components/Slider');
 
+const FocusLock = require('react-focus-lock').default;
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
+
 const styles = require('./styles');
 const RATES = [0.5, 1, 1.25, 1.5, 1.75, 2, 4];
 
@@ -25,7 +28,7 @@ const SpeedMenu = React.memo(React.forwardRef(({ className, playbackSpeed, onPla
     }, [onSpeedChanged]);
 
     return (
-        <div ref={ref} className={classnames(className, styles['speed-menu-container'])} onMouseDown={onMouseDown}>
+        <FocusScope ref={ref} className={classnames(className, styles['speed-menu-container'])} {...(process.env.WEBOS ? { lockProps: { onMouseDown } } : { onMouseDown })}>
             <div className={styles['title']}>
                 { t('PLAYBACK_SPEED') }
             </div>
@@ -57,7 +60,7 @@ const SpeedMenu = React.memo(React.forwardRef(({ className, playbackSpeed, onPla
                     }
                 </div>
             </div>
-        </div>
+        </FocusScope>
     );
 }));
 

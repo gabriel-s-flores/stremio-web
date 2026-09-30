@@ -1,0 +1,9 @@
+PASS build/4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8/scripts/203.js
+PASS build/4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8/scripts/989.js
+PASS build/4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8/scripts/main.js
+PASS build/4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8/scripts/worker.js
+PASS build/service-worker.js
+PASS build/webos/webOSTV.js
+PASS build/workbox-ee13fbdc.js
+ES2018 compatibility: 7/7 files passed
+$ node tools/check-es-compat.mjs

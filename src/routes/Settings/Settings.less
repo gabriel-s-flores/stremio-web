@@ -4,7 +4,7 @@
 
 .settings-container {
     height: calc(100% - var(--safe-area-inset-bottom));
-    width: 100%;
+    width: if(@webos = true, ~"calc(100% - var(--safe-area-inset-left) - var(--safe-area-inset-right))", 100%);
     background-color: transparent;
 
     .settings-content {

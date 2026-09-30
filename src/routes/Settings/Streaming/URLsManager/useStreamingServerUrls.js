@@ -13,16 +13,16 @@ const useStreamingServerUrls = () => {
     const streamingServerUrls = ctx.streamingServerUrls;
 
     const addServerUrl = useCallback((url) => {
+        const normalizedURL = url.trim();
         const isValidUrl = (url) => {
             try {
-                new URL(url);
-                return true;
+                return ['http:', 'https:'].includes(new URL(url).protocol);
             } catch (_) {
                 return false;
             }
         };
 
-        if (isValidUrl(url)) {
+        if (isValidUrl(normalizedURL)) {
             toast.show({
                 type: 'success',
                 title: 'New URL added',
@@ -34,7 +34,7 @@ const useStreamingServerUrls = () => {
                 action: 'Ctx',
                 args: {
                     action: 'AddServerUrl',
-                    args: url,
+                    args: normalizedURL,
                 }
             });
         } else {

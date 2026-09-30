@@ -1,8 +1,10 @@
-import React, { forwardRef, useCallback } from 'react';
+import React, { forwardRef, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Icon from '@stremio/stremio-icons/react';
 import { Button, MultiselectMenu } from 'stremio/components';
-import { useToast } from 'stremio/common';
+import TextInput from 'stremio/components/TextInput';
+import { useToast, usePlatform } from 'stremio/common';
+import writeTextToClipboard from 'stremio/common/writeTextToClipboard';
 import { Section, Option } from '../components';
 import URLsManager from './URLsManager';
 import useStreamingOptions from './useStreamingOptions';
@@ -16,6 +18,9 @@ type Props = {
 const Streaming = forwardRef<HTMLDivElement, Props>(({ profile, streamingServer }: Props, ref) => {
     const { t } = useTranslation();
     const toast = useToast();
+    const platform = usePlatform();
+    const remoteUrlInputRef = useRef<HTMLInputElement>(null);
+    const [copyFallbackUrl, setCopyFallbackUrl] = useState<string | null>(null);
 
     const {
         streamingServerRemoteUrlInput,
@@ -25,25 +30,61 @@ const Streaming = forwardRef<HTMLDivElement, Props>(({ profile, streamingServer 
         transcodingProfileSelect,
     } = useStreamingOptions(streamingServer);
 
-    const onCopyRemoteUrl = useCallback(() => {
-        if (streamingServer.remoteUrl) {
-            navigator.clipboard.writeText(streamingServer.remoteUrl);
+    const selectRemoteUrl = useCallback(() => {
+        if (remoteUrlInputRef.current !== null) {
+            remoteUrlInputRef.current.select();
+        }
+    }, []);
 
+    const onCopyRemoteUrl = useCallback(async () => {
+        const remoteUrl = streamingServer.remoteUrl;
+        if (!remoteUrl) {
+            return;
+        }
+
+        setCopyFallbackUrl(null);
+
+        try {
+            await writeTextToClipboard(remoteUrl);
             toast.show({
                 type: 'success',
                 title: t('SETTINGS_REMOTE_URL_COPIED'),
                 timeout: 2500,
             });
+        } catch (_) {
+            // Inline fallback preserved from T1.5. Never log the URL value.
+            setCopyFallbackUrl(remoteUrl);
+            toast.show({
+                type: 'error',
+                title: t('ERROR'),
+                message: t('ERR_CLIPBOARD_READ'),
+                timeout: 4000,
+            });
         }
-    }, [streamingServer.remoteUrl]);
+    }, [streamingServer.remoteUrl, t, toast]);
 
     return (
         <Section ref={ref} label={'SETTINGS_NAV_STREAMING'}>
+            {platform.name === 'webos' && <p className={styles['tv-guide']}>{t('TV_STREAMING_GUIDE')}</p>}
             <URLsManager />
             {
                 streamingServerRemoteUrlInput.value !== null &&
                     <Option className={styles['configure-input-container']} label={'SETTINGS_REMOTE_URL'}>
-                        <div className={styles['label']} title={streamingServerRemoteUrlInput.value}>{streamingServerRemoteUrlInput.value}</div>
+                        {
+                            copyFallbackUrl === streamingServerRemoteUrlInput.value ?
+                                <TextInput
+                                    ref={remoteUrlInputRef}
+                                    className={styles['fallback-input']}
+                                    title={streamingServerRemoteUrlInput.value}
+                                    aria-label={t('SETTINGS_REMOTE_URL')}
+                                    value={streamingServerRemoteUrlInput.value}
+                                    readOnly={true}
+                                    onFocus={selectRemoteUrl}
+                                    onClick={selectRemoteUrl}
+                                />
+                                :
+                                <div className={styles['label']} title={streamingServerRemoteUrlInput.value}>{streamingServerRemoteUrlInput.value}</div>
+                        }
                         <Button className={styles['configure-button-container']} title={t('SETTINGS_COPY_REMOTE_URL')} onClick={onCopyRemoteUrl}>
                             <Icon className={styles['icon']} name={'link'} />
                         </Button>

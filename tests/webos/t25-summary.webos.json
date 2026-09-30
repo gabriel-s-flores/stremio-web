@@ -1,0 +1,182 @@
+{
+  "date": "2026-09-07T14:24:12.352Z",
+  "note": "Aggregated latest per-route reports. Desktop fixtures/player use the test-only desktop config.",
+  "controls": 296,
+  "results": [
+    {
+      "name": "board",
+      "url": "http://10.0.2.2:8090/#/",
+      "count": 68,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-board-0.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "discover",
+      "url": "http://10.0.2.2:8090/#/discover",
+      "count": 66,
+      "failures": [],
+      "skipped": 6,
+      "screenshots": [
+        "t25-discover-0.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "library",
+      "url": "http://10.0.2.2:8090/#/library?sort=lastwatched",
+      "count": 9,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-library-0.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "calendar",
+      "url": "http://10.0.2.2:8090/#/calendar",
+      "count": 9,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-calendar-0.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "metadetails",
+      "url": "http://10.0.2.2:8090/#/detail/movie/tt11561116/tt11561116",
+      "count": 14,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-metadetails-0.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "search",
+      "url": "http://10.0.2.2:8090/#/search",
+      "count": 9,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-search-0.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "settings",
+      "url": "http://10.0.2.2:8090/#/settings",
+      "count": 39,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-settings-0.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "center"
+    },
+    {
+      "name": "addons",
+      "url": "http://10.0.2.2:8090/#/addons",
+      "count": 29,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-addons-0.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "center"
+    },
+    {
+      "name": "intro",
+      "url": "http://10.0.2.2:8090/#/intro",
+      "count": 16,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-intro-0.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "player",
+      "url": "http://10.0.2.2:8090/#/debug/player",
+      "count": 14,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-player-0.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "nearest"
+    },
+    {
+      "name": "fixture",
+      "url": "http://10.0.2.2:8090/#/debug/focus",
+      "count": 18,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-fixture-0.webos.png",
+        "t25-fixture-1.webos.png",
+        "t25-fixture-10.webos.png",
+        "t25-fixture-11.webos.png",
+        "t25-fixture-12.webos.png",
+        "t25-fixture-13.webos.png",
+        "t25-fixture-14.webos.png",
+        "t25-fixture-15.webos.png",
+        "t25-fixture-16.webos.png",
+        "t25-fixture-17.webos.png",
+        "t25-fixture-2.webos.png",
+        "t25-fixture-3.webos.png",
+        "t25-fixture-4.webos.png",
+        "t25-fixture-5.webos.png",
+        "t25-fixture-6.webos.png",
+        "t25-fixture-7.webos.png",
+        "t25-fixture-8.webos.png",
+        "t25-fixture-9.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "center"
+    },
+    {
+      "name": "fixture-menu",
+      "url": "http://10.0.2.2:8090/#/debug/focus",
+      "count": 2,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-fixture-menu-0.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "center"
+    },
+    {
+      "name": "fixture-modal",
+      "url": "http://10.0.2.2:8090/#/debug/focus",
+      "count": 3,
+      "failures": [],
+      "skipped": 0,
+      "screenshots": [
+        "t25-fixture-modal-0.webos.png",
+        "t25-fixture-modal-1.webos.png",
+        "t25-fixture-modal-2.webos.png"
+      ],
+      "clipping": [],
+      "scrollAlignment": "center"
+    }
+  ]
+}

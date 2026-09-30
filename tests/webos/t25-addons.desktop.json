@@ -1,0 +1,1183 @@
+{
+  "mode": "desktop",
+  "url": "http://127.0.0.1:8091/#/addons",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "samples": [
+    {
+      "index": 0,
+      "control": "div.button-container-xT9_L.button-container-zVLH6",
+      "surface": "div.button-container-xT9_L.button-container-zVLH6",
+      "text": "Enter fullscreen mode",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1792.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1792.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1792.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 1,
+      "control": "div.label-container-XOyzm.nav-menu-popup-label-XmUBo.button-container-xT9_L.menu-button-container-DtW4v.button-container-zVLH6",
+      "surface": "div.label-container-XOyzm.nav-menu-popup-label-XmUBo.button-container-xT9_L.menu-button-container-DtW4v.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1852.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1852.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1852.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 2,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Board",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 97.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 97.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 97.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 3,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Discover",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 184.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 184.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 184.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 4,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Library",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 5,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Calendar",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 358.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 358.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 358.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 6,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0.selected",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0.selected",
+      "text": "Addons",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 445.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 445.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 445.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 7,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Settings",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 532.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 532.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 532.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 8,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "Installed",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "after": {
+        "x": 112.5,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 9,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "All",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 360,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "after": {
+        "x": 360,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 360,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 10,
+      "control": "div.add-button-container-SkafT.button-container-zVLH6",
+      "surface": "div.add-button-container-SkafT.button-container-zVLH6",
+      "text": "Add addon",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1453.75,
+        "y": 105,
+        "width": 151.25,
+        "height": 45
+      },
+      "after": {
+        "x": 1453.75,
+        "y": 105,
+        "width": 151.25,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 1453.75,
+        "y": 105,
+        "width": 151.25,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 11,
+      "control": "input.search-input-bAgAh.text-input-hnLiz",
+      "surface": "label.search-bar-k7MXd.search-bar-container-p4tSt",
+      "text": "text",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 0)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1652,
+        "y": 118,
+        "width": 183.5,
+        "height": 19
+      },
+      "after": {
+        "x": 1652,
+        "y": 118,
+        "width": 183.5,
+        "height": 19
+      },
+      "surfaceGeometry": {
+        "x": 1627.5,
+        "y": 105,
+        "width": 270,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 0)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 12,
+      "control": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "surface": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "text": "Cinemetav.3.0.14movie & seriesThe official addon for movie and series catalogsUninstallSha",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 172.5,
+        "width": 1775,
+        "height": 169
+      },
+      "after": {
+        "x": 112.5,
+        "y": 172.5,
+        "width": 1775,
+        "height": 169
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 172.5,
+        "width": 1775,
+        "height": 169
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 13,
+      "control": "div.uninstall-button-container-oV4Yo.button-container-zVLH6",
+      "surface": "div.uninstall-button-container-oV4Yo.button-container-zVLH6",
+      "text": "Uninstall",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1608,
+        "y": 197,
+        "width": 255,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1608,
+        "y": 197,
+        "width": 255,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1608,
+        "y": 197,
+        "width": 255,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 14,
+      "control": "div.share-button-container-s3gwP.button-container-zVLH6",
+      "surface": "div.share-button-container-s3gwP.button-container-zVLH6",
+      "text": "Share addon",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1608,
+        "y": 264.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1608,
+        "y": 264.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1608,
+        "y": 264.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 15,
+      "control": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "surface": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "text": "YouTubev.1.30.7channelWatch your favourite YouTube channels ad-free and get notified when ",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 364,
+        "width": 1775,
+        "height": 169
+      },
+      "after": {
+        "x": 112.5,
+        "y": 364,
+        "width": 1775,
+        "height": 169
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 364,
+        "width": 1775,
+        "height": 169
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 16,
+      "control": "div.uninstall-button-container-oV4Yo.button-container-zVLH6",
+      "surface": "div.uninstall-button-container-oV4Yo.button-container-zVLH6",
+      "text": "Uninstall",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1608,
+        "y": 388.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1608,
+        "y": 388.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1608,
+        "y": 388.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 17,
+      "control": "div.share-button-container-s3gwP.button-container-zVLH6",
+      "surface": "div.share-button-container-s3gwP.button-container-zVLH6",
+      "text": "Share addon",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1608,
+        "y": 456,
+        "width": 255,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1608,
+        "y": 456,
+        "width": 255,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1608,
+        "y": 456,
+        "width": 255,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 18,
+      "control": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "surface": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "text": "WatchHubv.1.15.0movie & seriesFind where to stream your favorite movies and shows amongst ",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 555.5,
+        "width": 1775,
+        "height": 169
+      },
+      "after": {
+        "x": 112.5,
+        "y": 555.5,
+        "width": 1775,
+        "height": 169
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 555.5,
+        "width": 1775,
+        "height": 169
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 19,
+      "control": "div.uninstall-button-container-oV4Yo.button-container-zVLH6",
+      "surface": "div.uninstall-button-container-oV4Yo.button-container-zVLH6",
+      "text": "Uninstall",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1608,
+        "y": 580,
+        "width": 255,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1608,
+        "y": 580,
+        "width": 255,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1608,
+        "y": 580,
+        "width": 255,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 20,
+      "control": "div.share-button-container-s3gwP.button-container-zVLH6",
+      "surface": "div.share-button-container-s3gwP.button-container-zVLH6",
+      "text": "Share addon",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1608,
+        "y": 647.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1608,
+        "y": 647.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1608,
+        "y": 647.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 21,
+      "control": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "surface": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "text": "Public Domain Moviesv.1.0.0movieTorrents for public domain movies. Includes a collection o",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 747,
+        "width": 1775,
+        "height": 169
+      },
+      "after": {
+        "x": 112.5,
+        "y": 747,
+        "width": 1775,
+        "height": 169
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 747,
+        "width": 1775,
+        "height": 169
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 22,
+      "control": "div.uninstall-button-container-oV4Yo.button-container-zVLH6",
+      "surface": "div.uninstall-button-container-oV4Yo.button-container-zVLH6",
+      "text": "Uninstall",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1608,
+        "y": 771.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1608,
+        "y": 771.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1608,
+        "y": 771.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 23,
+      "control": "div.share-button-container-s3gwP.button-container-zVLH6",
+      "surface": "div.share-button-container-s3gwP.button-container-zVLH6",
+      "text": "Share addon",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1608,
+        "y": 839,
+        "width": 255,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1608,
+        "y": 839,
+        "width": 255,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1608,
+        "y": 839,
+        "width": 255,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 24,
+      "control": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "surface": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "text": "OpenSubtitles v3v.1.0.0movie & seriesOpenSubtitles v3 Addon for StremioUninstallShare addo",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 910.5,
+        "width": 1775,
+        "height": 169
+      },
+      "after": {
+        "x": 112.5,
+        "y": 910.5,
+        "width": 1775,
+        "height": 169
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 910.5,
+        "width": 1775,
+        "height": 169
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 25,
+      "control": "div.uninstall-button-container-oV4Yo.button-container-zVLH6",
+      "surface": "div.uninstall-button-container-oV4Yo.button-container-zVLH6",
+      "text": "Uninstall",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1608,
+        "y": 935,
+        "width": 255,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1608,
+        "y": 935,
+        "width": 255,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1608,
+        "y": 935,
+        "width": 255,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 26,
+      "control": "div.share-button-container-s3gwP.button-container-zVLH6",
+      "surface": "div.share-button-container-s3gwP.button-container-zVLH6",
+      "text": "Share addon",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1608,
+        "y": 1002.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1608,
+        "y": 1002.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1608,
+        "y": 1002.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 27,
+      "control": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "surface": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "text": "Local Files (without catalog support)v.1.10.0movie, series & otherLocal add-on to find pla",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 911,
+        "width": 1775,
+        "height": 169
+      },
+      "after": {
+        "x": 112.5,
+        "y": 911,
+        "width": 1775,
+        "height": 169
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 911,
+        "width": 1775,
+        "height": 169
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 28,
+      "control": "div.uninstall-button-container-oV4Yo.button-container-zVLH6",
+      "surface": "div.uninstall-button-container-oV4Yo.button-container-zVLH6",
+      "text": "Uninstall",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1608,
+        "y": 935.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1608,
+        "y": 935.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1608,
+        "y": 935.5,
+        "width": 255,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 29,
+      "control": "div.share-button-container-s3gwP.button-container-zVLH6",
+      "surface": "div.share-button-container-s3gwP.button-container-zVLH6",
+      "text": "Share addon",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1608,
+        "y": 1003,
+        "width": 255,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1608,
+        "y": 1003,
+        "width": 255,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1608,
+        "y": 1003,
+        "width": 255,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    }
+  ],
+  "skipped": [],
+  "failures": []
+}

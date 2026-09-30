@@ -1,0 +1,18 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>T3.10 isolated fixture</title>
+<script>
+window.__t310 = { errors: [], unhandledrejections: [], dragAdds: [], dragRemoves: [] };
+window.addEventListener('error', function (event) { window.__t310.errors.push(event.message || 'Resource error'); }, true);
+window.addEventListener('unhandledrejection', function (event) { window.__t310.unhandledrejections.push(String(event.reason)); });
+(function () {
+    var add = window.addEventListener, remove = window.removeEventListener;
+    window.addEventListener = function (type, listener, options) {
+        if (/^(drag|drop)/.test(type)) window.__t310.dragAdds.push(type);
+        return add.call(this, type, listener, options);
+    };
+    window.removeEventListener = function (type, listener, options) {
+        if (/^(drag|drop)/.test(type)) window.__t310.dragRemoves.push(type);
+        return remove.call(this, type, listener, options);
+    };
+}());
+</script></head><body><div id="app"></div></body></html>

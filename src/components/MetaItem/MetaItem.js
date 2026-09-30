@@ -15,6 +15,7 @@ const useBinaryState = require('stremio/common/useBinaryState');
 const { default: getMetaDetailsHref } = require('stremio/common/getMetaDetailsHref');
 const { ICON_FOR_TYPE } = require('stremio/common/CONSTANTS');
 const styles = require('./styles');
+const TVAction = process.env.WEBOS ? Button : 'div';
 
 const MetaItem = React.memo(({ className, type, name, poster, posterShape, posterChangeCursor, progress, newVideos, options, actionMenu, deepLinks, href: customHref, dataset, optionOnSelect, onDismissClick, onPlayClick, watched, ...props }) => {
     const { t } = useTranslation();
@@ -75,14 +76,14 @@ const MetaItem = React.memo(({ className, type, name, poster, posterShape, poste
     const hasOptions = Array.isArray(options) && options.length > 0;
     return (
         <div className={classnames(className, styles['meta-item-container'], styles['poster-shape-poster'], styles[`poster-shape-${posterShape}`], { 'active': menuOpen })}>
-            <Button title={name} href={href} {...filterInvalidDOMProps(props)} className={styles['meta-item-link']} onClick={metaItemOnClick}>
+            <Button data-focus-priority={process.env.WEBOS ? 10 : undefined} title={name} href={href} {...filterInvalidDOMProps(props)} className={styles['meta-item-link']} onClick={metaItemOnClick}>
                 <div className={classnames(styles['poster-container'], { 'poster-change-cursor': posterChangeCursor })}>
                     {
                         onDismissClick ?
-                            <div title={t('LIBRARY_RESUME_DISMISS')} className={styles['dismiss-icon-layer']} onClick={dismissOnClick}>
+                            <TVAction title={t('LIBRARY_RESUME_DISMISS')} className={styles['dismiss-icon-layer']} onClick={dismissOnClick}>
                                 <Icon className={styles['dismiss-icon']} name={'close'} />
                                 <div className={styles['dismiss-icon-backdrop']} />
-                            </div>
+                            </TVAction>
                             :
                             null
                     }
@@ -104,11 +105,11 @@ const MetaItem = React.memo(({ className, type, name, poster, posterShape, poste
                     </div>
                     {
                         onPlayClick ?
-                            <div title={t('CONTINUE_WATCHING')} className={styles['play-icon-layer']} onClick={playOnClick}>
+                            <TVAction title={t('CONTINUE_WATCHING')} className={styles['play-icon-layer']} onClick={playOnClick}>
                                 <Icon className={styles['play-icon']} name={'play'} />
                                 <div className={styles['play-icon-outer']} />
                                 <div className={styles['play-icon-background']} />
-                            </div>
+                            </TVAction>
                             :
                             null
                     }

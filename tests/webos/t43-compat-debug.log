@@ -1,0 +1,9 @@
+$ node tools/check-es-compat.mjs
+PASS build/77b40cf9196e669d58f78220cffe183de26cc528/scripts/101.js
+PASS build/77b40cf9196e669d58f78220cffe183de26cc528/scripts/575.js
+PASS build/77b40cf9196e669d58f78220cffe183de26cc528/scripts/main.js
+PASS build/77b40cf9196e669d58f78220cffe183de26cc528/scripts/worker.js
+PASS build/service-worker.js
+PASS build/webos/webOSTV.js
+PASS build/workbox-ee13fbdc.js
+ES2018 compatibility: 7/7 files passed

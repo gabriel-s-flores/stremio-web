@@ -1,0 +1,23 @@
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+const checks = [];
+const run = (label, command) => {
+    const result = spawnSync('powershell.exe', ['-NoProfile', '-Command', command], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+    fs.writeFileSync(`tests/webos/t33-${label}.log`, (result.stdout || '') + (result.stderr || ''));
+    checks.push({ label, command, exitCode: result.status });
+    fs.writeFileSync('tests/webos/t33-checks.json', JSON.stringify({ date: new Date().toISOString(), checks }, null, 2));
+    console.log(label, result.status);
+};
+run('test', 'corepack pnpm test --runInBand');
+run('lint', 'corepack pnpm lint');
+run('build', 'corepack pnpm build');
+run('vendor-desktop', 'node scripts/verify-webos-vendor.mjs desktop');
+run('build-webos', 'corepack pnpm build:webos');
+run('vendor-standard', 'node scripts/verify-webos-vendor.mjs webos');
+run('compat-standard', 'corepack pnpm check:webos-compat');
+run('isolation-standard', 'node scripts/verify-webos-debug-build.mjs build standard');
+run('build-debug', 'corepack pnpm build:webos:debug');
+run('vendor-debug', 'node scripts/verify-webos-vendor.mjs webos');
+run('compat-debug', 'corepack pnpm check:webos-compat');
+run('isolation-debug', 'node scripts/verify-webos-debug-build.mjs build debug');
+process.exitCode = checks.some(check => check.exitCode !== 0) ? 1 : 0;

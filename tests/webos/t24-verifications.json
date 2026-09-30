@@ -1,0 +1,62 @@
+{
+  "date": "2026-09-07T03:12:19.217Z",
+  "commit": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+  "dirtyWorktree": true,
+  "commands": [
+    {
+      "command": "corepack pnpm test --runInBand",
+      "result": "11 suites, 174 tests",
+      "passed": true
+    },
+    {
+      "command": "corepack pnpm lint",
+      "result": "passed",
+      "passed": true
+    },
+    {
+      "command": "corepack pnpm build",
+      "result": "2 known size warnings",
+      "passed": true
+    },
+    {
+      "command": "corepack pnpm build:webos",
+      "result": "2 size warnings",
+      "passed": true
+    },
+    {
+      "command": "corepack pnpm build:webos:debug",
+      "result": "2 size warnings",
+      "passed": true
+    },
+    {
+      "command": "corepack pnpm check:webos-compat (standard)",
+      "result": "7/7 ES2018 artifacts",
+      "passed": true
+    },
+    {
+      "command": "corepack pnpm check:webos-compat (debug)",
+      "result": "7/7 ES2018 artifacts",
+      "passed": true
+    },
+    {
+      "command": "corepack pnpm verify:hosted-build (debug)",
+      "result": "53 references, WASM present",
+      "passed": true
+    },
+    {
+      "command": "verify:webos-ui (8 routes)",
+      "result": "No unexpectedErrors or networkErrors",
+      "passed": true
+    },
+    {
+      "command": "tools/t24-safe-areas-probe.js (8 webOS + 8 desktop routes)",
+      "result": "16 reports, no failures",
+      "passed": true
+    },
+    {
+      "command": "git diff --check",
+      "result": "No errors; pre-existing LF/CRLF warnings",
+      "passed": true
+    }
+  ]
+}

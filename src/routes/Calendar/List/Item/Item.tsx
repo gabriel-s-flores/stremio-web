@@ -8,6 +8,8 @@ import { Button } from 'stremio/components';
 import useCalendarDate from '../../useCalendarDate';
 import styles from './Item.less';
 
+const TVAction = process.env.WEBOS ? Button : 'div';
+
 type Props = {
     selected: CalendarDate | null,
     monthInfo: CalendarMonthInfo,
@@ -45,7 +47,7 @@ const Item = ({ selected, monthInfo, date, items, profile, onClick }: Props) => 
     }, [active]);
 
     return (
-        <div
+        <TVAction
             ref={ref}
             className={classNames(styles['item'], { [styles['active']]: active, [styles['today']]: today })}
             key={date.day}
@@ -69,7 +71,7 @@ const Item = ({ selected, monthInfo, date, items, profile, onClick }: Props) => 
                     ))
                 }
             </div>
-        </div>
+        </TVAction>
     );
 };
 

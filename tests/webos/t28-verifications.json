@@ -1,0 +1,58 @@
+{
+  "tests": {
+    "suites": 15,
+    "passed": 374,
+    "log": "t28-tests.log"
+  },
+  "lint": {
+    "passed": true,
+    "log": "t28-lint.log"
+  },
+  "desktop": {
+    "identical": true,
+    "beforeBytes": 279417,
+    "afterBytes": 279417,
+    "beforeHash": "fb6508716c13ff55eeb24bdf1b3c737e5ede609914ffbda348354136b815e013",
+    "afterHash": "fb6508716c13ff55eeb24bdf1b3c737e5ede609914ffbda348354136b815e013",
+    "viewport": "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=0,user-scalable=no,viewport-fit=cover\">"
+  },
+  "webos": {
+    "bytes": 296074,
+    "hash": "40588ec2c30e9851dea6f6e0740b78e1b2f0dcb6c84f260564f6b7976c1b3547",
+    "unsupportedFunctions": [],
+    "insets": {
+      "top": [
+        "27px"
+      ],
+      "right": [
+        "48px"
+      ],
+      "bottom": [
+        "27px",
+        "27px"
+      ],
+      "left": [
+        "48px"
+      ]
+    },
+    "viewport": "<meta name=\"viewport\" content=\"width=1920,height=1080,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no\">"
+  },
+  "sourceCssFiles": 49,
+  "compat": {
+    "passed": 7,
+    "total": 7,
+    "log": "t28-compat.log"
+  },
+  "runtime": {
+    "engine": "Chrome/153.0.8010.36",
+    "routes": 10,
+    "controls": 285,
+    "failures": [],
+    "screenshots": 20,
+    "exceptions": 126
+  },
+  "targetRuntime": "pending",
+  "physicalTV": "pending",
+  "T28": "partially open",
+  "R04": "unchanged; open"
+}

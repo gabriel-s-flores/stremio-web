@@ -1,0 +1,10 @@
+﻿import fs from 'node:fs';
+import crypto from 'node:crypto';
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, ''));
+const checks = read('tests/webos/t36-checks.json').checks;
+const packaged = read('tests/webos/t36-runtime-packaged.json');
+const http = read('tests/webos/t36-runtime-http.json');
+const files = ['webpack.config.js','package.json','src/App/WebUpdateScreen/index.ts','src/App/WebUpdateScreen/disabled.js','src/App/WebUpdateScreen/useServiceWorkerUpdater.ts','scripts/verify-webos-packaged-build.mjs','tests/webosServiceWorker.spec.js',...fs.readdirSync('tools').filter(f=>/^t36-.*\.mjs$/.test(f)).map(f=>'tools/'+f)];
+const report = { status: 'incomplete', checksPassed: checks.length === 8 && checks.every(c=>c.exitCode===0), packagedRuntimePassed: packaged.passed === true, httpRuntimePassed: http.passed === true, httpsUpdateValidated: false, playerUpdateValidated: false, physicalTVValidated: false, hashes: Object.fromEntries(files.map(f=>[f,crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex')])) };
+fs.writeFileSync('tests/webos/t36-summary.json', JSON.stringify(report,null,2)+'\n');
+console.log(JSON.stringify({ ...report, hashes: undefined }));

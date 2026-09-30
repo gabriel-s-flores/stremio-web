@@ -1,0 +1,30 @@
+{
+  "date": "2026-09-09T20:07:32.062Z",
+  "checks": [
+    {
+      "label": "test",
+      "command": "corepack pnpm test --runInBand",
+      "exitCode": 0
+    },
+    {
+      "label": "lint",
+      "command": "corepack pnpm lint",
+      "exitCode": 0
+    },
+    {
+      "label": "build",
+      "command": "corepack pnpm build",
+      "exitCode": 0
+    },
+    {
+      "label": "build-webos",
+      "command": "corepack pnpm build:webos",
+      "exitCode": 0
+    },
+    {
+      "label": "compat",
+      "command": "corepack pnpm check:webos-compat",
+      "exitCode": 0
+    }
+  ]
+}

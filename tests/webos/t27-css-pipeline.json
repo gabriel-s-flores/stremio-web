@@ -1,0 +1,263 @@
+{
+  "targets": {
+    "webos": [
+      "chrome 68"
+    ],
+    "desktop": [
+      "and_chr 147",
+      "and_ff 150",
+      "and_qq 14.9",
+      "and_uc 15.5",
+      "android 147",
+      "chrome 147",
+      "chrome 146",
+      "chrome 145",
+      "chrome 144",
+      "chrome 109",
+      "edge 147",
+      "edge 146",
+      "edge 145",
+      "firefox 150",
+      "firefox 149",
+      "firefox 148",
+      "firefox 140",
+      "ios_saf 26.4",
+      "ios_saf 26.3",
+      "ios_saf 26.2",
+      "ios_saf 18.5-18.7",
+      "kaios 3.0-3.1",
+      "kaios 2.5",
+      "op_mini all",
+      "op_mob 80",
+      "opera 131",
+      "opera 127",
+      "safari 26.4",
+      "safari 26.3",
+      "samsung 29",
+      "samsung 28"
+    ]
+  },
+  "files": {
+    "desktop-before": {
+      "bytes": 279417,
+      "sha256": "fb6508716c13ff55eeb24bdf1b3c737e5ede609914ffbda348354136b815e013",
+      "prefixes": {
+        "-o-object-fit:contain": 18,
+        "-o-object-position:center": 23,
+        "display:-webkit-box": 6,
+        "-webkit-box-orient:vertical": 7,
+        "-webkit-line-clamp:5": 1,
+        "-webkit-user-select:text": 4,
+        "-moz-user-select:text": 4,
+        "-webkit-touch-callout:none": 4,
+        "-webkit-user-select:none": 8,
+        "-moz-user-select:none": 8,
+        "-o-object-fit:cover": 10,
+        "-webkit-line-clamp:2": 4,
+        "-webkit-mask-image:linear-gradient(90deg,#000000 calc(100% - 10%),rgba(0,0,0,0))": 1,
+        "-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,0),#000000 10%)": 1,
+        "-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,0),#000000 10%,#000000 calc(100% - 10%),rgba(0,0,0,0))": 1,
+        "-ms-overflow-style:none": 1,
+        "width:-moz-fit-content": 1,
+        "-webkit-appearance:none": 3,
+        "-moz-appearance:none": 2,
+        "-webkit-mask-image:linear-gradient(to right,black 0%,black var(--mask-width),transparent var(--mask-width))": 2,
+        "-webkit-filter:blur(0.5rem)": 2,
+        "-webkit-line-clamp:3": 1,
+        "-o-object-position:right": 1,
+        "-webkit-tap-highlight-color:transparent": 3,
+        "-webkit-line-clamp:4": 1,
+        "-moz-column-gap:0.5rem": 1,
+        "-webkit-font-smoothing:antialiased": 1
+      },
+      "scrollbars": 14
+    },
+    "desktop-after": {
+      "bytes": 279417,
+      "sha256": "fb6508716c13ff55eeb24bdf1b3c737e5ede609914ffbda348354136b815e013",
+      "prefixes": {
+        "-o-object-fit:contain": 18,
+        "-o-object-position:center": 23,
+        "display:-webkit-box": 6,
+        "-webkit-box-orient:vertical": 7,
+        "-webkit-line-clamp:5": 1,
+        "-webkit-user-select:text": 4,
+        "-moz-user-select:text": 4,
+        "-webkit-touch-callout:none": 4,
+        "-webkit-user-select:none": 8,
+        "-moz-user-select:none": 8,
+        "-o-object-fit:cover": 10,
+        "-webkit-line-clamp:2": 4,
+        "-webkit-mask-image:linear-gradient(90deg,#000000 calc(100% - 10%),rgba(0,0,0,0))": 1,
+        "-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,0),#000000 10%)": 1,
+        "-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,0),#000000 10%,#000000 calc(100% - 10%),rgba(0,0,0,0))": 1,
+        "-ms-overflow-style:none": 1,
+        "width:-moz-fit-content": 1,
+        "-webkit-appearance:none": 3,
+        "-moz-appearance:none": 2,
+        "-webkit-mask-image:linear-gradient(to right,black 0%,black var(--mask-width),transparent var(--mask-width))": 2,
+        "-webkit-filter:blur(0.5rem)": 2,
+        "-webkit-line-clamp:3": 1,
+        "-o-object-position:right": 1,
+        "-webkit-tap-highlight-color:transparent": 3,
+        "-webkit-line-clamp:4": 1,
+        "-moz-column-gap:0.5rem": 1,
+        "-webkit-font-smoothing:antialiased": 1
+      },
+      "scrollbars": 14
+    },
+    "webos-before": {
+      "bytes": 297127,
+      "sha256": "c38e41c955053eee1a30b1f3051ce0d671cdb0b6ebe3d9133fa1e3409d1b13b2",
+      "prefixes": {
+        "-o-object-fit:contain": 18,
+        "-o-object-position:center": 23,
+        "display:-webkit-box": 6,
+        "-webkit-box-orient:vertical": 7,
+        "-webkit-line-clamp:5": 1,
+        "-webkit-user-select:text": 4,
+        "-moz-user-select:text": 4,
+        "-webkit-touch-callout:none": 4,
+        "-webkit-user-select:none": 8,
+        "-moz-user-select:none": 8,
+        "-o-object-fit:cover": 10,
+        "-webkit-line-clamp:2": 4,
+        "-webkit-mask-image:linear-gradient(90deg,#000000 calc(100% - 10%),rgba(0,0,0,0))": 1,
+        "-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,0),#000000 10%)": 1,
+        "-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,0),#000000 10%,#000000 calc(100% - 10%),rgba(0,0,0,0))": 1,
+        "-ms-overflow-style:none": 1,
+        "width:-moz-fit-content": 1,
+        "-webkit-appearance:none": 3,
+        "-moz-appearance:none": 2,
+        "-webkit-mask-image:linear-gradient(to right,black 0%,black var(--mask-width),transparent var(--mask-width))": 2,
+        "-webkit-filter:blur(0.5rem)": 2,
+        "-webkit-line-clamp:3": 1,
+        "-o-object-position:right": 1,
+        "-webkit-tap-highlight-color:transparent": 3,
+        "-webkit-line-clamp:4": 1,
+        "-moz-column-gap:0.5rem": 1,
+        "-webkit-font-smoothing:antialiased": 1
+      },
+      "scrollbars": 14
+    },
+    "webos-after": {
+      "bytes": 294997,
+      "sha256": "41bf3749a3af99c40a829b532eab942c6b255bfaa9070f64cd42b9f3a8d414c2",
+      "prefixes": {
+        "display:-webkit-box": 6,
+        "-webkit-box-orient:vertical": 7,
+        "-webkit-line-clamp:5": 1,
+        "-webkit-touch-callout:none": 4,
+        "-webkit-line-clamp:2": 4,
+        "-webkit-mask-image:linear-gradient(90deg,#000000 calc(100% - 10%),rgba(0,0,0,0))": 1,
+        "-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,0),#000000 10%)": 1,
+        "-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,0),#000000 10%,#000000 calc(100% - 10%),rgba(0,0,0,0))": 1,
+        "-ms-overflow-style:none": 1,
+        "-webkit-appearance:none": 3,
+        "-webkit-mask-image:linear-gradient(to right,black 0%,black var(--mask-width),transparent var(--mask-width))": 2,
+        "-webkit-filter:blur(0.5rem)": 2,
+        "-webkit-line-clamp:3": 1,
+        "-webkit-tap-highlight-color:transparent": 3,
+        "-webkit-line-clamp:4": 1,
+        "-webkit-font-smoothing:antialiased": 1
+      },
+      "scrollbars": 14
+    }
+  },
+  "desktopIdentical": true,
+  "prefixChanges": [
+    {
+      "declaration": "-o-object-fit:contain",
+      "before": 18,
+      "after": 0
+    },
+    {
+      "declaration": "-o-object-position:center",
+      "before": 23,
+      "after": 0
+    },
+    {
+      "declaration": "-webkit-user-select:text",
+      "before": 4,
+      "after": 0
+    },
+    {
+      "declaration": "-moz-user-select:text",
+      "before": 4,
+      "after": 0
+    },
+    {
+      "declaration": "-webkit-user-select:none",
+      "before": 8,
+      "after": 0
+    },
+    {
+      "declaration": "-moz-user-select:none",
+      "before": 8,
+      "after": 0
+    },
+    {
+      "declaration": "-o-object-fit:cover",
+      "before": 10,
+      "after": 0
+    },
+    {
+      "declaration": "width:-moz-fit-content",
+      "before": 1,
+      "after": 0
+    },
+    {
+      "declaration": "-moz-appearance:none",
+      "before": 2,
+      "after": 0
+    },
+    {
+      "declaration": "-o-object-position:right",
+      "before": 1,
+      "after": 0
+    },
+    {
+      "declaration": "-moz-column-gap:0.5rem",
+      "before": 1,
+      "after": 0
+    }
+  ],
+  "fixture": {
+    "input": ".control{-webkit-appearance:none;-moz-appearance:none;appearance:none;-moz-transform:translateX(0);-o-transform:translateX(0);transform:translateX(0)}",
+    "before": ".control{-webkit-appearance:none;-moz-appearance:none;appearance:none;transform:translateX(0)}",
+    "after": ".control{-webkit-appearance:none;appearance:none;transform:translateX(0)}"
+  },
+  "webosStandardDeclarationsIdentical": true,
+  "runtime": {
+    "completed": false,
+    "reason": "Emulator CDP 127.0.0.1:9998 unavailable; configured emulator SSH 127.0.0.1:6622 unavailable; no webOS/VirtualBox/QEMU process found."
+  },
+  "standardDeclarationComparison": "Per individual non-vendor selector/property/value/important, ignoring rule merging and declaration order; vendor properties and values excluded. Static comparison, not cascade/runtime proof.",
+  "standardDeclarationDifferences": [],
+  "removedVendorSelectorDeclarations": [
+    {
+      "key": ".search-bar-container-asfq1 .search-input-IQ0ZW::-moz-placeholder|color:var(--primary-foreground-color):undefined",
+      "before": 1
+    },
+    {
+      "key": ".search-bar-container-asfq1 .search-input-IQ0ZW::-moz-placeholder|max-height:1.2em:undefined",
+      "before": 1
+    },
+    {
+      "key": ".search-bar-container-asfq1 .search-input-IQ0ZW::-moz-placeholder|opacity:1:undefined",
+      "before": 1
+    },
+    {
+      "key": ".search-bar-container-asfq1 .search-input-IQ0ZW::-moz-placeholder|opacity:0.6:undefined",
+      "before": 1
+    },
+    {
+      "key": ".search-bar-container-p4tSt .search-input-bAgAh::-moz-placeholder|color:var(--primary-foreground-color):undefined",
+      "before": 1
+    },
+    {
+      "key": ".search-bar-container-p4tSt .search-input-bAgAh::-moz-placeholder|opacity:0.6:undefined",
+      "before": 1
+    }
+  ]
+}

@@ -1,0 +1,1216 @@
+{
+  "supportsAspectRatio": false,
+  "supportsError": null,
+  "expectedMode": "fallback (measured width)",
+  "origin": "http://10.0.2.2:8090",
+  "route": "#/debug/calendar",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "cells": 35,
+  "measuredItems": 80,
+  "failures": [],
+  "samples": [
+    {
+      "cell": 1,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 2,
+      "item": 0,
+      "itemBox": {
+        "width": 96,
+        "height": 138.34
+      },
+      "inlineWidth": "96px",
+      "posterBox": {
+        "width": 96,
+        "height": 138.34
+      },
+      "iconWithinItem": true,
+      "ratio": 0.694
+    },
+    {
+      "cell": 2,
+      "item": 1,
+      "itemBox": {
+        "width": 96,
+        "height": 138.34
+      },
+      "inlineWidth": "96px",
+      "posterBox": {
+        "width": 96,
+        "height": 138.34
+      },
+      "iconWithinItem": true,
+      "ratio": 0.694
+    },
+    {
+      "cell": 2,
+      "item": 2,
+      "itemBox": {
+        "width": 96,
+        "height": 138.34
+      },
+      "inlineWidth": "96px",
+      "posterBox": {
+        "width": 96,
+        "height": 138.34
+      },
+      "iconWithinItem": true,
+      "ratio": 0.694
+    },
+    {
+      "cell": 2,
+      "item": 3,
+      "itemBox": {
+        "width": 92,
+        "height": 138.34
+      },
+      "inlineWidth": "92px",
+      "posterBox": {
+        "width": 92,
+        "height": 138.34
+      },
+      "iconWithinItem": true,
+      "ratio": 0.665
+    },
+    {
+      "cell": 2,
+      "item": 4,
+      "itemBox": {
+        "width": 92,
+        "height": 138.34
+      },
+      "inlineWidth": "92px",
+      "posterBox": {
+        "width": 92,
+        "height": 138.34
+      },
+      "iconWithinItem": true,
+      "ratio": 0.665
+    },
+    {
+      "cell": 2,
+      "item": 5,
+      "itemBox": {
+        "width": 92,
+        "height": 138.34
+      },
+      "inlineWidth": "92px",
+      "posterBox": {
+        "width": 92,
+        "height": 138.34
+      },
+      "iconWithinItem": true,
+      "ratio": 0.665
+    },
+    {
+      "cell": 2,
+      "item": 6,
+      "itemBox": {
+        "width": 92,
+        "height": 138.34
+      },
+      "inlineWidth": "92px",
+      "posterBox": {
+        "width": 92,
+        "height": 138.34
+      },
+      "iconWithinItem": true,
+      "ratio": 0.665
+    },
+    {
+      "cell": 2,
+      "item": 7,
+      "itemBox": {
+        "width": 92,
+        "height": 138.34
+      },
+      "inlineWidth": "92px",
+      "posterBox": {
+        "width": 92,
+        "height": 138.34
+      },
+      "iconWithinItem": true,
+      "ratio": 0.665
+    },
+    {
+      "cell": 3,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 3,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 4,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 4,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 4,
+      "item": 2,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 5,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 6,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 8,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 9,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 9,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 9,
+      "item": 2,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 9,
+      "item": 3,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 9,
+      "item": 4,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 9,
+      "item": 5,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 9,
+      "item": 6,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 9,
+      "item": 7,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 10,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 10,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 11,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 11,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 11,
+      "item": 2,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 12,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 13,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 15,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 16,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 16,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 16,
+      "item": 2,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 16,
+      "item": 3,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 16,
+      "item": 4,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 16,
+      "item": 5,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 16,
+      "item": 6,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 16,
+      "item": 7,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 17,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 17,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 18,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 18,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 18,
+      "item": 2,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 19,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 20,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 22,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 23,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 23,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 23,
+      "item": 2,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 23,
+      "item": 3,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 23,
+      "item": 4,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 23,
+      "item": 5,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 23,
+      "item": 6,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 23,
+      "item": 7,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 24,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 24,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 25,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 25,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 25,
+      "item": 2,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 26,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 27,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 29,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 30,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 30,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 30,
+      "item": 2,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 30,
+      "item": 3,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 30,
+      "item": 4,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 30,
+      "item": 5,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 30,
+      "item": 6,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 30,
+      "item": 7,
+      "itemBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "inlineWidth": "92.6667px",
+      "posterBox": {
+        "width": 92.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 31,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 31,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 32,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 32,
+      "item": 1,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 32,
+      "item": 2,
+      "itemBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 139.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.691
+    },
+    {
+      "cell": 33,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    },
+    {
+      "cell": 34,
+      "item": 0,
+      "itemBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "inlineWidth": "96.6667px",
+      "posterBox": {
+        "width": 96.66,
+        "height": 145.92
+      },
+      "iconWithinItem": true,
+      "ratio": 0.662
+    }
+  ]
+}

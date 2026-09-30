@@ -28,7 +28,15 @@ const ActionsGroup = ({ items, className }: Props) => {
                     <div
                         key={index}
                         className={classNames(styles['icon-container'], item.className, { [styles['disabled']]: item.disabled })}
-                        tabIndex={0}
+                        role={process.env.WEBOS ? 'button' : undefined}
+                        aria-disabled={process.env.WEBOS ? !!item.disabled : undefined}
+                        tabIndex={process.env.WEBOS && item.disabled ? -1 : 0}
+                        onKeyDown={process.env.WEBOS ? (event) => {
+                            if (event.key === 'Enter' && !event.repeat && !item.disabled) {
+                                event.preventDefault();
+                                event.currentTarget.click();
+                            }
+                        } : undefined}
                         onClick={item.onClick}
                     >
                         {

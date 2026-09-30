@@ -1,0 +1,374 @@
+{
+  "url": "http://127.0.0.1:8098/#/search",
+  "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "visualWidth": 1920,
+    "visualHeight": 1080,
+    "scale": 1,
+    "devicePixelRatio": 1,
+    "root": {
+      "left": 0,
+      "top": 0,
+      "right": 1920,
+      "bottom": 1080,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "insets": {
+    "top": 27,
+    "right": 48,
+    "bottom": 27,
+    "left": 48
+  },
+  "safeFrame": {
+    "left": 48,
+    "top": 27,
+    "right": 1872,
+    "bottom": 1053
+  },
+  "documentOverflowX": false,
+  "samples": [
+    {
+      "tag": "INPUT",
+      "classes": "search-input-IQ0ZW text-input-hnLiz",
+      "text": "Search or paste link",
+      "rect": {
+        "left": 712.5,
+        "top": 43.875,
+        "right": 1092,
+        "bottom": 92.625,
+        "width": 379.5,
+        "height": 48.75
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "search-input-IQ0ZW text-input-hnLiz",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "submit-button-container-MImNa button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1092,
+        "top": 43.875,
+        "right": 1162.5,
+        "bottom": 92.625,
+        "width": 70.5,
+        "height": 48.75
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "submit-button-container-MImNa button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "button-container-xT9_L button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1737,
+        "top": 42,
+        "right": 1789.5,
+        "bottom": 94.5,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "button-container-xT9_L button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "label-container-XOyzm nav-menu-popup-label-XmUBo button-container-xT9_L menu-button-container-DtW4v button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1804.5,
+        "top": 42,
+        "right": 1857,
+        "bottom": 94.5,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "label-container-XOyzm nav-menu-popup-label-XmUBo button-container-xT9_L menu-button-container-DtW4v button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Board",
+      "rect": {
+        "left": 57,
+        "top": 97.5,
+        "right": 129,
+        "bottom": 169.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Discover",
+      "rect": {
+        "left": 57,
+        "top": 199.5,
+        "right": 129,
+        "bottom": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Library",
+      "rect": {
+        "left": 57,
+        "top": 301.5,
+        "right": 129,
+        "bottom": 373.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Calendar",
+      "rect": {
+        "left": 57,
+        "top": 403.5,
+        "right": 129,
+        "bottom": 475.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Addons",
+      "rect": {
+        "left": 57,
+        "top": 505.5,
+        "right": 129,
+        "bottom": 577.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "text": "Settings",
+      "rect": {
+        "left": 57,
+        "top": 607.5,
+        "right": 129,
+        "bottom": 679.5,
+        "width": 72,
+        "height": 72
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "nav-tab-button-tW6qT nav-tab-button-container-dYhs0",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    }
+  ],
+  "typography": [
+    {
+      "classes": "search-hints-title-cigX3",
+      "ancestors": [
+        "search-hints-title-container-MXt8W animation-fade-in",
+        "search-hints-wrapper-IjhmE",
+        "search-content-LX6un",
+        "nav-content-container-zl9hQ",
+        "search-container-uXEFf main-nav-bars-container-wNjS5"
+      ],
+      "text": "You Can Search Anything...",
+      "fontSize": 24,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 854.453125,
+        "top": 389.25,
+        "right": 1155.546875,
+        "bottom": 419.25,
+        "width": 301.09375,
+        "height": 30
+      }
+    },
+    {
+      "classes": "label-l6wxz",
+      "ancestors": [
+        "search-hint-container-kd8iX",
+        "search-hints-container-FHpPM animation-fade-in",
+        "search-hints-wrapper-IjhmE",
+        "search-content-LX6un",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "Movies, Series, YouTube & TV",
+      "fontSize": 22,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 654,
+        "top": 569.25,
+        "right": 807,
+        "bottom": 653.25,
+        "width": 153,
+        "height": 84
+      }
+    },
+    {
+      "classes": "label-l6wxz",
+      "ancestors": [
+        "search-hint-container-kd8iX",
+        "search-hints-container-FHpPM animation-fade-in",
+        "search-hints-wrapper-IjhmE",
+        "search-content-LX6un",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "Actors, Directors & Writers",
+      "fontSize": 22,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 837,
+        "top": 569.25,
+        "right": 990,
+        "bottom": 653.25,
+        "width": 153,
+        "height": 84
+      }
+    },
+    {
+      "classes": "label-l6wxz",
+      "ancestors": [
+        "search-hint-container-kd8iX",
+        "search-hints-container-FHpPM animation-fade-in",
+        "search-hints-wrapper-IjhmE",
+        "search-content-LX6un",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "HTTP & Magnet Links",
+      "fontSize": 22,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 1020,
+        "top": 569.25,
+        "right": 1173,
+        "bottom": 625.25,
+        "width": 153,
+        "height": 56
+      }
+    },
+    {
+      "classes": "label-l6wxz",
+      "ancestors": [
+        "search-hint-container-kd8iX",
+        "search-hints-container-FHpPM animation-fade-in",
+        "search-hints-wrapper-IjhmE",
+        "search-content-LX6un",
+        "nav-content-container-zl9hQ"
+      ],
+      "text": "IMDB / TVDB links",
+      "fontSize": 22,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 1203,
+        "top": 569.25,
+        "right": 1356,
+        "bottom": 625.25,
+        "width": 153,
+        "height": 56
+      }
+    }
+  ],
+  "failures": [],
+  "requestedRoute": "/search"
+}

@@ -5,7 +5,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
+    .tv-flex-gap(1rem, 1rem, row);
     padding: 0 1rem;
     font-size: 1rem;
     font-weight: bold;
@@ -69,4 +69,9 @@
             width: 3.5rem;
         }
     }
+}
+
+// Preserve hover transitions without animating the TV outline.
+.update-banner .button when (@webos = true) {
+    transition-property: color, background-color, box-shadow;
 }

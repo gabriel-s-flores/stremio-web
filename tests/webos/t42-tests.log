@@ -1,0 +1,37 @@
+PASS tests/webosTranspilation.spec.js (50.093 s)
+PASS tests/webosCssPipeline.spec.js (49.902 s)
+PASS tests/webosCssBackdrop.spec.js
+PASS tests/i18nScan.test.js
+PASS tests/webosCssFocus.spec.js
+PASS tests/webosLayout1080.spec.js
+PASS tests/webosStorage.spec.js
+PASS tests/webosCssGap.spec.js
+PASS tests/webosCssSafeAreas.spec.js
+PASS tests/webosServiceWorker.spec.js
+PASS tests/webosBack.spec.js
+PASS tests/webosLogin.spec.js
+PASS tests/externalLinksAudit.spec.js (5.42 s)
+PASS tests/desktopFeatures.spec.js (5.459 s)
+PASS tests/videoPlatform.spec.js (5.062 s)
+PASS tests/webosCssResidual.spec.js
+PASS tests/platformPlayers.spec.js
+PASS tests/webosLifecycle.spec.js
+PASS tests/webosCssAspectRatio.spec.js
+PASS tests/webosSpatialNavigation.spec.js
+PASS tests/clipboardAudit.spec.js
+PASS tests/externalLinks.spec.js
+PASS tests/copyright.spec.js
+PASS tests/platformDevice.spec.js
+PASS tests/webosPlatform.spec.js
+PASS tests/webosDiagnostics.spec.js
+PASS tests/webosApiGuards.spec.js
+PASS tests/webosObservability.spec.js
+PASS tests/routesRegexp.spec.js
+PASS tests/webosNavigationRuntime.spec.js
+PASS tests/httpServer.spec.js
+
+Test Suites: 31 passed, 31 total
+Tests:       635 passed, 635 total
+Snapshots:   0 total
+Time:        163.942 s, estimated 858 s
+Ran all test suites.

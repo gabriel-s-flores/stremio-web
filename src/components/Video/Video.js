@@ -38,7 +38,7 @@ const Video = ({ className, id, title, thumbnail, season, episode, released, upc
         }
     }, [toggleMenu]);
     const popupLabelOnLongPress = React.useCallback((event) => {
-        if (event.nativeEvent.pointerType !== 'mouse' && !event.nativeEvent.togglePopupPrevented) {
+        if (event?.nativeEvent?.pointerType !== 'mouse' && !event?.nativeEvent?.togglePopupPrevented) {
             toggleMenu();
         }
     }, [toggleMenu]);
@@ -90,7 +90,7 @@ const Video = ({ className, id, title, thumbnail, season, episode, released, upc
         }
     }, [deepLinks, navigate, selectVideo]);
     const playButtonOnKeyDown = React.useCallback((event) => {
-        event.stopPropagation();
+        if (!process.env.WEBOS || event.key === 'Enter') event.stopPropagation();
     }, []);
     const renderLabel = React.useMemo(() => function renderLabel({ className, id, title, thumbnail, episode, released, upcoming, watched, progress, scheduled, children, ref, ...props }) {
         const blurThumbnail = profile.settings.hideSpoilers && season && episode && !watched;

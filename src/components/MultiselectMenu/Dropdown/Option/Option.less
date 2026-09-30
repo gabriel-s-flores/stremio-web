@@ -1,3 +1,4 @@
+@import (reference) '~stremio/common/screen-sizes.less';
 // Copyright (C) 2017-2024 Smart code 203358507
 
 @height: 3rem;
@@ -28,5 +29,11 @@
 
     &:hover {
         background-color: rgba(255, 255, 255, 0.15);
+    }
+}
+& when (@webos = true) {
+    .option .label {
+        font-size: 22px;
+        line-height: 1.3;
     }
 }

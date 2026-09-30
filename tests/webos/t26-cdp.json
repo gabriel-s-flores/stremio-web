@@ -1,0 +1,477 @@
+{
+  "browser": {
+    "Browser": "Chrome/152.0.7977.76",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+    "V8-Version": "15.2.124.19",
+    "WebKit-Version": "537.36 (@0d89dfa2dd7c1ec4b8a14b9f303f887bb63b6174)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9226/devtools/browser/a47c83e3-3a23-41f5-bffb-b169dc4102e6"
+  },
+  "smoke": [
+    {
+      "mode": "desktop",
+      "requested": "/",
+      "hash": "#/",
+      "width": 1920,
+      "height": 1080,
+      "elements": 544,
+      "text": "Search or paste link\nBoard\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nPopular - Movie\nSee All\nMayday\nThe Whisper Man\nStar Wars: The Mandalorian and Grogu\nObsessi"
+    },
+    {
+      "mode": "desktop",
+      "requested": "/discover",
+      "hash": "#/discover",
+      "width": 1920,
+      "height": 1080,
+      "elements": 1021,
+      "text": "Search or paste link\nBoard\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nMovie\nPopular\nGenre\nMayday\nThe Whisper Man\nStar Wars: The Mandalorian and Grogu\nObsession\nP"
+    },
+    {
+      "mode": "desktop",
+      "requested": "/library",
+      "hash": "#/library?sort=lastwatched",
+      "width": 1920,
+      "height": 1080,
+      "elements": 611,
+      "text": "Search or paste link\nBoard\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nLibrary is only available for logged in users\nAccess your favorite movies and TV shows anyt"
+    },
+    {
+      "mode": "desktop",
+      "requested": "/calendar",
+      "hash": "#/calendar",
+      "width": 1920,
+      "height": 1080,
+      "elements": 612,
+      "text": "Search or paste link\nBoard\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nCalendar is only available for logged in users\nNever miss an episode again\nSchedule your pe"
+    },
+    {
+      "mode": "desktop",
+      "requested": "/detail/movie/tt11561116/tt11561116",
+      "hash": "#/detail/movie/tt11561116/tt11561116",
+      "width": 1920,
+      "height": 1080,
+      "elements": 704,
+      "text": "114 min\n2026\nGENRES\nCrime\nDrama\nThriller\nCAST\nRobert De Niro\nMichelle Monaghan\nAdam Scott\nDIRECTORS\nJames Ashcroft\nSUMMARY\nA grieving father and his young son r"
+    },
+    {
+      "mode": "desktop",
+      "requested": "/search",
+      "hash": "#/search",
+      "width": 1920,
+      "height": 1080,
+      "elements": 617,
+      "text": "Board\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nYou Can Search Anything...\nMovies, Series, YouTube & TV\nActors, Directors & Writers\nHTTP & Magnet Links\nIMDB / T"
+    },
+    {
+      "mode": "desktop",
+      "requested": "/settings",
+      "hash": "#/settings",
+      "width": 1920,
+      "height": 1080,
+      "elements": 1052,
+      "text": "Search or paste link\nBoard\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nGeneral\nInterface\nPlayer\nStreaming\nShortcuts\nApp Version: 5.0.0-beta.39\nBuild Version: 4a44"
+    },
+    {
+      "mode": "desktop",
+      "requested": "/addons",
+      "hash": "#/addons",
+      "width": 1920,
+      "height": 1080,
+      "elements": 787,
+      "text": "Board\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nInstalled\nAll\nAdd addon\nCinemeta\nv.3.0.14\nMovie & Series\nThe official addon for movie and series catalogs\nUninst"
+    },
+    {
+      "mode": "desktop",
+      "requested": "/intro",
+      "hash": "#/intro",
+      "width": 1920,
+      "height": 1080,
+      "elements": 594,
+      "text": "Freedom to Stream\nAll the video content you enjoy in one place\nI have read and agree with the StremioTerms and Conditions\nI have read and agree with the Stremio"
+    },
+    {
+      "mode": "webos",
+      "requested": "/",
+      "hash": "#/",
+      "width": 1920,
+      "height": 1080,
+      "elements": 544,
+      "text": "Search or paste link\nBoard\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nPopular - Movie\nSee All\nMayday\nThe Whisper Man\nStar Wars: The Mandalorian and Grogu\nObsessi"
+    },
+    {
+      "mode": "webos",
+      "requested": "/discover",
+      "hash": "#/discover",
+      "width": 1920,
+      "height": 1080,
+      "elements": 1021,
+      "text": "Search or paste link\nBoard\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nMovie\nPopular\nGenre\nMayday\nThe Whisper Man\nStar Wars: The Mandalorian and Grogu\nObsession\nP"
+    },
+    {
+      "mode": "webos",
+      "requested": "/library",
+      "hash": "#/library?sort=lastwatched",
+      "width": 1920,
+      "height": 1080,
+      "elements": 611,
+      "text": "Search or paste link\nBoard\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nLibrary is only available for logged in users\nAccess your favorite movies and TV shows anyt"
+    },
+    {
+      "mode": "webos",
+      "requested": "/calendar",
+      "hash": "#/calendar",
+      "width": 1920,
+      "height": 1080,
+      "elements": 612,
+      "text": "Search or paste link\nBoard\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nCalendar is only available for logged in users\nNever miss an episode again\nSchedule your pe"
+    },
+    {
+      "mode": "webos",
+      "requested": "/detail/movie/tt11561116/tt11561116",
+      "hash": "#/detail/movie/tt11561116/tt11561116",
+      "width": 1920,
+      "height": 1080,
+      "elements": 704,
+      "text": "114 min\n2026\nGENRES\nCrime\nDrama\nThriller\nCAST\nRobert De Niro\nMichelle Monaghan\nAdam Scott\nDIRECTORS\nJames Ashcroft\nSUMMARY\nA grieving father and his young son r"
+    },
+    {
+      "mode": "webos",
+      "requested": "/search",
+      "hash": "#/search",
+      "width": 1920,
+      "height": 1080,
+      "elements": 617,
+      "text": "Board\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nYou Can Search Anything...\nMovies, Series, YouTube & TV\nActors, Directors & Writers\nHTTP & Magnet Links\nIMDB / T"
+    },
+    {
+      "mode": "webos",
+      "requested": "/settings",
+      "hash": "#/settings",
+      "width": 1920,
+      "height": 1080,
+      "elements": 1052,
+      "text": "Search or paste link\nBoard\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nGeneral\nInterface\nPlayer\nStreaming\nShortcuts\nApp Version: 5.0.0-beta.39\nBuild Version: 4a44"
+    },
+    {
+      "mode": "webos",
+      "requested": "/addons",
+      "hash": "#/addons",
+      "width": 1920,
+      "height": 1080,
+      "elements": 787,
+      "text": "Board\nDiscover\nLibrary\nCalendar\nAddons\nSettings\nInstalled\nAll\nAdd addon\nCinemeta\nv.3.0.14\nMovie & Series\nThe official addon for movie and series catalogs\nUninst"
+    },
+    {
+      "mode": "webos",
+      "requested": "/intro",
+      "hash": "#/intro",
+      "width": 1920,
+      "height": 1080,
+      "elements": 594,
+      "text": "Freedom to Stream\nAll the video content you enjoy in one place\nI have read and agree with the StremioTerms and Conditions\nI have read and agree with the Stremio"
+    }
+  ],
+  "focus": [
+    {
+      "platform": "webos",
+      "index": 0,
+      "secondary": false,
+      "hasFocus": true,
+      "events": [
+        "meta-item-link-veMqr button-container-zVLH6"
+      ],
+      "ua": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+      "calls": [
+        {
+          "card": 0,
+          "options": {
+            "behavior": "smooth",
+            "block": "nearest",
+            "inline": "nearest"
+          }
+        }
+      ],
+      "scrollLeft": 0,
+      "overflow": true,
+      "visible": true,
+      "focused": true
+    },
+    {
+      "platform": "webos",
+      "index": 0,
+      "secondary": true,
+      "hasFocus": true,
+      "events": [
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8"
+      ],
+      "ua": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+      "calls": [
+        {
+          "card": 0,
+          "options": {
+            "behavior": "smooth",
+            "block": "nearest",
+            "inline": "nearest"
+          }
+        }
+      ],
+      "scrollLeft": 0,
+      "overflow": true,
+      "visible": true,
+      "focused": true
+    },
+    {
+      "platform": "webos",
+      "index": 2,
+      "secondary": false,
+      "hasFocus": true,
+      "events": [
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8",
+        "meta-item-link-veMqr button-container-zVLH6"
+      ],
+      "ua": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+      "calls": [
+        {
+          "card": 2,
+          "options": {
+            "behavior": "smooth",
+            "block": "nearest",
+            "inline": "nearest"
+          }
+        }
+      ],
+      "scrollLeft": 360,
+      "overflow": true,
+      "visible": true,
+      "focused": true
+    },
+    {
+      "platform": "webos",
+      "index": 2,
+      "secondary": true,
+      "hasFocus": true,
+      "events": [
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8",
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8"
+      ],
+      "ua": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+      "calls": [
+        {
+          "card": 2,
+          "options": {
+            "behavior": "smooth",
+            "block": "nearest",
+            "inline": "nearest"
+          }
+        }
+      ],
+      "scrollLeft": 360,
+      "overflow": true,
+      "visible": true,
+      "focused": true
+    },
+    {
+      "platform": "webos",
+      "index": 5,
+      "secondary": false,
+      "hasFocus": true,
+      "events": [
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8",
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8",
+        "meta-item-link-veMqr button-container-zVLH6"
+      ],
+      "ua": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+      "calls": [
+        {
+          "card": 5,
+          "options": {
+            "behavior": "smooth",
+            "block": "nearest",
+            "inline": "nearest"
+          }
+        }
+      ],
+      "scrollLeft": 520,
+      "overflow": true,
+      "visible": true,
+      "focused": true
+    },
+    {
+      "platform": "webos",
+      "index": 5,
+      "secondary": true,
+      "hasFocus": true,
+      "events": [
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8",
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8",
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8"
+      ],
+      "ua": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+      "calls": [
+        {
+          "card": 5,
+          "options": {
+            "behavior": "smooth",
+            "block": "nearest",
+            "inline": "nearest"
+          }
+        }
+      ],
+      "scrollLeft": 520,
+      "overflow": true,
+      "visible": true,
+      "focused": true
+    },
+    {
+      "platform": "webos",
+      "noOverflow": true,
+      "overflow": false,
+      "calls": []
+    },
+    {
+      "platform": "desktop",
+      "index": 0,
+      "secondary": false,
+      "hasFocus": true,
+      "events": [
+        "meta-item-link-veMqr button-container-zVLH6"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "calls": [],
+      "scrollLeft": 1240,
+      "overflow": true,
+      "visible": false,
+      "focused": true
+    },
+    {
+      "platform": "desktop",
+      "index": 0,
+      "secondary": true,
+      "hasFocus": true,
+      "events": [
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "calls": [],
+      "scrollLeft": 1240,
+      "overflow": true,
+      "visible": false,
+      "focused": true
+    },
+    {
+      "platform": "desktop",
+      "index": 2,
+      "secondary": false,
+      "hasFocus": true,
+      "events": [
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8",
+        "meta-item-link-veMqr button-container-zVLH6"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "calls": [],
+      "scrollLeft": 1240,
+      "overflow": true,
+      "visible": false,
+      "focused": true
+    },
+    {
+      "platform": "desktop",
+      "index": 2,
+      "secondary": true,
+      "hasFocus": true,
+      "events": [
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8",
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "calls": [],
+      "scrollLeft": 1240,
+      "overflow": true,
+      "visible": false,
+      "focused": true
+    },
+    {
+      "platform": "desktop",
+      "index": 5,
+      "secondary": false,
+      "hasFocus": true,
+      "events": [
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8",
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8",
+        "meta-item-link-veMqr button-container-zVLH6"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "calls": [],
+      "scrollLeft": 0,
+      "overflow": true,
+      "visible": false,
+      "focused": true
+    },
+    {
+      "platform": "desktop",
+      "index": 5,
+      "secondary": true,
+      "hasFocus": true,
+      "events": [
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8",
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8",
+        "meta-item-link-veMqr button-container-zVLH6",
+        "trigger-AimsT menu-label-container-ChuX8"
+      ],
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+      "calls": [],
+      "scrollLeft": 0,
+      "overflow": true,
+      "visible": false,
+      "focused": true
+    },
+    {
+      "platform": "desktop",
+      "noOverflow": true,
+      "overflow": false,
+      "calls": []
+    }
+  ],
+  "css": {
+    "desktop": {
+      "snapType": true,
+      "snapAlign": true,
+      "calendarTop": true,
+      "logicalPadding": false
+    },
+    "webos": {
+      "snapType": false,
+      "snapAlign": false,
+      "calendarTop": true,
+      "logicalPadding": false
+    }
+  },
+  "errors": [
+    {
+      "url": "http://127.0.0.1:8096/desktop/#/library?sort=lastwatched",
+      "text": "AbortError: Transition was skipped"
+    },
+    {
+      "url": "http://127.0.0.1:8096/webos/#/library?sort=lastwatched",
+      "text": "AbortError: Transition was skipped"
+    }
+  ],
+  "failures": []
+}

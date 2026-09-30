@@ -1,0 +1,65 @@
+{
+  "mode": "packaged",
+  "configured": true,
+  "status": "passed",
+  "passed": true,
+  "wasmBlocked": true,
+  "samples": [
+    {
+      "chromium68": true,
+      "protocol": "file:",
+      "atOrigin": true,
+      "mounted": false,
+      "reactRootCreated": true,
+      "coreReady": false,
+      "fixture": true,
+      "observability": {
+        "sentryEnabled": true,
+        "provider": "sentry",
+        "release": "webos-5.0.0-beta.39",
+        "dist": "4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8",
+        "initState": "initialized",
+        "failureKind": null,
+        "transportState": "accepted"
+      },
+      "routePreserved": true
+    },
+    {
+      "chromium68": true,
+      "protocol": "file:",
+      "atOrigin": true,
+      "mounted": false,
+      "reactRootCreated": true,
+      "coreReady": false,
+      "fixture": true,
+      "observability": {
+        "sentryEnabled": true,
+        "provider": "sentry",
+        "release": "webos-5.0.0-beta.39",
+        "dist": "4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8",
+        "initState": "initialized",
+        "failureKind": null,
+        "transportState": "accepted"
+      },
+      "routePreserved": true
+    }
+  ],
+  "phase": "capture-flush",
+  "flushed": true,
+  "sinkCalls": 2,
+  "sink": {
+    "requests": 2,
+    "events": 2,
+    "rejected": 0,
+    "privacyPassed": true,
+    "identityPassed": true,
+    "nullOrigin": true,
+    "hashes": [
+      "56a5ac641fea392e87c9c6ce426ce6630c6c934245ff30b56b473caddb501126",
+      "daa73b533febdfcdbfb0262b11ef08c39353c18a5f0cbea9ab7cf802ed4c43c0"
+    ]
+  },
+  "reactMountPassed": false,
+  "coreReady": false,
+  "entryReachedReact": true
+}

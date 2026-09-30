@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
-import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import classnames from 'classnames';
 import throttle from 'lodash.throttle';
 import { usePlatform, useProfile, useStreamingServer, useRouteFocused, withCoreSuspender } from 'stremio/common';
@@ -17,6 +18,7 @@ import styles from './Settings.less';
 
 const Settings = () => {
     const routeFocused = useRouteFocused();
+    const [queryParams] = useSearchParams();
     const profile = useProfile();
     const platform = usePlatform();
     const streamingServer = useStreamingServer();
@@ -62,15 +64,30 @@ const Settings = () => {
         setSelectedSectionId(activeSection.id);
     }, [sections]);
 
+    useEffect(() => {
+        if (platform.name !== 'webos' || queryParams.get('section') !== SECTIONS.STREAMING) return;
+        const target = streamingServerSectionRef.current;
+        if (target && sectionsContainerRef.current) {
+            sectionsContainerRef.current.scrollTop = target.offsetTop - sectionsContainerRef.current.offsetTop;
+            setSelectedSectionId(SECTIONS.STREAMING);
+            const control = target.querySelector<HTMLElement>('[tabindex]');
+            control?.focus();
+        }
+    }, [queryParams, platform.name]);
+
     const onMenuSelect = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
         const section = sections.find((section) => {
             return section.id === event.currentTarget.dataset.section;
         });
 
         const container = sectionsContainerRef.current;
+        if (process.env.WEBOS && section?.ref.current) {
+            const target = section.ref.current.querySelector<HTMLElement>('[tabindex="0"],button,input');
+            target?.focus();
+        }
         section && container?.scrollTo({
             top: section.ref.current!.offsetTop - container!.offsetTop,
-            behavior: 'smooth'
+            behavior: process.env.WEBOS ? 'auto' : 'smooth'
         });
     }, [sections]);
 
@@ -112,7 +129,7 @@ const Settings = () => {
                         streamingServer={streamingServer}
                     />
                     {
-                        !platform.isMobile && <Shortcuts ref={shortcutsSectionRef} />
+                        (process.env.WEBOS || (!platform.isMobile && !platform.isTV)) && <Shortcuts ref={shortcutsSectionRef} />
                     }
                     <Info streamingServer={streamingServer} />
                 </div>

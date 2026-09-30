@@ -1,0 +1,176 @@
+{
+  "mode": "hosted",
+  "date": "2026-09-12T16:21:36.994Z",
+  "browser": "Edg/153.0.4234.32",
+  "emulator": false,
+  "completeApp": false,
+  "checks": {
+    "tvOAuthAbsent": true,
+    "tvMountInert": true,
+    "nativeInputContract": true,
+    "nativePasswordMask": true,
+    "initialEmailFocus": true,
+    "formPresent": true,
+    "optionsPresent": true,
+    "tvStackedCentered": true,
+    "invalidEmail": true,
+    "browserEmailValidity": true,
+    "invalidPassword": true,
+    "enterEmailFocusesPassword": true,
+    "enterPasswordDispatchesLogin": true,
+    "authErrorClosesLoader": true,
+    "authSuccessNavigates": true,
+    "signupNativeConfirmation": true,
+    "legalLinksPreserved": true,
+    "guestRequiresTerms": true,
+    "signupEnterFocusesConfirmation": true,
+    "confirmationRequired": true,
+    "termsRequired": true,
+    "termsEnterToggles": true,
+    "privacyRequired": true,
+    "registerConsentContract": true,
+    "marketingOptIn": true,
+    "guestNavigates": true,
+    "resetModal": true,
+    "resetInvalid": true,
+    "resetDelegates": true,
+    "resetCancel": true,
+    "switchToSignup": true,
+    "switchToLogin": true,
+    "desktopOAuthPresent": true,
+    "desktopFacebookStart": true,
+    "desktopAppleStart": true,
+    "mobileOAuthPresent": true,
+    "mobileFacebookStart": true,
+    "mobileAppleStart": true,
+    "cleanup": true,
+    "tvRemountInert": true,
+    "zeroErrors": true
+  },
+  "snapshots": {
+    "tvMount": {
+      "oauthControls": 0,
+      "emailInputs": 1,
+      "passwordInputs": 1,
+      "loader": false,
+      "authenticated": false,
+      "externalCalls": 0,
+      "fetchCalls": 0,
+      "oauthTimers": 0,
+      "dispatchCount": 0,
+      "payloads": [],
+      "resetExternal": false,
+      "errors": 0,
+      "rejections": 0,
+      "consoleErrors": 0,
+      "eventListeners": 1,
+      "errorListeners": 1
+    },
+    "login": {
+      "oauthControls": 0,
+      "emailInputs": 1,
+      "passwordInputs": 1,
+      "loader": true,
+      "authenticated": false,
+      "externalCalls": 0,
+      "fetchCalls": 0,
+      "oauthTimers": 0,
+      "dispatchCount": 1,
+      "payloads": [
+        {
+          "action": "Ctx",
+          "args": {
+            "action": "Authenticate",
+            "args": {
+              "type": "Login",
+              "emailPresent": true,
+              "passwordPresent": true,
+              "fieldCount": 3
+            }
+          }
+        }
+      ],
+      "resetExternal": false,
+      "errors": 0,
+      "rejections": 0,
+      "consoleErrors": 0,
+      "eventListeners": 1,
+      "errorListeners": 1
+    },
+    "register": {
+      "oauthControls": 0,
+      "emailInputs": 1,
+      "passwordInputs": 2,
+      "loader": true,
+      "authenticated": false,
+      "externalCalls": 0,
+      "fetchCalls": 0,
+      "oauthTimers": 0,
+      "dispatchCount": 1,
+      "payloads": [
+        {
+          "action": "Ctx",
+          "args": {
+            "action": "Authenticate",
+            "args": {
+              "type": "Register",
+              "emailPresent": true,
+              "passwordPresent": true,
+              "fieldCount": 4,
+              "gdpr_consent": {
+                "tos": true,
+                "privacy": true,
+                "marketing": false,
+                "from": "web"
+              }
+            }
+          }
+        }
+      ],
+      "resetExternal": false,
+      "errors": 0,
+      "rejections": 0,
+      "consoleErrors": 0,
+      "eventListeners": 1,
+      "errorListeners": 1
+    },
+    "tvAfterActions": {
+      "oauthControls": 0,
+      "emailInputs": 1,
+      "passwordInputs": 1,
+      "loader": false,
+      "authenticated": false,
+      "externalCalls": 1,
+      "fetchCalls": 0,
+      "oauthTimers": 0,
+      "dispatchCount": 0,
+      "payloads": [],
+      "resetExternal": true,
+      "errors": 0,
+      "rejections": 0,
+      "consoleErrors": 0,
+      "eventListeners": 1,
+      "errorListeners": 1
+    },
+    "cleanup": {
+      "oauthControls": 0,
+      "emailInputs": 0,
+      "passwordInputs": 0,
+      "loader": false,
+      "authenticated": false,
+      "externalCalls": 0,
+      "fetchCalls": 0,
+      "oauthTimers": 0,
+      "dispatchCount": 0,
+      "payloads": [],
+      "resetExternal": false,
+      "errors": 0,
+      "rejections": 0,
+      "consoleErrors": 0,
+      "eventListeners": 0,
+      "errorListeners": 0
+    }
+  },
+  "passed": true,
+  "runtimeErrors": 0
+}

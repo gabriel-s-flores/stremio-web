@@ -1,0 +1,76 @@
+{
+  "date": "2026-09-10T04:25:34.433Z",
+  "status": "passed",
+  "checksPassed": true,
+  "runtimePassed": true,
+  "packagedBaselineEquivalent": true,
+  "cases": {
+    "hosted-on": {
+      "status": "passed",
+      "passed": true,
+      "events": 1,
+      "wasmBlocked": false,
+      "reactMountPassed": true
+    },
+    "hosted-off": {
+      "status": "not-configured",
+      "passed": true,
+      "events": 0,
+      "wasmBlocked": false,
+      "reactMountPassed": true
+    },
+    "hosted-rejected": {
+      "status": "transport-blocked",
+      "passed": true,
+      "events": 1,
+      "wasmBlocked": false,
+      "reactMountPassed": true
+    },
+    "packaged-on": {
+      "status": "passed",
+      "passed": true,
+      "events": 2,
+      "wasmBlocked": true,
+      "reactMountPassed": false
+    },
+    "packaged-off": {
+      "status": "not-configured",
+      "passed": true,
+      "events": 0,
+      "wasmBlocked": true,
+      "reactMountPassed": false
+    }
+  },
+  "limitations": {
+    "packagedFullAppBoot": false,
+    "physicalTVValidated": false,
+    "productionEndpointValidated": false,
+    "t84Complete": false
+  },
+  "fixtures": {
+    "on": {
+      "mainSha256": "63942e69056ea71d5b952d90828a2ad37a4c21bdc2df7d4895ea219d58e95d36",
+      "adapterSourceMatches": true,
+      "es2018Passed": true
+    },
+    "off": {
+      "mainSha256": "d608c0727813fdb99eb7d8182c5725e8872d867816ba4b8d340cb34ad3e58f06",
+      "adapterSourceMatches": true,
+      "es2018Passed": true
+    }
+  },
+  "hashes": {
+    "src/index.js": "ee6dfc7f98d88e63afc32882fc479dff750a67f9d787a81d7d88bb7ed989b2ec",
+    "src/webos/diagnostics/observability.js": "13b4b0cddbab352283fb23e0a50e7d0a08b21769a4360f7d69977d9753829a47",
+    "src/webos/diagnostics/runtime.js": "018a320551e17fc3c91be5c4be2fdce765880b00b666901cb38b8d62b4e23f9c",
+    "src/webos/diagnostics/global.d.ts": "ce50984039d934198815977b5851bbe9dbc5026527627fb58eeaf0afa4368cd1",
+    "tests/webosObservability.spec.js": "aa43de83b11245443332fdb5bdfd9a4a4a80f643437e08fe3dfa4cc7aa9b72f4",
+    "tools/t37-build-fixture.cjs": "d2d01fd238fe2ada4685ddd3f77008bee5f790132b33f6ac41a3aa38d85b9e0f",
+    "tools/t37-checks.mjs": "17a37ca3982c6547b9049343503e7cdf181ca4ca1094751c68aee1c07fafc14e",
+    "tools/t37-evidence.mjs": "251cb2825befdd79e12e12c9ae649c002cbe740a587f5fa18eb51ba3d84b7178",
+    "tools/t37-fixture.js": "8633444c0f48998f4101eb0aa4384cc002d2b06e9221e876cfe6006a4eb6da9d",
+    "tools/t37-observability.mjs": "525f4d7e70a1b740c3e233f11416e80d608fb49776f521b7be47a85097bbf255",
+    "tools/t37-prepare.mjs": "f55872beeaafac3ddedf2dee0d02c46bcd0fe22aff8dc70a48e892cdb1cc006e",
+    "tools/t37-sentry-sink.mjs": "4e29ac2062f397873c9354ab7e2f8867363e62ddf230961f45aa2108c7cf7347"
+  }
+}

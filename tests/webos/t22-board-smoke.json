@@ -1,0 +1,150 @@
+{
+  "date": "2026-09-06T22:10:36.271Z",
+  "target": {
+    "cdp": "http://127.0.0.1:9998",
+    "route": "#/",
+    "runs": 1,
+    "reload": true,
+    "player": false,
+    "strictPlayer": false,
+    "expectedPlayerImplementation": null,
+    "screenshots": null
+  },
+  "results": [
+    {
+      "run": 1,
+      "route": "#/",
+      "artifacts": {
+        "commitHash": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+        "mainBytes": 9350837,
+        "cssBytes": 291716
+      },
+      "ui": {
+        "path": "/",
+        "appChildren": 6,
+        "hasIntroControls": false,
+        "hasBoard": true,
+        "focusableCount": 9,
+        "hasRawTranslationKey": false,
+        "queueMicrotaskAvailable": true,
+        "objectFreezeAvailable": true
+      },
+      "queueMicrotask": {
+        "available": true,
+        "order": [
+          "microtask",
+          "timer"
+        ],
+        "correctOrder": true
+      },
+      "deepFreeze": {
+        "objectFreezeAvailable": true,
+        "shallowFreezeLeavesNestedMutable": true,
+        "playerDeepFreezeExercised": false
+      },
+      "player": null,
+      "snapshot": {
+        "environment": {
+          "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+          "protocol": "http:",
+          "viewport": {
+            "width": 1920,
+            "height": 1080,
+            "devicePixelRatio": 0
+          },
+          "version": "5.0.0-beta.39",
+          "commit": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+          "performanceMemoryAvailable": true
+        },
+        "marks": {
+          "entry": 570.7000000002154,
+          "i18n-resources-start": 731.8999999988591,
+          "i18n-resources-ready": 886.5999999979977,
+          "i18n-init-start": 886.6999999991094,
+          "i18n-ready": 889.9999999994179,
+          "i18n-init-called": 889.9999999994179,
+          "app-render": 3350.1999999971304,
+          "core-ready": 3350.1999999971304,
+          "board-visible": 3396.499999998923,
+          "board-interactive": 3396.499999998923
+        },
+        "paints": {
+          "first-paint": 97.20000000015716,
+          "first-contentful-paint": 97.20000000015716
+        },
+        "navigation": {
+          "navigationStart": 1788732630852,
+          "domInteractive": 978,
+          "domContentLoaded": 978,
+          "load": 990
+        },
+        "memory": {
+          "current": {
+            "usedJSHeapSize": 31200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 3526.0999999991327
+          },
+          "peak": {
+            "usedJSHeapSize": 31200000,
+            "totalJSHeapSize": 35100000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 570.8999999988009
+          }
+        },
+        "fps": {
+          "running": false,
+          "durationMs": 0,
+          "frames": 0,
+          "averageFps": null,
+          "p95FrameMs": null,
+          "scrollEvents": 0
+        },
+        "player": {
+          "implementation": null,
+          "history": []
+        }
+      },
+      "console": [
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>",
+          "sourceUrl": "http://10.0.2.2:8090"
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  {code=18,name=SecurityError,message=Only secure origins are allowed (see: <url>",
+          "sourceUrl": "http://10.0.2.2:8090"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> ",
+          "sourceUrl": "http://10.0.2.2:8090"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> ",
+          "sourceUrl": "http://10.0.2.2:8090"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> ",
+          "sourceUrl": "http://10.0.2.2:8090"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> ",
+          "sourceUrl": "http://10.0.2.2:8090"
+        },
+        {
+          "type": "error",
+          "message": "{stack=Error: window.cast api not available\n    at E (htt…f96df01bbbbe5eb28c82c31/scripts/main.js:1:883498),message=window.cast api not available,cause=castAPIAvailable is null.}",
+          "sourceUrl": "http://10.0.2.2:8090"
+        }
+      ],
+      "externalPlayerErrors": [],
+      "networkErrors": [],
+      "unexpectedErrors": []
+    }
+  ]
+}

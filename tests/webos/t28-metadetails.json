@@ -1,0 +1,741 @@
+{
+  "url": "http://127.0.0.1:8098/#/detail/movie/tt11561116/tt11561116",
+  "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "visualWidth": 1920,
+    "visualHeight": 1080,
+    "scale": 1,
+    "devicePixelRatio": 1,
+    "root": {
+      "left": 0,
+      "top": 0,
+      "right": 1920,
+      "bottom": 1080,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "insets": {
+    "top": 27,
+    "right": 48,
+    "bottom": 27,
+    "left": 48
+  },
+  "safeFrame": {
+    "left": 48,
+    "top": 27,
+    "right": 1872,
+    "bottom": 1053
+  },
+  "documentOverflowX": false,
+  "samples": [
+    {
+      "tag": "DIV",
+      "classes": "button-container-xT9_L back-button-container-lDB1N button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 48,
+        "top": 42,
+        "right": 100.5,
+        "bottom": 94.5,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "button-container-xT9_L back-button-container-lDB1N button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "button-container-xT9_L button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1737,
+        "top": 42,
+        "right": 1789.5,
+        "bottom": 94.5,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "button-container-xT9_L button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "label-container-XOyzm nav-menu-popup-label-XmUBo button-container-xT9_L menu-button-container-DtW4v button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 1804.5,
+        "top": 42,
+        "right": 1857,
+        "bottom": 94.5,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "label-container-XOyzm nav-menu-popup-label-XmUBo button-container-xT9_L menu-button-container-DtW4v button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "text": "Crime",
+      "rect": {
+        "left": 63,
+        "top": 349.25,
+        "right": 147.90625,
+        "bottom": 384.75,
+        "width": 84.90625,
+        "height": 35.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "link-container-gHxPW button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "text": "Drama",
+      "rect": {
+        "left": 159.15625,
+        "top": 349.25,
+        "right": 247.96875,
+        "bottom": 384.75,
+        "width": 88.8125,
+        "height": 35.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "link-container-gHxPW button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "text": "Thriller",
+      "rect": {
+        "left": 259.21875,
+        "top": 349.25,
+        "right": 347.625,
+        "bottom": 384.75,
+        "width": 88.40625,
+        "height": 35.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "link-container-gHxPW button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "text": "Robert De Niro",
+      "rect": {
+        "left": 63,
+        "top": 447.75,
+        "right": 209.296875,
+        "bottom": 483.25,
+        "width": 146.296875,
+        "height": 35.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "link-container-gHxPW button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "text": "Michelle Monaghan",
+      "rect": {
+        "left": 220.546875,
+        "top": 447.75,
+        "right": 400.171875,
+        "bottom": 483.25,
+        "width": 179.625,
+        "height": 35.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "link-container-gHxPW button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "text": "Adam Scott",
+      "rect": {
+        "left": 411.421875,
+        "top": 447.75,
+        "right": 537.9375,
+        "bottom": 483.25,
+        "width": 126.515625,
+        "height": 35.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "link-container-gHxPW button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "text": "James Ashcroft",
+      "rect": {
+        "left": 63,
+        "top": 546.25,
+        "right": 214.5,
+        "bottom": 581.75,
+        "width": 151.5,
+        "height": 35.5
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "link-container-gHxPW button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "action-button-XIZa3 action-button-container-sVyRr wide button-container-zVLH6",
+      "text": "Trailer",
+      "rect": {
+        "left": 63,
+        "top": 948,
+        "right": 247.40625,
+        "bottom": 1008,
+        "width": 184.40625,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "action-button-XIZa3 action-button-container-sVyRr wide button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "icon-container-Vs4TN",
+      "text": "",
+      "rect": {
+        "left": 262.40625,
+        "top": 948,
+        "right": 322.40625,
+        "bottom": 1008,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "icon-container-Vs4TN",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "icon-container-Vs4TN",
+      "text": "",
+      "rect": {
+        "left": 322.40625,
+        "top": 948,
+        "right": 382.40625,
+        "bottom": 1008,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 15,
+      "focusSurface": "icon-container-Vs4TN",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "DIV",
+      "classes": "action-button-XIZa3 action-button-container-sVyRr button-container-zVLH6",
+      "text": "",
+      "rect": {
+        "left": 397.40625,
+        "top": 948,
+        "right": 457.40625,
+        "bottom": 1008,
+        "width": 60,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "action-button-XIZa3 action-button-container-sVyRr button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "tag": "A",
+      "classes": "install-button-container-Q60yJ button-container-zVLH6",
+      "text": "Install addons",
+      "rect": {
+        "left": 1542,
+        "top": 377.5,
+        "right": 1752,
+        "bottom": 437.5,
+        "width": 210,
+        "height": 60
+      },
+      "insideSafeFrame": true,
+      "clipping": [],
+      "fontSize": 22,
+      "focusSurface": "install-button-container-Q60yJ button-container-zVLH6",
+      "focus": {
+        "outlineStyle": "solid",
+        "outlineWidth": "4px",
+        "outlineColor": "rgb(255, 255, 255)",
+        "boxShadow": "none"
+      }
+    }
+  ],
+  "typography": [
+    {
+      "classes": "runtime-label-TzAGI",
+      "ancestors": [
+        "runtime-release-info-container-BGd_r",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV",
+        "metadetails-container-K_Dqa"
+      ],
+      "text": "114 min",
+      "fontSize": 18.75,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 63,
+        "top": 274.5,
+        "right": 125.90625,
+        "bottom": 297.5,
+        "width": 62.90625,
+        "height": 23
+      }
+    },
+    {
+      "classes": "release-info-label-LPJMB",
+      "ancestors": [
+        "runtime-release-info-container-BGd_r",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV",
+        "metadetails-container-K_Dqa"
+      ],
+      "text": "2026",
+      "fontSize": 18.75,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 170.90625,
+        "top": 274.5,
+        "right": 218.03125,
+        "bottom": 297.5,
+        "width": 47.125,
+        "height": 23
+      }
+    },
+    {
+      "classes": "label-container-dYN2B",
+      "ancestors": [
+        "meta-links-Xiao3 meta-links-container-dh69_",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV",
+        "metadetails-container-K_Dqa"
+      ],
+      "text": "Genres",
+      "fontSize": 14.25,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 63,
+        "top": 320,
+        "right": 1362,
+        "bottom": 338,
+        "width": 1299,
+        "height": 18
+      }
+    },
+    {
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "ancestors": [
+        "links-container-C8Mw9",
+        "meta-links-Xiao3 meta-links-container-dh69_",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV"
+      ],
+      "text": "Crime",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 63,
+        "top": 349.25,
+        "right": 147.90625,
+        "bottom": 384.75,
+        "width": 84.90625,
+        "height": 35.5
+      }
+    },
+    {
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "ancestors": [
+        "links-container-C8Mw9",
+        "meta-links-Xiao3 meta-links-container-dh69_",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV"
+      ],
+      "text": "Drama",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 159.15625,
+        "top": 349.25,
+        "right": 247.96875,
+        "bottom": 384.75,
+        "width": 88.8125,
+        "height": 35.5
+      }
+    },
+    {
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "ancestors": [
+        "links-container-C8Mw9",
+        "meta-links-Xiao3 meta-links-container-dh69_",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV"
+      ],
+      "text": "Thriller",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 259.21875,
+        "top": 349.25,
+        "right": 347.625,
+        "bottom": 384.75,
+        "width": 88.40625,
+        "height": 35.5
+      }
+    },
+    {
+      "classes": "label-container-dYN2B",
+      "ancestors": [
+        "meta-links-Xiao3 meta-links-container-dh69_",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV",
+        "metadetails-container-K_Dqa"
+      ],
+      "text": "Cast",
+      "fontSize": 14.25,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 63,
+        "top": 418.5,
+        "right": 1362,
+        "bottom": 436.5,
+        "width": 1299,
+        "height": 18
+      }
+    },
+    {
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "ancestors": [
+        "links-container-C8Mw9",
+        "meta-links-Xiao3 meta-links-container-dh69_",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV"
+      ],
+      "text": "Robert De Niro",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 63,
+        "top": 447.75,
+        "right": 209.296875,
+        "bottom": 483.25,
+        "width": 146.296875,
+        "height": 35.5
+      }
+    },
+    {
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "ancestors": [
+        "links-container-C8Mw9",
+        "meta-links-Xiao3 meta-links-container-dh69_",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV"
+      ],
+      "text": "Michelle Monaghan",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 220.546875,
+        "top": 447.75,
+        "right": 400.171875,
+        "bottom": 483.25,
+        "width": 179.625,
+        "height": 35.5
+      }
+    },
+    {
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "ancestors": [
+        "links-container-C8Mw9",
+        "meta-links-Xiao3 meta-links-container-dh69_",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV"
+      ],
+      "text": "Adam Scott",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 411.421875,
+        "top": 447.75,
+        "right": 537.9375,
+        "bottom": 483.25,
+        "width": 126.515625,
+        "height": 35.5
+      }
+    },
+    {
+      "classes": "label-container-dYN2B",
+      "ancestors": [
+        "meta-links-Xiao3 meta-links-container-dh69_",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV",
+        "metadetails-container-K_Dqa"
+      ],
+      "text": "Directors",
+      "fontSize": 14.25,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 63,
+        "top": 517,
+        "right": 1362,
+        "bottom": 535,
+        "width": 1299,
+        "height": 18
+      }
+    },
+    {
+      "classes": "link-container-gHxPW button-container-zVLH6",
+      "ancestors": [
+        "links-container-C8Mw9",
+        "meta-links-Xiao3 meta-links-container-dh69_",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV"
+      ],
+      "text": "James Ashcroft",
+      "fontSize": 15,
+      "lineHeight": "19.5px",
+      "rect": {
+        "left": 63,
+        "top": 546.25,
+        "right": 214.5,
+        "bottom": 581.75,
+        "width": 151.5,
+        "height": 35.5
+      }
+    },
+    {
+      "classes": "description-container-yi8iU",
+      "ancestors": [
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV",
+        "metadetails-container-K_Dqa",
+        "route-content"
+      ],
+      "text": "SummaryA grieving father and his young son relocate to the quiet town of Featherbank, which was terrorized by a serial k",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 63,
+        "top": 608,
+        "right": 1362,
+        "bottom": 683.703125,
+        "width": 1299,
+        "height": 75.703125
+      }
+    },
+    {
+      "classes": "label-container-_VXZt",
+      "ancestors": [
+        "description-container-yi8iU",
+        "meta-info-container-ub8AH",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV",
+        "metadetails-container-K_Dqa"
+      ],
+      "text": "Summary",
+      "fontSize": 14.25,
+      "lineHeight": "18.525px",
+      "rect": {
+        "left": 63,
+        "top": 608,
+        "right": 1362,
+        "bottom": 626.515625,
+        "width": 1299,
+        "height": 18.515625
+      }
+    },
+    {
+      "classes": "label-WCWIO",
+      "ancestors": [
+        "label-container-xslEF",
+        "action-button-XIZa3 action-button-container-sVyRr wide button-container-zVLH6",
+        "action-buttons-container-XbKVa",
+        "meta-preview-ES0h3 animation-fade-in meta-preview-container-o22hc",
+        "metadetails-content-Uz5EV"
+      ],
+      "text": "Trailer",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 149.25,
+        "top": 963.703125,
+        "right": 217.40625,
+        "bottom": 992.296875,
+        "width": 68.15625,
+        "height": 28.59375
+      }
+    },
+    {
+      "classes": "label-luvnO",
+      "ancestors": [
+        "message-container-f9_L4",
+        "streams-list-Y1lCM streams-list-container-xYMJo",
+        "metadetails-content-Uz5EV",
+        "metadetails-container-K_Dqa",
+        "route-content"
+      ],
+      "text": "No streams were found",
+      "fontSize": 22,
+      "lineHeight": "normal",
+      "rect": {
+        "left": 1526.921875,
+        "top": 304.5,
+        "right": 1767.078125,
+        "bottom": 332.5,
+        "width": 240.15625,
+        "height": 28
+      }
+    },
+    {
+      "classes": "label-luvnO",
+      "ancestors": [
+        "install-button-container-Q60yJ button-container-zVLH6",
+        "message-container-f9_L4",
+        "streams-list-Y1lCM streams-list-container-xYMJo",
+        "metadetails-content-Uz5EV",
+        "metadetails-container-K_Dqa"
+      ],
+      "text": "Install addons",
+      "fontSize": 22,
+      "lineHeight": "28.6px",
+      "rect": {
+        "left": 1617,
+        "top": 378.90625,
+        "right": 1722,
+        "bottom": 436.09375,
+        "width": 105,
+        "height": 57.1875
+      }
+    }
+  ],
+  "failures": [],
+  "requestedRoute": "/detail/movie/tt11561116/tt11561116"
+}

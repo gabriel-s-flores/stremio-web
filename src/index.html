@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
+    <% if (htmlWebpackPlugin.options.webos) { %>
+    <meta name="viewport" content="width=1920, height=1080, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <% } else { %>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=0, user-scalable=no, viewport-fit=cover">
+    <% } %>
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -59,14 +63,19 @@
     <link rel="apple-touch-startup-image" href="<%= htmlWebpackPlugin.options.imagesPath %>/splash/apple-splash-1136-640.jpg" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
     <link rel="manifest" href="manifest.json" />
     <title>Stremio - Freedom to Stream</title>
+    <% if (htmlWebpackPlugin.options.webos) { %>
+    <script src="webos/webOSTV.js"></script>
+    <% } %>
     <%= htmlWebpackPlugin.tags.headTags %>
 </head>
 
 <body>
     <div id="app"></div>
     <%= htmlWebpackPlugin.tags.bodyTags %>
+    <% if (!htmlWebpackPlugin.options.webos) { %>
     <script src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
     <script async src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
+    <% } %>
 </body>
 
 </html>

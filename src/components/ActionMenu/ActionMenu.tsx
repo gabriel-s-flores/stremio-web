@@ -3,6 +3,8 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import classNames from 'classnames';
+import { BACK_HANDLER_PRIORITIES, useBackHandler } from 'stremio/common';
+import useRouteFocused from 'stremio/common/useRouteFocused';
 import styles from './ActionMenu.less';
 
 const VIEWPORT_PADDING = 8;
@@ -38,6 +40,7 @@ type Position = {
 };
 
 const ActionMenu = ({ className, title, tabIndex, options, children, onOpen, onClose, onSelect }: Props) => {
+    const routeFocused = useRouteFocused();
     const triggerRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
     const [open, setOpen] = useState(false);
@@ -58,6 +61,11 @@ const ActionMenu = ({ className, title, tabIndex, options, children, onOpen, onC
         closeMenu();
         triggerRef.current?.focus();
     }, [closeMenu]);
+    const backOnRequest = useCallback(() => {
+        closeMenuAndRestoreFocus();
+        return true;
+    }, [closeMenuAndRestoreFocus]);
+    useBackHandler(backOnRequest, BACK_HANDLER_PRIORITIES.POPUP, routeFocused && open);
 
     useLayoutEffect(() => {
         if (!open || !triggerRef.current || !menuRef.current) return;
@@ -77,8 +85,15 @@ const ActionMenu = ({ className, title, tabIndex, options, children, onOpen, onC
             top: Math.max(VIEWPORT_PADDING, Math.min(preferredTop, maxTop)),
             left: Math.max(VIEWPORT_PADDING, Math.min(preferredLeft, maxLeft))
         });
-        menuRef.current.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+        if (!process.env.WEBOS) menuRef.current.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
     }, [open]);
+
+    useLayoutEffect(() => {
+        // The initial hidden positioning pass cannot receive browser focus.
+        if (process.env.WEBOS && open && position) {
+            menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+        }
+    }, [open, position]);
 
     const layerOnClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
         if (event.target === event.currentTarget) {
@@ -99,6 +114,11 @@ const ActionMenu = ({ className, title, tabIndex, options, children, onOpen, onC
         }
 
         const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
+        // Roving items remain -1. Horizontal arrows must not reach the background.
+        if (process.env.WEBOS && event.key.startsWith('Arrow')) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
         const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
         const nextIndex = event.key === 'ArrowDown'
             ? (currentIndex + 1) % items.length
@@ -141,7 +161,7 @@ const ActionMenu = ({ className, title, tabIndex, options, children, onOpen, onC
                 aria-label={title}
                 aria-haspopup={'menu'}
                 aria-expanded={open}
-                tabIndex={tabIndex}
+                tabIndex={process.env.WEBOS ? 0 : tabIndex}
                 onClick={openMenu}
             >
                 {children}

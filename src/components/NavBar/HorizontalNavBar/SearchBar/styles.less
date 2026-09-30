@@ -1,6 +1,9 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/tv-focus.less';
+
+@import (reference) '~stremio/common/screen-sizes.less';
 
 .search-bar-container {
     --search-bar-size: 3.25rem;
@@ -24,6 +27,7 @@
         cursor: text;
 
         &::placeholder, .placeholder-label {
+            & when (@webos = true) { font-size: 22px; }
             max-height: 1.2em;
             opacity: 1;
             color: var(--primary-foreground-color);
@@ -62,12 +66,12 @@
         justify-content: center;
         align-items: flex-start;
         flex-direction: column;
-        gap: 1.5rem;
+        .tv-flex-gap(1.5rem, 1.5rem, column);
         background-color: var(--modal-background-color);
         border-radius: var(--border-radius);
         
         .label {
-            font-size: 0.9rem;
+            font-size: if(@webos = true, 22px, 0.9rem);
             color: var(--primary-foreground-color);
         }
 
@@ -81,7 +85,7 @@
             .search-history-clear {
                 cursor: pointer;
                 color: var(--primary-foreground-color);
-                font-size: 0.9rem;
+                font-size: if(@webos = true, 22px, 0.9rem);
 
                 &:hover {
                     opacity: 0.6;
@@ -115,3 +119,5 @@
         }
     }
 }
+
+.search-bar-container .menu-container .title .search-history-clear { .tv-focus(); }

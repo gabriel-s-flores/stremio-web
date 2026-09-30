@@ -1,0 +1,34 @@
+{
+  "date": "2026-09-09T17:27:18.186Z",
+  "commit": "4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8",
+  "dirtyCheckout": true,
+  "bridgeSelectionPassed": true,
+  "hostedPlaybackObserved": true,
+  "packagedFullAppValidated": false,
+  "streamingServerPlaybackValidated": false,
+  "errorAttribution": {
+    "hosted": [
+      "Service Worker registration catch",
+      "Google Cast init-error catch",
+      "Published tracksData.js fetches loopback port 11470; catches failure and calls cb(false)"
+    ],
+    "navigation": "Existing useMediaSession.ts cleanup calls setActionHandler without a mediaSession guard",
+    "packagedFixture": "HTTP media fixture does not implement streaming-server probe/hash APIs; 404s are not full streaming-server validation"
+  },
+  "limitations": [
+    "Full packaged app WASM file:// bootstrap remains outside scope",
+    "Physical TV not tested",
+    "No real remote streaming server configured; selector branch proven with HTTP fixture only"
+  ],
+  "hashes": {
+    "src/common/Platform/videoPlatform.js": "e5ae26bdb67e0ac48b51569cd634d682b926d5e03ff03df70f09e7214289a3e2",
+    "src/routes/Player/Player.js": "54cbaef8eae40d9e893222380845bdfcc1e6a42eefc075d414299716fbe26698",
+    "src/routes/Player/useVideo.js": "3803152243610aa48082bca67f4af3b4c1a7661082c4d0c4ab1af603ddd03210",
+    "tests/videoPlatform.spec.js": "f8d40831ba294e6f06204ec9da436b512400bbd7847b0b6991e7ed1944e263cd",
+    "node_modules/@stremio/stremio-video/package.json": "2c07f4e9949961bf52361b84af9105b13e6db132c170fe1ce2b749d06ac02a8d",
+    "node_modules/@stremio/stremio-video/src/StremioVideo/selectVideoImplementation.js": "898436aeb821744d5861782cb2e9d8e15f44729743b0c876a9cc9cfbbe93e431",
+    "node_modules/@stremio/stremio-video/src/WebOsVideo/WebOsVideo.js": "06affab1de1a16f717623607df608ef6671c92b48f9b94508c773f3c40399633",
+    "node_modules/@stremio/stremio-video/src/tracksData.js": "d6bcdaf785b90f3c3afdcca01f9718c632e794a0f5325f1860774614394b6760",
+    "build/4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8/scripts/main.js": "b698f1dda603bd1b811fe4da6ea85e4993ed2d321d0342aac905ecff305d4433"
+  }
+}

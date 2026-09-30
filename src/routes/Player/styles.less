@@ -47,8 +47,8 @@ html:not(.active-slider-within) {
 
         &.background-layer {
             .image {
-                width: 100vw;
-                height: 100vh;
+                width: if(@webos = true, 1920px, 100vw);
+                height: if(@webos = true, 1080px, 100vh);
                 object-fit: cover;
                 opacity: 0.6;
             }
@@ -91,7 +91,7 @@ html:not(.active-slider-within) {
         &.side-drawer-button-layer {
             position: fixed;
             top: 50%;
-            right: -4rem;
+            right: if(@webos = true, var(--safe-area-inset-right), -4rem);
             left: initial;
             transform: translateY(-50%);
         }
@@ -134,7 +134,9 @@ html:not(.active-slider-within) {
             background-color: var(--modal-background-color);
             box-shadow: 0 1.35rem 2.7rem @color-background-dark5-40,
                 0 1.1rem 0.85rem @color-background-dark5-20;
-            backdrop-filter: blur(15px);
+            @supports (backdrop-filter: blur(1px)) {
+                backdrop-filter: blur(15px);
+            }
             overflow: auto;
         }
 

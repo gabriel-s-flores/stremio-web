@@ -17,7 +17,7 @@ const PasswordResetModal = ({ email, onCloseRequest }) => {
     const emailRef = React.useRef(null);
     const goToPasswordReset = React.useCallback(() => {
         emailRef.current.value.length > 0 && emailRef.current.validity.valid ?
-            platform.openExternal('https://www.strem.io/reset-password/' + emailRef.current.value, '_blank')
+            platform.openExternal('https://www.strem.io/reset-password/' + emailRef.current.value)
             :
             setError(t('INVALID_EMAIL'));
     }, []);

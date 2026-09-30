@@ -1,0 +1,174 @@
+{
+  "date": "2026-09-06T19:14:21.480Z",
+  "target": {
+    "cdp": "http://127.0.0.1:9998",
+    "route": "#/metadetails",
+    "runs": 1,
+    "reload": true
+  },
+  "results": [
+    {
+      "run": 1,
+      "route": "#/metadetails",
+      "artifacts": {
+        "commitHash": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+        "mainBytes": 9344206,
+        "cssBytes": 290286
+      },
+      "ui": {
+        "path": "/metadetails",
+        "appChildren": 6,
+        "hasIntroControls": false,
+        "hasBoard": false,
+        "focusableCount": 1,
+        "hasRawTranslationKey": false,
+        "queueMicrotaskAvailable": true,
+        "objectFreezeAvailable": true
+      },
+      "queueMicrotask": {
+        "available": true,
+        "order": [
+          "microtask",
+          "timer"
+        ],
+        "correctOrder": true
+      },
+      "deepFreeze": {
+        "objectFreezeAvailable": true,
+        "shallowFreezeLeavesNestedMutable": true,
+        "playerDeepFreezeExercised": false
+      },
+      "snapshot": {
+        "environment": {
+          "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+          "protocol": "http:",
+          "viewport": {
+            "width": 1920,
+            "height": 1080,
+            "devicePixelRatio": 0
+          },
+          "version": "5.0.0-beta.39",
+          "commit": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+          "performanceMemoryAvailable": true
+        },
+        "marks": {
+          "entry": 687.2000000003027,
+          "i18n-resources-start": 835.3000000006432,
+          "i18n-resources-ready": 964.2999999996391,
+          "i18n-init-start": 964.3999999989319,
+          "i18n-ready": 967.6999999992404,
+          "i18n-init-called": 967.6999999992404,
+          "app-render": 3529.5999999998457,
+          "core-ready": 3529.5999999998457
+        },
+        "paints": {
+          "first-paint": 78.10000000063155
+        },
+        "navigation": {
+          "navigationStart": 1788722056008,
+          "domInteractive": 1054,
+          "domContentLoaded": 1054,
+          "load": 1067
+        },
+        "memory": {
+          "current": {
+            "usedJSHeapSize": 17100000,
+            "totalJSHeapSize": 19300000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 3597.799999999552
+          },
+          "peak": {
+            "usedJSHeapSize": 17100000,
+            "totalJSHeapSize": 19300000,
+            "jsHeapSizeLimit": 286000000,
+            "sampledAt": 687.2999999995955
+          }
+        },
+        "fps": {
+          "running": false,
+          "durationMs": 0,
+          "frames": 0,
+          "averageFps": null,
+          "p95FrameMs": null,
+          "scrollEvents": 0
+        }
+      },
+      "console": [
+        {
+          "type": "error",
+          "message": "SW registration failed:  DOMException: Only secure origins are allowed (see: <url>"
+        },
+        {
+          "type": "error",
+          "message": "Error: window.cast api not available\n    at E (<url>\n    at Promise (<url>\n    at new Promise (<anonymous>)\n    at new e.exports (<url>\n    at e.exports.start (<url>\n    at a.useEffect (<url>\n    at tn (<url>\n    at LS (<url>\n    at rS (<url>\n    at Hi (<url>"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : true"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires webOSMouse event : Leave"
+        },
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires keyboardStateChange event : false"
+        },
+        {
+          "type": "log",
+          "message": "[WAM] fires webOSMouse event : Enter"
+        },
+        {
+          "type": "warning",
+          "message": "The Web Audio autoplay policy will be re-enabled in Chrome 70 (October 2018). Please check that your website is compatible with it. <url>"
+        },
+        {
+          "type": "error",
+          "message": "SW registration failed:  DOMException: Only secure origins are allowed (see: <url>"
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "info",
+          "message": "%cERROR%c stremio-core-web/src/env.rs:318%c \"Failed to fetch\"\n Method: GET Url: <url> "
+        },
+        {
+          "type": "error",
+          "message": "Error: window.cast api not available\n    at E (<url>\n    at Promise (<url>\n    at new Promise (<anonymous>)\n    at new e.exports (<url>\n    at e.exports.start (<url>\n    at a.useEffect (<url>\n    at tn (<url>\n    at LS (<url>\n    at rS (<url>\n    at Hi (<url>"
+        }
+      ],
+      "networkErrors": [],
+      "unexpectedErrors": []
+    }
+  ]
+}

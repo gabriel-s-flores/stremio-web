@@ -1,0 +1,16 @@
+{
+  "mode": "hosted",
+  "date": "2026-09-12T15:45:39.230Z",
+  "appleScripts": [],
+  "sources": [
+    "src/common/FileDrop/FileDrop.tsx",
+    "src/common/Discord/Discord.tsx",
+    "src/App/UpdaterBanner/UpdaterBanner.tsx",
+    "src/routes/Settings/Settings.tsx",
+    "src/routes/Settings/Menu/Menu.tsx",
+    "src/routes/Settings/Interface/Interface.tsx",
+    "src/routes/Settings/Player/Player.tsx"
+  ],
+  "mainSha256": "47cf15b087d1088d27bce919c4fcebefed25e190930ecc59720bc6ae6ffc6f88",
+  "passed": true
+}

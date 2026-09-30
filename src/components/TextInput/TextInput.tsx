@@ -16,10 +16,11 @@ const TextInput = forwardRef<HTMLInputElement, Props>((props, ref) => {
     const onKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
         props.onKeyDown && props.onKeyDown(event);
 
-        if (event.key === 'Enter' ) {
+        if (event.key === 'Enter' && !(process.env.WEBOS && (event.repeat || props.disabled || event.defaultPrevented))) {
+            if (process.env.WEBOS && props.onSubmit) event.preventDefault();
             props.onSubmit && props.onSubmit(event);
         }
-    }, [props.onKeyDown, props.onSubmit]);
+    }, [props.onKeyDown, props.onSubmit, props.disabled]);
 
     return (
         <input
@@ -30,6 +31,7 @@ const TextInput = forwardRef<HTMLInputElement, Props>((props, ref) => {
             spellCheck={false}
             tabIndex={0}
             {...props}
+            {...(process.env.WEBOS ? { tabIndex: props.disabled || props.type === 'hidden' ? -1 : 0 } : {})}
             ref={ref}
             className={classnames(props.className, styles['text-input'], { 'disabled': props.disabled })}
             onKeyDown={onKeyDown}

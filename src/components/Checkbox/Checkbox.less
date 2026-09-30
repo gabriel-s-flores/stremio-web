@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2025 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/tv-focus.less';
 
 .checkbox {
     display: flex;
@@ -81,4 +82,8 @@
             outline-style: solid;
         }
     }
+}
+
+.checkbox .checkbox-container:focus, .checkbox .checkbox-container:focus-within {
+    .tv-focus-ring();
 }

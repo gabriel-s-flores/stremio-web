@@ -1,0 +1,29 @@
+$ jest "--runInBand"
+PASS tests/webosCssPipeline.spec.js
+PASS tests/webosTranspilation.spec.js
+PASS tests/webosServiceWorker.spec.js
+PASS tests/videoPlatform.spec.js
+PASS tests/webosCssFocus.spec.js
+PASS tests/i18nScan.test.js
+PASS tests/webosLayout1080.spec.js
+PASS tests/webosCssSafeAreas.spec.js
+PASS tests/webosCssGap.spec.js
+PASS tests/webosCssBackdrop.spec.js
+PASS tests/webosStorage.spec.js
+PASS tests/platformPlayers.spec.js
+PASS tests/webosCssResidual.spec.js
+PASS tests/platformDevice.spec.js
+PASS tests/webosLifecycle.spec.js
+PASS tests/webosCssAspectRatio.spec.js
+PASS tests/webosPlatform.spec.js
+PASS tests/copyright.spec.js
+PASS tests/routesRegexp.spec.js
+PASS tests/webosApiGuards.spec.js
+PASS tests/webosDiagnostics.spec.js
+PASS tests/httpServer.spec.js
+
+Test Suites: 22 passed, 22 total
+Tests:       505 passed, 505 total
+Snapshots:   0 total
+Time:        19.339 s, estimated 38 s
+Ran all test suites.

@@ -1,0 +1,104 @@
+{
+  "mode": "desktop",
+  "scrollAlignment": "center",
+  "url": "http://127.0.0.1:8091/focus-fixture/#/debug/focus",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "samples": [
+    {
+      "index": 0,
+      "control": "button.option-container-iHl6R",
+      "surface": "button.option-container-iHl6R",
+      "text": "First action",
+      "focused": true,
+      "immediateRing": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "0px"
+      },
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 45,
+        "y": 656.75,
+        "width": 149.765625,
+        "height": 49
+      },
+      "after": {
+        "x": 45,
+        "y": 656.75,
+        "width": 149.765625,
+        "height": 49
+      },
+      "surfaceGeometry": {
+        "x": 45,
+        "y": 656.75,
+        "width": 149.765625,
+        "height": 49
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 1,
+      "control": "button.option-container-iHl6R",
+      "surface": "button.option-container-iHl6R",
+      "text": "Second action",
+      "focused": true,
+      "immediateRing": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "0px"
+      },
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 45,
+        "y": 705.75,
+        "width": 149.765625,
+        "height": 49
+      },
+      "after": {
+        "x": 45,
+        "y": 705.75,
+        "width": 149.765625,
+        "height": 49
+      },
+      "surfaceGeometry": {
+        "x": 45,
+        "y": 705.75,
+        "width": 149.765625,
+        "height": 49
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "0px"
+      }
+    }
+  ],
+  "skipped": [],
+  "failures": []
+}

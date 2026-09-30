@@ -1,0 +1,49 @@
+{
+  "task": "T2.2",
+  "kind": "Summary of observed computed styles, not a full CDP transcript",
+  "commit": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+  "worktreeDirty": true,
+  "probe": "tools/t22-backdrop-probe.js",
+  "desktop": {
+    "engine": "Chrome 152",
+    "viewport": [1898, 888],
+    "support": true,
+    "prefixedSupport": false,
+    "surfaces": 8,
+    "matchedFixtures": 9,
+    "screenshot": "tests/webos/t22-desktop-surfaces.png"
+  },
+  "webos": {
+    "engine": "Chrome 68.0.3440.106 / WebAppManager",
+    "mode": "hosted HTTP LAN",
+    "target": "A284055721F5F464F53C4830F345DBB6",
+    "viewport": [1920, 1080],
+    "support": false,
+    "prefixedSupport": false,
+    "surfaces": 8,
+    "matchedFixtures": 9,
+    "screenshot": "tests/webos/t22-webos-surfaces.png"
+  },
+  "surfaces": [
+    { "name": "EventModal", "webosBackground": "rgba(12, 11, 17, 0.95)", "desktopBackground": "rgba(0, 0, 0, 0.4)", "desktopBlur": "10px" },
+    { "name": "ActionsGroup", "webosBackground": "rgba(12, 11, 17, 0.95)", "desktopBackground": "rgba(255, 255, 255, 0.05)", "desktopBlur": "5px" },
+    { "name": "ActionButton", "webosBackground": "rgba(12, 11, 17, 0.95)", "desktopBackground": "rgba(255, 255, 255, 0.05)", "desktopBlur": "5px" },
+    { "name": "MetaLinks", "webosBackground": "rgb(12, 11, 17)", "desktopBackground": "rgba(255, 255, 255, 0.05)", "desktopBlur": "5px" },
+    { "name": "ToastItem", "webosBackground": "rgb(15, 13, 32)", "desktopBackground": "rgb(15, 13, 32)", "desktopBlur": "10px" },
+    { "name": "MetaDetails streams and videos", "webosBackground": "rgba(12, 11, 17, 0.95)", "desktopBackground": "rgba(0, 0, 0, 0.4)", "desktopBlur": "15px" },
+    { "name": "SideDrawer", "webosBackground": "rgb(15, 13, 32)", "desktopBackground": "rgb(15, 13, 32)", "desktopBlur": "15px" },
+    { "name": "Player menu", "webosBackground": "rgb(15, 13, 32)", "desktopBackground": "rgb(15, 13, 32)", "desktopBlur": "15px" }
+  ],
+  "focus": {
+    "actionButton": { "waitMs": 220, "webosBackground": "rgba(12, 11, 17, 0.95)", "desktopBackground": "transparent", "outline": "2px solid rgba(255, 255, 255, 0.9)" },
+    "metaLinks": { "waitMs": 120, "webosBackground": "rgb(45, 44, 50)", "desktopBackground": "rgba(255, 255, 255, 0.3)", "border": "2px solid rgb(255, 255, 255)" }
+  },
+  "limitations": [
+    "Surface gallery uses compiled CSS on temporary DOM fixtures, not React components.",
+    "EventModal and Toast were covered by CSS fixtures, not live core events.",
+    "Player integration uses existing debug fixture, not video playback.",
+    "MetaDetails movie showed an empty streams panel; videos covered by CSS fixture.",
+    "Board smoke passed but screenshot showed background and streaming-server warning without catalog; visual regression remains open.",
+    "No real TV, packaged cold boot, performance measurement or full desktop/mobile regression."
+  ]
+}

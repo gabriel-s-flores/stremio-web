@@ -1,0 +1,23 @@
+.clipboard-fallback {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 10;
+    color: var(--primary-foreground-color);
+    > div {
+        width: 70rem;
+        max-width: 80%;
+    }
+    .value {
+        width: 100%;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        user-select: text;
+        color: var(--primary-foreground-color);
+        background-color: var(--primary-background-color);
+        border: 1px solid var(--primary-accent-color);
+        font-size: 1.4rem;
+    }
+}

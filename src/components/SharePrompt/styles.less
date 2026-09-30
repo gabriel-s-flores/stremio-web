@@ -1,6 +1,8 @@
+@import (reference) '~stremio/common/screen-sizes.less';
 // Copyright (C) 2017-2023 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/tv-focus.less';
 
 .share-prompt-container {
     .buttons-container {
@@ -58,7 +60,7 @@
             flex: 1;
             align-self: stretch;
             padding: 1rem;
-            font-size: 1.1rem;
+            font-size: if(@webos = true, 22px, 1.1rem);
             text-align: center;
             color: var(--primary-foreground-color);
         }
@@ -97,9 +99,16 @@
                 flex-shrink: 1;
                 flex-basis: auto;
                 max-height: 2.4em;
-                font-size: 1.1rem;
+                font-size: if(@webos = true, 22px, 1.1rem);
                 color: var(--primary-foreground-color);
             }
         }
     }
+}
+// Keep the TV cursor visible through local hover/selected overrides.
+.share-prompt-container .buttons-container .facebook-button,
+.share-prompt-container .buttons-container .x-button,
+.share-prompt-container .buttons-container .reddit-button,
+.share-prompt-container .url-container .copy-button {
+    .tv-focus();
 }

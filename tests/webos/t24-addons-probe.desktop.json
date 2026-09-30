@@ -1,0 +1,191 @@
+{
+  "date": "2026-09-07T03:08:16.385Z",
+  "mode": "desktop",
+  "url": "http://127.0.0.1:8091/#/addons",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+  "viewport": [
+    1920,
+    1080
+  ],
+  "rootFontSize": "15px",
+  "standalone": false,
+  "support": {
+    "env": true,
+    "min": true,
+    "max": true,
+    "clamp": true
+  },
+  "insets": {
+    "top": "0px",
+    "right": "0px",
+    "bottom": "0px",
+    "left": "0px"
+  },
+  "rootDeclarations": {
+    "top": [
+      {
+        "value": "env(safe-area-inset-top,0rem)",
+        "conditions": []
+      }
+    ],
+    "right": [
+      {
+        "value": "env(safe-area-inset-right,0rem)",
+        "conditions": []
+      }
+    ],
+    "bottom": [
+      {
+        "value": "env(safe-area-inset-bottom,0rem)",
+        "conditions": []
+      },
+      {
+        "value": "min(env(safe-area-inset-bottom,0rem),max(1rem,calc(var(--viewport-height-diff) - env(safe-area-inset-top, 0rem))))",
+        "conditions": [
+          "(display-mode: standalone)"
+        ]
+      }
+    ],
+    "left": [
+      {
+        "value": "env(safe-area-inset-left,0rem)",
+        "conditions": []
+      }
+    ]
+  },
+  "stylesheetSources": [
+    {
+      "url": "http://127.0.0.1:8091/c481b4ee6204120b7f96df01bbbbe5eb28c82c31/styles/main.css",
+      "bytes": 279433,
+      "functions": [
+        "min(",
+        "min(",
+        "max(",
+        "max(",
+        "max(",
+        "env(",
+        "env(",
+        "env(",
+        "env(",
+        "min(",
+        "env(",
+        "max(",
+        "env(",
+        "max(",
+        "max(",
+        "max(",
+        "max("
+      ]
+    },
+    {
+      "url": "inline",
+      "bytes": 3231,
+      "functions": []
+    }
+  ],
+  "functionCount": 17,
+  "inaccessibleSheets": [],
+  "routeSurfaces": [
+    {
+      "name": "addons-container",
+      "selector": ".addons-container-ogGYu",
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080,
+        "computedWidth": "1920px",
+        "computedHeight": "1080px",
+        "marginLeft": "0px",
+        "paddingLeft": "0px",
+        "maxWidth": "none",
+        "maxHeight": "none"
+      },
+      "declaredHeight": "calc(100% - var(--safe-area-inset-bottom))",
+      "declaredWidth": ""
+    },
+    {
+      "name": "main-nav-bars-container",
+      "selector": ".main-nav-bars-container-wNjS5",
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080,
+        "computedWidth": "1920px",
+        "computedHeight": "1080px",
+        "marginLeft": "0px",
+        "paddingLeft": "0px",
+        "maxWidth": "none",
+        "maxHeight": "none"
+      },
+      "declaredHeight": "100%",
+      "declaredWidth": "calc(100% - var(--safe-area-inset-left) - var(--safe-area-inset-right))"
+    }
+  ],
+  "samples": [
+    {
+      "name": "HorizontalNavBar back button",
+      "selector": ".horizontal-nav-bar-container-Y_zvK .back-button-container-lDB1N",
+      "property": "margin-left",
+      "expected": "15px",
+      "computed": "15px",
+      "fixture": {
+        "x": 1445,
+        "y": 172,
+        "width": 90,
+        "height": 45,
+        "computedWidth": "90px",
+        "computedHeight": "45px",
+        "marginLeft": "15px",
+        "paddingLeft": "0px",
+        "maxWidth": "none",
+        "maxHeight": "none"
+      },
+      "actualElements": []
+    },
+    {
+      "name": "MetaDetails preview",
+      "selector": ".metadetails-container-K_Dqa .metadetails-content-Uz5EV .meta-preview-ES0h3",
+      "property": "padding-left",
+      "expected": "60px",
+      "computed": "60px",
+      "fixture": {
+        "x": 1430,
+        "y": 251,
+        "width": 360,
+        "height": 120,
+        "computedWidth": "360px",
+        "computedHeight": "120px",
+        "marginLeft": "0px",
+        "paddingLeft": "60px",
+        "maxWidth": "none",
+        "maxHeight": "none"
+      },
+      "actualElements": []
+    },
+    {
+      "name": "ActionMenu",
+      "selector": ".menu-container-EUaqA",
+      "property": "max-width",
+      "expected": "210px",
+      "computed": "210px",
+      "fixture": {
+        "x": 1430,
+        "y": 405,
+        "width": 210,
+        "height": 315,
+        "computedWidth": "210px",
+        "computedHeight": "315px",
+        "marginLeft": "0px",
+        "paddingLeft": "0px",
+        "maxWidth": "210px",
+        "maxHeight": "315px"
+      },
+      "actualElements": []
+    }
+  ],
+  "failures": [],
+  "limits": "Route surfaces and actualElements are real DOM; samples.fixture is a CSS fixture, not React integration. Overscan=0; no physical TV or cold packaged validation."
+}
+

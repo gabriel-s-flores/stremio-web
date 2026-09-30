@@ -1,0 +1,15 @@
+{
+  "head": "4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8",
+  "files": {
+    "src/common/Platform/device.ts": "a31b95df7d986b74318013094276280b6465a26ae0be4aab28d9958983ae0ee2",
+    "src/common/CONSTANTS.js": "b39b0c09d36d11e60b41545708eb879455e8f4a4aa131496c0d78eb11613fb9b",
+    "src/routes/Settings/Player/usePlayerOptions.ts": "07d7e12d15a1fc4dd4458e4b4faa6e1bfc600a41d7169e5423eeda331eef477b",
+    "src/routes/MetaDetails/StreamsList/Stream/Stream.js": "9dc65c73b503a4db311b028133ae333364d859ab616d869febcac7bc9c552a24",
+    "src/webos/diagnostics/DebugPage.tsx": "24efdc4a77144726d72e5bdf7d0672019e1977f7505157e801e74c38927697cd",
+    "tests/platformDevice.spec.js": "384af0c239b910d132a2d60a250ba6896e890d871ed5a6240f7db1c0cb1eac90",
+    "tests/platformPlayers.spec.js": "fe8d7d26293af4b5841b9abaaf183edb9dab6db694dc4274a8ca00cd6bf8efd9",
+    "scripts/verify-platform-viewport.mjs": "628053e89e7f2849a2a993449c722753bb25601a8fef27e4ec5b2bd947e8e210",
+    "tools/t31-platform-smoke.mjs": "70446326d56d5328f595155b4fff003d0f6ab8f6fc0899c7415a272d5df8fe89"
+  },
+  "debugMainSha256": "e711b9f8c6f74fe99f760124125efef32c8e2303452d7e71b176dd40717aadbd"
+}

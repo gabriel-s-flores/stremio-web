@@ -33,7 +33,7 @@
 
         .label {
             flex: none;
-            font-size: 1.4rem;
+            font-size: if(@webos = true, 22px, 1.4rem);
             text-align: center;
             color: var(--primary-foreground-color);
         }
@@ -45,7 +45,7 @@
         flex-direction: row;
         align-items: center;
         justify-content: flex-start;
-        gap: 1rem;
+        .tv-flex-gap(1rem, 1rem, row);
         padding: 1.15rem 1.5rem 0.65rem;
         color: @color-surface-light5-90;
     }

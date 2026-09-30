@@ -1,0 +1,16 @@
+{
+  "mode": "packaged",
+  "date": "2026-09-12T15:46:16.775Z",
+  "appleScripts": [],
+  "sources": [
+    "src/common/FileDrop/FileDrop.tsx",
+    "src/common/Discord/Discord.tsx",
+    "src/App/UpdaterBanner/UpdaterBanner.tsx",
+    "src/routes/Settings/Settings.tsx",
+    "src/routes/Settings/Menu/Menu.tsx",
+    "src/routes/Settings/Interface/Interface.tsx",
+    "src/routes/Settings/Player/Player.tsx"
+  ],
+  "mainSha256": "5638bd36017d2f3684453d272782580e363eab22f9e5f4fcbf7c4a554615bb0b",
+  "passed": true
+}

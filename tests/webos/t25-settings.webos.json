@@ -1,0 +1,1769 @@
+{
+  "mode": "webos",
+  "scrollAlignment": "center",
+  "url": "http://10.0.2.2:8090/#/settings",
+  "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "samples": [
+    {
+      "index": 0,
+      "control": "div.submit-button-container-MImNa.button-container-zVLH6",
+      "surface": "div.submit-button-container-MImNa.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 1125.75,
+        "y": 16.875,
+        "width": 70.5,
+        "height": 48.75
+      },
+      "after": {
+        "x": 1125.75,
+        "y": 16.875,
+        "width": 70.5,
+        "height": 48.75
+      },
+      "surfaceGeometry": {
+        "x": 1125.75,
+        "y": 16.875,
+        "width": 70.5,
+        "height": 48.75
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 1,
+      "control": "div.label-container-XOyzm.nav-menu-popup-label-XmUBo.button-container-xT9_L.menu-button-container-DtW4v.button-container-zVLH6",
+      "surface": "div.label-container-XOyzm.nav-menu-popup-label-XmUBo.button-container-xT9_L.menu-button-container-DtW4v.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 1852.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1852.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1852.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 2,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Board",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 9,
+        "y": 97.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 97.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 97.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 3,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Discover",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 9,
+        "y": 184.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 184.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 184.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 4,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Library",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 9,
+        "y": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 5,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Calendar",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 9,
+        "y": 358.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 358.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 358.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 6,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Addons",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 9,
+        "y": 445.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 445.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 445.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 7,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0.selected",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0.selected",
+      "text": "Settings",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 9,
+        "y": 532.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 532.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 532.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 8,
+      "control": "div.button-DNmYL.selected-S7SeK.button-container-zVLH6",
+      "surface": "div.button-DNmYL.selected-S7SeK.button-container-zVLH6",
+      "text": "General",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 127.5,
+        "width": 225,
+        "height": 60
+      },
+      "after": {
+        "x": 112.5,
+        "y": 127.5,
+        "width": 225,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 127.5,
+        "width": 225,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 9,
+      "control": "div.button-DNmYL.button-container-zVLH6",
+      "surface": "div.button-DNmYL.button-container-zVLH6",
+      "text": "Interface",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 195,
+        "width": 225,
+        "height": 60
+      },
+      "after": {
+        "x": 112.5,
+        "y": 195,
+        "width": 225,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 195,
+        "width": 225,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 10,
+      "control": "div.button-DNmYL.button-container-zVLH6",
+      "surface": "div.button-DNmYL.button-container-zVLH6",
+      "text": "Player",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 262.5,
+        "width": 225,
+        "height": 60
+      },
+      "after": {
+        "x": 112.5,
+        "y": 262.5,
+        "width": 225,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 262.5,
+        "width": 225,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 11,
+      "control": "div.button-DNmYL.button-container-zVLH6",
+      "surface": "div.button-DNmYL.button-container-zVLH6",
+      "text": "Streaming",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 330,
+        "width": 225,
+        "height": 60
+      },
+      "after": {
+        "x": 112.5,
+        "y": 330,
+        "width": 225,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 330,
+        "width": 225,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 12,
+      "control": "div.button-DNmYL.button-container-zVLH6",
+      "surface": "div.button-DNmYL.button-container-zVLH6",
+      "text": "Shortcuts",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 397.5,
+        "width": 225,
+        "height": 60
+      },
+      "after": {
+        "x": 112.5,
+        "y": 397.5,
+        "width": 225,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 397.5,
+        "width": 225,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 13,
+      "control": "a.link-FrL1t.button-container-zVLH6",
+      "surface": "a.link-FrL1t.button-container-zVLH6",
+      "text": "Log in / Sign up",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 495,
+        "y": 160.5,
+        "width": 106.640625,
+        "height": 30
+      },
+      "after": {
+        "x": 495,
+        "y": 160.5,
+        "width": 106.640625,
+        "height": 30
+      },
+      "surfaceGeometry": {
+        "x": 495,
+        "y": 160.5,
+        "width": 106.640625,
+        "height": 30
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 14,
+      "control": "a.link-FrL1t.button-container-zVLH6",
+      "surface": "a.link-FrL1t.button-container-zVLH6",
+      "text": "Contact support",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 405,
+        "y": 293.5,
+        "width": 118.5625,
+        "height": 30
+      },
+      "after": {
+        "x": 405,
+        "y": 293.5,
+        "width": 118.5625,
+        "height": 30
+      },
+      "surfaceGeometry": {
+        "x": 405,
+        "y": 293.5,
+        "width": 118.5625,
+        "height": 30
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 15,
+      "control": "a.link-FrL1t.button-container-zVLH6",
+      "surface": "a.link-FrL1t.button-container-zVLH6",
+      "text": "Source code",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 405,
+        "y": 323.5,
+        "width": 92.015625,
+        "height": 30
+      },
+      "after": {
+        "x": 405,
+        "y": 323.5,
+        "width": 92.015625,
+        "height": 30
+      },
+      "surfaceGeometry": {
+        "x": 405,
+        "y": 323.5,
+        "width": 92.015625,
+        "height": 30
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 16,
+      "control": "a.link-FrL1t.button-container-zVLH6",
+      "surface": "a.link-FrL1t.button-container-zVLH6",
+      "text": "Terms of Service",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 405,
+        "y": 353.5,
+        "width": 116.109375,
+        "height": 30
+      },
+      "after": {
+        "x": 405,
+        "y": 353.5,
+        "width": 116.109375,
+        "height": 30
+      },
+      "surfaceGeometry": {
+        "x": 405,
+        "y": 353.5,
+        "width": 116.109375,
+        "height": 30
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 17,
+      "control": "a.link-FrL1t.button-container-zVLH6",
+      "surface": "a.link-FrL1t.button-container-zVLH6",
+      "text": "Privacy Policy",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 405,
+        "y": 383.5,
+        "width": 96.859375,
+        "height": 30
+      },
+      "after": {
+        "x": 405,
+        "y": 383.5,
+        "width": 96.859375,
+        "height": 30
+      },
+      "surfaceGeometry": {
+        "x": 405,
+        "y": 383.5,
+        "width": 96.859375,
+        "height": 30
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 18,
+      "control": "div.button.button-container-zVLH6.disabled",
+      "surface": "div.button.button-container-zVLH6.disabled",
+      "text": "Authenticate",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 447.25,
+        "width": 247.5,
+        "height": 52.5
+      },
+      "after": {
+        "x": 682.5,
+        "y": 447.25,
+        "width": 247.5,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 447.25,
+        "width": 247.5,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 19,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "English",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "after": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 20,
+      "control": "div.toggle-container-lZfHP.button-container-zVLH6",
+      "surface": "div.toggle-container-lZfHP.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 782.25,
+        "y": 568.5,
+        "width": 48,
+        "height": 25.5
+      },
+      "after": {
+        "x": 782.25,
+        "y": 568.5,
+        "width": 48,
+        "height": 25.5
+      },
+      "surfaceGeometry": {
+        "x": 782.25,
+        "y": 568.5,
+        "width": 48,
+        "height": 25.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 21,
+      "control": "div.toggle-container-lZfHP.button-container-zVLH6",
+      "surface": "div.toggle-container-lZfHP.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 782.25,
+        "y": 568,
+        "width": 48,
+        "height": 25.5
+      },
+      "after": {
+        "x": 782.25,
+        "y": 568,
+        "width": 48,
+        "height": 25.5
+      },
+      "surfaceGeometry": {
+        "x": 782.25,
+        "y": 568,
+        "width": 48,
+        "height": 25.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 22,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "English",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "after": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 23,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "100%",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "after": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 24,
+      "control": "div.color-input.color-input-container-FAQiP.button-container-zVLH6",
+      "surface": "div.color-input.color-input-container-FAQiP.button-container-zVLH6",
+      "text": "#FFFFFFFF",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 559.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "after": {
+        "x": 682.5,
+        "y": 559.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 559.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 25,
+      "control": "div.color-input.color-input-container-FAQiP.button-container-zVLH6",
+      "surface": "div.color-input.color-input-container-FAQiP.button-container-zVLH6",
+      "text": "Transparent",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 559.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "after": {
+        "x": 682.5,
+        "y": 559.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 559.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 26,
+      "control": "div.color-input.color-input-container-FAQiP.button-container-zVLH6",
+      "surface": "div.color-input.color-input-container-FAQiP.button-container-zVLH6",
+      "text": "#000000",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 559.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "after": {
+        "x": 682.5,
+        "y": 559.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 559.5,
+        "width": 247.5,
+        "height": 43
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 27,
+      "control": "div.toggle-container-lZfHP.button-container-zVLH6",
+      "surface": "div.toggle-container-lZfHP.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 782.25,
+        "y": 568.5,
+        "width": 48,
+        "height": 25.5
+      },
+      "after": {
+        "x": 782.25,
+        "y": 568.5,
+        "width": 48,
+        "height": 25.5
+      },
+      "surfaceGeometry": {
+        "x": 782.25,
+        "y": 568.5,
+        "width": 48,
+        "height": 25.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 28,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "English",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 559,
+        "width": 247.5,
+        "height": 45
+      },
+      "after": {
+        "x": 682.5,
+        "y": 559,
+        "width": 247.5,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 559,
+        "width": 247.5,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 29,
+      "control": "div.toggle-container-lZfHP.button-container-zVLH6",
+      "surface": "div.toggle-container-lZfHP.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 782.25,
+        "y": 568,
+        "width": 48,
+        "height": 25.5
+      },
+      "after": {
+        "x": 782.25,
+        "y": 568,
+        "width": 48,
+        "height": 25.5
+      },
+      "surfaceGeometry": {
+        "x": 782.25,
+        "y": 568,
+        "width": 48,
+        "height": 25.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 30,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "10 seconds",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "after": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 31,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "3 seconds",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "after": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 32,
+      "control": "div.toggle-container-lZfHP.checked.button-container-zVLH6.disabled",
+      "surface": "div.toggle-container-lZfHP.checked.button-container-zVLH6.disabled",
+      "text": "",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 782.25,
+        "y": 568.5,
+        "width": 48,
+        "height": 25.5
+      },
+      "after": {
+        "x": 782.25,
+        "y": 568.5,
+        "width": 48,
+        "height": 25.5
+      },
+      "surfaceGeometry": {
+        "x": 782.25,
+        "y": 568.5,
+        "width": 48,
+        "height": 25.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 33,
+      "control": "div.toggle-container-lZfHP.checked.button-container-zVLH6",
+      "surface": "div.toggle-container-lZfHP.checked.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 782.25,
+        "y": 568,
+        "width": 48,
+        "height": 25.5
+      },
+      "after": {
+        "x": 782.25,
+        "y": 568,
+        "width": 48,
+        "height": 25.5
+      },
+      "surfaceGeometry": {
+        "x": 782.25,
+        "y": 568,
+        "width": 48,
+        "height": 25.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 34,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "35 seconds",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "after": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 35,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "Disabled",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "after": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 682.5,
+        "y": 558.5,
+        "width": 247.5,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 36,
+      "control": "div.radio-container-wPddo.selected-M_zHA.disabled-ZzMU9",
+      "surface": "div.radio-container-wPddo.selected-M_zHA.disabled-ZzMU9",
+      "text": "",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 429.5,
+        "y": 568.5,
+        "width": 26.25,
+        "height": 26.25
+      },
+      "after": {
+        "x": 429.5,
+        "y": 568.5,
+        "width": 26.25,
+        "height": 26.25
+      },
+      "surfaceGeometry": {
+        "x": 429.5,
+        "y": 568.5,
+        "width": 26.25,
+        "height": 26.25
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 37,
+      "control": "div.add-url-fEacA.button-container-zVLH6",
+      "surface": "div.add-url-fEacA.button-container-zVLH6",
+      "text": "Add URL",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 405,
+        "y": 561.75,
+        "width": 124.125,
+        "height": 38
+      },
+      "after": {
+        "x": 405,
+        "y": 561.75,
+        "width": 124.125,
+        "height": 38
+      },
+      "surfaceGeometry": {
+        "x": 405,
+        "y": 561.75,
+        "width": 124.125,
+        "height": 38
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 38,
+      "control": "div.reload-OVkwB.button-container-zVLH6",
+      "surface": "div.reload-OVkwB.button-container-zVLH6",
+      "text": "Reload",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 808.25,
+        "y": 561.75,
+        "width": 121.75,
+        "height": 38
+      },
+      "after": {
+        "x": 808.25,
+        "y": 561.75,
+        "width": 121.75,
+        "height": 38
+      },
+      "surfaceGeometry": {
+        "x": 808.25,
+        "y": 561.75,
+        "width": 121.75,
+        "height": 38
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    }
+  ],
+  "skipped": [],
+  "failures": []
+}

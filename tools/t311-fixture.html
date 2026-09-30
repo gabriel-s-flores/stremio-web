@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>T3.11 isolated login fixture</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root { --primary-background-color:#171622; --primary-foreground-color:#fff; --secondary-foreground-color:#151421; --overlay-color:#ffffff20; --primary-accent-color:#a48cff; --tertiary-accent-color:#ff8585; --border-radius:8px; --focus-outline-size:3px; --modal-background-color:#262432; }
+* { box-sizing:border-box; } html,body,#app { height:100%; margin:0; } body { background:#171622; font-family:Arial,sans-serif; color:white; } input,button { font:inherit; } .fixture-modal { position:fixed; inset:10%; padding:30px; background:#262432; overflow:auto; z-index:10; }
+</style>
+<script>
+window.__t311 = { errors:0, rejections:0, consoleErrors:0 };
+window.addEventListener('error', function(){ window.__t311.errors++; }, true);
+window.addEventListener('unhandledrejection', function(){ window.__t311.rejections++; });
+// Never record error objects, input values, URLs, responses or tokens.
+console.error = function(){ window.__t311.consoleErrors++; };
+</script></head><body><div id="app"></div></body></html>

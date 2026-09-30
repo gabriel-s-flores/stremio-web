@@ -1,0 +1,2657 @@
+{
+  "mode": "desktop",
+  "url": "http://127.0.0.1:8091/#/discover",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "samples": [
+    {
+      "index": 0,
+      "control": "div.submit-button-container-MImNa.button-container-zVLH6",
+      "surface": "div.submit-button-container-MImNa.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1095.75,
+        "y": 16.875,
+        "width": 70.5,
+        "height": 48.75
+      },
+      "after": {
+        "x": 1095.75,
+        "y": 16.875,
+        "width": 70.5,
+        "height": 48.75
+      },
+      "surfaceGeometry": {
+        "x": 1095.75,
+        "y": 16.875,
+        "width": 70.5,
+        "height": 48.75
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 1,
+      "control": "div.button-container-xT9_L.button-container-zVLH6",
+      "surface": "div.button-container-xT9_L.button-container-zVLH6",
+      "text": "Enter fullscreen mode",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1792.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1792.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1792.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 2,
+      "control": "div.label-container-XOyzm.nav-menu-popup-label-XmUBo.button-container-xT9_L.menu-button-container-DtW4v.button-container-zVLH6",
+      "surface": "div.label-container-XOyzm.nav-menu-popup-label-XmUBo.button-container-xT9_L.menu-button-container-DtW4v.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1852.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "after": {
+        "x": 1852.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "surfaceGeometry": {
+        "x": 1852.5,
+        "y": 15,
+        "width": 52.5,
+        "height": 52.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 3,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Board",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 97.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 97.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 97.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 4,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0.selected",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0.selected",
+      "text": "Discover",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 184.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 184.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 184.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 5,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Library",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 271.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 6,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Calendar",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 358.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 358.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 358.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 7,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Addons",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 445.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 445.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 445.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 8,
+      "control": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "surface": "a.nav-tab-button-tW6qT.nav-tab-button-container-dYhs0",
+      "text": "Settings",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "1px"
+      },
+      "before": {
+        "x": 9,
+        "y": 532.5,
+        "width": 72,
+        "height": 72
+      },
+      "after": {
+        "x": 9,
+        "y": 532.5,
+        "width": 72,
+        "height": 72
+      },
+      "surfaceGeometry": {
+        "x": 9,
+        "y": 532.5,
+        "width": 72,
+        "height": 72
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 9,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "Movie",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "after": {
+        "x": 112.5,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 10,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "Popular",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 360,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "after": {
+        "x": 360,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 360,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 11,
+      "control": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "surface": "div.multiselect-button-XXdgA.button-container-zVLH6",
+      "text": "Genre",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 607.5,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "after": {
+        "x": 607.5,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "surfaceGeometry": {
+        "x": 607.5,
+        "y": 105,
+        "width": 225,
+        "height": 45
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 12,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Whisper Man",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 127.5,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 127.5,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 127.5,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 13,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Obsession",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 316.78125,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 316.78125,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 316.78125,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 14,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Secret Woman",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 506.0625,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 506.0625,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 506.0625,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 15,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Invite",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 695.34375,
+        "y": 187.5,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 695.34375,
+        "y": 187.5,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 695.34375,
+        "y": 187.5,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 16,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Project Hail Mary",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 884.640625,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 884.640625,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 884.640625,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 17,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Facing El Chapo",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1073.921875,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 1073.921875,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 1073.921875,
+        "y": 187.5,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 18,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Backrooms",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1263.203125,
+        "y": 187.5,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 1263.203125,
+        "y": 187.5,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 1263.203125,
+        "y": 187.5,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 19,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Batman: Knightfall - Part 1: Knightfall",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 127.5,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 127.5,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 127.5,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 20,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Steel Magnolias",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 316.78125,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 316.78125,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 316.78125,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 21,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Clue",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 506.0625,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 506.0625,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 506.0625,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 22,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Disclosure Day",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 695.34375,
+        "y": 507.21875,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 695.34375,
+        "y": 507.21875,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 695.34375,
+        "y": 507.21875,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 23,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Sheep Detectives",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 884.640625,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 884.640625,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 884.640625,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 24,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Rocky Horror Picture Show",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1073.921875,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 1073.921875,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 1073.921875,
+        "y": 507.21875,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 25,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Masters of the Universe",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1263.203125,
+        "y": 507.21875,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 1263.203125,
+        "y": 507.21875,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 1263.203125,
+        "y": 507.21875,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 26,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Avengers: Endgame",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 127.5,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 127.5,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 127.5,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 27,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Normal",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 316.78125,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 316.78125,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 316.78125,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 28,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Michael",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 506.0625,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 506.0625,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 506.0625,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 29,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Muppet Show",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 695.34375,
+        "y": 797.9375,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 695.34375,
+        "y": 797.9375,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 695.34375,
+        "y": 797.9375,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 30,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Practical Magic",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 884.640625,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 884.640625,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 884.640625,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 31,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Don't Say Good Luck",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1073.921875,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 1073.921875,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 1073.921875,
+        "y": 797.9375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 32,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Days of Thunder",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1263.203125,
+        "y": 797.9375,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 1263.203125,
+        "y": 797.9375,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 1263.203125,
+        "y": 797.9375,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 33,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Drama",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 127.5,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 127.5,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 127.5,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 34,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Shawshank Redemption",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 316.78125,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 316.78125,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 316.78125,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 35,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Toy Story 5",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 506.0625,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 506.0625,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 506.0625,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 36,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "In the Grey",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 695.34375,
+        "y": 797.65625,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 695.34375,
+        "y": 797.65625,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 695.34375,
+        "y": 797.65625,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 37,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "X-Men",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 884.640625,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 884.640625,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 884.640625,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 38,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Evil Dead Burn",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1073.921875,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 1073.921875,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 1073.921875,
+        "y": 797.65625,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 39,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Grand Theft Auto VI: An Extended Look",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1263.203125,
+        "y": 797.65625,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 1263.203125,
+        "y": 797.65625,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 1263.203125,
+        "y": 797.65625,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 40,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Housemaid",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 127.5,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 127.5,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 127.5,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 41,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Interstellar",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 316.78125,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 316.78125,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 316.78125,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 42,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Spider-Man: No Way Home",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 506.0625,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 506.0625,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 506.0625,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 43,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Devil Wears Prada 2",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 695.34375,
+        "y": 797.375,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 695.34375,
+        "y": 797.375,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 695.34375,
+        "y": 797.375,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 44,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Colony",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 884.640625,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 884.640625,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 884.640625,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 45,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Bleach: Thousand-Year Blood War - The Calamity",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1073.921875,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 1073.921875,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 1073.921875,
+        "y": 797.375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 46,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Death of Robin Hood",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1263.203125,
+        "y": 797.375,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 1263.203125,
+        "y": 797.375,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 1263.203125,
+        "y": 797.375,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 47,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Pressure",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 127.5,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 127.5,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 127.5,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 48,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Dark Knight",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 316.78125,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 316.78125,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 316.78125,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 49,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Inception",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 506.0625,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 506.0625,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 506.0625,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 50,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "I Want Your Sex",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 695.34375,
+        "y": 798.09375,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 695.34375,
+        "y": 798.09375,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 695.34375,
+        "y": 798.09375,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 51,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Mayday",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 884.640625,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 884.640625,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 884.640625,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 52,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Tuner",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1073.921875,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 1073.921875,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 1073.921875,
+        "y": 798.09375,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 53,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Good Luck, Have Fun, Don't Die",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1263.203125,
+        "y": 798.09375,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 1263.203125,
+        "y": 798.09375,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 1263.203125,
+        "y": 798.09375,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 54,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "The Prestige",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 127.5,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 127.5,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 127.5,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 55,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Legend",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 316.78125,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 316.78125,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 316.78125,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 56,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Hokum",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 506.0625,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 506.0625,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 506.0625,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 57,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Oppenheimer",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 695.34375,
+        "y": 797.8125,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 695.34375,
+        "y": 797.8125,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 695.34375,
+        "y": 797.8125,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 58,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "I Swear",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 884.640625,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 884.640625,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 884.640625,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 59,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Avatar Aang: The Last Airbender",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1073.921875,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 1073.921875,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 1073.921875,
+        "y": 797.8125,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 60,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Spider-Man: Homecoming",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 1263.203125,
+        "y": 797.8125,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "after": {
+        "x": 1263.203125,
+        "y": 797.8125,
+        "width": 151.796875,
+        "height": 282.21875
+      },
+      "surfaceGeometry": {
+        "x": 1263.203125,
+        "y": 797.8125,
+        "width": 151.796875,
+        "height": 222.21875
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 61,
+      "control": "a.meta-item-link-veMqr.button-container-zVLH6",
+      "surface": "div.poster-container-qkw48",
+      "text": "Shelter",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      },
+      "before": {
+        "x": 127.5,
+        "y": 797.53125,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "after": {
+        "x": 127.5,
+        "y": 797.53125,
+        "width": 151.78125,
+        "height": 282.203125
+      },
+      "surfaceGeometry": {
+        "x": 127.5,
+        "y": 797.53125,
+        "width": 151.78125,
+        "height": 222.203125
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 62,
+      "control": "a.link-container-gHxPW.button-container-zVLH6",
+      "surface": "a.link-container-gHxPW.button-container-zVLH6",
+      "text": "Action",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1522.5,
+        "y": 502.25,
+        "width": 88.34375,
+        "height": 35
+      },
+      "after": {
+        "x": 1522.5,
+        "y": 502.25,
+        "width": 88.34375,
+        "height": 35
+      },
+      "surfaceGeometry": {
+        "x": 1522.5,
+        "y": 502.25,
+        "width": 88.34375,
+        "height": 35
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 69,
+      "control": "a.action-button-XIZa3.action-button-container-sVyRr.button-container-zVLH6",
+      "surface": "a.action-button-XIZa3.action-button-container-sVyRr.button-container-zVLH6",
+      "text": "",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1522.5,
+        "y": 975,
+        "width": 60,
+        "height": 60
+      },
+      "after": {
+        "x": 1522.5,
+        "y": 975,
+        "width": 60,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 1522.5,
+        "y": 975,
+        "width": 60,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 70,
+      "control": "div.icon-container-Vs4TN",
+      "surface": "div.icon-container-Vs4TN",
+      "text": "",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1598.65625,
+        "y": 975,
+        "width": 60,
+        "height": 60
+      },
+      "after": {
+        "x": 1598.65625,
+        "y": 975,
+        "width": 60,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 1598.65625,
+        "y": 975,
+        "width": 60,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 0)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 71,
+      "control": "div.icon-container-Vs4TN",
+      "surface": "div.icon-container-Vs4TN",
+      "text": "",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1658.65625,
+        "y": 975,
+        "width": 60,
+        "height": 60
+      },
+      "after": {
+        "x": 1658.65625,
+        "y": 975,
+        "width": 60,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 1658.65625,
+        "y": 975,
+        "width": 60,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 0)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 72,
+      "control": "a.action-button-XIZa3.show-button-_yuOF.action-button-container-sVyRr.wide.button-container-zVLH6",
+      "surface": "a.action-button-XIZa3.show-button-_yuOF.action-button-container-sVyRr.wide.button-container-zVLH6",
+      "text": "Show",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgb(0, 0, 238)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 1734.796875,
+        "y": 975,
+        "width": 147.703125,
+        "height": 60
+      },
+      "after": {
+        "x": 1734.796875,
+        "y": 975,
+        "width": 147.703125,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 1734.796875,
+        "y": 975,
+        "width": 147.703125,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    }
+  ],
+  "skipped": [
+    {
+      "index": 63,
+      "control": "a.link-container-gHxPW.button-container-zVLH6",
+      "reason": "Unmounted during dynamic route update"
+    },
+    {
+      "index": 64,
+      "control": "a.link-container-gHxPW.button-container-zVLH6",
+      "reason": "Unmounted during dynamic route update"
+    },
+    {
+      "index": 65,
+      "control": "a.link-container-gHxPW.button-container-zVLH6",
+      "reason": "Unmounted during dynamic route update"
+    },
+    {
+      "index": 66,
+      "control": "a.link-container-gHxPW.button-container-zVLH6",
+      "reason": "Unmounted during dynamic route update"
+    },
+    {
+      "index": 67,
+      "control": "a.link-container-gHxPW.button-container-zVLH6",
+      "reason": "Unmounted during dynamic route update"
+    },
+    {
+      "index": 68,
+      "control": "a.link-container-gHxPW.button-container-zVLH6",
+      "reason": "Unmounted during dynamic route update"
+    }
+  ],
+  "failures": []
+}

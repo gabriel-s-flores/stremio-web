@@ -1,0 +1,9 @@
+
+C:\Users\gabri\Documents\Projects\Stremio\stremio-web\src\common\FileDrop\FileDrop.tsx
+  22:15  error  Unexpected empty method 'on'   @typescript-eslint/no-empty-function
+  23:16  error  Unexpected empty method 'off'  @typescript-eslint/no-empty-function
+
+✖ 2 problems (2 errors, 0 warnings)
+
+[ELIFECYCLE] Command failed with exit code 1.
+$ eslint src

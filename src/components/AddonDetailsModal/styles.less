@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2023 Smart code 203358507
 
 @import (reference) '~@stremio/stremio-colors/less/stremio-colors.less';
+@import (reference) '~stremio/common/tv-focus.less';
 
 .addon-details-modal-container {
     .addon-details-container, .addon-details-message-container {
@@ -39,4 +40,9 @@
             outline-color: var(--primary-foreground-color);
         }
     }
+}
+// Keep the TV cursor visible through local hover/selected overrides.
+.addon-details-modal-container .cancel-button,
+.addon-details-modal-container .uninstall-button {
+    .tv-focus();
 }

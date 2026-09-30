@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import { languages } from 'stremio/common';
 import { Button } from 'stremio/components';
+import FocusLock from 'react-focus-lock';
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
+
 import styles from './AudioMenu.less';
 
 type Props = {
@@ -26,7 +29,7 @@ const AudioMenu = memo(forwardRef<HTMLDivElement, Props>(({ className, selectedA
     };
 
     return (
-        <div ref={ref} className={classNames(className, styles['audio-menu'])} onMouseDown={onMouseDown}>
+        <FocusScope ref={ref} className={classNames(className, styles['audio-menu'])} {...(process.env.WEBOS ? { lockProps: { onMouseDown } } : { onMouseDown })}>
             <div className={styles['container']}>
                 <div className={styles['header']}>
                     { t('AUDIO_TRACKS') }
@@ -60,7 +63,7 @@ const AudioMenu = memo(forwardRef<HTMLDivElement, Props>(({ className, selectedA
                     }
                 </div>
             </div>
-        </div>
+        </FocusScope>
     );
 }));
 

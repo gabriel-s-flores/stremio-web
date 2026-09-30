@@ -210,8 +210,9 @@ const usePlayerOptions = (profile: Profile) => {
                 value,
                 label: t(label),
             })),
-        value: profile.settings.playerType,
+        value: platform.name === 'webos' ? null : profile.settings.playerType,
         title: () => {
+            if (platform.name === 'webos') return t('EXTERNAL_PLAYER_DISABLED');
             const selectedOption = CONSTANTS.EXTERNAL_PLAYERS.find(({ value }) => value === profile.settings.playerType);
             return selectedOption ? t(selectedOption.label, { defaultValue: selectedOption.label }) : profile.settings.playerType;
         },
@@ -227,7 +228,7 @@ const usePlayerOptions = (profile: Profile) => {
                 }
             });
         }
-    }), [profile.settings]);
+    }), [profile.settings, platform.name, t]);
 
     const nextVideoPopupDurationSelect = useMemo(() => ({
         options: CONSTANTS.NEXT_VIDEO_POPUP_DURATIONS.map((duration) => ({

@@ -1,0 +1,637 @@
+{
+  "mode": "desktop",
+  "url": "http://127.0.0.1:8091/#/intro",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "samples": [
+    {
+      "index": 0,
+      "control": "input.credentials-text-input-QMCZz.text-input-hnLiz",
+      "surface": "input.credentials-text-input-QMCZz.text-input-hnLiz",
+      "text": "email",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.05)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 600,
+        "y": 472.25,
+        "width": 330,
+        "height": 49
+      },
+      "after": {
+        "x": 600,
+        "y": 472.25,
+        "width": 330,
+        "height": 49
+      },
+      "surfaceGeometry": {
+        "x": 600,
+        "y": 472.25,
+        "width": 330,
+        "height": 49
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 1,
+      "control": "input.credentials-text-input-QMCZz.text-input-hnLiz",
+      "surface": "input.credentials-text-input-QMCZz.text-input-hnLiz",
+      "text": "password",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.05)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 600,
+        "y": 536.25,
+        "width": 330,
+        "height": 49
+      },
+      "after": {
+        "x": 600,
+        "y": 536.25,
+        "width": 330,
+        "height": 49
+      },
+      "surfaceGeometry": {
+        "x": 600,
+        "y": 536.25,
+        "width": 330,
+        "height": 49
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 2,
+      "control": "input.credentials-text-input-QMCZz.text-input-hnLiz",
+      "surface": "input.credentials-text-input-QMCZz.text-input-hnLiz",
+      "text": "password",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.05)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 600,
+        "y": 600.25,
+        "width": 330,
+        "height": 49
+      },
+      "after": {
+        "x": 600,
+        "y": 600.25,
+        "width": 330,
+        "height": 49
+      },
+      "surfaceGeometry": {
+        "x": 600,
+        "y": 600.25,
+        "width": 330,
+        "height": 49
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "3px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 3,
+      "control": "div.checkbox-container-O5cy3",
+      "surface": "div.checkbox-container-O5cy3",
+      "text": "",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      },
+      "before": {
+        "x": 604.5,
+        "y": 679.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "after": {
+        "x": 604.5,
+        "y": 679.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "surfaceGeometry": {
+        "x": 604.5,
+        "y": 679.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      }
+    },
+    {
+      "index": 4,
+      "control": "input.",
+      "surface": "div.checkbox-container-O5cy3",
+      "text": "checkbox",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      },
+      "before": {
+        "x": 615.75,
+        "y": 690.75,
+        "width": 0,
+        "height": 0
+      },
+      "after": {
+        "x": 615.75,
+        "y": 690.75,
+        "width": 0,
+        "height": 0
+      },
+      "surfaceGeometry": {
+        "x": 604.5,
+        "y": 679.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      }
+    },
+    {
+      "index": 5,
+      "control": "a.link-ih0xx.button-container-zVLH6",
+      "surface": "a.link-ih0xx.button-container-zVLH6",
+      "text": "Terms and Conditions",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 642,
+        "y": 673.75,
+        "width": 286.328125,
+        "height": 36
+      },
+      "after": {
+        "x": 642,
+        "y": 673.75,
+        "width": 286.328125,
+        "height": 36
+      },
+      "surfaceGeometry": {
+        "x": 642,
+        "y": 673.75,
+        "width": 286.328125,
+        "height": 36
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 6,
+      "control": "div.checkbox-container-O5cy3",
+      "surface": "div.checkbox-container-O5cy3",
+      "text": "",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      },
+      "before": {
+        "x": 604.5,
+        "y": 732.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "after": {
+        "x": 604.5,
+        "y": 732.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "surfaceGeometry": {
+        "x": 604.5,
+        "y": 732.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      }
+    },
+    {
+      "index": 7,
+      "control": "input.",
+      "surface": "div.checkbox-container-O5cy3",
+      "text": "checkbox",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      },
+      "before": {
+        "x": 615.75,
+        "y": 743.75,
+        "width": 0,
+        "height": 0
+      },
+      "after": {
+        "x": 615.75,
+        "y": 743.75,
+        "width": 0,
+        "height": 0
+      },
+      "surfaceGeometry": {
+        "x": 604.5,
+        "y": 732.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      }
+    },
+    {
+      "index": 8,
+      "control": "a.link-ih0xx.button-container-zVLH6",
+      "surface": "a.link-ih0xx.button-container-zVLH6",
+      "text": "Privacy Policy",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 700.53125,
+        "y": 745.75,
+        "width": 87.171875,
+        "height": 17
+      },
+      "after": {
+        "x": 700.53125,
+        "y": 745.75,
+        "width": 87.171875,
+        "height": 17
+      },
+      "surfaceGeometry": {
+        "x": 700.53125,
+        "y": 745.75,
+        "width": 87.171875,
+        "height": 17
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 9,
+      "control": "div.checkbox-container-O5cy3",
+      "surface": "div.checkbox-container-O5cy3",
+      "text": "",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      },
+      "before": {
+        "x": 604.5,
+        "y": 785.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "after": {
+        "x": 604.5,
+        "y": 785.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "surfaceGeometry": {
+        "x": 604.5,
+        "y": 785.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      }
+    },
+    {
+      "index": 10,
+      "control": "input.",
+      "surface": "div.checkbox-container-O5cy3",
+      "text": "checkbox",
+      "focused": true,
+      "ring": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      },
+      "before": {
+        "x": 615.75,
+        "y": 796.75,
+        "width": 0,
+        "height": 0
+      },
+      "after": {
+        "x": 615.75,
+        "y": 796.75,
+        "width": 0,
+        "height": 0
+      },
+      "surfaceGeometry": {
+        "x": 604.5,
+        "y": 785.5,
+        "width": 22.5,
+        "height": 22.5
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "2px"
+      }
+    },
+    {
+      "index": 11,
+      "control": "div.form-button-vyqqj.submit-button-x3L8z.button-container-zVLH6",
+      "surface": "div.form-button-vyqqj.submit-button-x3L8z.button-container-zVLH6",
+      "text": "Sign up",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 600,
+        "y": 838.25,
+        "width": 330,
+        "height": 60
+      },
+      "after": {
+        "x": 600,
+        "y": 838.25,
+        "width": 330,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 600,
+        "y": 838.25,
+        "width": 330,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 12,
+      "control": "div.form-button-vyqqj.facebook-button-LZ_kG.button-container-zVLH6",
+      "surface": "div.form-button-vyqqj.facebook-button-LZ_kG.button-container-zVLH6",
+      "text": "Continue with Facebook",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(24, 119, 241)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 990,
+        "y": 472.25,
+        "width": 330,
+        "height": 60
+      },
+      "after": {
+        "x": 990,
+        "y": 472.25,
+        "width": 330,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 990,
+        "y": 472.25,
+        "width": 330,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 13,
+      "control": "div.form-button-vyqqj.apple-button-V5nEI.button-container-zVLH6",
+      "surface": "div.form-button-vyqqj.apple-button-V5nEI.button-container-zVLH6",
+      "text": "Continue with Apple",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 990,
+        "y": 547.25,
+        "width": 330,
+        "height": 60
+      },
+      "after": {
+        "x": 990,
+        "y": 547.25,
+        "width": 330,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 990,
+        "y": 547.25,
+        "width": 330,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "2px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 14,
+      "control": "div.form-button-vyqqj.login-form-button-DqJUV.button-container-zVLH6",
+      "surface": "div.form-button-vyqqj.login-form-button-DqJUV.button-container-zVLH6",
+      "text": "Log in",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 990,
+        "y": 622.25,
+        "width": 330,
+        "height": 60
+      },
+      "after": {
+        "x": 990,
+        "y": 622.25,
+        "width": 330,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 990,
+        "y": 622.25,
+        "width": 330,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      }
+    },
+    {
+      "index": 15,
+      "control": "div.form-button-vyqqj.guest-login-button-D8DWZ.button-container-zVLH6",
+      "surface": "div.form-button-vyqqj.guest-login-button-D8DWZ.button-container-zVLH6",
+      "text": "Guest login",
+      "focused": true,
+      "ring": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      },
+      "before": {
+        "x": 990,
+        "y": 697.25,
+        "width": 330,
+        "height": 60
+      },
+      "after": {
+        "x": 990,
+        "y": 697.25,
+        "width": 330,
+        "height": 60
+      },
+      "surfaceGeometry": {
+        "x": 990,
+        "y": 697.25,
+        "width": 330,
+        "height": 60
+      },
+      "clipping": [],
+      "failures": [],
+      "ringAfterBlur": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgba(255, 255, 255, 0.9)",
+        "offset": "-2px"
+      }
+    }
+  ],
+  "skipped": [],
+  "failures": []
+}

@@ -1,0 +1,15 @@
+{
+  "note": "Supplementary source/asset audit, not byte equivalence or runtime proof",
+  "mainSourcesChanged": [
+    "webpack://stremio/./src/common/CONSTANTS.js",
+    "webpack://stremio/./src/common/Platform/device.ts",
+    "webpack://stremio/./src/routes/MetaDetails/StreamsList/Stream/Stream.js",
+    "webpack://stremio/./src/routes/Settings/Player/usePlayerOptions.ts"
+  ],
+  "identicalAssets": {
+    "index.html": true,
+    "4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8\\styles\\main.css": true,
+    "4a440f3cd25ddeeab0d54e2ac466a33a62c1fdb8\\styles\\main.css.map": true
+  },
+  "normalization": "node_modules physical path and four-digit LESS source query suffix only"
+}

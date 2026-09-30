@@ -1,0 +1,26 @@
+{
+  "date": "2026-09-09T20:13:42.069Z",
+  "passed": true,
+  "hostedStoragePassed": true,
+  "packagedStoragePassed": true,
+  "hostedCoreReady": true,
+  "packagedCoreReady": false,
+  "cookies": {
+    "productionDependency": false,
+    "packagedAbsenceExpected": true,
+    "historicalEvidence": "webos/hello/t04-results.md",
+    "liveCookieWrites": false
+  },
+  "physicalTVValidated": false,
+  "hashes": {
+    "tests/webosStorage.spec.js": "10881b4f29da2fbee06cbad2ecd41ab91e1d06cc910182bd000e6861c10e2902",
+    "tools/t35-storage.mjs": "324601bc7f4569aadb94b89592402640a5b28be060edf254b264c7a9ffbce25a",
+    "tools/t35-prepare.mjs": "d69b84412c9e48d2182bacfb214ee093c763960001db23c94485347b8856df5f",
+    "tools/t35-evidence.mjs": "232df2e7c7c08789de614753285ab76cb16181c5813765e3e16d28d8cf5be9e7",
+    "src/core/Error/Error.tsx": "56ce9c806d3e842ef7b406d935a78ff600a4b0b5e141bdca4b0a128e5935b789",
+    "src/core/createTransport.ts": "3cec8b525b29d0012342f2f9658bd1a8935bd4adbb924871efdba5a833d95f70",
+    "src/index.js": "05da31dcb8f72d693f92fc6acc92692008f93c3593fa5e4071e075a1a229fe97",
+    "node_modules/@stremio/stremio-core-web/worker.js": "455af735f709befb35ea2b66ae70059551413d39fab5154b8de94823c288ddcc",
+    "build/index.html": "3e2fa392b767b926fa090105c1c00ef46c4c1fd01afd2d0c3633036e419f0b1f"
+  }
+}

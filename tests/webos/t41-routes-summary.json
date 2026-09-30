@@ -1,0 +1,137 @@
+{
+  "date": "2026-09-13T13:45:02.635Z",
+  "accepted": false,
+  "failures": [
+    "diagnostic-only: acceptance disabled",
+    "Native 1920x1080 / scale 1 required",
+    "required-coverage-missing",
+    "state-failures"
+  ],
+  "reports": [
+    {
+      "name": "library",
+      "controls": 0,
+      "reached": 0,
+      "enter": 0,
+      "failures": [
+        "Unexpected route redirect"
+      ]
+    },
+    {
+      "name": "continuewatching",
+      "controls": 0,
+      "reached": 0,
+      "enter": 0,
+      "failures": [
+        "Unexpected route redirect"
+      ]
+    },
+    {
+      "name": "settings",
+      "controls": 36,
+      "reached": 25,
+      "enter": 0,
+      "failures": [
+        "clipped-ring:26",
+        "clipped-ring:27",
+        "graph-did-not-stabilize",
+        "not-visited-before-limit:28",
+        "not-visited-before-limit:29",
+        "not-visited-before-limit:30",
+        "not-visited-before-limit:31",
+        "not-visited-before-limit:32",
+        "not-visited-before-limit:33",
+        "not-visited-before-limit:35",
+        "not-visited-before-limit:36",
+        "not-visited-before-limit:37",
+        "not-visited-before-limit:40",
+        "not-visited-before-limit:41"
+      ]
+    },
+    {
+      "name": "player",
+      "controls": 0,
+      "reached": 0,
+      "enter": 0,
+      "failures": [
+        "State readiness assertion failed"
+      ]
+    }
+  ],
+  "runtime": {
+    "product": "",
+    "revision": "@cbd6ac4848a540ea6646d4f79700cf531e4eb9f9",
+    "jsVersion": "6.8.275.26",
+    "browserUA": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36",
+    "ua": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+    "width": 1920,
+    "height": 1080,
+    "scale": 0,
+    "pageScale": 1,
+    "debugBuild": true,
+    "overridesIssued": [],
+    "launchArgumentsChecked": true
+  },
+  "missing": [
+    "board",
+    "discover",
+    "library",
+    "continuewatching",
+    "calendar",
+    "detail",
+    "search",
+    "settings",
+    "addons",
+    "intro",
+    "player",
+    "episodes",
+    "streams",
+    "library-authenticated",
+    "continuewatching-authenticated",
+    "settings-urls",
+    "settings-add-form",
+    "addons-cards",
+    "addons-filters",
+    "addons-details",
+    "addons-share",
+    "addons-remove-confirm",
+    "player-controlbar",
+    "player-options",
+    "player-speed",
+    "player-subtitles",
+    "player-audio",
+    "player-statistics",
+    "player-cast",
+    "player-sidedrawer",
+    "player-nextvideo",
+    "horizontal-scroll",
+    "grid-scroll",
+    "lazy-load",
+    "shortcuts-modal",
+    "gamepad-modal",
+    "toast",
+    "update-banner"
+  ],
+  "optional": [
+    {
+      "tag": "shortcuts-modal",
+      "tested": false,
+      "unavailableVerified": false
+    },
+    {
+      "tag": "gamepad-modal",
+      "tested": false,
+      "unavailableVerified": false
+    },
+    {
+      "tag": "toast",
+      "tested": false,
+      "unavailableVerified": false
+    },
+    {
+      "tag": "update-banner",
+      "tested": false,
+      "unavailableVerified": false
+    }
+  ]
+}

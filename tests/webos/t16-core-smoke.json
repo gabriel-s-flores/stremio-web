@@ -1,0 +1,52 @@
+{
+  "date": "2026-09-06",
+  "branch": "webos",
+  "head": "c481b4ee6204120b7f96df01bbbbe5eb28c82c31",
+  "target": {
+    "platform": "webOS TV 5",
+    "chromium": "68.0.3440.106",
+    "firmware": "02.00.30",
+    "mode": "hosted HTTP"
+  },
+  "corePackage": {
+    "name": "@stremio/stremio-core-web",
+    "version": "0.57.0"
+  },
+  "wasm": {
+    "bytes": 5187435,
+    "sha256": "b7b2effc52053f78436aebac299b5d51b5158a66355d918b2690c4dc9826238e",
+    "httpStatus": 200,
+    "validatedInChromium68": true,
+    "compiledInChromium68": true,
+    "referenceTypes": []
+  },
+  "core": {
+    "appChildren": 6,
+    "windowCore": true,
+    "ctxType": "object",
+    "ctxKeys": [
+      "events",
+      "notifications",
+      "profile",
+      "searchHistory",
+      "streamingServerUrls"
+    ],
+    "getStateCtxMs": 1.7
+  },
+  "bootToCoreMs": [
+    2900.3,
+    2790.1,
+    2512.7,
+    2569.2,
+    2570.4
+  ],
+  "memory": {
+    "usedJSHeapSizeAfterInit": 17100000,
+    "jsHeapSizeLimit": 286000000,
+    "workerWasmNativeMeasured": false
+  },
+  "expectedWarnings": [
+    "Service Worker requires a secure origin",
+    "window.cast API unavailable"
+  ]
+}

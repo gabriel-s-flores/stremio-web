@@ -7,6 +7,7 @@ import classnames from 'classnames';
 import FocusLock from 'react-focus-lock';
 import Icon from '@stremio/stremio-icons/react';
 import { Button } from 'stremio/components';
+import { BACK_HANDLER_PRIORITIES, isBackKeyboardEvent, useBackHandler } from 'stremio/common';
 import styles from './styles.less';
 
 type Props = {
@@ -17,9 +18,19 @@ type Props = {
 
 const StreamingServerUrlModal = ({ url, onConfirm, onCancel }: Props) => {
     const { t } = useTranslation();
+    const backOnRequest = useCallback(() => {
+        onCancel();
+        return true;
+    }, [onCancel]);
+    useBackHandler(backOnRequest, BACK_HANDLER_PRIORITIES.MODAL);
 
     const onKeyDown = useCallback((event: React.KeyboardEvent) => {
-        event.stopPropagation();
+        const back = !!process.env.WEBOS && isBackKeyboardEvent(event.nativeEvent);
+        // TV arrows must reach the spatial polyfill on window; FocusLock and
+        // navbeforefocus keep its destination inside this modal.
+        if (!process.env.WEBOS || (!back && !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key))) {
+            event.stopPropagation();
+        }
         if (event.key === 'Escape') {
             event.preventDefault();
             onCancel();
@@ -37,7 +48,7 @@ const StreamingServerUrlModal = ({ url, onConfirm, onCancel }: Props) => {
 
     return createPortal((
         <FocusLock
-            autoFocus={false}
+            autoFocus={!!process.env.WEBOS}
             returnFocus
             className={styles['modal-container']}
             lockProps={{ onKeyDown }}

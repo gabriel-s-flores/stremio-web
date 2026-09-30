@@ -1,0 +1,36 @@
+{
+  "date": "2026-09-09T20:12:11.276Z",
+  "mode": "packaged",
+  "appId": "com.stremio.webos.t35.packaged",
+  "device": "emulator",
+  "immediate": true,
+  "closed": true,
+  "reopened": true,
+  "persisted": true,
+  "cleaned": true,
+  "passed": true,
+  "before": {
+    "origin": "file://com.stremio.webos.t35.packaged-webos",
+    "protocol": "file:",
+    "storageAvailable": true,
+    "coreReady": false,
+    "coreErrorVisible": false,
+    "packagedCookiesEmpty": true,
+    "wasmResourcePresent": false
+  },
+  "after": {
+    "origin": "file://com.stremio.webos.t35.packaged-webos",
+    "protocol": "file:",
+    "storageAvailable": true,
+    "coreReady": false,
+    "coreErrorVisible": false,
+    "packagedCookiesEmpty": true,
+    "wasmResourcePresent": false
+  },
+  "coreStatus": "not-initialized",
+  "packagedWasmLimitation": true,
+  "errors": {
+    "storage": false,
+    "wasm": true
+  }
+}

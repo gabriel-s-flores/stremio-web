@@ -3,9 +3,11 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import classnames from 'classnames';
-import { Button } from 'stremio/components';
+import { Button, ExternalLink } from 'stremio/components';
 import { useCore } from 'stremio/core';
 import useProfile from 'stremio/common/useProfile';
+import { useNavigate } from 'react-router';
+import { usePlatform } from 'stremio/common';
 import { withCoreSuspender } from 'stremio/common/CoreSuspender';
 import styles from './StreamingServerWarning.less';
 
@@ -16,6 +18,8 @@ type Props = {
 const StreamingServerWarning = ({ className }: Props) => {
     const { t } = useTranslation();
     const core = useCore();
+    const platform = usePlatform();
+    const navigate = useNavigate();
     const profile = useProfile();
 
     const createDismissalDate = (months: number, years = 0): Date => {
@@ -55,24 +59,23 @@ const StreamingServerWarning = ({ className }: Props) => {
     return (
         <div className={classnames(className, styles['warning-container'])}>
             <div className={styles['warning-statement']}>
-                {t('SETTINGS_SERVER_UNAVAILABLE')}
+                {t(platform.name === 'webos' ? 'TV_STREAMING_WARNING' : 'SETTINGS_SERVER_UNAVAILABLE')}
             </div>
             <div className={styles['actions']}>
-                <a
-                    href='https://www.stremio.com/download-service'
-                    target='_blank'
-                    rel='noreferrer'
-                >
-                    <Button
+                {platform.name === 'webos' ?
+                    <Button className={styles['action']} onClick={() => navigate('/settings?section=streaming')}>
+                        <div className={styles['label']}>{t('TV_STREAMING_CONFIGURE')}</div>
+                    </Button> : <ExternalLink
+                        href='https://www.stremio.com/download-service'
+                        target='_blank'
+                        rel='noreferrer'
                         className={styles['action']}
                         title={t('SERVICE_INSTALL')}
-                        tabIndex={-1}
                     >
                         <div className={styles['label']}>
                             {t('SERVICE_INSTALL')}
                         </div>
-                    </Button>
-                </a>
+                    </ExternalLink>}
                 <Button
                     className={styles['action']}
                     title={t('WARNING_STREAMING_SERVER_LATER')}

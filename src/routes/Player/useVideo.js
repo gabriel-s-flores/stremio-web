@@ -4,9 +4,14 @@ const React = require('react');
 const Video = require('@stremio/stremio-video');
 const EventEmitter = require('eventemitter3');
 
-const events = new EventEmitter();
+const recordDebugImplementation = (manifest) => {
+    if (typeof window !== 'undefined' && window.__stremioWebosDebug && typeof window.__stremioWebosDebug.recordPlayerImplementation === 'function') {
+        window.__stremioWebosDebug.recordPlayerImplementation(manifest?.name);
+    }
+};
 
 const useVideo = () => {
+    const events = React.useRef(new EventEmitter()).current;
     const video = React.useRef(null);
     const containerRef = React.useRef(null);
 
@@ -211,6 +216,7 @@ const useVideo = () => {
             manifest
         }));
 
+        recordDebugImplementation(manifest);
         events.emit('implementationChanged', manifest);
     };
 
@@ -231,6 +237,9 @@ const useVideo = () => {
                     video.current.destroy();
                 } catch (err) {
                     console.error('Error destroying video:', err);
+                } finally {
+                    video.current = null;
+                    events.removeAllListeners();
                 }
             }
         };

@@ -1,0 +1,53 @@
+name: webOS Build Check
+
+on:
+  push:
+    branches:
+      - webos
+  pull_request:
+    branches:
+      - webos
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webos-build-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  webos-build-check:
+    name: webos-build-check
+    if: ${{ github.event_name != 'workflow_dispatch' || github.ref_name == 'webos' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6.0.10
+        with:
+          version: 11.8.0
+          run_install: false
+
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build webOS
+        run: pnpm build:webos
+
+      - name: Check Chromium 68 compatibility
+        run: pnpm check:webos-compat
+
+      - name: Test
+        run: pnpm test
+
+      - name: Lint
+        run: pnpm lint

@@ -1,0 +1,19 @@
+{
+  "runtime": "local Chrome; not webOS validation",
+  "reports": [
+    {
+      "name": "library",
+      "controls": 10,
+      "smallText": 0,
+      "failures": []
+    }
+  ],
+  "browser": {
+    "Browser": "Chrome/153.0.8010.36",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+    "V8-Version": "15.3.76.10",
+    "WebKit-Version": "537.36 (@507c6ee3e2f3b2ca0e660547e5b9ea4820c67f4c)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9228/devtools/browser/9948b349-a493-4c03-8494-28ea2a691dee"
+  }
+}

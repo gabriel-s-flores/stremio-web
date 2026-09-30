@@ -1,0 +1,12 @@
+[
+  {
+    "port": 9226,
+    "available": false,
+    "error": "TypeError: fetch failed"
+  },
+  {
+    "port": 9998,
+    "available": false,
+    "error": "TypeError: fetch failed"
+  }
+]

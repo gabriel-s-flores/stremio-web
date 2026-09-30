@@ -1,0 +1,172 @@
+{
+  "date": "2026-09-07T02:14:33.762Z",
+  "mode": "webos",
+  "url": "http://10.0.2.2:8090/#/discover",
+  "userAgent": "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36 WebAppManager",
+  "viewport": [
+    1920,
+    1080
+  ],
+  "rootFontSize": "15px",
+  "standalone": false,
+  "support": {
+    "env": false,
+    "min": false,
+    "max": false,
+    "clamp": false
+  },
+  "insets": {
+    "top": "0rem",
+    "right": "0rem",
+    "bottom": "0rem",
+    "left": "0rem"
+  },
+  "rootDeclarations": {
+    "top": [
+      {
+        "value": "0rem",
+        "conditions": []
+      }
+    ],
+    "right": [
+      {
+        "value": "0rem",
+        "conditions": []
+      }
+    ],
+    "bottom": [
+      {
+        "value": "0rem",
+        "conditions": []
+      },
+      {
+        "value": "0rem",
+        "conditions": [
+          "(display-mode: standalone)"
+        ]
+      }
+    ],
+    "left": [
+      {
+        "value": "0rem",
+        "conditions": []
+      }
+    ]
+  },
+  "stylesheetSources": [
+    {
+      "url": "http://10.0.2.2:8090/c481b4ee6204120b7f96df01bbbbe5eb28c82c31/styles/main.css",
+      "bytes": 292378,
+      "functions": []
+    },
+    {
+      "url": "inline",
+      "bytes": 3231,
+      "functions": []
+    }
+  ],
+  "functionCount": 0,
+  "inaccessibleSheets": [],
+  "routeSurfaces": [
+    {
+      "name": "discover-container",
+      "selector": ".discover-container-L6OGL",
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080,
+        "computedWidth": "1920px",
+        "computedHeight": "1080px",
+        "marginLeft": "0px",
+        "paddingLeft": "0px",
+        "maxWidth": "none",
+        "maxHeight": "none"
+      },
+      "declaredHeight": "calc(100% - var(--safe-area-inset-bottom))",
+      "declaredWidth": ""
+    },
+    {
+      "name": "main-nav-bars-container",
+      "selector": ".main-nav-bars-container-wNjS5",
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080,
+        "computedWidth": "1920px",
+        "computedHeight": "1080px",
+        "marginLeft": "0px",
+        "paddingLeft": "0px",
+        "maxWidth": "none",
+        "maxHeight": "none"
+      },
+      "declaredHeight": "100%",
+      "declaredWidth": "calc(100% - var(--safe-area-inset-left) - var(--safe-area-inset-right))"
+    }
+  ],
+  "samples": [
+    {
+      "name": "HorizontalNavBar back button",
+      "selector": ".horizontal-nav-bar-container-Y_zvK .back-button-container-lDB1N",
+      "property": "margin-left",
+      "expected": "15px",
+      "computed": "15px",
+      "fixture": {
+        "x": 1445,
+        "y": 170,
+        "width": 90,
+        "height": 45,
+        "computedWidth": "90px",
+        "computedHeight": "45px",
+        "marginLeft": "15px",
+        "paddingLeft": "0px",
+        "maxWidth": "none",
+        "maxHeight": "none"
+      },
+      "actualElements": []
+    },
+    {
+      "name": "MetaDetails preview",
+      "selector": ".metadetails-container-K_Dqa .metadetails-content-Uz5EV .meta-preview-ES0h3",
+      "property": "padding-left",
+      "expected": "60px",
+      "computed": "60px",
+      "fixture": {
+        "x": 1430,
+        "y": 248,
+        "width": 360,
+        "height": 120,
+        "computedWidth": "360px",
+        "computedHeight": "120px",
+        "marginLeft": "0px",
+        "paddingLeft": "60px",
+        "maxWidth": "none",
+        "maxHeight": "none"
+      },
+      "actualElements": []
+    },
+    {
+      "name": "ActionMenu",
+      "selector": ".menu-container-EUaqA",
+      "property": "max-width",
+      "expected": "210px",
+      "computed": "210px",
+      "fixture": {
+        "x": 1430,
+        "y": 401,
+        "width": 210,
+        "height": 315,
+        "computedWidth": "210px",
+        "computedHeight": "315px",
+        "marginLeft": "0px",
+        "paddingLeft": "0px",
+        "maxWidth": "210px",
+        "maxHeight": "315px"
+      },
+      "actualElements": []
+    }
+  ],
+  "failures": [],
+  "limits": "Route surfaces and actualElements are real DOM; samples.fixture is a CSS fixture, not React integration. Overscan=0; no physical TV or cold packaged validation."
+}

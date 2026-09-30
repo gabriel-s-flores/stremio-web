@@ -1,9 +1,9 @@
 // Copyright (C) 2017-2025 Smart code 203358507
 
 import React, { useCallback, ChangeEvent, KeyboardEvent, RefCallback } from 'react';
+import ExternalLink from 'stremio/components/ExternalLink';
 import classNames from 'classnames';
 import styles from './Checkbox.less';
-import Button from '../Button';
 import Icon from '@stremio/stremio-icons/react';
 
 type Props = {
@@ -59,6 +59,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, Props>(({ name, disabled, cl
                         { [styles['error']]: error }
                     )}
                     role={'checkbox'}
+                    aria-disabled={process.env.WEBOS ? !!disabled : undefined}
                     tabIndex={disabled ? -1 : 0}
                     aria-checked={checked}
                     onKeyDown={onKeyDown}
@@ -82,9 +83,9 @@ const Checkbox = React.forwardRef<HTMLInputElement, Props>(({ name, disabled, cl
                     <span>{label}</span>
                     {
                         href && link ?
-                            <Button className={styles['link']} href={href} target={'_blank'} tabIndex={-1}>
+                            <ExternalLink className={styles['link']} href={href} target={'_blank'} tabIndex={-1}>
                                 {link}
-                            </Button>
+                            </ExternalLink>
                             : null
                     }
                 </div>

@@ -1,0 +1,38 @@
+{
+  "date": "2026-09-07T02:57:06.273Z",
+  "comparison": "LESS output before and after T2.4 on the existing dirty worktree, webos=false",
+  "results": [
+    {
+      "file": "App/styles.less",
+      "identical": true,
+      "beforeBytes": 9110,
+      "afterBytes": 9110,
+      "beforeSha256": "1625d9d8cea3529b94534853750c4634070bda7a69ed4ba570711f918d9e52ec",
+      "afterSha256": "1625d9d8cea3529b94534853750c4634070bda7a69ed4ba570711f918d9e52ec"
+    },
+    {
+      "file": "components/ActionMenu/ActionMenu.less",
+      "identical": true,
+      "beforeBytes": 931,
+      "afterBytes": 931,
+      "beforeSha256": "64b2c4f54d3648a5dab16f17e4eec090f66c8dfcfb4b2daf41c4e0ee03b4b430",
+      "afterSha256": "64b2c4f54d3648a5dab16f17e4eec090f66c8dfcfb4b2daf41c4e0ee03b4b430"
+    },
+    {
+      "file": "components/NavBar/HorizontalNavBar/styles.less",
+      "identical": true,
+      "beforeBytes": 3039,
+      "afterBytes": 3039,
+      "beforeSha256": "894f91f0254c2844237a5f4105f15073c0b21547c89e2b0fd50b5544dcee2aeb",
+      "afterSha256": "894f91f0254c2844237a5f4105f15073c0b21547c89e2b0fd50b5544dcee2aeb"
+    },
+    {
+      "file": "routes/MetaDetails/styles.less",
+      "identical": true,
+      "beforeBytes": 3330,
+      "afterBytes": 3330,
+      "beforeSha256": "8c9376806e963693c19093a66db164e2f0e8b2b7c35e886a0f47d94bd3c6a6b4",
+      "afterSha256": "8c9376806e963693c19093a66db164e2f0e8b2b7c35e886a0f47d94bd3c6a6b4"
+    }
+  ]
+}

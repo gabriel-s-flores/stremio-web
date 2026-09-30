@@ -1,0 +1,480 @@
+{
+  "name": "fixture-modal",
+  "tags": [],
+  "failures": [],
+  "controls": [
+    {
+      "id": "23",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2)",
+      "tag": "DIV",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "safe",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 1095,
+        "y": 398.5,
+        "width": 45,
+        "height": 45
+      },
+      "phase": "initial",
+      "reached": true
+    },
+    {
+      "id": "24",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > input:nth-child(1)",
+      "tag": "INPUT",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "deferred",
+      "reason": "Text editing and virtual keyboard are T4.9; this input has no submit action",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 802.5,
+        "y": 488.5,
+        "width": 300,
+        "height": 58
+      },
+      "phase": "initial",
+      "reached": true
+    },
+    {
+      "id": "25",
+      "selector": "body > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(3) > div:nth-child(3) > div:nth-child(1)",
+      "tag": "DIV",
+      "role": null,
+      "tabIndex": 0,
+      "classification": "control",
+      "enter": "safe",
+      "visible": true,
+      "inViewport": true,
+      "roving": false,
+      "rect": {
+        "x": 802.5,
+        "y": 606.5,
+        "width": 315,
+        "height": 52.5
+      },
+      "phase": "initial",
+      "reached": true
+    }
+  ],
+  "edges": [
+    {
+      "phase": "initial",
+      "from": "23",
+      "key": "ArrowUp",
+      "to": "23",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "23",
+      "key": "ArrowDown",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "23",
+      "key": "ArrowLeft",
+      "to": "23",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "23",
+      "key": "ArrowRight",
+      "to": "23",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowUp",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowDown",
+      "to": "25",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowLeft",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowRight",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowUp",
+      "to": "23",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowDown",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowLeft",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowRight",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "25",
+      "key": "ArrowUp",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "25",
+      "key": "ArrowDown",
+      "to": "25",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "25",
+      "key": "ArrowLeft",
+      "to": "25",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "25",
+      "key": "ArrowRight",
+      "to": "25",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowUp",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowDown",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowLeft",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowRight",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowUp",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowDown",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowLeft",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowRight",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowUp",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowDown",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowLeft",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowRight",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowUp",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowDown",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowLeft",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowRight",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowUp",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowDown",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowLeft",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowRight",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowUp",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowDown",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowLeft",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowRight",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowUp",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowDown",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowLeft",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowRight",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowUp",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowDown",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowLeft",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowRight",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowUp",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowDown",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowLeft",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowRight",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowUp",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowDown",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowLeft",
+      "to": "24",
+      "scrollChanged": false
+    },
+    {
+      "phase": "initial",
+      "from": "24",
+      "key": "ArrowRight",
+      "to": "24",
+      "scrollChanged": false
+    }
+  ],
+  "enter": [
+    {
+      "phase": "initial",
+      "id": "23",
+      "clicks": 1,
+      "submits": 0,
+      "effect": true,
+      "passed": true
+    },
+    {
+      "phase": "initial",
+      "id": "25",
+      "clicks": 1,
+      "submits": 0,
+      "effect": true,
+      "passed": true
+    }
+  ]
+}

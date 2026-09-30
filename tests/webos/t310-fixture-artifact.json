@@ -1,0 +1,28 @@
+{
+  "date": "2026-09-12T15:46:19.616Z",
+  "realSources": [
+    "webpack://stremio/./src/App/UpdaterBanner/UpdaterBanner.tsx",
+    "webpack://stremio/./src/common/CONSTANTS.js",
+    "webpack://stremio/./src/common/Discord/Discord.tsx",
+    "webpack://stremio/./src/common/FileDrop/utils.ts",
+    "webpack://stremio/./src/common/FileDrop/FileDrop.tsx",
+    "webpack://stremio/./src/common/useBinaryState.js",
+    "webpack://stremio/./src/routes/Settings/constants.ts",
+    "webpack://stremio/./src/routes/Settings/Menu/Menu.tsx",
+    "webpack://stremio/./src/routes/Settings/Menu/index.ts",
+    "webpack://stremio/./src/routes/Settings/Interface/Interface.tsx",
+    "webpack://stremio/./src/routes/Settings/Interface/index.ts",
+    "webpack://stremio/./src/routes/Settings/Player/index.ts",
+    "webpack://stremio/./src/routes/Settings/Player/Player.tsx",
+    "webpack://stremio/./src/routes/Settings/Shortcuts/Shortcuts.tsx",
+    "webpack://stremio/./src/routes/Settings/Shortcuts/index.ts",
+    "webpack://stremio/./src/routes/Settings/Settings.tsx",
+    "webpack://stremio/./src/common/FileDrop/styles.less",
+    "webpack://stremio/./src/routes/Settings/Menu/Menu.less",
+    "webpack://stremio/./src/routes/Settings/Settings.less",
+    "webpack://stremio/./src/routes/Settings/Shortcuts/Shortcuts.less"
+  ],
+  "coreBundled": false,
+  "es2018": true,
+  "sha256": "1b67ab68c3d08de185da49dd090860c46a3d6e83b2afeecb0fe266553cb5f956"
+}

@@ -1,0 +1,119 @@
+{
+  "note": "Initial probe with native scrollIntoView nearest; handoff to Fase 4",
+  "samples": [
+    {
+      "index": 23,
+      "control": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "surface": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "text": "OpenSubtitles v3v.1.0.0movie & seriesOpenSubtitles v3 Addon for StremioUninstallShare addo",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 912.5,
+        "width": 1779,
+        "height": 169.5
+      },
+      "after": {
+        "x": 112.5,
+        "y": 912.5,
+        "width": 1779,
+        "height": 169.5
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 912.5,
+        "width": 1779,
+        "height": 169.5
+      },
+      "clipping": [
+        "viewport",
+        "div.addons-list-container-Ovr2Z:y",
+        "div.addons-content-zhFBl:y",
+        "div.nav-content-container-zl9hQ:y",
+        "div.addons-container-ogGYu.main-nav-bars-container-wNjS5:y",
+        "div.route-content:y",
+        "div.route-container:y",
+        "div.routes-container:y",
+        "div.:y"
+      ],
+      "failures": [
+        "Focus ring is clipped"
+      ],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    },
+    {
+      "index": 26,
+      "control": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "surface": "div.addon-whmdO.animation-fade-in.addon-container-lC5KN.button-container-zVLH6",
+      "text": "Local Files (without catalog support)v.1.10.0movie, series & otherLocal add-on to find pla",
+      "focused": true,
+      "immediateRing": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "ring": {
+        "style": "solid",
+        "width": "4px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "-4px"
+      },
+      "before": {
+        "x": 112.5,
+        "y": 912.5,
+        "width": 1779,
+        "height": 169.5
+      },
+      "after": {
+        "x": 112.5,
+        "y": 912.5,
+        "width": 1779,
+        "height": 169.5
+      },
+      "surfaceGeometry": {
+        "x": 112.5,
+        "y": 912.5,
+        "width": 1779,
+        "height": 169.5
+      },
+      "clipping": [
+        "viewport",
+        "div.addons-list-container-Ovr2Z:y",
+        "div.addons-content-zhFBl:y",
+        "div.nav-content-container-zl9hQ:y",
+        "div.addons-container-ogGYu.main-nav-bars-container-wNjS5:y",
+        "div.route-content:y",
+        "div.route-container:y",
+        "div.routes-container:y",
+        "div.:y"
+      ],
+      "failures": [
+        "Focus ring is clipped"
+      ],
+      "ringAfterBlur": {
+        "style": "none",
+        "width": "0px",
+        "color": "rgb(255, 255, 255)",
+        "offset": "0px"
+      }
+    }
+  ]
+}

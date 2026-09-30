@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import Option from './Option';
 import Icon from '@stremio/stremio-icons/react';
+import FocusLock from 'react-focus-lock';
+const FocusScope = process.env.WEBOS ? FocusLock : 'div';
+
 import styles from './Dropdown.less';
 
 type Props = {
@@ -48,7 +51,7 @@ const Dropdown = ({ level, setLevel, options, onSelect, value, menuOpen }: Props
     }, [menuOpen, selectedOptionValue]);
 
     return (
-        <div
+        <FocusScope
             className={classNames(styles['dropdown'], { [styles['open']]: menuOpen })}
             role={'listbox'}
             ref={containerRef}
@@ -72,7 +75,7 @@ const Dropdown = ({ level, setLevel, options, onSelect, value, menuOpen }: Props
                     />
                 ))
             }
-        </div>
+        </FocusScope>
     );
 };
 
