@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Reserva uma instância livre do pool de emuladores, sobe um boot limpo, roda o comando e desliga.
+# A reserva é uma trava flock por instância (sem daemon): vários agentes testam ao mesmo tempo
+# sem colisão, e a trava some sozinha se o processo morrer.
+#
+#   emu-run [--instance N] [--keep-state] [--timeout MIN] -- <comando...>
+#
+# Dentro do comando ficam definidos: EMU_INSTANCE, EMU_DEVICE (dispositivo ares), EMU_SSH_PORT,
+# EMU_CDP_PORT (= CDP_PORT, usado pelo cdp.mjs), EMU_REMOTE_PORT, EMU_QMP (= WEBOS_QMP).
+# Padrão: overlay recriado a cada reserva (estado de fábrica). --keep-state reaproveita o disco.
+# Tamanho do pool: $EMU_POOL_SIZE (padrão 4). Um cenário de mídia por reserva: o emulador só
+# reproduz de forma confiável a primeira mídia após o boot.
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+RUN="$HOME/webos-tv-sdk/run"
+POOL="${EMU_POOL_SIZE:-4}"
+want="" keep=0 timeout_min=60
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --instance) want="$2"; shift 2 ;;
+        --keep-state) keep=1; shift ;;
+        --timeout) timeout_min="$2"; shift 2 ;;
+        --) shift; break ;;
+        *) echo "uso: emu-run [--instance N] [--keep-state] [--timeout MIN] -- comando" >&2; exit 1 ;;
+    esac
+done
+[[ $# -gt 0 ]] || { echo "erro: falta o comando" >&2; exit 1; }
+mkdir -p "$RUN"
+
+acquire() {
+    local n="$1"
+    exec {LOCKFD}>"$RUN/emu-$n.lock"
+    if flock -n "$LOCKFD"; then EMU_N="$n"; return 0; fi
+    exec {LOCKFD}>&-
+    return 1
+}
+
+EMU_N=""
+if [[ -n "$want" ]]; then
+    echo "emu-run: aguardando a instância $want…" >&2
+    exec {LOCKFD}>"$RUN/emu-$want.lock"; flock "$LOCKFD"; EMU_N="$want"
+else
+    for _ in $(seq 1 7200); do
+        for ((n = 0; n < POOL; n++)); do acquire "$n" && break 2; done
+        sleep 5
+    done
+fi
+[[ -n "$EMU_N" ]] || { echo "erro: nenhuma instância livre" >&2; exit 1; }
+
+EMU="$HERE/emulator-qemu.sh -i $EMU_N"
+cleanup() { $EMU stop >/dev/null 2>&1 || true; }
+trap cleanup EXIT
+$EMU stop >/dev/null 2>&1 || true
+[[ "$keep" == 1 ]] || $EMU reset >/dev/null
+$EMU start headless --smp 2 >&2
+$EMU wait 240 >&2
+eval "$($EMU env)"
+echo "emu-run: instância $EMU_N pronta (ares $EMU_DEVICE, inspector $EMU_CDP_PORT)" >&2
+timeout "$((timeout_min * 60))" "$@"

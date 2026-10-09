@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>webOS Probe</title>
+    <style>
+        html, body { margin: 0; background: #0c0b11; color: #e8e6f0; font-family: sans-serif; }
+        #summary { font-size: 28px; line-height: 1.4; padding: 32px 48px 8px; }
+        #summary b { color: #9d85ff; }
+        #out { font-size: 15px; line-height: 1.25; padding: 0 48px; white-space: pre-wrap; word-break: break-all; }
+        #v { position: fixed; right: 24px; bottom: 24px; width: 640px; height: 360px; background: #000; display: none; }
+    </style>
+</head>
+<body>
+    <div id="summary">Coletando…</div>
+    <pre id="out"></pre>
+    <video id="v"></video>
+    <script src="probe.js"></script>
+</body>
+</html>

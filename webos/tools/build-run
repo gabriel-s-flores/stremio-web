@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Semáforo para comandos pesados (webpack, cargo, testes grandes): no máximo $BUILD_SLOTS
+# ao mesmo tempo na máquina (padrão 3), para não disputar CPU com os emuladores.
+#   build-run -- <comando...>
+set -euo pipefail
+RUN="$HOME/webos-tv-sdk/run"
+SLOTS="${BUILD_SLOTS:-3}"
+[[ "${1:-}" == "--" ]] && shift
+[[ $# -gt 0 ]] || { echo "uso: build-run -- comando" >&2; exit 1; }
+mkdir -p "$RUN"
+for _ in $(seq 1 7200); do
+    for ((n = 0; n < SLOTS; n++)); do
+        exec {FD}>"$RUN/build-$n.lock"
+        if flock -n "$FD"; then exec nice -n 5 "$@"; fi
+        exec {FD}>&-
+    done
+    sleep 3
+done
+echo "erro: nenhum slot de build livre" >&2
+exit 1
