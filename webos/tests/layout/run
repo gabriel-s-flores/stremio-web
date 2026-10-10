@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Layout page on an emulator reserved by emu-run: installs build/webos, opens each scene of
+# scenes.sh, captures it through CDP and records the console errors and the layout probe.
+#   webos/tools/build-run -- npx webpack --config webos/tests/layout/webpack.config.js --env target=webos
+#   webos/tools/emu-run --timeout 15 -- webos/tests/layout/run <output folder>
+# Output: <folder>/<scene>.png and <folder>/layout.json (per scene: errors, probe).
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+TOOLS="$(cd "$HERE/../../tools" && pwd)"
+APP_ID="io.github.gabrielsflores.layout"
+APP_DIR="$HERE/build/webos"
+OUT="$(realpath -m "${1:?usage: run <output folder>}")"
+: "${EMU_DEVICE:?run inside webos/tools/emu-run}"
+[[ -f "$APP_DIR/appinfo.json" ]] || { echo "error: $APP_DIR not built (see the header)" >&2; exit 2; }
+. "$HERE/scenes.sh"
+mkdir -p "$OUT"
+
+CDP=(node "$TOOLS/cdp.mjs" --target "$APP_ID")
+PKG_DIR="$(mktemp -d)"
+trap 'rm -rf "$PKG_DIR"' EXIT
+ares-package --no-minify "$APP_DIR" -o "$PKG_DIR" >/dev/null
+ares-install -d "$EMU_DEVICE" "$PKG_DIR"/*.ipk
+ares-launch -d "$EMU_DEVICE" "$APP_ID"
+for _ in $(seq 1 60); do
+    "${CDP[@]}" eval 'document.readyState' 2>/dev/null | grep -q complete && break
+    sleep 1
+done
+
+PROBE="$HERE/probe.js"
+printf '{\n' > "$OUT/layout.json"
+first=1
+for entry in "${SCENES[@]}"; do
+    name="${entry%%:*}"
+    hash="${entry#*:}"
+    "${CDP[@]}" navigate "$(printf 'file:///media/developer/apps/usr/palm/applications/%s/index.html#%s' "$APP_ID" "$hash")" >/dev/null
+    "${CDP[@]}" eval 'location.reload()' >/dev/null 2>&1 || true
+    # Rendered when #app has content; the scene may also have stopped with an error.
+    sleep 3
+    for _ in $(seq 1 40); do
+        "${CDP[@]}" eval 'document.getElementById("app") && document.getElementById("app").children.length > 0' 2>/dev/null | grep -q true && break
+        sleep 1
+    done
+    sleep 2
+    "${CDP[@]}" screenshot "$OUT/$name.png" >/dev/null
+    result="$("${CDP[@]}" eval "$(cat "$PROBE")" 2>&1 || true)"
+    [[ $first == 1 ]] || printf ',\n' >> "$OUT/layout.json"
+    first=0
+    printf '  "%s": %s' "$name" "${result:-null}" >> "$OUT/layout.json"
+    echo "$name: $OUT/$name.png"
+done
+printf '\n}\n' >> "$OUT/layout.json"

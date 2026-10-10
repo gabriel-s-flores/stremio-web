@@ -1,0 +1,85 @@
+// webOS TV 4.x (Chromium 53 has no CSS Grid, no aspect-ratio and no contain: size): the cell as an
+// item of the flex-wrap grid of ../Table.webos.less (7 per line, 1px between them, lines of equal
+// height).
+//
+// The grid gave every row the same height (grid-auto-rows: 1fr). Here a line is as tall as its tallest
+// cell, so the cell has no content height: the day and the posters are absolute, and the line takes
+// an equal share of the grid (align-content: stretch).
+
+@import (multiple) './Cell.less';
+
+@heading-height: 2rem;
+@today-heading-height: 2.1rem;
+@poster-width: 40%;
+@poster-width-4-rows: 50%;
+@poster-width-6-rows: 32%;
+
+.cell {
+    flex: none;
+    box-sizing: border-box;
+    width: calc((100% - 6px) / 7);
+    margin: 0 1px 1px 0;
+
+    &:nth-child(7n) {
+        margin-right: 0;
+    }
+
+    .heading {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    .items {
+        position: absolute;
+        top: @heading-height;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        box-sizing: border-box;
+    }
+
+    &.today .items {
+        top: @today-heading-height;
+    }
+
+    .more {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+    }
+
+    // aspect-ratio: 2 / 3 on an item as tall as the cell. Chromium 53 has no aspect-ratio and sizes
+    // an image with a height in percent 0 wide when it computes the width of its item, so the width
+    // comes from the width of the cell instead: a share that makes the poster about 2:3 for the
+    // height of a line of 5 rows on a 1080p screen (the lines of 4 and 6 rows below). The image
+    // fills the item and crops with object-fit: cover (as upstream), so another height only crops.
+    .items .item {
+        width: @poster-width;
+        min-width: 0;
+
+        .poster {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+        }
+    }
+}
+
+// The month has 4 rows (28 children of the grid, the empty days included) or 6 (36 or more).
+// span:first-child is the first empty day, .cell:first-child the 1st when the month starts on Monday.
+.cell:first-child:nth-last-child(-n + 28),
+.cell:first-child:nth-last-child(-n + 28) ~ .cell,
+span:first-child:nth-last-child(-n + 28) ~ .cell {
+    .items .item {
+        width: @poster-width-4-rows;
+    }
+}
+
+.cell:first-child:nth-last-child(n + 36),
+.cell:first-child:nth-last-child(n + 36) ~ .cell,
+span:first-child:nth-last-child(n + 36) ~ .cell {
+    .items .item {
+        width: @poster-width-6-rows;
+    }
+}

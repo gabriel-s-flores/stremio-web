@@ -1,0 +1,55 @@
+// webOS TV 4.x (Chromium 53 has no CSS Grid): the page (hero above the guide) and the guide
+// (schedule beside the sources) as flex. Only the desktop/TV layouts; the phone landscape ones
+// (a 1000x500 viewport at most) are not reached on a TV.
+// The upstream file comes first; the rules below only replace its display: grid.
+
+@import (multiple) './LiveTvDetails.less';
+@import (reference) '~stremio/common/screen-sizes.less';
+
+.channel-page {
+    display: flex;
+    flex-direction: column;
+
+    // Row 1 (minmax(min-content, 1fr)): the hero takes what the guide leaves, never less than its content.
+    > :first-child {
+        flex: 1 0 auto;
+        min-height: 0;
+    }
+
+    // Row 2 (min-content).
+    > .guide-layout {
+        flex: none;
+    }
+}
+
+@media (min-width: (@xsmall + 1px)) {
+    .guide-layout {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 1.75rem;
+
+        // minmax(0, 1fr)
+        > :first-child {
+            flex: 1 1 0%;
+            min-width: 0;
+        }
+
+        // clamp(18rem, 25vw, 24rem)
+        > :nth-child(2) {
+            flex: none;
+            width: 25vw;
+            min-width: 18rem;
+            max-width: 24rem;
+        }
+    }
+}
+
+@media (min-width: (@xsmall + 1px)) and (min-height: 600px) {
+    .channel-page {
+        // minmax(0, 1fr)
+        > :first-child {
+            flex: 1 1 0%;
+        }
+    }
+}

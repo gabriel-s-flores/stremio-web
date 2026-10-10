@@ -1,0 +1,44 @@
+// webOS TV 4.x (Chromium 53 has no CSS Grid): a mapping row (key, direction, action) as flex.
+// The columns were auto 1.2rem 1fr with a 0.5rem gap; the gaps are margins here.
+
+@import (multiple) './styles.less';
+
+.gamepad-modal {
+    .mapping {
+        display: flex;
+        align-items: center;
+
+        .kbd {
+            flex: none;
+            margin-right: 0.5rem;
+        }
+
+        .dir {
+            flex: 0 0 1.2rem;
+            margin-right: 0.5rem;
+        }
+
+        .action {
+            flex: 1 1 0%;
+            min-width: 0;
+        }
+    }
+}
+
+// flex-gap-polyfill (webos/webpack/postcss.js) resets the parent gap of the grandchildren of
+// .content with `.content > * > *`, which outranks the `.sections > *` rule that gives it to the
+// sections: they lost the 5rem above and the page ran into the caption of the diagram. The row
+// gap is given back here; the 5rem between the columns is a margin, as the polyfill's would shift
+// the first column.
+.gamepad-modal .container .content .sections {
+    margin-left: 0;
+
+    > .section {
+        --fgp-parent-gap-row: 5rem;
+        --fgp-parent-gap-column: 1.2rem;
+
+        + .section {
+            margin-left: 5rem;
+        }
+    }
+}

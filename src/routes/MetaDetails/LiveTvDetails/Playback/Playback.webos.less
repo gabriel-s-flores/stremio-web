@@ -1,0 +1,27 @@
+// webOS TV 4.x (Chromium 53 has no CSS Grid): a source row was a grid of two columns (the name
+// and the description, then the play icon over both rows). Here the name and the description
+// stack and the icon sits in the right padding, at the top, as the grid placed it.
+
+@import (multiple) './Playback.less';
+
+.streams-panel {
+    .stream-option {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 0.35rem 0.75rem;
+        padding-right: 4.25rem;
+
+        .stream-info,
+        .stream-description {
+            flex: 1 1 100%;
+        }
+
+        .stream-icon {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+    }
+}

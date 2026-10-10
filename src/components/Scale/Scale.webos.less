@@ -1,0 +1,15 @@
+// webOS TV 4.x (Chromium 53 has no CSS Grid): the ticks as equal flex items. Scale.tsx also sets
+// grid-template-columns inline, which flex ignores.
+
+@import (multiple) './Scale.less';
+
+.scale {
+    .ticks {
+        display: flex;
+
+        .label {
+            flex: 1 1 0%;
+            min-width: 0;
+        }
+    }
+}
