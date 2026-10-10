@@ -8,8 +8,12 @@ Gerado por `webos/core/build`. Não edite à mão: rode o script de novo.
 - **wasm-bindgen:** wasm-bindgen 0.2.121, `--target web --no-typescript`
 - **Binaryen:** wasm-opt version 133 (version_133), `wasm-opt -O --signext-lowering`
 - **Babel:** @babel/core 7.24.3, @babel/cli 7.24.1, @babel/preset-env 7.24.3, @babel/plugin-transform-runtime 7.24.3, babel-plugin-bundled-import-meta 0.3.2, com o `.babelrc` do upstream (como `scripts/build.sh`)
-- **Glue:** em `getStringFromWasm0`, `TextDecoder.decode` recebe `slice()` (cópia) em vez de `subarray()` (view da memória wasm). No Chromium 53 do webOS, certos usos de uma view do `memory.buffer` seguidos de `memory.grow` derrubam o processo do app (`TextDecoder.decode(view)`, `crypto.getRandomValues(view)`, `new Uint8Array(view)` depois de escrever na view). O resto da glue só usa padrões validados no emulador (escrita indexada na view inteira, `subarray().set()`, `DataView`); qualquer outro uso de view da memória precisa de repro no emulador antes
-- **Diferenças para o pacote npm:** só o `stremio_core_web_bg.wasm` (MVP), a glue `stremio_core_web.js` gerada para ele (com a correção acima) e a versão `0.65.0-mvp` no `package.json`. O `bridge.js` e o `worker.js` saem da mesma fonte e do mesmo Babel. `README.md` e `rust-toolchain.toml` do pacote npm não são copiados.
+- **wasm2js:** wasm2js version 133 (version_133), `wasm2js -O` sobre o mesmo `stremio_core_web_bg.wasm`; a saída (módulo ES) vira um script clássico que define a fábrica `asmFunc(imports)` no global `stremio_core_web_wasm2js` (`stremio_core_web_bg.wasm2js.js`). Usado só quando falta o WebAssembly ou a compilação/instanciação do wasm falha (`webos/core/loader.js`)
+- **Glue** (a mesma para WASM e wasm2js):
+  1. em `getStringFromWasm0`, `TextDecoder.decode` recebe `slice()` (cópia) em vez de `subarray()` (view da memória wasm). No Chromium 53 do webOS, certos usos de uma view do `memory.buffer` seguidos de `memory.grow` derrubam o processo do app (`TextDecoder.decode(view)`, `crypto.getRandomValues(view)`, `new Uint8Array(view)` depois de escrever na view). O resto da glue só usa padrões validados no emulador (escrita indexada na view inteira, `subarray().set()`, `DataView`); qualquer outro uso de view da memória precisa de repro no emulador antes. No wasm2js a cópia é inofensiva;
+  2. e 3. o `DataView` e o `Uint8Array` em cache são refeitos quando `buffer !== wasm.memory.buffer`. No wasm2js o `grow` troca o `ArrayBuffer` sem destacar o antigo, e as checagens originais (`detached`, `byteLength === 0`) não percebem a troca;
+  4. `__wbg_load` aceita um objeto com `webosInstantiate(imports)`, que devolve `{ instance, module }`: é por ele que o carregador entrega à glue o core WASM ou o wasm2js
+- **Diferenças para o pacote npm:** o `stremio_core_web_bg.wasm` (MVP), o `stremio_core_web_bg.wasm2js.js` (novo), a glue `stremio_core_web.js` gerada para o MVP (com as correções acima) e a versão `0.65.0-mvp` no `package.json`. O `bridge.js` e o `worker.js` saem da mesma fonte e do mesmo Babel. `README.md` e `rust-toolchain.toml` do pacote npm não são copiados.
 
 ## Checksums (sha256)
 
@@ -17,6 +21,7 @@ Gerado por `webos/core/build`. Não edite à mão: rode o script de novo.
 |---|---|---|
 | `bridge.js` | 3926 | `51c490dcde610baad20f6bf0c2cfc87e6b886830c2c6f80080ce4a7a796199d1` |
 | `worker.js` | 5122 | `455af735f709befb35ea2b66ae70059551413d39fab5154b8de94823c288ddcc` |
-| `stremio_core_web.js` | 34139 | `b9f94819a8c23fa59ac42c38a6f14d616da1a1ba39b5b35b21dc0f162b7203a9` |
+| `stremio_core_web.js` | 34361 | `cfc8663d44cf20681480dbff5aa5ed0e352c6d063bbce86d517e19cba772756c` |
 | `stremio_core_web_bg.wasm` | 4913718 | `0607123a2b13b4179cabf719d94980fbb10a0853d4a327d7dfa793e8368ea505` |
+| `stremio_core_web_bg.wasm2js.js` | 32649520 | `d57542c52e090f2910eecb51b7d88e4063a4f604c8599e23f4958d8146bd714e` |
 | `package.json` | 881 | `9dc4e0e231f1ae701b30e4116e519f9c375ecc07a51a426088b8946431d7d5d8` |
