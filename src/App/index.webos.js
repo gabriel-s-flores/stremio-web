@@ -1,16 +1,19 @@
 // Copyright (C) 2017-2026 Smart code 203358507
 
 // webOS TV 4.x build only (resolved instead of index.js by webos/webpack/app.js): the App plus the
-// Back key dispatcher of webos/back (F3.2), inside the same router.
+// Back key dispatcher of webos/back (F3.2) and the app lifecycle of webos/lifecycle (F3.3), inside
+// the same router.
 
 const React = require('react');
 const { BackNavigation } = require('../../webos/back');
+const { LifecycleHandler } = require('../../webos/lifecycle');
 const App = require('./App');
 
 const WebOSApp = () => (
     <React.Fragment>
         <App />
         <BackNavigation />
+        <LifecycleHandler />
     </React.Fragment>
 );
 
