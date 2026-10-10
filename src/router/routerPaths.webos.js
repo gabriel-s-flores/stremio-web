@@ -4,7 +4,8 @@
 //   - boot marks on the Board route (webos/lib/diagnostics/registry.js): when its element mounted
 //     and when the first catalog item showed up;
 //   - the remote shortcut (RED GREEN YELLOW BLUE) that opens the diagnostics screen from any route
-//     (webos/lib/diagnostics/shortcut.js), installed with the Board route: one window listener.
+//     (webos/lib/diagnostics/shortcut.js): one window listener, installed when this module loads so
+//     it also works when the app starts on another route (a deep link).
 
 import React from 'react';
 // The explicit extension resolves to the upstream file, not to this one.
@@ -18,15 +19,12 @@ const DIAGNOSTICS_PATH = '/webos-diagnostics';
 // The class names of the CSS modules are `[local]-[hash]`; the F1.4/F1.6 probes match the same way.
 const FIRST_ITEM_SELECTOR = '[class*="meta-item-container"]';
 
+installDiagnosticsShortcut(window);
+
 const BoardBootMarks = ({ children }) => {
     React.useEffect(() => {
         mark('boardMounted');
-        const stopShortcut = installDiagnosticsShortcut(window);
-        const stopWatching = markWhenFound(document.querySelector('.routes-container'), FIRST_ITEM_SELECTOR, 'boardFirstItem');
-        return () => {
-            stopShortcut();
-            stopWatching();
-        };
+        return markWhenFound(document.querySelector('.routes-container'), FIRST_ITEM_SELECTOR, 'boardFirstItem');
     }, []);
     return children;
 };

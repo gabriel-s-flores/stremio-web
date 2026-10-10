@@ -5,7 +5,8 @@
 //   coreReadyAt  window.core assigned (the F1.4 definition), ms on the page's performance.now()
 //   firstRowAt   first frame (rAF) with a Board catalog item that has a box inside the screen
 //   screenFullAt two Board rows with items on screen
-//   chunks       ids of the webpack chunks the page had loaded by then (the diagnostics chunk must not be there)
+//   scripts      the .js files the page had loaded by then, from Page.getResourceTree (the diagnostics
+//                chunk must not be there)
 //
 //   node boot-probe.mjs --port <cdp> [--timeout s]
 const argv = process.argv.slice(2);
@@ -43,7 +44,6 @@ const HOOKS = `(function(){
 })()`;
 
 const STATE = `JSON.stringify({ hooks: window.__f36 || null,
-  chunks: Object.keys(window).filter(function(k){ return /^webpackChunk/.test(k); }).map(function(k){ return [].concat.apply([], window[k].map(function(c){ return c[0]; })); })[0] || null,
   heap: performance.memory ? { usedMB: Math.round(performance.memory.usedJSHeapSize / 1048576 * 10) / 10, totalMB: Math.round(performance.memory.totalJSHeapSize / 1048576 * 10) / 10 } : null,
   now: performance.now() })`;
 
@@ -78,7 +78,12 @@ async function connect() {
         pending.set(id, { resolve: (r) => resolve(r.result && r.result.value), reject });
         ws.send(JSON.stringify({ id, method: 'Runtime.evaluate', params: { expression, returnByValue: true } }));
     });
-    return { evaluate, close: () => ws.close() };
+    const send = (method) => new Promise((resolve, reject) => {
+        const id = nextId++;
+        pending.set(id, { resolve, reject });
+        ws.send(JSON.stringify({ id, method }));
+    });
+    return { evaluate, send, close: () => ws.close() };
 }
 
 const session = await connect();
@@ -92,6 +97,11 @@ while (Date.now() < deadline) {
     } catch (e) { /* the document is being replaced */ }
     await sleep(500);
 }
+let scripts = null;
+try {
+    const tree = await session.send('Page.getResourceTree');
+    scripts = (tree.frameTree.resources || []).filter((r) => /\.js(\?|$)/.test(r.url)).map((r) => r.url.split('/').pop());
+} catch (e) { /* not available */ }
 session.close();
 const round = (value) => (typeof value === 'number' ? Math.round(value) : value);
 const hooks = (state && state.hooks) || {};
@@ -100,6 +110,6 @@ console.log(JSON.stringify({
     firstRowAt: round(hooks.firstRowAt),
     screenFullAt: round(hooks.screenFullAt),
     heap: state && state.heap,
-    chunks: state && state.chunks,
+    scripts,
     ok: !!(state && hooks.screenFullAt !== null),
 }));
