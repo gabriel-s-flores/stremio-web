@@ -380,6 +380,26 @@ describe('webos persistence mirror', () => {
         expect(page.copy().kv).toMatchObject({ library: 'L2', profile: 'P2' });
     });
 
+    test('a database created by someone else without the stores is repaired, not left broken', async () => {
+        const disk = createDisk();
+        const name = openPage(disk).dbName;
+        // Um indexedDB.open(nome) sem versão, antes do espelho: banco v1 sem stores.
+        await new Promise((resolve) => { disk.idb.open(name).onsuccess = resolve; });
+        expect(disk.idb.databases.get(name)).toMatchObject({ version: 1, stores: {} });
+        const page = await seed(disk);
+        expect(page.mirror.getStatus().broken).toBe(false);
+        expect(page.copy().kv).toEqual(USER_STATE);
+        expect(disk.idb.databases.get(name).version).toBe(2);
+    });
+
+    test('inspect() reports the copy without changing it', async () => {
+        const disk = createDisk();
+        const page = await seed(disk);
+        const info = await page.mirror.inspect();
+        expect(info.meta).toMatchObject({ appId: APP_ID, pendingRestore: false });
+        expect(info.keys).toEqual(Object.fromEntries(Object.entries(USER_STATE).map(([k, v]) => [k, v.length])));
+    });
+
     test('only localStorage writes are tracked, not sessionStorage', async () => {
         const disk = createDisk();
         const page = await seed(disk);

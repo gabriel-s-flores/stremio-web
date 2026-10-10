@@ -127,18 +127,39 @@ function createMirror(options) {
     }
 
     // ---- IndexedDB ----
+    var STORES = ['kv', 'meta'];
+    function missingStores(db) {
+        return STORES.filter(function (name) { return !db.objectStoreNames.contains(name); });
+    }
+    // Abre na versão atual (ou cria a 1). Se o banco existe sem as stores (alguém o abriu sem versão
+    // antes de nós), reabre com a versão seguinte para criá-las, em vez de ficar quebrado para sempre.
+    function openVersion(version, resolve, reject) {
+        var req = version ? idb.open(dbName, version) : idb.open(dbName);
+        req.onupgradeneeded = function () {
+            missingStores(req.result).forEach(function (name) { req.result.createObjectStore(name); });
+        };
+        req.onsuccess = function () {
+            var db = req.result;
+            if (missingStores(db).length) {
+                db.close();
+                if (version) reject(new Error('stores ausentes no IndexedDB'));
+                else openVersion(db.version + 1, resolve, reject);
+                return;
+            }
+            db.onversionchange = function () {   // não bloquear quem precisar subir a versão
+                db.close();
+                dbPromise = null;
+            };
+            resolve(db);
+        };
+        req.onerror = function () { reject(req.error || new Error('indexedDB.open falhou')); };
+        req.onblocked = function () { reject(new Error('indexedDB.open bloqueado')); };
+    }
     function openDb() {
         if (dbPromise) return dbPromise;
         var p = new Promise(function (resolve, reject) {
             if (!idb) throw new Error('sem indexedDB');
-            var req = idb.open(dbName, 1);
-            req.onupgradeneeded = function () {
-                req.result.createObjectStore('kv');
-                req.result.createObjectStore('meta');
-            };
-            req.onsuccess = function () { resolve(req.result); };
-            req.onerror = function () { reject(req.error || new Error('indexedDB.open falhou')); };
-            req.onblocked = function () { reject(new Error('indexedDB.open bloqueado')); };
+            openVersion(0, resolve, reject);
         });
         dbPromise = p;
         // Não guarda uma promessa rejeitada: a próxima operação tenta abrir de novo.
@@ -432,6 +453,24 @@ function createMirror(options) {
         return wipe().then(null, function (e) { status.error = errorText(e); });
     }
 
+    // Só leitura, para diagnóstico (F3.6) e sondas: o meta e o tamanho de cada chave da cópia.
+    function inspect() {
+        return tx('readonly', function (kv, meta) {
+            var out = { meta: null, keys: {}, chars: 0 };
+            var m = meta.get('meta');
+            m.onsuccess = function () { out.meta = m.result || null; };
+            kv.openCursor().onsuccess = function (ev) {
+                var cursor = ev.target.result;
+                if (cursor) {
+                    out.keys[cursor.key] = String(cursor.value).length;
+                    out.chars += String(cursor.value).length;
+                    cursor['continue']();
+                }
+            };
+            return out;
+        });
+    }
+
     function getStatus() {
         var s = JSON.parse(JSON.stringify(status));
         s.broken = broken;
@@ -446,6 +485,7 @@ function createMirror(options) {
         initFailed: initFailed,
         flush: flush,
         wipe: wipe,
+        inspect: inspect,
         getStatus: getStatus,
         dbName: dbName
     };

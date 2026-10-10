@@ -39,6 +39,7 @@ const boot = mirror.start();
 
 window.__stremioPersist = {
     status: mirror.getStatus,
+    inspect: mirror.inspect,
     flush: mirror.flush,
     wipe: mirror.wipe,
 };

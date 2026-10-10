@@ -13,7 +13,7 @@ const { createMirror } = require('../../persistence/mirror');
 const tick = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function createFakeIndexedDB() {
-    const databases = new Map();   // nome -> { stores: { kv: Map, meta: Map } }
+    const databases = new Map();   // nome -> { version, stores: { kv: Map, meta: Map } }
     const fake = { mode: 'ok', openDelay: 0, failTx: false, opens: 0, databases };
 
     function request() {
@@ -23,6 +23,9 @@ function createFakeIndexedDB() {
     function makeDb(name) {
         const entry = databases.get(name);
         return {
+            get version() { return entry.version; },
+            objectStoreNames: { contains: (store) => Object.prototype.hasOwnProperty.call(entry.stores, store) },
+            close() {},
             createObjectStore(store) {
                 entry.stores[store] = new Map();
             },
@@ -101,7 +104,7 @@ function createFakeIndexedDB() {
         };
     }
 
-    fake.open = (name) => {
+    fake.open = (name, version) => {
         fake.opens++;
         const req = request();
         req.onupgradeneeded = null;
@@ -113,10 +116,19 @@ function createFakeIndexedDB() {
                 if (req.onerror) req.onerror();
                 return;
             }
-            const isNew = !databases.has(name);
-            if (isNew) databases.set(name, { stores: {} });
+            if (!databases.has(name)) databases.set(name, { version: 0, stores: {} });
+            const entry = databases.get(name);
+            const target = version || entry.version || 1;
+            if (target < entry.version) {
+                req.error = Object.assign(new Error('VersionError'), { name: 'VersionError' });
+                if (req.onerror) req.onerror();
+                return;
+            }
             req.result = makeDb(name);
-            if (isNew && req.onupgradeneeded) req.onupgradeneeded();
+            if (target > entry.version) {
+                entry.version = target;
+                if (req.onupgradeneeded) req.onupgradeneeded();
+            }
             setTimeout(() => { if (req.onsuccess) req.onsuccess(); }, fake.openDelay);
         }, 0);
         return req;
