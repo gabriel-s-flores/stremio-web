@@ -1,0 +1,45 @@
+// webOS TV 4.x build only (Stream.webos.js, F6.2): the LG C8 labels of a stream item. A full-width
+// row (the item is a wrapping flex row) under the description, small and translucent.
+
+.c8-labels {
+    flex: 0 0 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    // Under the description: the addon name column (7rem) plus the item gap.
+    padding-left: 8rem;
+    margin-top: -0.5rem;
+
+    .label,
+    .warning {
+        flex: none;
+        margin: 0.25rem 0.5rem 0 0;
+        padding: 0.1rem 0.6rem;
+        border-radius: 0.3rem;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        white-space: nowrap;
+    }
+
+    .label {
+        color: var(--primary-foreground-color);
+        background-color: var(--overlay-color);
+        opacity: 0.8;
+    }
+
+    .warning {
+        color: #f5c26b;
+        border: 1px solid rgba(245, 194, 107, 0.45);
+    }
+
+    .warning.hide {
+        color: #ff8f85;
+        border-color: rgba(255, 143, 133, 0.45);
+    }
+}
+
+// Streams the C8 cannot play (AV1) stay at the end of the list, dimmed.
+.tier-hidden {
+    opacity: 0.55;
+}
