@@ -5,6 +5,14 @@ const { selectors, categories } = require('../../polyfills/plural-data');
 
 const languageOf = (locale) => locale === 'pt-PT' ? 'pt-PT' : locale.split('-')[0];
 
+// Intl.NumberFormat of a TV whose locale is `host` (Node may not resolve it to itself).
+const hostNumberFormat = (host) => function(locales, options) {
+    const format = new Intl.NumberFormat(locales, options);
+    if (locales !== undefined) return format;
+    const resolvedOptions = format.resolvedOptions();
+    return { format: format.format, resolvedOptions: () => ({ ...resolvedOptions, locale: host }) };
+};
+
 describe('Intl.PluralRules polyfill', () => {
     let PluralRules;
 
@@ -74,6 +82,22 @@ describe('Intl.PluralRules polyfill', () => {
     test('falls back to the host locale for unknown languages and supportedLocalesOf filters', () => {
         expect(PluralRules.supportedLocalesOf(['ru-RU', 'xx-XX', 'pt-PT'])).toEqual(['ru-RU', 'pt-PT']);
         expect(new PluralRules('xx-XX').resolvedOptions().locale).toBe('en');
+    });
+
+    test('falls back to English when neither the requested nor the host locale has rules', () => {
+        const target = { Intl: { NumberFormat: hostNumberFormat('sw-KE') } };
+        install(target);
+        const rules = new target.Intl.PluralRules('zz-ZZ');
+        expect(rules.resolvedOptions().locale).toBe('en');
+        expect(rules.resolvedOptions().pluralCategories).toEqual(categories.en.cardinal);
+        expect([1, 2].map((number) => rules.select(number))).toEqual(['one', 'other']);
+        expect(new target.Intl.PluralRules().resolvedOptions().locale).toBe('en');
+    });
+
+    test('keeps the host locale when it has rules', () => {
+        const target = { Intl: { NumberFormat: hostNumberFormat('ru-RU') } };
+        install(target);
+        expect(new target.Intl.PluralRules('zz-ZZ').resolvedOptions().locale).toBe('ru');
     });
 
     test('treats Infinity and NaN as other', () => {
