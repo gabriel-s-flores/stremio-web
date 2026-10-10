@@ -2,19 +2,27 @@
 // Back key on the emulator (F3.2): real remote keys (webos/tools/remote.mjs, port 19001) on the
 // packaged app, with the state read over CDP after each press. Run from the repo root, inside an
 // emu-run reservation, after `pnpm webos:package`:
-//   webos/tools/emu-run --timeout 15 -- node webos/tests/back/emulator/run.mjs <out-dir>
-// Writes <out-dir>/back-emulator.json (every step with its state before and after) and screenshots.
+//   webos/tools/emu-run --timeout 15 -- node webos/tests/back/emulator/run.mjs <out-dir> [navigation|player]
+// Writes <out-dir>/back-<scenario>.json (every step with its state before and after) and screenshots.
+// The output folder must be under $HOME (the VM screenshots are written by QEMU, in a flatpak).
+// Scenarios (one per emu-run: the emulator only plays the first media after a boot):
+// - navigation (default): Board, quit dialog, dropdown, popup, MetaDetails, modal, keyboard, quit;
+// - player: a video served from the host (webos/tools/media-server.mjs, $MEDIA_FILE, by default
+//   ~/webos-tv-sdk/run/f16-media/longo_h264_aac.mp4, 90 s), its speed menu and its context menu
+//   closed by Back with the playback rate checked, then Back out of the Player.
 //
 // Navigation between screens is done the way the remote would trigger it (clicks on the app's own
 // links and buttons over CDP, so react-router pushes history entries); every Back is a real key.
 // "No double navigation" is checked on each press: exactly one dispatch in window.__webosBack, the
 // expected route, history.state.idx and the number of popstate events (WebAppMgr must not go back
 // on its own: disableBackHistoryAPI).
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
+import zlib from 'node:zlib';
 import fs from 'node:fs';
 import path from 'node:path';
 
 const OUT = path.resolve(process.argv[2] || 'back-emulator');
+const SCENARIO = process.argv[3] || 'navigation';
 const REPO = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..', '..', '..');
 const APP_ID = 'io.github.gabrielsflores.stremio';
 const DEVICE = process.env.EMU_DEVICE;
@@ -195,7 +203,8 @@ const click = (name, selectorExpression) => {
     return result !== 'not found';
 };
 
-const main = async () => {
+// Installs and opens the app, brings it to the front and waits for the Board.
+const boot = async () => {
     const started = Date.now();
     console.log(run('webos/scripts/ares.sh', ['install'], { env: { ...process.env, WEBOS_DEVICE: DEVICE } }).trim());
     console.log(run('webos/scripts/ares.sh', ['launch'], { env: { ...process.env, WEBOS_DEVICE: DEVICE } }).trim());
@@ -216,7 +225,7 @@ const main = async () => {
     record('board-loaded', { ok: boardMs !== null, note: `${Math.round((Date.now() - started) / 1000)} s after install`, state: state() });
     if (boardMs === null) {
         record('board-dom', { dump: evaluate('return document.body.innerHTML.slice(0, 4000);') });
-        return;
+        return false;
     }
     await sleep(3000);
     record('environment', {
@@ -234,7 +243,10 @@ const main = async () => {
         `),
     });
     screenshot('00-board');
+    return true;
+};
 
+const navigationScenario = async () => {
     // 1. Root: Back opens the quit dialog, Back again closes it. No history movement.
     await back('01-board-back-opens-exit-dialog', (b, a) => ({
         'dialog open': a.exitDialog,
@@ -378,12 +390,104 @@ const main = async () => {
     });
 };
 
+// The Player with a real video: Back closes its menus without touching the playback, then leaves.
+const MEDIA_FILE = process.env.MEDIA_FILE || path.join(process.env.HOME, 'webos-tv-sdk', 'run', 'f16-media', 'longo_h264_aac.mp4');
+
+const videoState = () => evaluate(`
+    var video = document.querySelector('video');
+    return video ? { time: Math.round(video.currentTime * 10) / 10, rate: video.playbackRate, paused: video.paused, readyState: video.readyState } : null;
+`);
+
+const playerScenario = async () => {
+    const port = 8120 + Number(process.env.EMU_INSTANCE || 0);
+    const server = spawn('node', ['webos/tools/media-server.mjs', path.dirname(MEDIA_FILE), String(port)], { cwd: REPO, stdio: 'ignore' });
+    try {
+        await sleep(1000);
+        // The Player route takes the stream as deflated JSON in base64 (src/routes/Player). A
+        // router entry is pushed the way a link would, so Back has an entry to go back to.
+        const stream = zlib.deflateSync(Buffer.from(JSON.stringify({ url: `http://10.0.2.2:${port}/${path.basename(MEDIA_FILE)}`, name: '', description: '' })), { level: 0 }).toString('base64');
+        const playerHash = `#/player/${encodeURIComponent(stream)}`;
+        evaluate(`
+            var idx = window.history.state && typeof window.history.state.idx === 'number' ? window.history.state.idx + 1 : 1;
+            var state = { usr: null, key: 'f32player', idx: idx };
+            window.history.pushState(state, '', ${JSON.stringify(playerHash)});
+            window.dispatchEvent(new PopStateEvent('popstate', { state: state }));
+            return true;
+        `);
+        const playingMs = await waitFor('var video = document.querySelector("video"); return !!video && video.readyState >= 3 && video.currentTime > 1;', 90000, 1000);
+        record('P01-player-playing', { ok: playingMs !== null, data: videoState(), state: state(), screenshot: screenshot('P01-player') });
+        if (playingMs === null) {
+            return;
+        }
+
+        // Speed menu (a Player menu layer), opened with its shortcut.
+        evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { key: "r", bubbles: true })); return true;');
+        await sleep(800);
+        const menuLayers = evaluate(`return document.querySelectorAll(window.__f32.sel('menu-layer')).length;`);
+        record('P02-speed-menu-open', { ok: menuLayers > 0, note: `menu layers: ${menuLayers}`, screenshot: screenshot('P02-speed-menu') });
+        await back('P03-player-back-closes-speed-menu', (b, a) => ({
+            'consumed by overlay (player-menu)': a.lastDispatch && a.lastDispatch.detail === 'player-menu',
+            'menu closed': evaluate(`return document.querySelectorAll(window.__f32.sel('menu-layer')).length;`) === 0,
+            'still in Player': a.hash.indexOf('#/player') === 0,
+            'no popstate': a.popstates === b.popstates,
+        }), { settleMs: 1500 });
+        await sleep(1000);
+        const afterMenu = videoState();
+        record('P04-playback-after-speed-menu', { ok: afterMenu.rate === 1 && !afterMenu.paused, data: afterMenu });
+
+        // Context menu of the Player (right click on the video; the remote has no right click,
+        // but the bridge has to close it right when it is open).
+        evaluate(`
+            var event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 600, clientY: 400, button: 2 });
+            document.querySelector('video').dispatchEvent(event);
+            return true;
+        `);
+        await sleep(800);
+        const contextMenuOpen = () => evaluate(`return !!document.querySelector('body > ' + window.__f32.sel('context-menu-container').split(', ').join(', body > '));`);
+        record('P05-context-menu-open', { ok: contextMenuOpen() === true, screenshot: screenshot('P05-context-menu') });
+        await back('P06-player-back-closes-context-menu', (b, a) => ({
+            'consumed by overlay (context-menu)': a.lastDispatch && a.lastDispatch.detail === 'context-menu',
+            'still in Player': a.hash.indexOf('#/player') === 0,
+            'no popstate': a.popstates === b.popstates,
+        }), { settleMs: 1500 });
+        record('P07-context-menu-closed', { ok: contextMenuOpen() === false });
+        // The Player switches to 2x 400 ms after a press that is not released: check well after.
+        const rates = [];
+        for (let i = 0; i < 4; i++) {
+            await sleep(1000);
+            rates.push(videoState());
+        }
+        record('P08-playback-after-context-menu', {
+            ok: rates.every((video) => video && video.rate === 1 && !video.paused),
+            note: `rate over 4 s: ${rates.map((video) => video && video.rate).join(', ')}`,
+            data: rates,
+        });
+
+        // Back while the video plays: leaves the Player, one entry back.
+        await back('P09-player-back-leaves', (b, a) => ({
+            'left Player': a.hash.indexOf('#/player') !== 0,
+            'one popstate': a.popstates === b.popstates + 1,
+            'one entry back': a.idx === b.idx - 1,
+            'no dialog': !a.exitDialog,
+        }), { settleMs: 2500 });
+    } finally {
+        server.kill();
+    }
+};
+
+const SCENARIOS = { navigation: navigationScenario, player: playerScenario };
+
 try {
-    await main();
+    if (!SCENARIOS[SCENARIO]) {
+        throw new Error(`unknown scenario ${SCENARIO}`);
+    }
+    if (await boot()) {
+        await SCENARIOS[SCENARIO]();
+    }
 } catch (error) {
     record('error', { ok: false, note: error.message });
 }
 const failed = steps.filter((step) => step.ok === false);
-fs.writeFileSync(path.join(OUT, 'back-emulator.json'), JSON.stringify({ date: new Date().toISOString(), failed: failed.map((step) => step.name), steps }, null, 2));
-console.log(`\n${steps.filter((step) => step.ok === true).length} ok, ${failed.length} falharam -> ${path.join(OUT, 'back-emulator.json')}`);
+fs.writeFileSync(path.join(OUT, `back-${SCENARIO}.json`), JSON.stringify({ date: new Date().toISOString(), failed: failed.map((step) => step.name), steps }, null, 2));
+console.log(`\n${steps.filter((step) => step.ok === true).length} ok, ${failed.length} falharam -> ${path.join(OUT, `back-${SCENARIO}.json`)}`);
 process.exit(failed.length === 0 ? 0 : 1);
