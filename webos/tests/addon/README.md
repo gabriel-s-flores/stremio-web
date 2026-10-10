@@ -27,12 +27,14 @@ Os streams estão em [`catalog.js`](catalog.js), na ordem do addon, com o result
 ## Uso
 
 ```bash
-node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <raiz de mídia>] [--info addon.json]
+node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <raiz de mídia>] [--info addon.json] [--delay <ms>]
 ```
+
+- `--delay <ms>` põe um proxy na frente do servidor de mídia que segura cada pedido por esse tempo, para simular a latência de um debrid real. As URLs dos streams passam a apontar para o proxy.
 
 - As portas livres são escolhidas sozinhas. `--host` é como o cliente enxerga esta máquina: `10.0.2.2` no emulador (padrão) e `127.0.0.1` num navegador do desktop.
 - Quando fica pronto, imprime (e grava em `--info`) `{ manifestUrl, mediaUrl, port, mediaPort, dir }`.
-- O `media-server.mjs` sobe como processo filho e é encerrado junto, com SIGINT ou SIGTERM.
+- O `media-server.mjs` sobe como processo filho e é encerrado junto, com SIGINT ou SIGTERM. A raiz de mídia temporária (sem `--dir`) é apagada na saída.
 
 Para instalar no app em modo convidado (sem conta), por CDP, como faz a tela de Addons (`window.core` é o transport do core):
 

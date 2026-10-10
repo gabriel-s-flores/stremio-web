@@ -3,9 +3,10 @@
 // or series id starting with "tt") whose URLs point at webos/tools/media-server.mjs, started here
 // on a media root with the kit media, the F0.10 headers and the rebuilt probe fixtures (media.js).
 //
-//   node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <media root>] [--info <file.json>]
+//   node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <media root>] [--info <file.json>] [--delay <ms>]
 //
-// Ports default to free ones. --host is how the client reaches this machine (10.0.2.2 from the
+// Ports default to free ones. --delay puts a proxy in front of the media server that holds every
+// request that long (debrid latency); the stream URLs then point at the proxy. --host is how the client reaches this machine (10.0.2.2 from the
 // emulator, 127.0.0.1 from a desktop browser). When ready, prints and writes (--info) a JSON with
 // manifestUrl, mediaUrl and the ports. Stops the media server on SIGINT/SIGTERM.
 import http from 'node:http';
@@ -59,8 +60,10 @@ const waitForPort = (port) => new Promise((resolve, reject) => {
 const host = option('host', '10.0.2.2');
 const port = Number(option('port', 0)) || await freePort();
 const mediaPort = Number(option('media-port', 0)) || await freePort();
-const dir = path.resolve(option('dir', fs.mkdtempSync(path.join(os.tmpdir(), 'webos-test-addon-'))));
+const ownDir = option('dir', null) === null;
+const dir = path.resolve(ownDir ? fs.mkdtempSync(path.join(os.tmpdir(), 'webos-test-addon-')) : option('dir'));
 const infoFile = option('info', null);
+const delay = Number(option('delay', 0)) || 0;
 
 const missing = prepareMedia(dir, STREAMS.filter((entry) => entry.media).map((entry) => entry.media));
 if (missing.length > 0) {
@@ -70,19 +73,44 @@ if (missing.length > 0) {
 const media = spawn(process.execPath, [path.join(ROOT, 'webos', 'tools', 'media-server.mjs'), dir, String(mediaPort)], {
     stdio: ['ignore', 'inherit', 'inherit'],
 });
+// The temporary media root (sparse fixtures, links) goes away with the server.
+const removeDir = () => {
+    if (ownDir) fs.rmSync(dir, { recursive: true, force: true });
+};
 const stop = () => {
     media.kill('SIGTERM');
+    removeDir();
     process.exit(0);
 };
 process.on('SIGINT', stop);
 process.on('SIGTERM', stop);
 media.on('exit', (code) => {
     console.error(`media-server saiu (código ${code})`);
+    removeDir();
     process.exit(1);
 });
 await waitForPort(mediaPort);
 
-const mediaUrl = `http://${host}:${mediaPort}`;
+// Debrid latency: every media request waits `delay` ms before reaching the media server.
+let urlPort = mediaPort;
+if (delay > 0) {
+    urlPort = await freePort();
+    await new Promise((resolve) => {
+        http.createServer((req, res) => setTimeout(() => {
+            const upstream = http.request({ host: '127.0.0.1', port: mediaPort, path: req.url, method: req.method, headers: req.headers }, (answer) => {
+                res.writeHead(answer.statusCode, answer.headers);
+                answer.pipe(res);
+            });
+            upstream.on('error', () => {
+                res.writeHead(502);
+                res.end();
+            });
+            req.pipe(upstream);
+            res.on('close', () => upstream.destroy());
+        }, delay)).listen(urlPort, '127.0.0.1', resolve);
+    });
+}
+const mediaUrl = `http://${host}:${urlPort}`;
 const manifestUrl = `http://${host}:${port}/manifest.json`;
 
 const send = (res, status, body) => {
@@ -114,7 +142,7 @@ http.createServer((req, res) => {
     send(res, 404, { err: 'not found' });
     return log(404);
 }).listen(port, '127.0.0.1', () => {
-    const info = { manifestUrl, mediaUrl, port, mediaPort, dir, streams: STREAMS.length };
+    const info = { manifestUrl, mediaUrl, port, mediaPort, delay, dir, streams: STREAMS.length };
     if (infoFile) fs.writeFileSync(infoFile, JSON.stringify(info, null, 4));
     process.stdout.write(`${JSON.stringify(info)}\n`);
 });
