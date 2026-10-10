@@ -79,6 +79,13 @@ function scrollBy() {
     }
 }
 
+const DOCUMENT_FRAGMENT_NODE = 11;
+
+// A ShadowRoot is a document fragment whose host is a node (a detached <a> has a string host).
+const isShadowRoot = (node) => {
+    return node.nodeType === DOCUMENT_FRAGMENT_NODE && Boolean(node.host) && typeof node.host.nodeType === 'number';
+};
+
 // The root of the node's tree: the document, a detached subtree's top or a ShadowRoot; with
 // { composed: true }, shadow roots are crossed through their host.
 function getRootNode(options) {
@@ -87,7 +94,7 @@ function getRootNode(options) {
     for (;;) {
         if (node.parentNode) {
             node = node.parentNode;
-        } else if (composed && node.host) {
+        } else if (composed && isShadowRoot(node)) {
             node = node.host;
         } else {
             return node;
