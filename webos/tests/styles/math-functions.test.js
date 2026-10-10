@@ -73,6 +73,11 @@ describe('webos/webpack/postcss-math-functions', () => {
         });
     });
 
+    test('max-width/max-height: min(L, X%) keeps the % guard, other properties keep L', async () => {
+        const css = '.a{max-width:min(30rem,100%);max-height:min(20rem,calc(100% - 2rem));width:min(1.25rem,100%);max-width:min(14rem,70vw);margin:min(1rem,100%)}.b{max-width:calc(min(30rem,100%) + 1px)}';
+        expect((await run(css)).css).toBe('.a{max-width:100%;max-height:calc(100% - 2rem);width:1.25rem;max-width:14rem;margin:1rem}.b{max-width:calc(30rem + 1px)}');
+    });
+
     test('leaves out of reach what is not min(), max() or clamp()', () => {
         expect(resolveValue('minmax(0, 1fr) 2rem')).toBe('minmax(0, 1fr) 2rem');
         expect(resolveValue('var(--fgp-max-width, 1px)')).toBe('var(--fgp-max-width, 1px)');
@@ -85,11 +90,11 @@ describe('webos/webpack/postcss-math-functions', () => {
     });
 
     test('rewrites the declarations, custom properties and nested rules of a stylesheet', async () => {
-        const css = '.a{max-width:min(30rem,100%);--size:max(1rem,0px)}@media (min-width:600px){.b{font-size:clamp(1rem,2vw,2rem)}}';
+        const css = '.a{margin-left:min(30rem,100%);--size:max(1rem,0px)}@media (min-width:600px){.b{font-size:clamp(1rem,2vw,2rem)}}';
         const result = await run(css);
-        expect(result.css).toBe('.a{max-width:30rem;--size:1rem}@media (min-width:600px){.b{font-size:2rem}}');
+        expect(result.css).toBe('.a{margin-left:30rem;--size:1rem}@media (min-width:600px){.b{font-size:2rem}}');
         expect(result.messages.map((message) => message.text)).toEqual([
-            'max-width: min(30rem,100%) -> 30rem',
+            'margin-left: min(30rem,100%) -> 30rem',
             '--size: max(1rem,0px) -> 1rem',
             'font-size: clamp(1rem,2vw,2rem) -> 2rem',
         ]);

@@ -16,6 +16,9 @@
 // the Timeline's --content-width) are ignored while another argument can be: the length written in
 // the source is the design value, the dynamic term is only a guard for a viewport that is not a TV.
 // If none can be sized, the first argument without % is used (the first, if all have %).
+// One exception: max-width/max-height: min(L, X%) keeps the X% term. There the % is a guard that
+// keeps the box inside its container (a 360px MetaPreview column on Discover is narrower than the
+// 30rem of the logo cap), while L is only a cap; elsewhere (width: min(1.25rem, 100%)) L is the value.
 // Consequence: max(1rem, var(--safe-area-inset-*)) is frozen at 1rem. An overscan margin set through
 // the --safe-area-inset-* variables must not rely on those paddings.
 // Also in what is emitted: static calc() arithmetic is folded (`calc(3rem * 7)` -> `21rem`), env()
@@ -253,8 +256,12 @@ const pick = (kind, operands) => {
     });
 };
 
-const resolveCall = (name, args, viewport) => {
+const resolveCall = (name, args, viewport, isCap) => {
     const operands = args.map((arg) => toOperand(arg, viewport));
+    if (isCap && name === 'min') {
+        const guard = operands.find((operand) => operand.px === null && /%/.test(operand.text));
+        if (guard) return guard.text;
+    }
     let chosen;
     if (name === 'clamp' && operands.length === 3) {
         const [low, value, high] = operands;
@@ -267,7 +274,7 @@ const resolveCall = (name, args, viewport) => {
 };
 
 // `value` with every min()/max()/clamp() replaced, innermost calls first.
-const resolveValue = (value, viewport = VIEWPORT) => {
+const resolveValue = (value, viewport = VIEWPORT, isCap = false) => {
     let result = '';
     let rest = value;
     for (;;) {
@@ -276,8 +283,10 @@ const resolveValue = (value, viewport = VIEWPORT) => {
         const open = match.index + match[0].length - 1;
         const end = closing(rest, open);
         if (end === -1) return result + rest;
+        // Only a call that is the whole value of a max-* property is the cap.
+        const whole = isCap && match.index === 0 && end === rest.length - 1 && result === '';
         const args = splitArgs(rest.slice(open + 1, end)).map((arg) => resolveValue(arg, viewport));
-        result += rest.slice(0, match.index) + resolveCall(match[1], args, viewport);
+        result += rest.slice(0, match.index) + resolveCall(match[1], args, viewport, whole);
         rest = rest.slice(end + 1);
     }
 };
@@ -300,7 +309,7 @@ const plugin = () => ({
     postcssPlugin: 'webos-math-functions',
     Declaration(decl, { result }) {
         if (!CALL.test(decl.value)) return;
-        const resolved = resolveValue(decl.value, viewportOf(decl));
+        const resolved = resolveValue(decl.value, viewportOf(decl), /^max-(width|height)$/.test(decl.prop));
         if (resolved === decl.value) return;
         result.messages.push({
             type: 'webos-math-functions',
