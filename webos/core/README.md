@@ -5,8 +5,9 @@ externref, multivalue, bulk memory e conversões sem trap, e falha com `invalid 
 pasta gera o mesmo pacote como MVP e o versiona em `webos/vendor/stremio-core-web/`, com os mesmos
 nomes de arquivos do npm (`bridge.js`, `worker.js`, `stremio_core_web.js`,
 `stremio_core_web_bg.wasm`, `package.json`). Do mesmo wasm sai a variante **wasm2js**
-(`stremio_core_web_bg.wasm2js.js`), que o carregador (`loader.js`) usa quando o WebAssembly falta ou
-falha. Origem e checksums ficam em `SOURCE.md`.
+(`stremio_core_web_bg.wasm2js.js`). O carregador (`loader.js`) escolhe uma das duas em runtime: no
+webOS 4 prefere o wasm2js, e cada variante serve de reserva para a outra. Origem e checksums ficam em
+`SOURCE.md`.
 
 ```bash
 webos/tools/build-run -- webos/core/build          # ~5–11 min, conforme a carga; termina com o gate
@@ -93,19 +94,38 @@ ambiente).
 
 O `worker.js` vendorizado (igual ao do npm) chama
 `initialize_api(require('./stremio_core_web_bg.wasm'))`. No build webOS esse `require` aponta, por
-alias, para `wasm-module.js`, que devolve `loadCore()`: a promessa de um objeto com
-`webosInstantiate(imports)`, que a glue chama (correção 4). O carregador decide:
+alias, para `wasm-module.js`, que devolve `loadConfigured()`: a promessa de um objeto com
+`webosInstantiate(imports)`, que a glue chama (correção 4).
 
-| Situação | Variante | `reason` |
-|---|---|---|
-| sem o objeto `WebAssembly` (ou sem `compile`/`instantiate`) | wasm2js | `no-webassembly` |
-| `WebAssembly.compile` do `.wasm` falha (por exemplo, wasm pós-MVP: `invalid local type`) | wasm2js | `compile-failed` |
-| `WebAssembly.instantiate` falha | wasm2js | `instantiate-failed` |
-| senão | wasm | `webassembly` |
+**Variante preferida.** No webOS 4 o carregador tenta primeiro o **wasm2js** (`defaults.prefer`). É a
+condição do gate G0: no perfil C8 o wasm2js inicializa em ~9 s e o WASM em 20–25 s, com pico de
+memória maior. A chave **`webos.coreVariant`** do `localStorage` da página troca a preferência:
+`"wasm"` ou `"wasm2js"`. Qualquer outro valor, ou a chave ausente, mantém o padrão. O
+`loadConfigured()` lê a chave no `init` do worker, pelo Bridge (`self.local_storage_get_item`, o
+mesmo caminho que o core usa para o storage), e vale a partir do próximo lançamento do app. É para
+a tela de diagnóstico (F3.6) e para a Fase 8 na TV real, onde a relação entre as duas variantes
+pode se inverter:
 
-- Os bytes do `.wasm` vêm por **XHR** (`fetch()` de `file://` é recusado no worker do Chromium 53).
-  O wasm2js entra por `importScripts`, só quando escolhido. Falha ao ler um arquivo do pacote
-  rejeita em vez de cair no wasm2js: é erro de empacotamento, não do motor.
+```js
+localStorage.setItem('webos.coreVariant', 'wasm');   // WASM primeiro; removeItem volta ao padrão
+```
+
+O carregador decide:
+
+| Preferida | Situação | Variante | `reason` |
+|---|---|---|---|
+| wasm2js | o wasm2js carrega e instancia (com ou sem `WebAssembly`) | wasm2js | `preferred` |
+| wasm2js | o wasm2js falha (`importScripts` ou a fábrica) e há `WebAssembly` | wasm | `wasm2js-failed` |
+| wasm | sem o objeto `WebAssembly` (ou sem `compile`/`instantiate`) | wasm2js | `no-webassembly` |
+| wasm | `WebAssembly.compile` do `.wasm` falha (por exemplo, wasm pós-MVP: `invalid local type`) | wasm2js | `compile-failed` |
+| wasm | `WebAssembly.instantiate` falha | wasm2js | `instantiate-failed` |
+| wasm | senão | wasm | `webassembly` |
+
+Se as duas variantes falham, ou se o wasm2js falha sem `WebAssembly`, o status fica com `ok: false`.
+
+- Os bytes do `.wasm` vêm por **XHR** (`fetch()` de `file://` é recusado no worker do Chromium 53),
+  só quando o WASM é tentado. O wasm2js entra por `importScripts`, só quando escolhido. Falha ao ler
+  o `.wasm` rejeita em vez de cair no wasm2js: é erro de empacotamento, não do motor.
 - **Memória:** o `WebAssembly.Module` compilado (código nativo do wasm inteiro, ~100 MB no V8 5.8)
   só fica vivo enquanto a glue o usa. A promessa de `loadCore()` fica no cache de módulos do webpack
   durante toda a vida do worker, então o objeto entregue à glue é de uso único: na primeira chamada
@@ -117,32 +137,44 @@ alias, para `wasm-module.js`, que devolve `loadCore()`: a promessa de um objeto 
   com `bridge.call(['getCoreLoaderStatus'])`: `ok` (`null` carregando, `true` pronto, `false` se uma
   etapa falhou), `stage` (a etapa em andamento ou a que falhou: `wasm-read`, `wasm-compile`,
   `wasm-instantiate`, `wasm2js-load`, `wasm2js-instantiate`, `ready`), `variant`, `reason`, `error`
-  (o motivo da troca ou, com `ok: false`, o erro que parou o core), `hasWebAssembly`, URLs,
+  (o motivo da troca ou, com `ok: false`, o erro que parou o core), `prefer`, `preferSource`
+  (`default` ou `config`), `preferConfig` (o valor lido da chave, mesmo inválido), `hasWebAssembly`, URLs,
   `wasmBytes`, `memoryBytes` (tamanho atual da memória do core) e `timings` (`readMs`, `compileMs`,
   `instantiateMs` ou `wasm2jsLoadMs` e `wasm2jsInstantiateMs`).
 - **Configuração:** `require('webos/core/loader').defaults` (`wasmUrl`, `wasm2jsUrl`, relativos ao
-  worker; `onStep(nome, detalhe)` para marcos), ajustada antes do `init`.
+  worker; `prefer`; `onStep(nome, detalhe)` para marcos), ajustada antes do `init`. As opções de
+  `loadCore(options)` e `loadConfigured(options)` sobrepõem os `defaults`; no `loadConfigured`, a
+  chave do `localStorage` sobrepõe o `prefer`.
 
-**Para a F1.4** (webpack do app), o que o smoke faz em `webos/tests/core-smoke/webpack.config.js`:
+## No app (`webos/webpack/core.js`)
 
-```js
-resolve: { alias: { [path.join(VENDOR, 'stremio_core_web_bg.wasm')]: path.join(ROOT, 'webos/core/wasm-module.js') } },
-plugins: [new CopyWebpackPlugin({ patterns: [
-    { from: path.join(VENDOR, 'stremio_core_web_bg.wasm'), to: <pasta do worker.js> },
-    { from: path.join(VENDOR, 'stremio_core_web_bg.wasm2js.js'), to: <pasta do worker.js>, info: { minimized: true } }
-] })]
-```
+O build webOS (`pnpm webos:build`) usa o core vendorizado no lugar do pacote do npm:
+
+- `@stremio/stremio-core-web` (a página importa o `bridge`) aponta para `webos/vendor/stremio-core-web`;
+- a entry do worker é o `worker.js` vendorizado, e o `require` do `.wasm` dele aponta para o
+  `wasm-module.js`;
+- o `.wasm` e o `.wasm2js.js` vão copiados para a pasta do `worker.js`
+  (`build-webos/<commit>/scripts/`), marcados como `minimized`.
 
 O `.wasm2js.js` já sai minificado e com a fábrica entre parênteses: não pode passar de novo pelo
-Babel nem pelo Terser, que tirariam os parênteses (por isso é copiado, não importado, e vai marcado
-como `minimized`). Pelo mesmo motivo, empacote com `ares-package --no-minify` (como o
-`webos/scripts/ares.sh` e o `core-smoke/run`).
+Babel nem pelo Terser, que tirariam os parênteses. Por isso é copiado, não importado, e vai marcado
+como `minimized`. Pelo mesmo motivo, empacote com `ares-package --no-minify` (como o
+`webos/scripts/ares.sh` e o `core-smoke/run`). Duas guardas:
+
+- `CoreArtifactsGuard` (no `core.js`) faz o `webos:build` falhar se um dos dois arquivos não sair
+  byte a byte igual ao do vendor;
+- o `pnpm webos:check-syntax` roda antes o `webos/scripts/check-core.js` no `build-webos/`: confere
+  os bytes de novo e, pela AST, os parênteses da fábrica e de `asmFunc`. Ele aceita outra pasta (por
+  exemplo, um IPK desempacotado): `node webos/scripts/check-core.js <pasta>`.
+
+O build desktop não usa nada disto.
 
 ## Smoke no emulador
 
 `webos/tests/core-smoke/` empacota uma página que sobe o worker vendorizado como o app (com o
 carregador), mede o init, lê o `ctx` e carrega catálogos do Cinemeta como convidado. O smoke também
-confere a variante e o motivo escolhidos pelo carregador em cada cenário:
+confere a variante e o motivo escolhidos pelo carregador em cada cenário. Ele testa o caminho com o
+**WASM preferido** e as quedas para o wasm2js (o `smoke-worker.js` põe `defaults.prefer = 'wasm'`):
 
 ```bash
 webos/tools/build-run -- npx webpack --config webos/tests/core-smoke/webpack.config.js
@@ -174,5 +206,6 @@ Depois do init, o app ainda libera memória por ~40–45 s, então compare sempr
 O pacote do app roda de `file://`, e no Chromium 53 `fetch()` não aceita `file://` (`Failed to
 fetch`). Por isso o carregador lê o `.wasm` por XHR.
 
-O `webos/tests/core-loader/` (jest, roda no `pnpm test`) cobre as escolhas do carregador e sobe o
-core vendorizado no Node nas duas variantes até o `ctx`.
+O `webos/tests/core-loader/` (jest, roda no `pnpm test`) cobre as escolhas do carregador, inclusive
+a preferência e a chave do `localStorage`, e sobe o core vendorizado no Node nas duas variantes até
+o `ctx`. O `webos/tests/core-build.test.js` cobre o `core.js` e as duas guardas.

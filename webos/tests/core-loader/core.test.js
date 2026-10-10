@@ -1,6 +1,7 @@
 // O core vendorizado (glue + webos/core/loader.js) sobe no Node nas duas variantes, WASM e wasm2js,
-// e lê o ctx de convidado. Pega regressões nas correções da glue (SOURCE.md) e no artefato wasm2js
-// sem o emulador; o smoke no emulador (webos/tests/core-smoke) continua sendo a prova no Chromium 53.
+// com a preferência lida do localStorage como no app, e lê o ctx de convidado. Pega regressões nas
+// correções da glue (SOURCE.md) e no artefato wasm2js sem o emulador; o smoke no emulador
+// (webos/tests/core-smoke) continua sendo a prova no Chromium 53.
 const fs = require('fs');
 const path = require('path');
 
@@ -30,9 +31,9 @@ class XMLHttpRequest {
 const intervals = [];
 const setIntervalNative = global.setInterval;
 
-async function startCore(hideWebAssembly) {
+async function startCore(hideWebAssembly, configured) {
     const saved = { WebAssembly: global.WebAssembly };
-    const storage = {};
+    const storage = configured ? { 'webos.coreVariant': configured } : {};
     global.self = global;
     // O core exige rodar num worker (env.rs: "worker global scope is not available").
     global.WorkerGlobalScope = Object;
@@ -61,7 +62,7 @@ async function startCore(hideWebAssembly) {
             loader = require('../../core/loader');
             glue = require('../../vendor/stremio-core-web/stremio_core_web.js');
         });
-        await glue.default(loader.loadCore());
+        await glue.default(loader.loadConfigured());
         await glue.initialize_runtime(jest.fn());
         return { ctx: glue.get_state('ctx'), status: loader.getStatus() };
     } finally {
@@ -83,11 +84,12 @@ describe('vendored core', () => {
     });
 
     test.each([
-        ['wasm', false, 'webassembly'],
-        ['wasm2js', true, 'no-webassembly']
-    ])('starts as %s and reads the guest ctx', async (variant, hide, reason) => {
-        const { ctx, status } = await startCore(hide);
-        expect(status).toMatchObject({ variant, reason, error: null });
+        ['wasm2js', 'default', false, null, 'preferred'],
+        ['wasm', 'configured', false, 'wasm', 'webassembly'],
+        ['wasm2js', 'configured as wasm without WebAssembly', true, 'wasm', 'no-webassembly']
+    ])('starts as %s (%s) and reads the guest ctx', async (variant, _name, hide, configured, reason) => {
+        const { ctx, status } = await startCore(hide, configured);
+        expect(status).toMatchObject({ variant, reason, error: null, prefer: configured || 'wasm2js' });
         expect(Object.keys(ctx)).toEqual(expect.arrayContaining(['profile', 'notifications', 'searchHistory']));
         expect(ctx.profile.auth).toBeNull();
         expect(ctx.profile.addons.map((addon) => addon.manifest.id)).toContain('com.linvo.cinemeta');
