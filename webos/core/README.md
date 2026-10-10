@@ -56,9 +56,10 @@ webos/core/check-wasm arquivo.wasm                  # gate sozinho (--json para 
    carregar; o build a reembala como script clássico que só define a fábrica `asmFunc(imports)` no
    global `stremio_core_web_wasm2js` (ou `module.exports` no Node). É ES5 e não passa pelo Babel.
    O `-O` sai menor que o `-O2` (32,7 MB contra 34,3 MB; 3,7 MB contra 3,8 MB com gzip). No
-   emulador, o wasm2js inicializa em tempo parecido com o do WASM (~7 s, metade no parse do
-   `importScripts`) e usa memória parecida no estável e menor no pico: o V8 5.8 compila o wasm
-   inteiro com o TurboFan, e o JS é compilado sob demanda (tabela no relatório da F0.6).
+   emulador, o wasm2js usa memória parecida com a do WASM no estável e menor no pico, porque o V8
+   5.8 compila o wasm inteiro com o TurboFan e o JS é compilado sob demanda. No perfil C8 ele
+   também inicializa mais rápido (13,7–14,2 s contra 21,2–21,5 s, com o host ocioso); no emulador
+   padrão, os dois levam ~3,8 s (tabelas no relatório da F0.6).
 8. Babel com as `devDependencies` e o `.babelrc` do upstream (`npm ci` do lockfile do pacote), como
    o `scripts/build.sh` oficial. O `bridge.js` e o `worker.js` saem idênticos aos do npm.
 
@@ -102,7 +103,7 @@ alias, para `wasm-module.js`, que devolve `loadCore()`: a promessa de um objeto 
   durante toda a vida do worker, então o objeto entregue à glue é de uso único: na primeira chamada
   ele solta o `Module`, e se o `instantiate` falha o handler solta a sua cópia antes de subir o
   wasm2js. Sem isso, o caminho `instantiate-failed` ficava com o código nativo e o wasm2js juntos
-  (+34 MB no estável, pico mais longo). Mesmo assim, o pico desse caminho (~255–295 MB no processo)
+  (158–163 MB no estável do processo, contra 129–134 MB). Mesmo assim, o pico desse caminho (~255–295 MB no processo)
   dura até o GC coletar o `Module`, uns 50 s depois do init.
 - **Diagnóstico (F3.6):** `getStatus()` e, no worker, `self.getCoreLoaderStatus()`, que a página lê
   com `bridge.call(['getCoreLoaderStatus'])`: `ok` (`null` carregando, `true` pronto, `false` se uma
@@ -149,7 +150,8 @@ imports vazios ao `instantiate` nativo, e o V8 5.8 recusa o link de verdade
 (`module is not an object or function`). O `run` sai com 1 se o app cair, estourar o tempo, terminar
 com `ok=false`, escolher outra variante, não carregar todo o Board ou, com `--max-steady-mb N`,
 passar de N MB no estável do processo do app (155 MB pega a retenção do `Module` no
-`instantiate-failed`: 163 MB com ela, 129 MB sem ela; o maior estável normal medido foi 145 MB). A memória do convidado (`MemAvailable` e RSS de cada processo WebAppMgr) é amostrada a cada
+`instantiate-failed`: 158–163 MB com ela, 129–134 MB sem ela; o maior estável normal medido foi
+145 MB). A memória do convidado (`MemAvailable` e RSS de cada processo WebAppMgr) é amostrada a cada
 segundo, desde antes do lançamento até `POST_SECS` (padrão 120 s) depois do fim. O JSON registra:
 
 - `peak`: o pior momento desde o lançamento;
