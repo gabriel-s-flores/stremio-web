@@ -21,7 +21,7 @@ build `WEBOS=1` (passo `webos/webpack/tlsproxy.js` e o override `Image.webos.tsx
 | `worker.js`, `worker-entry.js` | Troca o `self.fetch` do worker do core (prefixado na entrada `worker`) |
 | `src/components/Image/Image.webos.tsx` | O `Image` do upstream com o `src` passando por `proxify`, e uma nova tentativa pelo proxy antes do fallback |
 | `security-test.mjs` | Bateria de segurança contra o serviço real (hosts públicos; com `--cdp-port`, os redirecionamentos também no `fetch` do Chromium 53) |
-| `emulator/run.sh`, `accept.mjs`, `memory.mjs` | Aceite no emulador: Board, Discover, detalhe, addon Let's Encrypt, serviço morto e recuperado, latência, memória, segurança |
+| `emulator/run.sh`, `accept.mjs`, `memory.mjs`, `node012-test.js` | Aceite no emulador: Board, Discover, detalhe, addon Let's Encrypt, serviço morto e recuperado, latência, memória, segurança |
 
 O IPK leva o serviço ao lado do app: `webos/scripts/ares.sh package` roda
 `webos/scripts/check-service.js` (ES5 puro, `ca.js` = `certs/`, ids coerentes com o `appinfo.json`)
@@ -42,6 +42,10 @@ e chama `ares-package <build-webos> webos/tlsproxy/service`.
      proxy: uma imagem do proxy que falha dispara um `/status` (no máximo a cada 5 s) e um `fetch`
      do worker que não alcança o proxy pede `restart` à página. Nos dois casos a página chama
      `start` de novo, recebe porta e token novos e as imagens são renderizadas com o endereço novo.
+   - O serviço novo recusa o token antigo com **`401` e `X-Proxy-Error: bad-token`**. O worker, que
+     guarda a configuração, trata isso como configuração vencida: pede `restart(porta, token)` à
+     página (que só derruba o serviço se ele ainda for o desse token; senão só devolve o atual) e
+     repete a requisição uma vez com a configuração nova.
 3. **Imagens** (`Image.webos.tsx`). `proxify` reescreve as URLs `https` dos hosts conhecidos:
    `images.metahub.space`, `episodes.metahub.space` (redireciona para o `image.tmdb.org`),
    `image.tmdb.org`, `debrid-link.com`, `debrid-link.fr` e os aprendidos. Enquanto o serviço sobe (ou
@@ -50,22 +54,26 @@ e chama `ares-package <build-webos> webos/tlsproxy/service`.
    proxy lê o emissor, e o host só é aprendido se for Let's Encrypt/ISRG.
 4. **Core** (`worker.js`). Passam direto tudo o que não é `https` (URLs relativas, `file:`, os
    arquivos do core) e `127.0.0.1`/`localhost`. Hosts conhecidos vão pelo proxy, com método,
-   cabeçalhos e corpo. Outro host `https` que dê `TypeError` é tentado uma vez pelo proxy, e a
-   resposta só é usada (e o host aprendido) se o cabeçalho `X-Proxy-Issuer-O` disser Let's Encrypt:
-   um `TypeError` também pode ser CORS, e o proxy não pode virar um contorno de CORS. A configuração
+   cabeçalhos e corpo. Outro host `https` cujo `GET`/`HEAD` dê `TypeError` é tentado uma vez pelo
+   proxy, e a resposta só é usada (e o host aprendido) se o cabeçalho `X-Proxy-Issuer-O` disser Let's
+   Encrypt: um `TypeError` também pode ser CORS, e o proxy não pode virar um contorno de CORS. Outros
+   métodos nunca são reenviados (o `TypeError` de CORS chega depois de o servidor já ter executado a
+   requisição). A configuração
    vem da página pelo protocolo do Bridge (`window.__webosTlsProxy.config`); requisições feitas
    antes da decisão esperam até 3 s e depois seguem direto.
 
 **Vídeo nunca passa pelo proxy (P3).** As URLs de stream vão direto ao `<video>`; só imagens e o
 `fetch` do worker usam o proxy. Como defesa em profundidade, o serviço recusa `Range`, `video/*`,
 `audio/*`, HLS e DASH, assinaturas de contêiner de mídia (`ftyp`, `styp`/`moof`/`sidx`/`moov`/`mdat`,
-EBML, MPEG-TS, `#EXTM3U`, `<MPD`, Ogg, FLAC, ID3, AAC ADTS, quadro MPEG de áudio, FLV, AVI/WAVE,
-RealMedia), binário genérico acima de 2 MB e qualquer corpo acima de 16 MB.
+átomos `wide`/`free`/`skip`/`pnot` do QuickTime, EBML, MPEG-TS, MPEG-PS e MPEG elementar, `#EXTM3U`,
+`<MPD`, Ogg, FLAC, ID3, AAC ADTS, quadro MPEG de áudio, FLV, AVI/WAVE, RealMedia), binário genérico
+acima de 2 MB e qualquer corpo acima de 16 MB.
 
 ## Segurança do serviço
 
-- Escuta só em `127.0.0.1`; token aleatório por processo em `/proxy` e `/status`; a Luna só aceita
-  chamadas do próprio app; `Host` diferente de `127.0.0.1:<porta>`/`localhost:<porta>` dá 403.
+- Escuta só em `127.0.0.1`; token aleatório por processo em `/proxy` e `/status` (sem ele, ou com o
+  de outro processo, 401 `bad-token`); a Luna só aceita chamadas do próprio app; `Host` diferente de
+  `127.0.0.1:<porta>`/`localhost:<porta>` dá 403. As recusas do próprio proxy levam `X-Proxy-Error`.
 - Só `https`, e só `GET`, `HEAD` e `POST` (o resto dá 405).
 - **`Authorization` nunca vai a outro host.** Nos redirecionamentos que o serviço segue (GET/HEAD,
   até 5 saltos `https`), é removido no primeiro salto para outro host e **não volta** se a cadeia
@@ -85,3 +93,7 @@ pnpm test                                    # webos/tests/tlsproxy: proxy com u
 pnpm webos:package                           # inclui check-service.js
 webos/tools/emu-run --timeout 20 -- webos/tlsproxy/emulator/run.sh <pasta>   # aceite no emulador
 ```
+
+O `run.sh` também roda o `emulator/node012-test.js`: o `proxy.js` no Node 0.12 do próprio emulador,
+contra upstreams HTTPS locais com a CA de teste (corpo curto, timeout, A → B → A, assinaturas que
+começam com `0xFF`, 401 e emissor), o que a bateria pública não alcança.
