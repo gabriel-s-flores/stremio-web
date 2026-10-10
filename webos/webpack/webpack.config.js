@@ -13,6 +13,7 @@ const steps = [
     require('./polyfills'),
     require('./trim'),
     require('./postcss'),
+    require('./styles'),
 ];
 
 module.exports = (env, argv) => {
