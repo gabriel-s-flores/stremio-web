@@ -1,0 +1,33 @@
+// webOS TV 4.x (Chromium 53 has no CSS Grid): the weekday header and the month grid as flex.
+// The upstream file comes first; the rules below only replace its display: grid.
+
+@import (multiple) './Table.less';
+
+.table {
+    .week {
+        display: flex;
+
+        .day {
+            flex: 1 1 0%;
+            min-width: 0;
+        }
+    }
+
+    // 7 columns by wrapping; the width of a cell and of the offset spans is in Cell.webos.less. The
+    // lines are equal because no cell has a content height there (its children are absolute), so
+    // align-content: stretch splits the height of the grid between them.
+    .grid {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: stretch;
+        // The 1px under the last line is not part of the grid gap.
+        margin-bottom: -1px;
+
+        // The empty days before the 1st: a grid cell each, a box of the width of a cell here.
+        > span {
+            flex: none;
+            width: calc((100% - 6px) / 7);
+            margin: 0 1px 1px 0;
+        }
+    }
+}

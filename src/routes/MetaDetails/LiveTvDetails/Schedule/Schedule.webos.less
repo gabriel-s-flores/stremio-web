@@ -1,0 +1,10 @@
+// webOS TV 4.x: the title of the guide. flex-gap-polyfill gives the children of `.header` (gap 0.5rem)
+// a margin that the negative margin of `.header` takes back; `.title { margin: 0 }` upstream has the
+// same specificity as the polyfill's `.header > *` and comes after it, so the title lost the margin
+// and sat 0.5rem left of and above the rest of the schedule.
+
+@import (multiple) './Schedule.less';
+
+.header > .title {
+    margin: 0.5rem 0 0 0.5rem;
+}

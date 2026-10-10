@@ -27,9 +27,13 @@ module.exports = (config) => {
     };
 
     // `require('./styles')` picks styles.webos.less over styles.less when it exists, so webOS
-    // overrides live next to the upstream file without touching it.
-    const webosExtensions = config.resolve.extensions.map((extension) => `.webos${extension}`);
-    config.resolve.extensions = [...webosExtensions, ...config.resolve.extensions];
+    // overrides live next to the upstream file without touching it. `.webos.less` comes after the
+    // script extensions: `import Table from './Table'` must find Table.tsx, not Table.webos.less.
+    const { extensions } = config.resolve;
+    config.resolve.extensions = [
+        ...extensions.filter((extension) => extension !== '.less').map((extension) => `.webos${extension}`),
+        ...extensions.flatMap((extension) => extension === '.less' ? ['.webos.less', extension] : [extension]),
+    ];
 
     removePlugin(config, 'GenerateSW');
 

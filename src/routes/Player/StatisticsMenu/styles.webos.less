@@ -1,0 +1,33 @@
+// webOS TV 4.x (Chromium 53 has no CSS Grid): the statistics as a flex-wrap with 3 columns, what
+// repeat(auto-fit, minmax(7rem, 1fr)) gives in the 30rem menu. Spacing by margins, not gap: the
+// wrapped lines need it on both axes.
+
+@import (multiple) './styles.less';
+
+@stat-gap: 1.5rem;
+
+.statistics-menu-container {
+    .stats {
+        display: flex;
+        flex-wrap: wrap;
+        // The right margin of the last stat of a line falls in the padding of the menu.
+        margin-right: -@stat-gap;
+
+        .stat {
+            flex: none;
+            width: calc((100% - 3 * @stat-gap) / 3);
+            margin-right: @stat-gap;
+
+            &:nth-child(n + 4) {
+                margin-top: @stat-gap;
+            }
+        }
+
+        // Up to 3 stats share the line, as the auto-fit columns do.
+        .stat:first-child:nth-last-child(-n + 3),
+        .stat:first-child:nth-last-child(-n + 3) ~ .stat {
+            flex: 1 1 0%;
+            width: auto;
+        }
+    }
+}
