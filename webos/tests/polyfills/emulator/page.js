@@ -23,6 +23,8 @@ api('DocumentFragment.prototype.append', DocumentFragment.prototype.append);
 api('Element.prototype.scrollTo', Element.prototype.scrollTo);
 api('Element.prototype.scrollBy', Element.prototype.scrollBy);
 api('Element.prototype.scroll', Element.prototype.scroll);
+api('DOMRect', window.DOMRect);
+api('DOMRectReadOnly', window.DOMRectReadOnly);
 
 var pending = [];
 var check = function (name, run) {
@@ -162,6 +164,18 @@ check('ResizeObserver notifies on resize', function () {
         assert(detail === '100x50 then 240x50', detail);
         return detail;
     });
+});
+
+check('DOMRect from a bounding box, scaled like getInterfaceRect', function () {
+    var box = document.createElement('div');
+    box.style.cssText = 'position:absolute;left:100px;top:50px;width:250px;height:125px';
+    document.body.appendChild(box);
+    var b = box.getBoundingClientRect();
+    document.body.removeChild(box);
+    var rect = new DOMRect(b.left / 1.25, b.top / 1.25, b.width / 1.25, b.height / 1.25);
+    var detail = JSON.stringify(rect.toJSON());
+    assert(rect instanceof DOMRectReadOnly && rect.right === 280 && rect.bottom === 140, detail);
+    return detail;
 });
 
 check('append and prepend', function () {
