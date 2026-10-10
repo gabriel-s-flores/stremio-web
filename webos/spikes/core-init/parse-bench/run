@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Decompõe o tempo do wasm2js no V8 5.8 do emulador (spike F0.11): parse puro, chamada da fábrica e
+# execução de asmFunc, para cada forma de embrulho (veja bench-page.js). Rode dentro do emu-run:
+#   webos/spikes/core-init/parse-bench/run --package-only        # monta e empacota o app (fora da medição)
+#   webos/tools/emu-run [--profile c8] -- webos/spikes/core-init/parse-bench/run pasta-de-saída [rodadas]
+# Cada caso é um lançamento do app (processo e worker novos); a 2ª rodada repete tudo na mesma VM
+# (mostra se o cache de código do V8 para file:// vale para o importScripts).
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+TOOLS="$(cd "$HERE/../../../tools" && pwd)"
+VENDOR="$(cd "$HERE/../../../vendor/stremio-core-web" && pwd)"
+APP_ID="io.github.gabrielsflores.parsebench"
+# O app (≈ 32 MB) é montado e empacotado uma vez em ../build/, fora da medição.
+APP="$HERE/../build/app-parsebench"
+IPK_DIR="$HERE/../build/ipk-parsebench"
+if [[ ! -f "$IPK_DIR/done" || "$VENDOR/stremio_core_web_bg.wasm2js.js" -nt "$IPK_DIR/done" || -n "$(find "$HERE" -newer "$IPK_DIR/done" -name 'bench-*' -print -quit)" ]]; then
+    rm -rf "$APP" "$IPK_DIR"
+    mkdir -p "$APP"
+    cp "$VENDOR/stremio_core_web_bg.wasm2js.js" "$APP/w2js-factory.js"
+    cp "$HERE/bench-page.js" "$HERE/bench-worker.js" "$HERE/../app/icon.png" "$HERE/../app/largeIcon.png" "$APP/"
+    cat > "$APP/index.html" <<'HTML'
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Parse bench</title></head>
+<body style="background:#0c0b11;color:#e8e6f0;font:20px sans-serif">parse bench…<script src="bench-page.js"></script></body></html>
+HTML
+    cat > "$APP/appinfo.json" <<JSON
+{ "id": "$APP_ID", "version": "1.0.0", "vendor": "gabriel-s-flores", "type": "web", "main": "index.html",
+  "title": "Parse bench F0.11", "icon": "icon.png", "largeIcon": "largeIcon.png", "resolution": "1920x1080" }
+JSON
+    ares-package --no-minify "$APP" -o "$IPK_DIR" >/dev/null
+    touch "$IPK_DIR/done"
+fi
+[[ "${1:-}" == --package-only ]] && exit 0
+OUT_DIR="$(realpath -m "$1")"; ROUNDS="${2:-2}"
+: "${EMU_DEVICE:?rode dentro do webos/tools/emu-run}"
+mkdir -p "$OUT_DIR"
+OUT="$OUT_DIR/parse-bench-${EMU_PROFILE:-semperfil}-$(date +%Y%m%d-%H%M%S).jsonl"
+ares-install -d "$EMU_DEVICE" "$IPK_DIR"/*.ipk >/dev/null
+CDP=(node "$TOOLS/cdp.mjs" --target "$APP_ID")
+# Casos: "forma call onde" (onde = worker ou page). CASES_SET=page roda só o caso na página.
+CASES=("noinvoke false worker" "factory true worker" "eager true worker" "flat false worker" "flat true worker"
+       "flat-eager true worker")
+[[ "${CASES_SET:-}" == page ]] && CASES=("factory false page")
+echo "parse-bench · perfil ${EMU_PROFILE:-nenhum} · $(uptime)"
+for round in $(seq 1 "$ROUNDS"); do
+    for c in "${CASES[@]}"; do
+        read -r form call where <<<"$c"
+        ares-launch -d "$EMU_DEVICE" "$APP_ID" -p "{\"form\":\"$form\",\"call\":$call,\"where\":\"$where\"}" >/dev/null
+        for _ in $(seq 1 120); do
+            "${CDP[@]}" eval 'window.__bench && window.__bench.done' 2>/dev/null | grep -q true && break
+            sleep 1.5
+        done
+        res="$("${CDP[@]}" eval 'JSON.stringify(window.__bench)' 2>/dev/null || echo '{}')"
+        ares-launch -d "$EMU_DEVICE" --close "$APP_ID" >/dev/null 2>&1 || true
+        python3 -I -c 'import json,sys; d=json.loads(sys.argv[3]); d=json.loads(d) if isinstance(d,str) else d; d["round"]=int(sys.argv[2]); open(sys.argv[1],"a").write(json.dumps(d)+"\n"); r=d.get("result") or {}; print(sys.argv[2], r.get("where"), r.get("form"), "call" if r.get("call") else "    ", "import", r.get("importMs"), "factory", r.get("factoryMs"), "asmFunc", r.get("asmFuncMs"), "total", r.get("totalMs"), "prep", r.get("prepareMs"), r.get("error") or d.get("error") or "")' "$OUT" "$round" "$res"
+        sleep 5
+    done
+done
+echo "$OUT · $(uptime)"

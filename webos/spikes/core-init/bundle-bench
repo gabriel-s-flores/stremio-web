@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Quanto custa só carregar o bundle do app (build-webos/.../main.js) na página, no perfil c8? O
+# bundle vai embrulhado numa função que nunca é chamada: o V8 lê e pré-analisa o texto, mas o app não
+# roda. É um limite inferior do custo de parse do main.js antes de qualquer tela que dependa dele.
+# Lança N vezes na mesma VM (a partir do 2º lançamento vale o cache de código da LG para file://).
+#   webos/tools/build-run -- pnpm webos:build
+#   webos/tools/emu-run --profile c8 -- webos/spikes/core-init/bundle-bench pasta-de-saída [lançamentos]
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+REPO="$(cd "$HERE/../../.." && pwd)"
+TOOLS="$REPO/webos/tools"
+APP_ID="io.github.gabrielsflores.bundlebench"
+OUT_DIR="$(realpath -m "$1")"; LAUNCHES="${2:-3}"
+: "${EMU_DEVICE:?rode dentro do webos/tools/emu-run}"
+BUNDLE="$(ls "$REPO"/build-webos/*/scripts/main.js | head -1)"
+[[ -f "$BUNDLE" ]] || { echo "erro: falta o build webOS (pnpm webos:build)" >&2; exit 2; }
+mkdir -p "$OUT_DIR"
+OUT="$OUT_DIR/bundle-bench-${EMU_PROFILE:-semperfil}-$(date +%Y%m%d-%H%M%S).jsonl"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+APP="$WORK/app"
+mkdir -p "$APP"
+{ echo 'function __bundleNaoExecutado() {'; cat "$BUNDLE"; echo; echo '}'; echo 'window.__bundleLoaded = performance.now();'; } > "$APP/bundle.js"
+cp "$HERE/app/icon.png" "$HERE/app/largeIcon.png" "$APP/"
+cat > "$APP/index.html" <<'HTML'
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Bundle bench</title>
+<script>window.__t0 = performance.now();</script></head>
+<body style="background:#0c0b11;color:#e8e6f0;font:20px sans-serif">bundle bench…
+<script src="bundle.js"></script>
+<script>window.__bench = { done: true, headMs: window.__t0, bundleLoadedMs: window.__bundleLoaded };</script>
+</body></html>
+HTML
+cat > "$APP/appinfo.json" <<JSON
+{ "id": "$APP_ID", "version": "1.0.0", "vendor": "gabriel-s-flores", "type": "web", "main": "index.html",
+  "title": "Bundle bench F0.11", "icon": "icon.png", "largeIcon": "largeIcon.png", "resolution": "1920x1080" }
+JSON
+ares-package --no-minify "$APP" -o "$WORK/pkg" >/dev/null
+ares-install -d "$EMU_DEVICE" "$WORK/pkg"/*.ipk >/dev/null
+CDP=(node "$TOOLS/cdp.mjs" --target "$APP_ID")
+echo "bundle-bench $(stat -c %s "$BUNDLE") bytes · perfil ${EMU_PROFILE:-nenhum} · $(uptime)"
+for n in $(seq 1 "$LAUNCHES"); do
+    ares-launch -d "$EMU_DEVICE" "$APP_ID" >/dev/null
+    for _ in $(seq 1 60); do
+        "${CDP[@]}" eval 'window.__bench && window.__bench.done' 2>/dev/null | grep -q true && break
+        sleep 1
+    done
+    res="$("${CDP[@]}" eval 'JSON.stringify(window.__bench)' 2>/dev/null || echo '{}')"
+    ares-launch -d "$EMU_DEVICE" --close "$APP_ID" >/dev/null 2>&1 || true
+    python3 -I -c 'import json,sys; d=json.loads(sys.argv[3]); d=json.loads(d) if isinstance(d,str) else d; d["launch"]=int(sys.argv[2]); d["bundleParseMs"]=round(d["bundleLoadedMs"]-d["headMs"]) if d.get("bundleLoadedMs") else None; open(sys.argv[1],"a").write(json.dumps(d)+"\n"); print("lançamento", sys.argv[2], "· bundle carregado (só parse) em", d["bundleParseMs"], "ms")' "$OUT" "$n" "$res"
+    sleep 5
+done
+echo "$OUT"

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Roda uma fila de medições do spike, uma reserva curta do emu-run (perfil c8) por item, e registra a
+# carga do host antes de cada uma:
+#   webos/spikes/core-init/battery pasta-de-saída "ref" "z-eager" "ref --hide-wasm" ...
+# Cada item são os argumentos do run (variante e opções). Os apps têm de estar compilados (webpack).
+# PROFILE (padrão c8; vazio = sem perfil), RUN_TIMEOUT (minutos por reserva, padrão 20).
+set -uo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+TOOLS="$(cd "$HERE/../../tools" && pwd)"
+OUT="$(realpath -m "$1")"
+shift
+mkdir -p "$OUT"
+LOG="$OUT/bateria.log"
+PROFILE="${PROFILE-c8}"
+# Empacota antes, para nenhum ares-package rodar no host durante as medições.
+for item in "$@"; do read -r variant _ <<<"$item"; "$HERE/package" "$variant"; done
+for item in "$@"; do
+    echo "=== [$(date +%T)] $item · perfil ${PROFILE:-nenhum} · $(uptime)" | tee -a "$LOG"
+    # shellcheck disable=SC2086
+    "$TOOLS/emu-run" ${PROFILE:+--profile "$PROFILE"} --timeout "${RUN_TIMEOUT:-20}" -- \
+        "$HERE/run" $item "$OUT" 2>&1 | grep -E '^(L[0-9]|lançamento|variante|/|erro|aviso)' | tee -a "$LOG"
+    echo "exit ${PIPESTATUS[0]} · fim $(uptime)" | tee -a "$LOG"
+done
