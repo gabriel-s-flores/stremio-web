@@ -1,0 +1,13 @@
+{
+    "id": "__APP_ID__",
+    "version": "__VERSION__",
+    "vendor": "gabriel-s-flores",
+    "type": "web",
+    "main": "index.html",
+    "title": "Persist Probe __VERSION__",
+    "icon": "icon.png",
+    "largeIcon": "largeIcon.png",
+    "bgColor": "#0c0b11",
+    "resolution": "1920x1080",
+    "disableBackHistoryAPI": true
+}
