@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# Autoteste do gate: monta módulos mínimos com o Binaryen do kit e confere o veredito de cada um
+# (0 = aprovado, 1 = reprovado). O build roda antes do gate; rode também ao mudar o check-wasm.
+#   webos/core/check-wasm-selftest [check-wasm]
+set -uo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+CHECK="${1:-$HERE/check-wasm}"
+BIN="${WEBOS_SDK:-$HOME/webos-tv-sdk}/tools/binaryen-version_133/bin"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+fails=0 total=0
+
+verdict() { # nome esperado arquivo.wasm
+    total=$((total + 1))
+    "$CHECK" "$3" > "$TMP/$1.out" 2>&1
+    local got=$?
+    if [[ "$got" == "$2" ]]; then
+        echo "ok    $1 (exit $got)"
+    else
+        echo "FALHA $1: esperado $2, veio $got"
+        sed -n '/RESULTADO/,$p' "$TMP/$1.out"
+        fails=$((fails + 1))
+    fi
+}
+
+# t nome esperado "flags do wasm-as" 'wat'
+t() {
+    echo "$4" > "$TMP/$1.wat"
+    if ! "$BIN/wasm-as" $3 "$TMP/$1.wat" -o "$TMP/$1.wasm" 2> "$TMP/$1.err"; then
+        echo "ERRO  $1: wasm-as falhou: $(head -c 200 "$TMP/$1.err")"
+        fails=$((fails + 1)) total=$((total + 1))
+        return
+    fi
+    verdict "$1" "$2" "$TMP/$1.wasm"
+}
+
+# tf: como t, mas com a seção target_features gravada pelo wasm-opt
+tf() {
+    echo "$4" > "$TMP/$1.wat"
+    if ! "$BIN/wasm-as" $3 "$TMP/$1.wat" -o "$TMP/$1.pre.wasm" 2> "$TMP/$1.err" ||
+        ! "$BIN/wasm-opt" $3 --emit-target-features "$TMP/$1.pre.wasm" -o "$TMP/$1.wasm" 2>> "$TMP/$1.err"; then
+        echo "ERRO  $1: binaryen falhou: $(head -c 200 "$TMP/$1.err")"
+        fails=$((fails + 1)) total=$((total + 1))
+        return
+    fi
+    verdict "$1" "$2" "$TMP/$1.wasm"
+}
+
+# Aprovados: MVP puro (i64 só por dentro, global mutável interno, tabela única, dados ativos)
+t mvp 0 "" '(module (memory (export "memory") 1) (table 1 funcref) (global $g (mut i32) (i32.const 0)) (func (export "add") (param i32 i32) (result i32) (i32.add (local.get 0) (local.get 1))) (func (param i64) (result i64) (i64.add (local.get 0) (i64.const 1))) (data (i32.const 0) "ab"))'
+t mvp-i64-interno 0 "" '(module (func $i (param i64) (result i64) (local.get 0)) (func (export "f") (result i32) (i32.wrap_i64 (call $i (i64.const 5)))))'
+t mvp-global-get-const 0 "" '(module (import "env" "base" (global $b i32)) (memory 1) (data (global.get $b) "x"))'
+tf tf-mvp 0 "--mvp-features" '(module (func))'
+tf tf-mutable-globals 0 "--mvp-features --enable-mutable-globals" '(module (func))'
+
+# Fronteira JS
+t i64-export 1 "" '(module (func (export "big") (param i64) (result i64) (local.get 0)))'
+t i64-export-result 1 "" '(module (func (export "big") (result i64) (i64.const 0)))'
+t i64-import 1 "" '(module (import "env" "f" (func $f (param i64))) (func (export "g") (call $f (i64.const 1))))'
+t mutglobal-import 1 "--enable-mutable-globals" '(module (import "env" "g" (global (mut i32))) (func (export "r") (result i32) (global.get 0)))'
+t mutglobal-export 1 "--enable-mutable-globals" '(module (global $g (export "g") (mut i32) (i32.const 0)))'
+
+# Recursos pós-MVP
+t signext 1 "--enable-sign-ext" '(module (func (export "s") (param i32) (result i32) (i32.extend8_s (local.get 0))))'
+t signext-i64 1 "--enable-sign-ext" '(module (func (param i64) (result i64) (i64.extend32_s (local.get 0))))'
+t memcopy 1 "--enable-bulk-memory" '(module (memory 1) (func (memory.copy (i32.const 0) (i32.const 8) (i32.const 4))))'
+t memfill 1 "--enable-bulk-memory" '(module (memory 1) (func (memory.fill (i32.const 0) (i32.const 8) (i32.const 4))))'
+t passive-data 1 "--enable-bulk-memory" '(module (memory 1) (data $d "x") (func (memory.init $d (i32.const 0) (i32.const 0) (i32.const 1)) (data.drop $d)))'
+t trunc-sat 1 "--enable-nontrapping-float-to-int" '(module (func (param f64) (result i32) (i32.trunc_sat_f64_s (local.get 0))))'
+t multivalue 1 "--enable-multivalue" '(module (func (result i32 i32) (i32.const 1) (i32.const 2)))'
+t multivalue-block 1 "--enable-multivalue" '(module (func (result i32) (block (result i32 i32) (i32.const 1) (i32.const 2)) (drop)))'
+t externref-param 1 "--enable-reference-types" '(module (func (export "f") (param externref)))'
+t externref-local 1 "--enable-reference-types" '(module (func (local externref)))'
+t two-tables 1 "--enable-reference-types" '(module (table 1 funcref) (table 1 funcref) (func (call_indirect 1 (i32.const 0))))'
+t table-get 1 "--enable-reference-types" '(module (table 1 funcref) (func (drop (table.get 0 (i32.const 0)))))'
+t ref-func 1 "--enable-reference-types" '(module (table 1 funcref) (elem declare func $f) (func $f (drop (ref.func $f))))'
+t simd 1 "--enable-simd" '(module (func (result v128) (v128.const i32x4 0 0 0 0)))'
+t atomics 1 "--enable-threads" '(module (memory 1 1 shared) (func (result i32) (i32.atomic.load (i32.const 0))))'
+t shared-mem 1 "--enable-threads" '(module (memory 1 1 shared))'
+t tail-call 1 "--enable-tail-call" '(module (func $f (return_call $f)))'
+t exceptions 1 "--enable-exception-handling" '(module (tag $e) (func (throw $e)))'
+t memory64 1 "--enable-memory64" '(module (memory i64 1))'
+t multi-memory 1 "--enable-multimemory" '(module (memory 1) (memory 1))'
+t extended-const-global 1 "--enable-extended-const" '(module (global i32 (i32.add (i32.const 1) (i32.const 2))))'
+t extended-const-data 1 "--enable-extended-const" '(module (memory 1) (data (offset (i32.add (i32.const 1) (i32.const 2))) "x"))'
+tf tf-signext 1 "--mvp-features --enable-sign-ext" '(module (func))'
+tf tf-bulk 1 "--mvp-features --enable-bulk-memory" '(module (func))'
+
+echo "$((total - fails))/$total casos com o veredito esperado"
+exit $((fails > 0))

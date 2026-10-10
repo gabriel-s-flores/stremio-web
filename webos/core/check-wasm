@@ -6,7 +6,7 @@
 Reprova (saída 1) se encontrar:
   - qualquer recurso pós-MVP no binário (opcodes, tipos, seções, flags de segmentos e memórias):
     sign-ext, bulk memory, conversões sem trap, reference types/externref, multivalue, SIMD,
-    threads, exceções, tail call, GC, memory64, multi-memory;
+    threads, exceções, tail call, GC, memory64, multi-memory, extended-const;
   - i64 na assinatura de funções importadas ou exportadas (o V8 5.8 não tem BigInt na fronteira);
   - global mutável importado ou exportado (mutable-globals não existe no V8 5.8);
   - seção target_features com algo além de +mutable-globals.
@@ -101,6 +101,10 @@ def scan_expr(r, F, types, const_expr=False):
     """Percorre as instruções até o fim da expressão (const_expr) ou até r.end (corpo de função)."""
     while r.p < r.end:
         op = r.byte()
+        # No MVP, expressões constantes só têm *.const, global.get e end (ref.null/ref.func já
+        # contam como reference types abaixo); o resto é extended-const.
+        if const_expr and op not in (0x0B, 0x23, 0x41, 0x42, 0x43, 0x44, 0xD0, 0xD2):
+            F['extended-const: op 0x%02x em expressão constante' % op] += 1
         if op == 0x0B:
             if const_expr:
                 return
