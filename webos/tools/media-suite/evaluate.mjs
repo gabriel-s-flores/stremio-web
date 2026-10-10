@@ -56,6 +56,20 @@ export function summarizeRequests(entries, file) {
     };
 }
 
+// Maior intervalo entre keyframes (s). `lines` vem de `ffprobe -select_streams v:0 -show_entries
+// packet=pts_time,flags -of csv=p=0` ("0.000000,K__"); o último intervalo vai até `duration`.
+export function maxKeyframeGap(lines, duration) {
+    const keys = String(lines).split('\n')
+        .map((l) => l.split(','))
+        .filter((f) => f.length >= 2 && f[1].includes('K') && f[0] !== 'N/A')
+        .map((f) => Number(f[0]))
+        .sort((a, b) => a - b);
+    if (keys.length === 0) return Infinity;
+    let gap = 0;
+    for (let i = 0; i < keys.length; i++) gap = Math.max(gap, (i + 1 < keys.length ? keys[i + 1] : duration) - keys[i]);
+    return gap;
+}
+
 const eventName = (e) => String(e).split('@')[0];
 
 // Devolve [{ name, ok, expected, actual }]. `expect` já inclui os valores derivados.
@@ -89,6 +103,8 @@ export function evaluate(scenario, expect, result, requests) {
         }
     }
     if (expect.redirect) check('redirect 302 seguido', requests.redirects > 0 && requests.requests > 0, '302 e depois o arquivo', `${requests.redirects} redirect(s), ${requests.requests} requisição(ões) ao arquivo`);
-    if (expect.rangeSeek) check('Range com offset > 0 (seek)', requests.rangeOffsets.length > 0, '≥ 1', requests.rangeOffsets.length);
+    // Só mostra que o pipeline leu o arquivo a partir de um offset: em MKV o índice Cues também gera
+    // isso sem seek. A prova do seek é 'evento seeked' + 'progresso (currentTime)'.
+    if (expect.rangeOffset) check('Range com offset > 0', requests.rangeOffsets.length > 0, '≥ 1', requests.rangeOffsets.length);
     return checks;
 }

@@ -2,7 +2,7 @@
 // Bateria de testes de mídia no emulador webOS TV 4.0.
 //
 //   node run.mjs [--scenarios scenarios.json] [--only id,id] [--jobs N] [--retries N]
-//                [--media-dir pasta] [--out pasta] [--timeout-min N] [--list]
+//                [--media-dir pasta] [--out pasta] [--timeout-min N] [--list] [--dry-run]
 //
 // Para cada cenário: um `emu-run` (boot limpo e uma instância do pool), onde `run-one.sh` instala
 // a sonda e roda o `play-test.sh` sobre a URL servida pelo `media-server.mjs`. Os cenários
@@ -16,14 +16,14 @@ import net from 'node:net';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { deriveExpectations, evaluate, parseServerLog, summarizeRequests } from './evaluate.mjs';
+import { deriveExpectations, evaluate, maxKeyframeGap, parseServerLog, summarizeRequests } from './evaluate.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const TOOLS = path.dirname(HERE);
 const HOME = os.homedir();
 const APP_ID = 'io.github.gabrielsflores.webosprobe';
 
-const args = { scenarios: path.join(HERE, 'scenarios.json'), only: null, jobs: 0, retries: 1, mediaDir: path.join(HOME, 'webos-tv-sdk/media-tests/suite'), out: null, timeoutMin: 6, list: false };
+const args = { scenarios: path.join(HERE, 'scenarios.json'), only: null, jobs: 0, retries: 1, mediaDir: path.join(HOME, 'webos-tv-sdk/media-tests/suite'), out: null, timeoutMin: 6, list: false, dryRun: false };
 for (let i = 2; i < process.argv.length; i++) {
     const a = process.argv[i];
     if (a === '--scenarios') args.scenarios = path.resolve(process.argv[++i]);
@@ -34,6 +34,7 @@ for (let i = 2; i < process.argv.length; i++) {
     else if (a === '--out') args.out = path.resolve(process.argv[++i]);
     else if (a === '--timeout-min') args.timeoutMin = Number(process.argv[++i]);
     else if (a === '--list') args.list = true;
+    else if (a === '--dry-run') args.dryRun = true;
     else { console.error(`opção desconhecida: ${a}`); process.exit(2); }
 }
 
@@ -67,6 +68,17 @@ for (const s of scenarios) {
         s.derived = deriveExpectations(JSON.parse(p.stdout));
     }
     s.finalExpect = { ...s.derived, ...s.expect };
+    // O seek do pipeline cai no keyframe anterior: com keyframes muito afastados o teste de progresso falha.
+    if (s.file && s.seek) {
+        const k = run('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'packet=pts_time,flags', '-of', 'csv=p=0', path.join(args.mediaDir, s.file)]);
+        const gap = maxKeyframeGap(k.stdout, s.derived.duration ? s.derived.duration[1] - 1 : 0);
+        if (gap > 2.5) log(`AVISO ${s.id}: keyframes até ${gap.toFixed(1)} s afastados; o seek para ${s.seek} s pode cair no keyframe anterior (gere as mídias com GOP=24, como a bateria faz na pasta padrão)`);
+    }
+}
+
+if (args.dryRun) {
+    for (const s of scenarios) console.log(`${s.id}\t${JSON.stringify(s.finalExpect)}`);
+    process.exit(0);
 }
 
 // 3. Servidor de mídia numa porta livre (outras tarefas usam a 8099) e a sonda empacotada uma vez.
@@ -107,12 +119,20 @@ async function attempt(s, n) {
     const cmd = [path.join(TOOLS, 'emu-run'), '--timeout', String(args.timeoutMin), '--', 'bash', path.join(HERE, 'run-one.sh'),
         dir, ipkPath, urlFor(s), String(s.seconds || 8), s.seek === undefined ? '' : String(s.seek), s.luna ? '1' : '0'];
     log(`${s.id}: tentativa ${n} na fila do pool`);
+    // O emu-run imprime "instância N iniciada" logo depois de reservar a instância (antes do boot).
+    let reservedAt = null;
+    const logPath = path.join(dir, 'emu-run.log');
+    const watcher = setInterval(() => {
+        if (reservedAt === null && /instância \d+ iniciada/.test(fs.readFileSync(logPath, 'utf8'))) reservedAt = Date.now();
+    }, 500);
     const code = await new Promise((resolve) => {
         const child = spawn(cmd[0], cmd.slice(1), { stdio: ['ignore', logFd, logFd] });
         child.on('exit', (c, sig) => resolve(c === null ? `sinal ${sig}` : c));
     });
+    clearInterval(watcher);
     fs.closeSync(logFd);
     const meta = readJson(path.join(dir, 'meta.json'));
+    if (meta) meta.reservedAt = reservedAt === null ? meta.startedAt : reservedAt;
     const result = readJson(path.join(dir, 'play.json'));
     if (meta) log(`${s.id}: tentativa ${n} terminou (instância ${meta.instance}, saída ${code})`);
     else log(`${s.id}: tentativa ${n} falhou antes de rodar (saída ${code})`);
@@ -146,10 +166,10 @@ await Promise.all(Array.from({ length: Math.min(jobs, scenarios.length) }, async
 }));
 
 // 5. Relatório.
-const git = run('git', ['-C', TOOLS, 'rev-parse', '--short', 'HEAD']).stdout.trim();
+const git = run('git', ['-C', TOOLS, 'describe', '--always', '--dirty']).stdout.trim();
 const secs = (ms) => (ms / 1000).toFixed(1);
-const t0 = Math.min(queuedAt, ...results.filter((r) => r.last.meta).map((r) => r.last.meta.startedAt));
-const intervals = results.filter((r) => r.last.meta).map((r) => [r.last.meta.startedAt, r.last.meta.endedAt]);
+const t0 = queuedAt;
+const intervals = results.filter((r) => r.last.meta).map((r) => [r.last.meta.reservedAt, r.last.meta.endedAt]);
 const maxParallel = Math.max(0, ...intervals.map(([start]) => intervals.filter(([a, b]) => a <= start && start < b).length));
 const cell = (v) => String(v).replace(/\|/g, '\\|').replace(/\n/g, ' ');
 const mark = (ok) => (ok ? '✅' : '❌');
@@ -163,14 +183,14 @@ lines.push(`- **Pool:** EMU_POOL_SIZE=${process.env.EMU_POOL_SIZE || 4}; cenári
 lines.push(`- **Servidor de mídia:** \`127.0.0.1:${port}\` (emulador: \`${baseUrl}\`), log em \`media-server.log\``);
 lines.push(`- **Resultado:** ${results.filter((r) => r.pass).length}/${results.length} cenários passaram`, '');
 lines.push('## Resumo', '');
-lines.push('| Cenário | Resultado | Instância | Início (s) | Fim (s) | Tentativas | Falhas |');
-lines.push('|---|---|---|---|---|---|---|');
+lines.push('| Cenário | Resultado | Instância | Reserva (s) | Teste (s) | Fim (s) | Tentativas | Falhas |');
+lines.push('|---|---|---|---|---|---|---|---|');
 for (const r of results) {
     const m = r.last.meta;
     const failed = r.checks.filter((c) => !c.ok).map((c) => `${c.name} (esperado ${c.expected}, obtido ${c.actual})`).join('; ');
-    lines.push(`| \`${r.scenario.id}\` | ${mark(r.pass)} | ${m ? m.instance : '-'} | ${m ? secs(m.startedAt - t0) : '-'} | ${m ? secs(m.endedAt - t0) : '-'} | ${r.attempts.length} | ${cell(failed || '-')} |`);
+    lines.push(`| \`${r.scenario.id}\` | ${mark(r.pass)} | ${m ? m.instance : '-'} | ${m ? secs(m.reservedAt - t0) : '-'} | ${m ? secs(m.playStartedAt - t0) : '-'} | ${m ? secs(m.endedAt - t0) : '-'} | ${r.attempts.length} | ${cell(failed || '-')} |`);
 }
-lines.push('', 'Início e fim contam a partir do primeiro boot; a espera por uma instância livre do pool fica antes do início.', '');
+lines.push('', 'Tempos em segundos desde o lançamento da bateria. **Reserva**: o emu-run obteve a instância (a espera na fila do pool vem antes) e começou o boot; **Teste**: início do play-test, depois do boot e da instalação da sonda; **Fim**: fim do cenário. O paralelismo máximo conta as instâncias reservadas ao mesmo tempo (da reserva ao fim).', '');
 for (const r of results) {
     const s = r.scenario;
     const res = r.last.result;

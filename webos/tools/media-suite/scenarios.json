@@ -12,7 +12,7 @@
             ],
             "minTimeupdates": 3,
             "redirect": true,
-            "rangeSeek": true
+            "rangeOffset": true
         }
     },
     "scenarios": [

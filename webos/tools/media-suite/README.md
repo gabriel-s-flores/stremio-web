@@ -6,6 +6,7 @@ Roda uma lista de cenários de reprodução no emulador webOS TV 4.0 e gera um r
 node webos/tools/media-suite/run.mjs                    # os 7 cenários sintéticos, em paralelo no pool
 node webos/tools/media-suite/run.mjs --only t1-mp4-h264-aac,t2-mkv-multiaudio
 node webos/tools/media-suite/run.mjs --list
+node webos/tools/media-suite/run.mjs --dry-run         # mídias, expectativas e aviso de GOP, sem emulador
 node --test webos/tools/media-suite                     # testes da lógica de avaliação (sem emulador)
 ```
 
@@ -28,7 +29,8 @@ O código de saída é 0 só se todos os cenários passarem.
    roda o `play-test.sh` e desliga. **Um cenário por boot**, porque o emulador só reproduz de forma
    confiável a primeira mídia após o boot. Os sete `emu-run` são lançados juntos; quem manda é o pool
    (`EMU_POOL_SIZE`, padrão 4), então só roda em paralelo o que couber nas instâncias livres.
-5. Avalia o resultado e cruza com o log do servidor (redirect seguido, Range com offset > 0 no seek).
+5. Avalia o resultado e cruza com o log do servidor (redirect seguido, Range com offset > 0). Cenários com `seek` avisam
+   se a mídia tem keyframes mais de 2,5 s afastados (o seek cairia no keyframe anterior).
 6. Só repete a tentativa (novo boot) quando **não houve resultado** (falha de infraestrutura). Expectativa
    não cumprida nunca é repetida.
 
@@ -36,7 +38,7 @@ O código de saída é 0 só se todos os cenários passarem.
 
 ```json
 {
-    "defaults": { "redirect": true, "seconds": 8, "expect": { "events": ["playing"], "rangeSeek": true } },
+    "defaults": { "redirect": true, "seconds": 8, "expect": { "events": ["playing"], "rangeOffset": true } },
     "scenarios": [
         { "id": "t4-mkv-h264-eac3", "title": "…", "file": "t4_h264_eac3.mkv", "seconds": 8, "seek": 5,
           "expect": { "audioTracks": { "count": 1, "languages": ["en"] } } }
@@ -58,7 +60,7 @@ O código de saída é 0 só se todos os cenários passarem.
 | `expect.minTimeupdates` | Mínimo de eventos `timeupdate` |
 | `expect.audioTracks` | `{ "count": N, "languages": ["en", "pt"] }` (ISO 639-1, como o webOS entrega) |
 | `expect.redirect` | Redirect 302 e depois requisição ao arquivo no log do servidor |
-| `expect.rangeSeek` | Alguma requisição com `Range: bytes=N-` e N > 0 (em MKV, pode vir também do índice Cues; o `seeked` é a prova do seek) |
+| `expect.rangeOffset` | Alguma requisição com `Range: bytes=N-` e N > 0. Não prova o seek (em MKV o índice Cues também gera isso); a prova é `seeked` + `currentTime` |
 
 ## Limites conhecidos
 
