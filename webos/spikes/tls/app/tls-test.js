@@ -86,7 +86,7 @@
     }
 
     function serviceStatus() {
-        return fetch('http://127.0.0.1:' + proxy.port + '/status').then(function (r) { return r.json(); });
+        return fetch('http://127.0.0.1:' + proxy.port + '/status?t=' + proxy.token).then(function (r) { return r.json(); });
     }
 
     function stat(list) {
@@ -208,7 +208,7 @@
             pre.className = 'ok';
             pre.textContent =
                 'serviço: ' + m.afterAll.node + ' / OpenSSL ' + m.afterAll.openssl + ' / ' + m.afterAll.strategy + '\n' +
-                'pelo serviço, sequencial: ' + b.proxySequential.ok + '/12 ok · 1º (TLS frio) ' + b.proxySequential.first + ' ms · mediana ' + b.proxySequential.ms.median + ' ms · p90 ' + b.proxySequential.ms.p90 + ' ms\n' +
+                'pelo serviço, sequencial: ' + b.proxySequential.ok + '/12 ok · 1º do lote ' + b.proxySequential.first + ' ms · mediana ' + b.proxySequential.ms.median + ' ms · p90 ' + b.proxySequential.ms.p90 + ' ms\n' +
                 'pelo serviço, 12 em paralelo: ' + b.proxyParallel.ok + '/12 ok em ' + b.proxyParallel.wallMs + ' ms\n' +
                 'wsrv.nl (terceiro), sequencial: ' + b.wsrvSequential.ok + '/12 ok · mediana ' + b.wsrvSequential.ms.median + ' ms · p90 ' + b.wsrvSequential.ms.p90 + ' ms\n' +
                 'estabilidade (img pelo serviço + wsrv + fetch, simultâneos): ' + b.stability.proxyImgOk + '/' + b.stability.rounds + ' pôsteres ok\n' +
@@ -304,6 +304,13 @@
         return sample().then(function () { return loop(0); }).then(function () {
             T.soak = { n: n, errors: errors, seconds: Math.round(performance.now() - t0) / 1000, samples: samples };
             return JSON.stringify(T.soak);
+        });
+    };
+
+    // Diagnóstico completo do serviço (inclui as últimas linhas de log) pelo método Luna `status`.
+    window.__tlsServiceStatus = function () {
+        return new Promise(function (resolve) {
+            luna(SERVICE + '/status', {}, function (r) { resolve(JSON.stringify(r, null, 2)); });
         });
     };
 

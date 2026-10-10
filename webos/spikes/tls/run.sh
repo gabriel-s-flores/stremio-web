@@ -4,6 +4,7 @@
 # 1ª passada: instala app + serviço e abre o app em modo hold; o cdp-net.mjs liga o log de rede e
 #   libera os testes (serviço sobe a frio).
 # 2ª passada: recarrega a página com o log de rede ligado (serviço já de pé).
+# Depois: carga opcional (SOAK=n), bateria de segurança (security-test.mjs) e log do serviço.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 TOOLS="$(cd "$HERE/../../tools" && pwd)"
@@ -12,9 +13,9 @@ APP_ID="io.github.gabrielsflores.webostls"
 : "${EMU_DEVICE:?rode dentro do webos/tools/emu-run}"
 mkdir -p "$OUT"
 CDP=(node "$TOOLS/cdp.mjs" --port "$EMU_CDP_PORT" --target "$APP_ID" --timeout 30000)
-SSH=(ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o HostKeyAlgorithms=+ssh-rsa
-     -o PubkeyAcceptedAlgorithms=+ssh-rsa -o BatchMode=yes -i "$HOME/webos-tv-sdk/run/ares_webos_emul"
-     -p "$EMU_SSH_PORT" developer@127.0.0.1)
+SSH_OPTS=(-q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o HostKeyAlgorithms=+ssh-rsa
+     -o PubkeyAcceptedAlgorithms=+ssh-rsa -o BatchMode=yes -i "$HOME/webos-tv-sdk/run/ares_webos_emul" -p "$EMU_SSH_PORT")
+SSH=(ssh "${SSH_OPTS[@]}" developer@127.0.0.1)
 
 mem_snapshot() {
     # RSS do processo do serviço visto de fora (/proc), para cruzar com process.memoryUsage().
@@ -50,5 +51,20 @@ if [[ -n "${SOAK:-}" ]]; then
     node "$TOOLS/cdp.mjs" --port "$EMU_CDP_PORT" --target "$APP_ID" --timeout 900000 eval "window.__tlsSoak($SOAK)" > "$OUT/soak.json"
     mem_snapshot > "$OUT/mem-soak.txt" 2>&1
 fi
-"${SSH[@]}" 'grep -h "tls-proxy" /var/log/messages 2>/dev/null | tail -40' > "$OUT/service-log.txt" 2>&1 || true
+
+# Bateria de segurança (security-test.mjs) por um túnel SSH até 127.0.0.1:47443 do emulador.
+TOKEN="$("${CDP[@]}" eval 'window.__tls.service.token' | tr -d '"[:space:]')"
+LP=$((47500 + EMU_INSTANCE))
+# As opções do túnel vêm antes do destino (depois dele o ssh as trataria como comando remoto).
+ssh "${SSH_OPTS[@]}" -o ExitOnForwardFailure=yes -N -L "$LP:127.0.0.1:47443" developer@127.0.0.1 &
+TUNNEL_PID=$!
+for _ in $(seq 1 20); do (exec 3<>"/dev/tcp/127.0.0.1/$LP") 2>/dev/null && break; sleep 0.5; done
+sec=0
+node "$HERE/security-test.mjs" --base "http://127.0.0.1:$LP" --token "$TOKEN" --out "$OUT/security.json" | tee "$OUT/security.txt" || sec=$?
+kill "$TUNNEL_PID" 2>/dev/null || true
+
+# Log do serviço: o console não chega a /var/log/messages; as últimas linhas vêm pelo Luna status.
+"${CDP[@]}" eval 'window.__tlsServiceStatus()' > "$OUT/service-status.json" || true
+node -e 'const s=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log((s.log||[]).join("\n"))' "$OUT/service-status.json" > "$OUT/service-log.txt" || true
 echo "evidências em $OUT"
+exit "$sec"
