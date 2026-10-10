@@ -1,0 +1,10 @@
+{
+    "id": "io.github.gabrielsflores.stremio.tlsproxy",
+    "description": "Local HTTPS proxy with the ISRG roots for hosts with Let's Encrypt certificates",
+    "services": [
+        {
+            "name": "io.github.gabrielsflores.stremio.tlsproxy",
+            "description": "Local HTTPS proxy with the ISRG roots for hosts with Let's Encrypt certificates"
+        }
+    ]
+}

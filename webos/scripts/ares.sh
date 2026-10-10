@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Packages, installs and launches the webOS build (pnpm webos:package | webos:install | webos:launch).
-#   ares.sh package    build-webos/ -> dist-webos/<id>_<version>_all.ipk (as built: no re-minify,
-#                      source maps left out)
+#   ares.sh package    build-webos/ + the tlsproxy service (webos/tlsproxy/service/) ->
+#                      dist-webos/<id>_<version>_all.ipk (as built: no re-minify, source maps left out)
 #   ares.sh install    installs that IPK on the device
 #   ares.sh launch     opens the app on the device
 # Device: $WEBOS_DEVICE, else $EMU_DEVICE (set by webos/tools/emu-run). There is no default:
@@ -9,6 +9,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BUILD_DIR="$ROOT/build-webos"
+SERVICE_DIR="$ROOT/webos/tlsproxy/service"
 DIST_DIR="$ROOT/dist-webos"
 DEVICE="${WEBOS_DEVICE:-${EMU_DEVICE:-}}"
 
@@ -23,9 +24,11 @@ require_device() {
 case "${1:-}" in
     package)
         rm -rf "$DIST_DIR"
+        # The service runs as is on Node 0.12 (no Babel): ES5, ca.js from certs/, id prefixed by the app id.
+        node "$ROOT/webos/scripts/check-service.js"
         # --no-minify: ares-package runs terser on every .js by default; the bundle is already
         # minified by webpack and must match build-webos/ (source maps, syntax checks, webOSTV.js).
-        ares-package --no-minify --app-exclude '*.map' --outdir "$DIST_DIR" "$BUILD_DIR"
+        ares-package --no-minify --app-exclude '*.map' --outdir "$DIST_DIR" "$BUILD_DIR" "$SERVICE_DIR"
         ls -l "$IPK"
         ;;
     install)

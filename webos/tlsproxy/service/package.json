@@ -1,0 +1,6 @@
+{
+    "name": "io.github.gabrielsflores.stremio.tlsproxy",
+    "version": "1.0.0",
+    "description": "Local HTTPS proxy with the ISRG roots for hosts with Let's Encrypt certificates",
+    "main": "service.js"
+}

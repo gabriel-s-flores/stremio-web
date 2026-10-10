@@ -1,5 +1,10 @@
 # F0.7 · Certificados Let's Encrypt no Chromium 53: decisão
 
+> **Integrado na F3.7.** O serviço, as raízes, `gen-ca` e a bateria de segurança saíram deste
+> spike para [`webos/tlsproxy/`](../../tlsproxy/README.md), com id `io.github.gabrielsflores.stremio.tlsproxy`,
+> e o app de teste e o `run.sh` foram removidos (ficam no histórico do git). Este documento fica como
+> registro da decisão; o funcionamento atual está no README do `webos/tlsproxy/`.
+
 - **Data:** 2026-10-09 · **Fase:** 0 (viabilidade) · **Ambiente:** emulador oficial webOS TV 4.0 (QEMU, `emu-run`), Chromium 53.0.2785.34
 - **Decisão:** opção **(a)**, um **serviço JS do próprio app** (Node v0.12.2) que faz proxy HTTPS em `127.0.0.1:47443` e confia nas raízes padrão do Node **mais** as raízes ISRG embutidas. O proxy de imagens de terceiros (`wsrv.nl`) fica documentado como alternativa, nunca como única saída.
 - **Evidências:** `~/webos-tv-sdk/orquestrador/tarefas/F0.7/evidencias/`. Relatório: `…/F0.7/relatorio.md`.

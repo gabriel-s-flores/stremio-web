@@ -10,6 +10,8 @@ const steps = [
     require('./babel'),
     // core before polyfills: core replaces the worker entry path, polyfills then prefixes it.
     require('./core'),
+    // tlsproxy between them: it prefixes the entries after core, and the polyfills still go first.
+    require('./tlsproxy'),
     require('./polyfills'),
     require('./trim'),
     require('./postcss'),
