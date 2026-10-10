@@ -3,11 +3,16 @@
 # Usa a imagem oficial do SDK com um overlay qcow2 por instância: o disco original fica intacto.
 #
 #   emulator-qemu.sh [-i N] start [headless|gui] [--mem MB] [--smp N] [--sound off|pa]
+#                                 [--profile c8] [--cpu-quota PCT]
 #   emulator-qemu.sh [-i N] wait [segundos]          espera o SSH responder
 #   emulator-qemu.sh [-i N] status | stop | reset    reset recria o overlay (estado de fábrica)
 #   emulator-qemu.sh [-i N] screenshot <arquivo.png>
 #   emulator-qemu.sh [-i N] key <qcode>...           teclado do PC (ex.: ret esc left)
 #   emulator-qemu.sh [-i N] env                      variáveis da instância (para "eval")
+#
+# Perfil C8 (opt-in, --profile c8 ou EMU_PROFILE=c8): 1 GB, 2 vCPUs e cota de CPU no cgroup do QEMU
+# (EMU_CPU_QUOTA, % de um núcleo do host para a VM inteira) para estimar o desempenho da TV.
+# Sem perfil nada muda. Detalhes e calibração: webos/docs/BASELINE-C8.md.
 #
 # Instância N (padrão 0 ou $EMU_INSTANCE): portas no host = base + N*100
 #   SSH 6622 (ares "emulator" / "emuN"), Web Inspector 9998, controle remoto 19001, VNC 590(5+N).
@@ -61,17 +66,28 @@ case "$cmd" in
         ;;
     start)
         running && { echo "instância $N já em execução"; exit 0; }
-        mode=headless mem=1024 smp=3 sound=off
+        mode=headless mem="" smp="" sound=off
+        profile="${EMU_PROFILE:-}" quota="${EMU_CPU_QUOTA:-}"
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 headless|gui) mode="$1" ;;
                 --mem) mem="$2"; shift ;;
                 --smp) smp="$2"; shift ;;
                 --sound) sound="$2"; shift ;;   # off (padrão) | pa (som no PC)
+                --profile) profile="$2"; shift ;;
+                --cpu-quota) quota="$2"; shift ;;
                 *) die "opção desconhecida: $1" ;;
             esac
             shift
         done
+        # Precedência: opção explícita > variável > perfil > padrão (1024 MB, 3 vCPUs, sem cota).
+        case "$profile" in
+            "") ;;
+            c8) : "${mem:=${EMU_C8_MEM:-1024}}" "${smp:=${EMU_C8_SMP:-2}}" "${quota:=${EMU_C8_QUOTA:-40}}" ;;
+            *) die "perfil desconhecido: $profile (use c8)" ;;
+        esac
+        mem="${mem:-1024}" smp="${smp:-3}"
+        [[ -z "$quota" || "$quota" =~ ^[0-9]+$ ]] || die "--cpu-quota deve ser um inteiro (% de um núcleo do host)"
         # Sem placa de som o pipeline de mídia do emulador reproduz normalmente; com AC97 e
         # backend "none" a reprodução trava em "stalled".
         case "$sound" in
@@ -97,7 +113,17 @@ case "$cmd" in
             -serial file:"$SERIAL" > "$RUN/qemu-$N.log" 2>&1 &
         for _ in $(seq 1 20); do running && break; sleep 0.5; done
         running || die "QEMU não subiu (veja $RUN/qemu-$N.log)"
-        echo "instância $N iniciada ($mode, ${mem} MB, ${smp} vCPU) — ares: $DEVICE, inspector: $CDP_PORT"
+        if [[ -n "$quota" ]]; then
+            # O flatpak move o QEMU para um scope transitório próprio (app-flatpak-org.gnome.Boxes-*.scope),
+            # então um "systemd-run --scope" por fora não o alcança: a cota vai nesse scope, em tempo de execução.
+            unit="$(sed 's#.*/##' "/proc/$(host_pid)/cgroup" 2>/dev/null || true)"
+            if [[ "$unit" != app-flatpak-org.gnome.Boxes-*.scope ]] ||
+                ! systemctl --user set-property --runtime "$unit" "CPUQuota=${quota}%" ${EMU_CPU_PERIOD_MS:+"CPUQuotaPeriodSec=${EMU_CPU_PERIOD_MS}ms"}; then
+                kill "$(host_pid)" 2>/dev/null || true
+                die "não consegui aplicar CPUQuota=${quota}% (scope do QEMU: ${unit:-?})"
+            fi
+        fi
+        echo "instância $N iniciada ($mode, ${mem} MB, ${smp} vCPU${profile:+, perfil $profile}${quota:+, cota ${quota}% de CPU}) — ares: $DEVICE, inspector: $CDP_PORT"
         ;;
     wait)
         limit="${1:-180}"

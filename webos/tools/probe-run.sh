@@ -46,7 +46,7 @@ if [[ "$DEVICE" != "emulator" && "$DEVICE" != emu* ]]; then
 fi
 CDP=(node "$HERE/cdp.mjs" --host "$HOST" --port "$PORT" --target "$APP_ID")
 
-for _ in $(seq 1 40); do
+for _ in $(seq 1 "${PROBE_WAIT:-40}"); do
     if "${CDP[@]}" eval 'window.__probe && window.__probe.complete' 2>/dev/null | grep -q true; then
         break
     fi

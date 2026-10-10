@@ -24,6 +24,7 @@ source ~/webos-tv-sdk/env.sh
 | `webos/tools/qmp.py` | Comandos QMP para a VM QEMU (screendump, teclas) |
 | `webos/tools/probe-run.sh` | Instala e roda o app-sonda no emulador ou na TV e salva JSON e capturas em `probe/results/` |
 | `webos/tools/wasm-compile-test.sh` | Compila um `.wasm` dentro de um Worker no emulador e mede tempo e memória |
+| `webos/tools/baseline-c8.sh` | Baseline de CPU de uma instância (boot, sonda, microbenchmark de JS, compilação do core); rode dentro do `emu-run`, com ou sem `--profile c8` ([docs/BASELINE-C8.md](docs/BASELINE-C8.md)) |
 | `webos/tools/media-server.mjs` | Servidor de mídia para o emulador: Range (seek), CORS e `/redirect/<arquivo>` (302, como links de debrid) |
 | `webos/tools/play-test.sh` | Teste padronizado de reprodução: eventos, faixas, progresso e seek |
 | `webos/tools/switch-test.js` | Teste de trocas seguidas de stream (estratégias de liberação do pipeline) |
@@ -53,6 +54,7 @@ emulator-qemu.sh stop                     # "reset" volta o disco ao estado de f
 
 - O host aparece para o emulador como `10.0.2.2`. Exemplo: `python3 -m http.server 8099 --bind 127.0.0.1` em `run/www`, acessado no emulador como `http://10.0.2.2:8099/`.
 - SSH no emulador: `ssh -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i run/ares_webos_emul -p 6622 developer@127.0.0.1`.
+- **Perfil C8** (opt-in): `emu-run --profile c8` limita a CPU da VM (2 vCPUs, cota de 40 % de um núcleo, 1 GB) para estimar o desempenho da TV. Detalhes e medições em [docs/BASELINE-C8.md](docs/BASELINE-C8.md).
 - A VM tem 1 GB de RAM, como a oficial (`start --mem 2048` aumenta). A rede usa e1000: a PCnet da VM oficial travava no QEMU depois de transferências grandes.
 - `remote.mjs` manda teclas do sistema (o app recebe Back = 461, cores = 403–406). `cdp.mjs key` injeta direto na página. Para `cdp.mjs eval` com várias instruções, use uma IIFE `(function(){ … })()`.
 - **Mídia no emulador** (detalhes em `docs/PESQUISA.md`, seção 7):
