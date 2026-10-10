@@ -11,6 +11,9 @@ const WEBOS_LOAD_ARGS = Object.freeze({
 
 // Playback rates other than 1x play without sound on the C8, so the app keeps the native rate.
 const PLAYBACK_SPEED_SUPPORTED = false;
+// The rate the TV plays at. The Player state reports no speed (null), but the seek bar divides the
+// remaining time by the speed, so the control bar gets this value instead.
+const NATIVE_PLAYBACK_SPEED = 1;
 
 const toWebOsLoadArgs = (args) => Object.assign({}, args, WEBOS_LOAD_ARGS);
 
@@ -36,6 +39,7 @@ const removeElements = (React, element, predicate) => {
 module.exports = {
     WEBOS_LOAD_ARGS,
     PLAYBACK_SPEED_SUPPORTED,
+    NATIVE_PLAYBACK_SPEED,
     toWebOsLoadArgs,
     removeElements,
 };

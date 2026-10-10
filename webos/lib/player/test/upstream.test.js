@@ -25,6 +25,35 @@ describe('upstream Player details the webOS overrides depend on', () => {
         expect(returned).toMatch(/\n\s+setPlaybackSpeed,\n/);
     });
 
+    it('playbackSpeed: the known consumers, each safe with the webOS values', () => {
+        // useVideo.webos.js gives the Player state null and ControlBar.webos.js gives the bar 1. A new
+        // consumer (or a changed one) has to be checked against those two values before updating this list.
+        //   ControlBar.js, SeekBar.js: get 1 (SeekBar divides the remaining time by it)
+        //   Indicator.tsx: skips null; SpeedMenu.js: never opened (gated on !== null)
+        //   usePlaybackSpeedHold.ts: null -> 1, and setPlaybackSpeed is a no-op
+        //   useVideo.js: the state and setter the override wraps; Player.js: gates and props
+        const consumers = [];
+        const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).forEach((entry) => {
+            const file = path.join(dir, entry.name);
+            if (entry.isDirectory()) return walk(file);
+            if (/\.webos\.|\.d\.ts$/.test(entry.name) || !/\.(js|ts|tsx)$/.test(entry.name)) return;
+            if (fs.readFileSync(file, 'utf8').includes('playbackSpeed')) consumers.push(path.relative(PLAYER_DIR, file));
+        });
+        walk(PLAYER_DIR);
+        expect(consumers.sort()).toEqual([
+            path.join('ControlBar', 'ControlBar.js'),
+            path.join('ControlBar', 'SeekBar', 'SeekBar.js'),
+            path.join('Indicator', 'Indicator.tsx'),
+            'Player.js',
+            path.join('SpeedMenu', 'SpeedMenu.js'),
+            'usePlaybackSpeedHold.ts',
+            'useVideo.js',
+        ].sort());
+        expect(read(path.join('ControlBar', 'SeekBar', 'SeekBar.js'))).toMatch(/\/playbackSpeed/);
+        expect(read(path.join('Indicator', 'Indicator.tsx'))).toMatch(/if \(next && next !== prev\)/);
+        expect(read('usePlaybackSpeedHold.ts')).toMatch(/speedRef\.current \?\? 1/);
+    });
+
     it('Player: speed controls are gated on playbackSpeed !== null and the load gets the surround setting', () => {
         const source = read('Player.js');
         expect(source).toMatch(/useShortcut\('speedMenu'[\s\S]*?video\.state\.playbackSpeed !== null/);
