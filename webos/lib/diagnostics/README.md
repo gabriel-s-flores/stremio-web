@@ -26,7 +26,7 @@ Na tela: setas para cima e para baixo percorrem os botões e as seções (cada s
 | Media (canPlayType) | `canPlayType` e `MediaSource.isTypeSupported` das linhas da tabela da C8 (`canplay.js`): H.264, HEVC Main10, VP9, AV1, DV P5/P7/P8 (`dvh1`/`dvhe`), AAC, AC-3, E-AC-3/JOC, TrueHD, DTS (`dtsc/dtsh/dtse/dtsx`), FLAC, Opus, MKV, MPEG-TS, HLS |
 | Memory | `performance.memory` (quantizado pelo Chromium 53: serve para tendência, não para valor exato), `deviceMemory`, serviço Luna `com.webos.memorymanager/getCurrentMemState` (tentativa; um app comum recebe "Denied" no emulador, e a resposta fica no relatório) |
 | Persistence | espelho do localStorage da F3.5 (`window.__stremioPersist`): resultado do boot, lotes gravados, último lote, erro e o que a cópia no IndexedDB guarda (`inspect()`, só leitura) |
-| Certificate proxy | ponto de extensão da F3.7 (veja abaixo); sem a F3.7, "not integrated yet" |
+| Certificate proxy | proxy de certificados da F3.7: lado da página (`window.__webosTlsProxy.status()`: modo `direct`/`proxy`, serviço de pé, porta, partidas, falhas, firmware, hosts aprendidos) e, **só no modo `proxy`** com o serviço de pé, o diagnóstico do próprio serviço pela Luna (`…tlsproxy/status`: pid, uptime, RSS e heap — a memória do serviço, que não entra no `performance.memory` —, versão do Node/OpenSSL, contadores de erro TLS, últimas 5 linhas do log). Na TV que já confia na ISRG (modo `direct`) o serviço não é consultado: chamá-lo o acordaria |
 
 `canPlayType` só diz que o pipeline conhece o tipo, nunca que vai tocar: a resposta real é o checklist de mídia da Fase 8. JOC (Atmos) viaja no codec `ec-3`, que o `canPlayType` não distingue do E-AC-3 comum.
 
@@ -63,15 +63,15 @@ collectDiagnostics({ app: { version, commit, coreVersion } })  // nunca rejeita
 - Opções para teste: `window`, `request` (compatível com `webOS.service.request`), `getCoreStatus()`, `readCapabilities(force)`, `registry`, `timeoutMs`, `now()`.
 - `getRequestedVariant(storage)` / `setRequestedVariant(storage, variant)` leem e gravam a chave da variante; `VARIANT_KEY` é igual ao `PREFER_KEY` do carregador (um teste garante).
 
-## Ponto de extensão: outras seções (F3.7, F5.x…)
+## Ponto de extensão: outras seções (F5.x…)
 
 ```js
 const { registerSection } = require('./webos/lib/diagnostics/registry'); // pequeno, seguro no boot
 
-registerSection('certificateProxy', 'Certificate proxy', () => ({ running: true, port: 8123 }));
+registerSection('player', 'Player', () => ({ pipeline: 'ok', audioTracks: 2 }));
 ```
 
-`collect()` devolve um objeto (ou uma promessa) e só roda quando o relatório é coletado. O `id` `certificateProxy` substitui o texto "not integrated yet". Registrar o mesmo id duas vezes troca a seção. Não importe `index.js` no boot: ele é o chunk lazy.
+`collect()` devolve um objeto (ou uma promessa) e só roda quando o relatório é coletado; as linhas do relatório saem do objeto achatado (`chave.sub: valor`). Registrar um `id` de seção nativa (`certificateProxy`, `persistence`…) **troca** a seção nativa; os outros ids vão depois das nativas; registrar o mesmo id duas vezes troca a seção. Não importe `index.js` no boot: ele é o chunk lazy.
 
 ## Marcas de boot (`registry.js`)
 
@@ -85,6 +85,7 @@ registerSection('certificateProxy', 'Certificate proxy', () => ({ running: true,
 ## Testes
 
 - Unitários (Luna, `window` e status do core simulados): `pnpm exec jest webos/lib/diagnostics`.
+- O id do serviço da F3.7 que a tela consulta é conferido contra `webos/tlsproxy/service/services.json` (um teste).
 - Os arquivos gerados (`createTransport.diagnostics.ts`, `Menu.webos.tsx`) seguem o teste de deriva do upstream: `pnpm exec jest webos/tests/no-server`.
 - Emulador, depois de `pnpm webos:package`:
   - `webos/tools/emu-run --timeout 15 [--profile c8] -- webos/tests/diagnostics/emulator.sh <pasta>`: sobe até o Board, abre a tela, salva o relatório (JSON e texto) e uma captura;

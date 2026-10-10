@@ -240,17 +240,77 @@ describe('collectDiagnostics', () => {
         });
     });
 
-    it('has an extension point: the certificate proxy placeholder and registered sections', async () => {
-        const placeholder = await collect();
-        const section = placeholder.sections.find((candidate) => candidate.id === 'certificateProxy');
-        expect(section.data).toEqual({ integrated: false });
-        expect(formatReport(placeholder)).toContain('[Certificate proxy]\nStatus: not integrated yet');
+    describe('certificate proxy section (F3.7)', () => {
+        const pageStatus = (overrides) => ({
+            mode: 'proxy', ready: true, port: 47443, error: null, firmware: '4.0|WEBOS4.0|UA', detectedAt: 1,
+            starts: 1, failures: 0, learned: ['example.org'], hosts: ['images.metahub.space', 'example.org'], ...overrides,
+        });
+        const serviceReply = {
+            pid: 321, uptimeMs: 65000, rss: 31457280, heapTotal: 20971520, heapUsed: 10485760, strategy: 'agent-ca',
+            node: 'v0.12.2', openssl: '1.0.2', listening: true, listenError: null, subscribers: 1,
+            stats: { requests: 12, tlsErrors: { CERT_HAS_EXPIRED: 1 } }, log: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6'],
+        };
 
+        it('says so when the page module is missing', async () => {
+            const report = await collect();
+            expect(getSection(report, 'certificateProxy')).toEqual({ integrated: false });
+            expect(formatReport(report)).toContain('[Certificate proxy]\nStatus: not integrated (window.__webosTlsProxy is missing)');
+        });
+
+        it('in proxy mode asks the service over Luna: pid, memory, counters and the last log lines', async () => {
+            const asked = [];
+            const request = (service, call) => {
+                asked.push([service, call.method]);
+                fakeLuna({ status: { result: serviceReply }, getCurrentMemState: { error: 'denied' } })(service, call);
+            };
+            const report = await collect({ window: makeWindow({ __webosTlsProxy: { status: () => pageStatus() } }), request });
+            expect(asked).toContainEqual(['luna://io.github.gabrielsflores.stremio.tlsproxy', 'status']);
+            const data = getSection(report, 'certificateProxy');
+            expect(data.service).toMatchObject({ available: true, pid: 321, rssMB: 30, heapUsedMB: 10, strategy: 'agent-ca', log: ['l2', 'l3', 'l4', 'l5', 'l6'] });
+            const text = formatReport(report);
+            expect(text).toContain('Mode: proxy (the TV lacks the Let\'s Encrypt roots)');
+            expect(text).toContain('Service: up on port 47443');
+            expect(text).toContain('Known hosts / learned: 2 / example.org');
+            expect(text).toContain('Service pid / uptime: 321 / 65 s');
+            expect(text).toContain('Service memory (RSS / heap): 30 MB / 10 MB');
+            expect(text).toContain('Service counters: {"requests":12,"tlsErrors":{"CERT_HAS_EXPIRED":1}}');
+            expect(text).toContain('Service log (last 5): l2 | l3 | l4 | l5 | l6');
+        });
+
+        it('does not wake an idle service: direct mode and a service that is not up are not asked', async () => {
+            const asked = [];
+            const request = (service, call) => { asked.push(call.method); };
+            const direct = await collect({ window: makeWindow({ __webosTlsProxy: { status: () => pageStatus({ mode: 'direct', ready: false, port: null }) } }), request });
+            expect(formatReport(direct)).toContain('Service diagnostics: skipped: the TV trusts the Let\'s Encrypt roots');
+            const down = await collect({ window: makeWindow({ __webosTlsProxy: { status: () => pageStatus({ ready: false, error: 'start failed' }) } }), request });
+            expect(formatReport(down)).toContain('Service: not up: start failed');
+            expect(asked).not.toContain('status');
+        });
+
+        it('keeps the page side when the service does not answer', async () => {
+            const window = makeWindow({ __webosTlsProxy: { status: () => pageStatus() } });
+            const denied = await collect({ window, request: fakeLuna({ status: { error: 'Denied method call' }, getCurrentMemState: { error: 'denied' } }) });
+            expect(getSection(denied, 'certificateProxy').service).toEqual({ available: false, error: 'Denied method call' });
+            expect(formatReport(denied)).toContain('Service diagnostics: unavailable: Denied method call');
+            const noBridge = await collect({ window, request: null });
+            expect(formatReport(noBridge)).toContain('skipped: webOS.service is not available');
+        });
+
+        it('uses the id of the service the F3.7 package declares', () => {
+            const fs = require('fs');
+            const path = require('path');
+            const services = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '..', 'tlsproxy', 'service', 'services.json'), 'utf8'));
+            expect(`luna://${services.id}`).toBe('luna://io.github.gabrielsflores.stremio.tlsproxy');
+        });
+    });
+
+    it('has an extension point: other modules register sections, and a built-in id is replaced', async () => {
         registry.registerSection('certificateProxy', 'Certificate proxy', () => Promise.resolve({ running: true, port: 8123, hosts: ['images.metahub.space'] }));
         registry.registerSection('other', 'Other', () => { throw new Error('boom'); });
         const registered = await collect();
         const text = formatReport(registered);
         expect(registered.sections.filter((candidate) => candidate.id === 'certificateProxy')).toHaveLength(1);
+        expect(registered.sections.map((section) => section.id).slice(-2)).toEqual(['certificateProxy', 'other']);
         expect(text).toContain('[Certificate proxy]\nrunning: true\nport: 8123\nhosts.0: images.metahub.space');
         expect(text).toContain('[Other]\nerror: boom');
     });

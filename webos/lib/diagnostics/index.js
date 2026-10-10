@@ -13,6 +13,8 @@ const VARIANT_KEY = 'webos.coreVariant';
 const VARIANTS = ['wasm2js', 'wasm'];
 
 const MEMORY_MANAGER_SERVICE = 'luna://com.webos.memorymanager';
+// The certificate proxy service (F3.7, webos/tlsproxy/service/services.json; a test keeps the id in sync).
+const TLSPROXY_SERVICE = 'luna://io.github.gabrielsflores.stremio.tlsproxy';
 const DEFAULT_TIMEOUT_MS = 3000;
 const MB = 1048576;
 
@@ -228,20 +230,47 @@ const collectPersistence = (context) => {
     );
 };
 
-// Sections registered by other modules (webos/lib/diagnostics/registry.js). The certificate proxy
-// (F3.7) fills "certificateProxy"; until it does, the report says so.
-const collectExtensions = (context) => {
-    const registered = context.registry.getSections();
-    const entries = registered.map((section) => attempt(() => section.collect()).then((data) => ({
-        id: section.id, title: section.title, data,
-    })));
-    return Promise.all(entries).then((extensions) => {
-        if (!extensions.some((extension) => extension.id === 'certificateProxy')) {
-            extensions.unshift({ id: 'certificateProxy', title: 'Certificate proxy', data: { integrated: false } });
-        }
-        return extensions;
+// The certificate proxy (F3.7, webos/tlsproxy): the page side (window.__webosTlsProxy.status(), no
+// token) and, when the proxy is in use, the service's own diagnostics over Luna (pid, memory, TLS
+// error counters, log). Asking an idle service would start it, so a direct-mode TV is not asked.
+const collectCertificateProxy = (context) => {
+    const bridge = context.window.__webosTlsProxy;
+    if (!bridge || typeof bridge.status !== 'function') return Promise.resolve({ integrated: false });
+    const page = bridge.status();
+    const skipped = (reason) => ({ integrated: true, page, service: { available: false, skipped: reason } });
+    if (page.mode !== 'proxy') return Promise.resolve(skipped('the TV trusts the Let\'s Encrypt roots: the service is not in use'));
+    if (!page.ready) return Promise.resolve(skipped('the service is not up yet'));
+    if (!context.request) return Promise.resolve(skipped('webOS.service is not available'));
+    return callLuna(TLSPROXY_SERVICE, 'status', {}, context.request, context.timeoutMs).then((outcome) => {
+        if (!outcome.ok) return { integrated: true, page, service: { available: false, error: outcome.error } };
+        const reply = outcome.result;
+        return {
+            integrated: true,
+            page,
+            service: {
+                available: true,
+                pid: orNull(reply.pid),
+                uptimeMs: orNull(reply.uptimeMs),
+                rssMB: toMB(reply.rss),
+                heapUsedMB: toMB(reply.heapUsed),
+                strategy: orNull(reply.strategy),
+                node: orNull(reply.node),
+                openssl: orNull(reply.openssl),
+                listening: orNull(reply.listening),
+                listenError: orNull(reply.listenError),
+                subscribers: orNull(reply.subscribers),
+                stats: orNull(reply.stats),
+                log: Array.isArray(reply.log) ? reply.log.slice(-5) : [],
+            },
+        };
     });
 };
+
+// Sections registered by other modules (webos/lib/diagnostics/registry.js). A registered section
+// replaces the built-in one with the same id; the others are appended after the built-in ones.
+const collectExtensions = (context) => Promise.all(context.registry.getSections().map((section) => (
+    attempt(() => section.collect()).then((data) => ({ id: section.id, title: section.title, data }))
+)));
 
 const yesNo = (value) => (value === null || value === undefined ? 'unknown' : value === true ? 'yes' : value === false ? 'no' : String(value));
 const ms = (value) => (typeof value === 'number' ? value + ' ms' : 'not reached');
@@ -337,6 +366,31 @@ const SECTION_ROWS = {
         ['Copy in IndexedDB', d.copy ? d.copy.keys + ' keys, ' + d.copy.chars + ' chars' : 'unreadable: ' + text(d.copyError)],
         ['Copy meta', d.copy ? json(d.copy.meta) : '—'],
     ] : [['localStorage mirror', 'not installed (window.__stremioPersist missing)']]),
+    certificateProxy: (d) => {
+        if (!d.integrated) return [['Status', 'not integrated (window.__webosTlsProxy is missing)']];
+        const page = d.page;
+        const rows = [
+            ['Mode', page.mode === 'proxy' ? 'proxy (the TV lacks the Let\'s Encrypt roots)' : text(page.mode)],
+            ['Service', page.mode === 'proxy' ? (page.ready ? 'up on port ' + page.port : 'not up' + (page.error ? ': ' + text(page.error) : '')) : 'not needed'],
+            ['Service starts / failures', page.starts + ' / ' + page.failures],
+            ['Detected for', text(page.firmware)],
+            ['Known hosts / learned', page.hosts.length + ' / ' + (page.learned.length ? page.learned.join(', ') : '—')],
+        ];
+        const service = d.service;
+        if (service.available) {
+            rows.push(
+                ['Service pid / uptime', service.pid + ' / ' + Math.round(service.uptimeMs / 1000) + ' s'],
+                ['Service memory (RSS / heap)', mb(service.rssMB) + ' / ' + mb(service.heapUsedMB)],
+                ['Service runtime', [service.node, 'OpenSSL ' + text(service.openssl), service.strategy].map(text).join(' · ')],
+                ['Service listening', yesNo(service.listening) + (service.listenError ? ' (' + service.listenError + ')' : '') + ', ' + text(service.subscribers) + ' subscribers'],
+                ['Service counters', json(service.stats)],
+                ['Service log (last 5)', service.log.length ? service.log.join(' | ') : '—']
+            );
+        } else {
+            rows.push(['Service diagnostics', service.skipped ? 'skipped: ' + service.skipped : 'unavailable: ' + text(service.error)]);
+        }
+        return rows;
+    },
     memory: (d) => [
         ['JS heap used / total / limit', d.jsHeap ? [d.jsHeap.usedMB, d.jsHeap.totalMB, d.jsHeap.limitMB].map(mb).join(' / ') : 'not exposed'],
         ['Device memory', d.deviceMemoryGB === null ? 'not exposed' : d.deviceMemoryGB + ' GB'],
@@ -354,9 +408,10 @@ const SECTION_TITLES = {
     media: 'Media (canPlayType)',
     memory: 'Memory',
     persistence: 'Persistence (localStorage mirror)',
+    certificateProxy: 'Certificate proxy',
 };
 
-const SECTION_ORDER = ['app', 'environment', 'core', 'boot', 'webAssembly', 'tv', 'media', 'memory', 'persistence'];
+const SECTION_ORDER = ['app', 'environment', 'core', 'boot', 'webAssembly', 'tv', 'media', 'memory', 'persistence', 'certificateProxy'];
 
 const COLLECTORS = {
     app: collectApp,
@@ -368,6 +423,7 @@ const COLLECTORS = {
     media: collectMedia,
     memory: collectMemory,
     persistence: collectPersistence,
+    certificateProxy: collectCertificateProxy,
 };
 
 // `rows` of a section whose data is {error}: the rows builders expect real data.
@@ -401,21 +457,25 @@ const collectDiagnostics = (options) => {
     const generatedAt = settings.now ? settings.now() : new Date();
     return Promise.all(SECTION_ORDER.map((id) => attempt(() => COLLECTORS[id](context)))).then((results) => {
         return attempt(() => collectExtensions(context)).then((extensions) => {
-            const sections = SECTION_ORDER.map((id, index) => ({
-                id,
-                title: SECTION_TITLES[id],
-                data: results[index],
-                rows: rowsFor(id, results[index]),
-            }));
-            (Array.isArray(extensions) ? extensions : []).forEach((extension) => {
-                sections.push({
-                    id: extension.id,
-                    title: extension.title,
-                    data: extension.data,
-                    rows: extension.data && extension.data.integrated === false ?
-                        [['Status', 'not integrated yet (F3.7 registers this section)']] : flatten(extension.data),
-                });
+            const registered = Array.isArray(extensions) ? extensions : [];
+            const fromRegistry = (extension) => ({
+                id: extension.id,
+                title: extension.title,
+                data: extension.data,
+                rows: flatten(extension.data),
             });
+            const sections = SECTION_ORDER.map((id, index) => {
+                const replacement = registered.filter((extension) => extension.id === id)[0];
+                return replacement ? fromRegistry(replacement) : {
+                    id,
+                    title: SECTION_TITLES[id],
+                    data: results[index],
+                    rows: rowsFor(id, results[index]),
+                };
+            });
+            registered
+                .filter((extension) => SECTION_ORDER.indexOf(extension.id) === -1)
+                .forEach((extension) => sections.push(fromRegistry(extension)));
             return { generatedAt: generatedAt.toISOString(), sections };
         });
     });
