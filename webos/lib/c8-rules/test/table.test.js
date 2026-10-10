@@ -106,6 +106,10 @@ describe('Linha 2 · Dolby Vision em MP4: P5, P8.1, P7 dual-track (✅ toca dire
         expect(labelsOf(p5)).toEqual(['dv']);
         // Without a profile: both P5 and P8.1 are active in MP4, so DV is assumed active.
         expect(labelsOf(rate(null, { title: 'Movie 2160p DV', behaviorHints: { filename: 'movie.mp4' } }))).toEqual(['dv']);
+        // "P8" alone is read as 8.1 (8.4 with HLG in the name)
+        const p8 = rate(null, { title: 'Movie 2160p DV P8 HDR10 HEVC', behaviorHints: { filename: 'movie.mp4' } });
+        expect(p8.video.dolbyVision).toMatchObject({ profile: '8.1', mode: 'dolby-vision' });
+        expect(rate(null, 'Clip DV P8 HLG HEVC.mkv').video.dolbyVision).toMatchObject({ profile: '8.4', baseLayer: 'hlg' });
     });
 });
 
@@ -195,10 +199,17 @@ describe('Linha 4 · Dolby Vision em MKV P5 (❌ cores erradas: detecta por prob
         expect(result.tier).toBe('demoted');
     });
 
-    it('ambiguous probe (DV_UNKNOWN) + name "P5" → wrong colours', async () => {
-        const result = rate(await probeFixture('dv-p5-nobam-mkv', { sniffFrames: false }), 'Movie 2160p P5');
+    it('ambiguous probe (DV_UNKNOWN) + name "DV P5" → wrong colours', async () => {
+        const result = rate(await probeFixture('dv-p5-nobam-mkv', { sniffFrames: false }), 'Movie 2160p DV P5');
         expect(result.video.output).toBe('wrong-colors');
         expect(result.warnings.find((warning) => warning.code === 'DV_WRONG_COLORS')).toMatchObject({ source: 'name' });
+    });
+
+    it('a profile token without DV ("Season 1 P5") and DV with an AVC video are not DV', () => {
+        const season = rate(null, 'Show Season 1 P5 WEB 1080p HEVC.mkv');
+        expect(season.video.dolbyVision).toBeNull();
+        expect(season.tier).toBe('ok');
+        expect(rate(null, 'Movie 1080p DV P5 x264.mkv').video.dolbyVision).toBeNull();
     });
 
     it('ambiguous probe (DV_UNKNOWN) without name signals → info only, not demoted', async () => {
@@ -287,9 +298,25 @@ describe('Linha 5 · DD+ Atmos, E-AC-3 JOC (✅ Atmos virtual: prefere essa faix
         expect(rate(probe, 'Movie.TrueHD.7.1.Atmos.mkv').labels).toEqual([]);
     });
 
-    it('name only: "DDP5.1 Atmos" → Atmos; "TrueHD Atmos" → no Atmos label', () => {
+    it('name only: "DDP5.1 Atmos" / "DDPA5.1" → Atmos; "TrueHD Atmos" or Atmos without a codec → no label', () => {
         expect(rate(null, 'Movie.2160p.WEB-DL.DDP5.1.Atmos.HEVC').labels).toEqual([{ code: 'atmos', text: 'Atmos', source: 'name' }]);
+        expect(labelsOf(rate(null, 'Movie.2160p.WEB-DL.DDPA5.1.H.265'))).toEqual(['atmos']);
         expect(labelsOf(rate(null, 'Movie.2160p.BluRay.REMUX.HEVC.TrueHD.7.1.Atmos'))).toEqual([]);
+        expect(labelsOf(rate(null, 'Movie.2160p.BluRay.REMUX.HEVC.TrueHD7.1.Atmos-GRP.mkv'))).toEqual([]);
+        expect(labelsOf(rate(null, 'Movie 2160p HEVC 5.1 Atmos.mkv'))).toEqual([]);
+    });
+
+    it('the name Atmos goes to one E-AC-3 track only: the default one (derived: kit-multi AAC tracks as E-AC-3, atmos null)', async () => {
+        const probe = editTracks(await probeFixture('kit-multi-mkv'), (track) => {
+            if (track.id === 2 || track.id === 3) {
+                track.codec = 'eac3';
+                track.audio.atmos = null;
+            }
+        });
+        const result = rate(probe, 'Movie.2160p.DUAL.DDP5.1.Atmos.H265', { audioLanguages: ['por'] });
+        expect(result.audio.tracks.filter((track) => track.atmos === true).map((track) => track.id)).toEqual([2]);
+        expect(result.audio.initialTrack).toMatchObject({ id: 3, language: 'por', atmos: null });
+        expect(labelsOf(result)).toEqual([]);
     });
 });
 
@@ -340,10 +367,12 @@ describe('Linha 7 · TrueHD com ou sem Atmos (❌ mudo: escolhe outra faixa; sem
     });
 
     it('name only: TrueHD as the only codec → possibly mute, demoted less, probe recommended', () => {
-        const result = rate(null, 'Movie.2160p.BluRay.REMUX.HEVC.TrueHD.7.1.Atmos.mkv');
-        expect(warningsOf(result)).toEqual(['AUDIO_UNSUPPORTED_POSSIBLE']);
-        expect(result.tier).toBe('demoted');
-        expect(result.needsProbe).toBe(true);
+        ['Movie.2160p.BluRay.REMUX.HEVC.TrueHD.7.1.Atmos.mkv', 'Movie.2160p.BluRay.REMUX.HEVC.TrueHD7.1.Atmos-GRP.mkv'].forEach((text) => {
+            const result = rate(null, text);
+            expect(warningsOf(result)).toEqual(['AUDIO_UNSUPPORTED_POSSIBLE']);
+            expect(result.tier).toBe('demoted');
+            expect(result.needsProbe).toBe(true);
+        });
         // with a compatible codec also in the name there is nothing to warn about
         const withAc3 = rate(null, 'Movie.TrueHD.7.1.Atmos.AC3.5.1.mkv');
         expect(withAc3.warnings).toEqual([]);

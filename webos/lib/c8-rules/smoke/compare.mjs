@@ -13,7 +13,8 @@ const read = (file) => {
 };
 
 const emulator = read(process.argv[2]);
-const expected = read(process.argv[3]);
+const reference = read(process.argv[3]);
+const expected = reference.results;
 const byId = {};
 emulator.results.forEach((entry) => {
     byId[entry.id] = entry.result;
@@ -28,5 +29,8 @@ expected.forEach((entry) => {
     console.log((same ? 'OK   ' : 'DIFF ') + entry.id.padEnd(52) + r.tier.padEnd(8) + String(r.score).padStart(6) + '  ' +
         r.labels.map((label) => label.text).join(', '));
 });
-console.log(failures === 0 ? 'todos os ' + expected.length + ' casos iguais ao Node' : failures + ' caso(s) diferente(s)');
+const sameOrder = isDeepStrictEqual(emulator.sorted, reference.sorted);
+if (!sameOrder) failures++;
+console.log((sameOrder ? 'OK   ' : 'DIFF ') + 'sortStreams com ' + reference.sorted.length + ' itens: mesma ordem que no Node');
+console.log(failures === 0 ? 'todos os ' + expected.length + ' casos e a ordenação iguais ao Node' : failures + ' diferença(s)');
 process.exit(failures === 0 ? 0 : 1);

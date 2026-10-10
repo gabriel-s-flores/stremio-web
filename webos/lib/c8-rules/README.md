@@ -16,7 +16,7 @@ São as decisões D6 a D8 do [plano](../../docs/PLANO-PORT-WEBOS4.md) (Fase 5, i
 ## Uso
 
 ```js
-const { evaluate, compare, mergeProfile, DEFAULT_PROFILE } = require('./webos/lib/c8-rules');
+const { evaluate, sortStreams, mergeProfile, DEFAULT_PROFILE } = require('./webos/lib/c8-rules');
 
 const result = evaluate({
     probe: probeResult,                  // saída do probe (formato v1) ou null
@@ -27,10 +27,10 @@ const result = evaluate({
 
 result.audio.initialTrack;               // { id, codec, language, … } ou null
 result.labels;                           // [{ code: 'hdr10-on-tv', text: 'HDR10 nesta TV', source: 'probe' }]
-streams.sort((a, b) => compare(a.rules, b.rules));   // sort estável: empate mantém a ordem do addon
+sortStreams(streams, (stream) => stream.rules);      // nova lista; no empate, mantém a ordem do addon
 ```
 
-Também são exportados `parseStreamName(stream)` (os sinais lidos do nome, abaixo), `normalizeLanguage(code)` e `VERSION`.
+Também são exportados `compare(a, b)` (a ordem usada por `sortStreams`), `parseStreamName(stream)` (os sinais lidos do nome, abaixo), `normalizeLanguage(code)` e `VERSION`.
 
 ### Entradas
 
@@ -43,13 +43,13 @@ Também são exportados `parseStreamName(stream)` (os sinais lidos do nome, abai
 | Sinal | Exemplos reconhecidos |
 |---|---|
 | Dolby Vision | `DV`, `DoVi`, `Dolby Vision` (mas não `DVDRip`) |
-| Perfil DV | `P5`, `DV.P8.1`, `Profile 7`; `FEL`/`MEL` junto de `DV` = P7 |
+| Perfil DV | `DV P5`, `DV.P8.1`, `DoVi Profile 7`, `DV FEL`/`MEL` = P7. Só vale com um token DV no texto (`Season 1 P5` não é DV). `P8` sozinho vira 8.1 (8.4 com `HLG`, 8.2 com `SDR`) |
 | HDR | `HDR10`, `HDR` (vale HDR10), `HDR10+`/`HDR10Plus`, `HLG`, `SDR` |
-| Áudio | `DDP`, `DD+`, `E-AC-3`/`EAC3`; `AC3`, `DD5.1`, `Dolby Digital`; `TrueHD`; `DTS`, `DTS-HD`, `DTS:X`; `AAC`, `FLAC`, `Opus`, `LPCM`, `MP3`; `Atmos` |
-| Vídeo | `HEVC`/`x265`/`H.265`, `AVC`/`x264`/`H.264`, `AV1`, `VP9` |
+| Áudio | `DDP`, `DD+`, `E-AC-3`/`EAC3`/`EC3`, `Dolby Digital+`; `AC3`, `DD5.1`, `Dolby Digital`; `TrueHD`; `DTS`, `DTS-HD MA`, `DTSHDMA`, `DTS:X`; `AAC`, `FLAC`, `Opus`, `LPCM`, `MP3`; `Atmos`, `DDPA` (= DD+ Atmos). Os canais podem vir colados (`TrueHD7.1`, `DTS5.1`) |
+| Vídeo | `HEVC`/`x265`/`H.265`/`H-265`, `AVC`/`x264`/`H.264`, `AV1`, `VP9`. DV pelo nome é ignorado quando o vídeo citado é AVC, AV1 ou VP9 |
 | Contêiner | extensão de `behaviorHints.filename` ou `mkv`/`mp4`/`webm` no texto |
 
-O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os dois (ou nenhum) no nome, o motor não sabe a qual faixa ele pertence.
+O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os dois (ou nenhum) no nome, o motor não sabe a qual faixa ele pertence e não usa o sinal.
 
 ## Formato da saída (versão 1)
 
@@ -104,7 +104,7 @@ O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os doi
 |---|---|---|---|
 | `VIDEO_UNSUPPORTED` | hide | −1000 | AV1 (probe ou nome) |
 | `VIDEO_UNKNOWN` | info | −10 | VP9 e outros sem informação |
-| `DV_WRONG_COLORS` | demote | −200 | DV sem camada base (P5) num contêiner onde a C8 não ativa DV: MKV ou contêiner desconhecido. Vem do probe ou de um `P5` explícito no nome |
+| `DV_WRONG_COLORS` | demote | −200 | DV sem camada base (P5) num contêiner onde a C8 não ativa DV: MKV ou contêiner desconhecido. Vem do probe ou de um `DV P5` explícito no nome |
 | `DV_WRONG_COLORS_POSSIBLE` | demote | −60 | DV sem perfil nem camada base conhecidos (nome `DV` sem `HDR`) em MKV ou contêiner desconhecido: pode ser P5 |
 | `DV_UNVERIFIED` | info | −10 | O probe avisou `DV_UNKNOWN` e o nome não diz nada sobre DV |
 | `DV_BASE_LAYER` | info | 0 | DV que a C8 mostra como HDR10/HLG/SDR (acompanha o rótulo `*-on-tv`) |
@@ -118,7 +118,7 @@ O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os doi
 | `SUBTITLES_HIDDEN` | info | 0 | Há legendas bitmap (PGS, VobSub, DVB), que ficam ocultas |
 | `PROBE_IGNORED` | info | 0 | Saída do probe em outra versão de formato |
 
-`tier` é `hidden` se houver um aviso `hide`, `demoted` se houver um `demote`, e `ok` nos demais casos. `score` soma os pesos dos rótulos e dos avisos, mais `scoring.preferredLanguage` (20) quando a faixa inicial está num idioma preferido. `compare(a, b)` ordena por `tier` e depois por `score`, do maior para o menor. Ele devolve 0 no empate, para o sort estável preservar a ordem do addon. Cabe à F6.2 decidir se esconde os `hidden`.
+`tier` é `hidden` se houver um aviso `hide`, `demoted` se houver um `demote`, e `ok` nos demais casos. `score` soma os pesos dos rótulos e dos avisos, mais `scoring.preferredLanguage` (20) quando a faixa inicial está num idioma preferido. `compare(a, b)` ordena por `tier` e depois por `score`, do maior para o menor, e devolve 0 no empate. No Chromium 53, `Array#sort` não é estável acima de 10 itens (o QuickSort do V8 5.3). Por isso, a lista deve ser ordenada com `sortStreams(items, getResult)`, que desempata pela posição original e devolve uma lista nova. Cabe à F6.2 decidir se esconde os `hidden`.
 
 ## Regras
 
@@ -133,7 +133,7 @@ O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os doi
 
 | Probe (MKV HEVC sem DV) | Nome | Resultado |
 |---|---|---|
-| qualquer | `P5` | `wrong-colors`, `DV_WRONG_COLORS` (fonte: nome) |
+| qualquer | `DV P5` | `wrong-colors`, `DV_WRONG_COLORS` (fonte: nome) |
 | cor PQ ou HLG | `DV` | camada base HDR10/HLG: "HDR10 nesta TV" |
 | `hdr: null` ou SDR | `DV` | `DV_WRONG_COLORS_POSSIBLE` (pode ser P5) |
 | qualquer | `DV HDR10`, `DV P7`, `DV P8.1` | "HDR10 nesta TV" |
@@ -150,7 +150,7 @@ Só a cor PQ/HLG do probe conta como evidência de camada base. Streams P5 costu
 4. A preferência de codec do perfil: `eac3-atmos` (DD+ Atmos), `eac3`, `ac3`, `aac`…
 5. A flag `default`, os canais e a ordem no arquivo.
 
-O status vem primeiro porque D8 manda preterir o DTS até a Fase 8, mesmo no idioma preferido. Quando o probe não leu o 1º quadro (`atmos: null`), um `Atmos` no nome junto de DD+ marca a faixa E-AC-3 como Atmos (`atmosSource: 'name'`).
+O status vem primeiro porque D8 manda preterir o DTS até a Fase 8, mesmo no idioma preferido. Quando o probe não leu o 1º quadro (`atmos: null`), um `Atmos` no nome junto de DD+ marca como Atmos uma única faixa E-AC-3: a padrão, ou senão a primeira (`atmosSource: 'name'`). Uma dublagem raramente é Atmos.
 
 Sem probe, o status de áudio sai dos codecs citados no nome. Como um remux costuma ter uma faixa compatível que o nome não cita, o rebaixamento é menor (`*_POSSIBLE`), e `needsProbe` fica `true`.
 

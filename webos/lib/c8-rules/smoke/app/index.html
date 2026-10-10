@@ -49,7 +49,9 @@
             return { id: entry.id, result: result };
         });
         status.textContent = out.length + ' casos em ' + (Date.now() - started) + ' ms · ' + navigator.userAgent;
-        return JSON.stringify({ userAgent: navigator.userAgent, ms: Date.now() - started, results: out });
+        // Over 40 items: well above the size where the V8 5.3 sort stops being stable (10).
+        var sorted = C8Rules.sortStreams(out, function (entry) { return entry.result; }).map(function (entry) { return entry.id; });
+        return JSON.stringify({ userAgent: navigator.userAgent, ms: Date.now() - started, results: out, sorted: sorted });
     };
 })();
 </script>

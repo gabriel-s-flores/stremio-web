@@ -74,6 +74,24 @@ describe('parseStreamName', () => {
         expect(pick('Movie.2020.E-AC-3').audioCodecs).toEqual(['eac3']);
     });
 
+    it('reads codecs glued to the channel count and the less common spellings', () => {
+        expect(pick('Movie.TrueHD7.1.Atmos-GRP').audioCodecs).toEqual(['truehd']);
+        expect(pick('Movie.DTS5.1-GRP').audioCodecs).toEqual(['dts']);
+        expect(pick('Movie.DTSHDMA.7.1').audioCodecs).toEqual(['dts']);
+        expect(pick('Movie.LPCM2.0').audioCodecs).toEqual(['pcm']);
+        expect(pick('Movie EC3 5.1').audioCodecs).toEqual(['eac3']);
+        expect(pick('Movie Dolby Digital+ 5.1').audioCodecs).toEqual(['eac3']);
+        expect(pick('Movie.DDPA5.1')).toMatchObject({ audioCodecs: ['eac3'], atmos: true, atmosCodec: 'eac3' });
+        expect(pick('Movie H-265').videoCodec).toBe('hevc');
+        expect(pick('Movie.HDR-Rip.x264').hdr10).toBe(false);
+    });
+
+    it('needs a DV token before reading a profile', () => {
+        expect(pick('Show Season 1 P5 WEB 1080p')).toMatchObject({ dolbyVision: false, dvProfile: null });
+        expect(pick('Movie - P.7 1080p')).toMatchObject({ dolbyVision: false, dvProfile: null });
+        expect(pick('Movie DV P.7')).toMatchObject({ dolbyVision: true, dvProfile: '7' });
+    });
+
     it('accepts no stream at all', () => {
         expect(pick(null)).toMatchObject({ container: null, dolbyVision: false, audioCodecs: [] });
         expect(parseStreamName({}).text).toBe('');

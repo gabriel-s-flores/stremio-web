@@ -15,7 +15,7 @@ const webpack = require('webpack');
 const acorn = createRequire(require.resolve('webpack'))('acorn');
 const { probe } = require('../../header-probe');
 const { loadFixture, replayReadRange, bufferReadRange } = require('../../header-probe/test/replay');
-const { evaluate } = require('../index.js');
+const { evaluate, sortStreams } = require('../index.js');
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.resolve(process.argv[2] || path.join(HERE, 'out'));
@@ -94,8 +94,9 @@ for (const file of fs.readdirSync(path.join(HERE, 'app'))) {
 
 const cases = await buildCases();
 const expected = cases.map((entry) => ({ id: entry.id, result: evaluate(entry) }));
+const sorted = sortStreams(expected, (entry) => entry.result).map((entry) => entry.id);
 fs.writeFileSync(path.join(APP, 'cases.js'), 'window.SMOKE_CASES = ' + JSON.stringify(cases) + ';\n');
-fs.writeFileSync(path.join(OUT, 'expected.json'), JSON.stringify(expected, null, 1));
+fs.writeFileSync(path.join(OUT, 'expected.json'), JSON.stringify({ results: expected, sorted }, null, 1));
 await bundle();
 const checked = [checkSyntax(path.join(APP, 'c8-rules.bundle.js'))];
 for (const file of ['index.js', 'name.js', 'languages.js']) {

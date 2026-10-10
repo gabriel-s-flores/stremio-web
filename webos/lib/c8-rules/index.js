@@ -73,20 +73,27 @@ const hasProbeWarning = (probe, code) => probe.warnings.some((warning) => warnin
 // ---- Video -------------------------------------------------------------------------------------
 
 const dvFromName = (name, probeHdr, source) => {
-    let baseLayer = name.dvProfile !== null && NAME_BASE_LAYER[name.dvProfile] ? NAME_BASE_LAYER[name.dvProfile] : 'unknown';
+    let profile = name.dvProfile;
+    // "P8" alone: the sub-profile follows the HDR hint; streaming P8 is almost always 8.1.
+    if (profile === '8') profile = name.hlg ? '8.4' : (name.sdr ? '8.2' : '8.1');
+    let baseLayer = profile !== null && NAME_BASE_LAYER[profile] ? NAME_BASE_LAYER[profile] : 'unknown';
     if (baseLayer === 'unknown') {
         // Only PQ/HLG colour from the probe counts: P5 often carries unspecified or BT.709 colour.
         if (probeHdr === 'hdr10' || probeHdr === 'hlg') baseLayer = probeHdr;
         else if (name.hdr10) baseLayer = 'hdr10';
         else if (name.hlg) baseLayer = 'hlg';
     }
-    return { profile: name.dvProfile, baseLayer, dualTrack: false, source };
+    return { profile, baseLayer, dualTrack: false, source };
 };
 
 // The probe is authoritative for MP4 (the DV configuration is in the sample entry). In MKV it
 // can miss DV (frame not read, or a malformed NAL read as "no RPU"), so the name adds to it.
 const resolveDolbyVision = (probe, name) => {
-    if (probe === null) return name.dolbyVision ? dvFromName(name, null, 'name') : null;
+    if (probe === null) {
+        // DV only exists on HEVC here (P9 AVC and P10 AV1 are outside the C8 cases).
+        const hevcOrUnknown = name.videoCodec === null || name.videoCodec === 'hevc';
+        return name.dolbyVision && hevcOrUnknown ? dvFromName(name, null, 'name') : null;
+    }
     const dv = probe.summary.dolbyVision;
     if (dv) {
         return { profile: dv.profileName, baseLayer: dv.baseLayer, dualTrack: probe.summary.dolbyVisionDualTrack === true, source: 'probe' };
@@ -190,12 +197,17 @@ const audioStatus = (profile, codec, audioProfile, channels) => {
     return status;
 };
 
-// The probe leaves atmos null when it could not read the first frame; the name can fill it in.
-const atmosOf = (track, name) => {
+// The probe leaves atmos null when it could not read the first frame; the name can fill it in,
+// but for one track only (a dub is rarely Atmos): the default one of that codec, else the first.
+const nameAtmosTrack = (tracks, name) => {
+    if (!name.atmos || name.atmosCodec === null) return null;
+    const candidates = tracks.filter((track) => track.codec === name.atmosCodec && track.audio.atmos === null);
+    return candidates.filter((track) => track.default)[0] || candidates[0] || null;
+};
+
+const atmosOf = (track, atmosByName) => {
     if (track.audio.atmos !== null) return { atmos: track.audio.atmos, source: 'probe' };
-    const byName = name.atmos && (name.atmosCodec === track.codec ||
-        (name.atmosCodec === null && track.codec === 'eac3' && name.audioCodecs.indexOf('truehd') === -1));
-    return byName ? { atmos: true, source: 'name' } : { atmos: null, source: null };
+    return track === atmosByName ? { atmos: true, source: 'name' } : { atmos: null, source: null };
 };
 
 const preferenceIndex = (profile, track) => {
@@ -218,8 +230,9 @@ const evaluateProbeAudio = (profile, probe, name, languages, report) => {
     const raw = probe.tracks.filter((track) => track.type === 'audio' && track.audio);
     const fallback = raw.filter((track) => track.default)[0] || raw[0] || null;
     const fallbackLanguage = fallback !== null ? normalizeLanguage(fallback.language) : null;
+    const atmosByName = nameAtmosTrack(raw, name);
     const tracks = raw.map((track) => {
-        const atmos = atmosOf(track, name);
+        const atmos = atmosOf(track, atmosByName);
         const language = normalizeLanguage(track.language);
         const preferred = language !== null ? languages.indexOf(language) : -1;
         let languageRank = languages.length + 1;
@@ -288,8 +301,7 @@ const evaluateNameAudio = (profile, name, report) => {
     } else if (status === 'unconfirmed') {
         report.warn('AUDIO_UNCONFIRMED_POSSIBLE', 'name', 'O nome do stream só cita ' + listed + ', que ' + STATUS_TEXT.unconfirmed + '.');
     }
-    const atmosCodec = name.atmosCodec !== null ? name.atmosCodec : (name.audioCodecs.indexOf('truehd') === -1 ? 'eac3' : null);
-    const atmos = name.atmos && atmosCodec !== null && profile.audio.atmosCodecs.indexOf(atmosCodec) !== -1;
+    const atmos = name.atmos && name.atmosCodec !== null && profile.audio.atmosCodecs.indexOf(name.atmosCodec) !== -1;
     if (atmos) report.label('atmos', 'name');
     return { status, initialTrack: null, tracks: [], atmos, preferredLanguage: false };
 };
@@ -367,15 +379,26 @@ const evaluate = (input) => {
     };
 };
 
-// Sort helper for the stream list (F6.2): ok before demoted before hidden, then score. Equal
-// results return 0, so a stable sort keeps the addon's order among them.
+// Order for the stream list (F6.2): ok before demoted before hidden, then score; 0 on a tie.
 const compare = (a, b) => (TIERS[a.tier] - TIERS[b.tier]) || (b.score - a.score);
+
+// Array#sort is not stable on Chromium 53 (V8 5.3 uses QuickSort above 10 items), so ties are
+// broken by the original position: the addon's order survives among equal results.
+// getResult(item) returns the evaluate() result of an item (default: the item itself).
+const sortStreams = (items, getResult) => {
+    const resultOf = getResult || ((item) => item);
+    return items
+        .map((item, index) => ({ item, index, result: resultOf(item) }))
+        .sort((a, b) => compare(a.result, b.result) || (a.index - b.index))
+        .map((entry) => entry.item);
+};
 
 module.exports = {
     VERSION,
     DEFAULT_PROFILE,
     evaluate,
     compare,
+    sortStreams,
     mergeProfile,
     parseStreamName,
     normalizeLanguage,

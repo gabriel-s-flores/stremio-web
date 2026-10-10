@@ -2,7 +2,7 @@
 // D6: the C8 facts live in perfil-c8.json and phase 8 changes them by configuration. These tests
 // check the file itself and that overrides change decisions without code changes.
 
-const { evaluate, compare, mergeProfile, DEFAULT_PROFILE } = require('../index');
+const { evaluate, compare, sortStreams, mergeProfile, DEFAULT_PROFILE } = require('../index');
 const { probeFixture, probeHeader, codes } = require('./helpers');
 
 const STATUSES = ['ok', 'unconfirmed', 'unknown', 'unsupported'];
@@ -113,10 +113,23 @@ describe('evaluate input handling', () => {
         expect(result.audio).toEqual({ status: null, initialTrack: null, tracks: [], atmos: false });
     });
 
-    it('compare keeps equal results in place (stable sort keeps the addon order)', () => {
+    it('compare returns 0 for equal results', () => {
         const a = evaluate({ stream: 'A 1080p x264 AAC' });
         const b = evaluate({ stream: 'B 1080p x264 AC3' });
         expect(compare(a, b)).toBe(0);
-        expect([a, b].sort(compare)).toEqual([a, b]);
+    });
+
+    it('sortStreams keeps the addon order among equals, also above 10 items (V8 5.3 sort is unstable)', () => {
+        const streams = [];
+        for (let i = 0; i < 30; i++) {
+            const kind = i % 3;
+            const text = kind === 0 ? 'S' + i + ' 1080p x264 AAC' : (kind === 1 ? 'S' + i + ' 2160p DV P5 HEVC mkv' : 'S' + i + ' 2160p WEB-DL DV P8.1 HEVC.mp4');
+            streams.push({ id: i, rules: evaluate({ stream: text }) });
+        }
+        const sorted = sortStreams(streams, (stream) => stream.rules).map((stream) => stream.id);
+        const ids = (kind) => streams.filter((stream) => stream.id % 3 === kind).map((stream) => stream.id);
+        expect(sorted).toEqual(ids(2).concat(ids(0), ids(1)));
+        expect(streams.map((stream) => stream.id)).toEqual(streams.map((_, index) => index));
+        expect(sortStreams([3, 1].map((n) => evaluate({ stream: n === 3 ? 'AV1' : 'x264' })))[0].tier).toBe('ok');
     });
 });
