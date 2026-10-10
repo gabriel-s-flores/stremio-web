@@ -1,0 +1,17 @@
+{
+    "id": "kit-multi-mkv",
+    "source": "kit:media-tests/files/t2_multi.mkv",
+    "size": 8401787,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 32768
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 32768
+        }
+    ],
+    "bytes": 32768,
+    "sha256": "087c4080a52352365903f0e6806fb24967c4f36c152a0c98f98ea16ef2c4f8c9"
+}

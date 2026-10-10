@@ -1,0 +1,17 @@
+{
+    "id": "dts-express-mka",
+    "source": "https://raw.githubusercontent.com/androidx/media/8c6678b657ede1e7883fc164ef73ed483c7796c3/libraries/test_data/src/test/assets/media/mka/sample_with_dts_express.mka",
+    "size": 45646,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 32768
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 32768
+        }
+    ],
+    "bytes": 32768,
+    "sha256": "0d463657f5fcdebd7189a1e90c8777c18cc752d54b493496d62b29d380220aa8"
+}

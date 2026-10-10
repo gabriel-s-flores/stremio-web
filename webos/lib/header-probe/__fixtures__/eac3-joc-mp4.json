@@ -1,0 +1,17 @@
+{
+    "id": "eac3-joc-mp4",
+    "source": "https://raw.githubusercontent.com/androidx/media/8c6678b657ede1e7883fc164ef73ed483c7796c3/libraries/test_data/src/test/assets/media/mp4/sample_eac3joc.mp4",
+    "size": 164796,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 4096
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 4096
+        }
+    ],
+    "bytes": 4096,
+    "sha256": "6b5d77bd2a9cba096bd8bcf55c6ff721ae79d4b55d274275c3dd94a30b7f6c32"
+}

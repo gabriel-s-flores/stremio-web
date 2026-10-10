@@ -1,0 +1,21 @@
+{
+    "id": "dv-p81-mp4",
+    "source": "https://repo.jellyfin.org/test-videos/HDR/Dolby%20Vision/Test%20Jellyfin%201080p%20DV%20P8.1.mp4",
+    "size": 48198953,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 65536
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 65536
+        },
+        {
+            "offset": 48175649,
+            "length": 23304
+        }
+    ],
+    "bytes": 88840,
+    "sha256": "8ef7b6c1cdf5fa95e16ae683cb29d296bdad368f11b3d0ac3f059956dd218ac9"
+}

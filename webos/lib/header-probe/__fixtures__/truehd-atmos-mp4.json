@@ -1,0 +1,17 @@
+{
+    "id": "truehd-atmos-mp4",
+    "source": "https://raw.githubusercontent.com/androidx/media/8c6678b657ede1e7883fc164ef73ed483c7796c3/libraries/test_data/src/test/assets/media/mp4/sample_dthd.mp4",
+    "size": 98103,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 4096
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 4096
+        }
+    ],
+    "bytes": 4096,
+    "sha256": "339295aaa8b4c10ebba0e155c5ef1cba4b5723b0bf38491327e57ffbd9ce3cd1"
+}

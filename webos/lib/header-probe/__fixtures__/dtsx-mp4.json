@@ -1,0 +1,17 @@
+{
+    "id": "dtsx-mp4",
+    "source": "https://raw.githubusercontent.com/chromium/chromium/3e08d37c08b73fcfcc8ef37e1d58213fd39e6f29/media/test/data/bear_dtsx.mp4",
+    "size": 1335,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 32768
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 1335
+        }
+    ],
+    "bytes": 1335,
+    "sha256": "01e7818b744fc2ba1a43577c3764a5c6fe7d8a0b92929c4480fdd5f2be64d43e"
+}

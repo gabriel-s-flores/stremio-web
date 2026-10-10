@@ -1,0 +1,17 @@
+{
+    "id": "dtsc-mp4",
+    "source": "https://raw.githubusercontent.com/chromium/chromium/3e08d37c08b73fcfcc8ef37e1d58213fd39e6f29/media/test/data/bear_dtsc.mp4",
+    "size": 711,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 32768
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 711
+        }
+    ],
+    "bytes": 711,
+    "sha256": "c36c18925a30710974692ccb339874be9391162053039edb3f4a1a987ce26ffc"
+}

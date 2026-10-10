@@ -1,0 +1,21 @@
+{
+    "id": "dts-hdma-mp4",
+    "source": "https://raw.githubusercontent.com/androidx/media/8c6678b657ede1e7883fc164ef73ed483c7796c3/libraries/test_data/src/test/assets/media/mp4/sample_dts_hd_ma.mp4",
+    "size": 201034,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 32768
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 65536
+        },
+        {
+            "offset": 200076,
+            "length": 958
+        }
+    ],
+    "bytes": 66494,
+    "sha256": "131d6ad334befde38685f99d388bed8eaa11cb51cc4f4e860c0fe77ece2651ae"
+}
