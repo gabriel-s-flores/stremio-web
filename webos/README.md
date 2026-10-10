@@ -42,3 +42,13 @@ No emulador, dentro de uma reserva do pool:
   página (imagens, `Image.webos.tsx`) e o worker do core o usam só para hosts Let's Encrypt, e nunca
   para vídeo. Detalhes em `webos/tlsproxy/README.md`.
 - `webos/vendor/webOSTVjs-1.2.13/`: webOSTV.js da LG, sem alterações (origem e sha256 no README).
+- Escala de TV (F2.6): o app inteiro é ampliado pelo zoom da escala de interface do upstream, com o
+  fator `TV_SCALE` de `src/common/interfaceScale.webos.ts` (a opção "Interface zoom" das configurações
+  multiplica esse fator: 100% = padrão da TV). As margens de overscan são as `--safe-area-inset-*` de
+  `webos/styles/app.less`, e o foco do controle remoto também fica lá. `postcss-math-functions.js`
+  resolve `min()/max()` para essa mesma escala (`webos/tests/styles/tv-scale.test.js` amarra os três).
+- `webos/tests/screens/`: roteiro de capturas das telas principais (Board, Discover e menu, Busca,
+  Detalhes, streams, Library, Calendar, Addons e modal, Settings, menu do usuário, diálogo de saída,
+  Player), com um item focado em cada uma e uma sonda (escala, áreas seguras, caixa e estilos do foco,
+  tamanhos de fonte em px da tela, erros de JS): `emulator.sh` (dentro do `emu-run`), `desktop.sh`
+  (Chrome headless sobre `build/`) e `compare.sh` (lado a lado). Base para a regressão visual (F2.7).
