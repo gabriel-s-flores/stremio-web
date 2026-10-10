@@ -153,6 +153,20 @@ describe('robustness', () => {
         expect(audioOf(result)[0].codec).toBe('eac3');
     });
 
+    it('NaN Duration and SamplingFrequency floats become null', async () => {
+        const fill = (data, id) => {
+            const at = Buffer.from(data.buffer, data.byteOffset, data.length).indexOf(Buffer.from(id));
+            data.fill(0xff, at + id.length, at + id.length + 8);
+        };
+        const result = await runPatched('dts-core-mkv', (data, offset) => {
+            if (offset !== 0) return;
+            fill(data, [0x44, 0x89, 0x88]);
+            fill(data, [0xb5, 0x88]);
+        });
+        expect(result.durationSec).toBeNull();
+        expect(audioOf(result)[0].audio.sampleRate).toBeNull();
+    });
+
     it('any parser exception leaves probe() as ProbeError INVALID', async () => {
         const failing = () => Promise.reject(new TypeError('boom'));
         await expect(probe(failing)).rejects.toMatchObject({ name: 'ProbeError', code: 'INVALID' });
