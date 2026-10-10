@@ -81,8 +81,8 @@ Para cada tarefa com status `implementando` ou `corrigindo`:
 Para cada tarefa `em revisão` cujo turno do revisor terminou, leia `tarefas/<id>/revisao-c<N>.md`:
 - **APROVAR**: confira que a revisão rodou as checagens; faça o merge
   `gh pr merge <n> --repo gabriel-s-flores/stremio-web --squash --delete-branch --subject "<título do PR> (#<n>)"`,
-  depois `git -C ~/webos-tv-sdk/repo-webos pull --ff-only`. Status `concluída`. Arquive as threads
-  da tarefa (`t3ctl settle`). Thread concluída e sem mais nada a fazer fica **settled**, não arquivada
+  depois `git -C ~/webos-tv-sdk/repo-webos pull --ff-only`. Status `concluída`. Marque as threads
+  da tarefa (implementadora e revisora) como settled (`t3ctl settle`). Thread concluída e sem mais nada a fazer fica **settled**, não arquivada
   (pedido do Gabriel); uma thread arquivada não aceita settle, então desarquive antes (`t3ctl unarchive`).
 - **MUDANÇAS**: se ainda há ciclo (≤ 2), escreva `tarefas/<id>/devolutiva-c<N>.md` com os achados
   (copie da revisão, priorizados) e envie à thread implementadora (`t3ctl send <impl> --prompt-file …`).
