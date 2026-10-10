@@ -3,8 +3,8 @@
 // window.__smoke (lido pelo run via CDP). ES5: roda no Chromium 53 sem Babel.
 // Com o parâmetro de lançamento {"mode": "baseline"}, a mesma página sobe um worker vazio, sem o
 // core: é a linha de base da memória. {"webassembly": "hidden"} esconde o WebAssembly no worker e
-// {"wasm": "npm"} dá ao carregador o .wasm do npm (pós-MVP): nos dois o core tem de subir em wasm2js
-// (veja smoke-worker.js).
+// {"wasm": "npm"} dá ao carregador o .wasm do npm (pós-MVP) e {"instantiate": "fail"} faz o
+// instantiate falhar de verdade: nos três o core tem de subir em wasm2js (veja smoke-worker.js).
 var Bridge = require('../../vendor/stremio-core-web/bridge.js');
 
 var CINEMETA = 'https://v3-cinemeta.strem.io/manifest.json';
@@ -16,14 +16,18 @@ try {
     launchParams = {};
 }
 var BASELINE = launchParams.mode === 'baseline';
-var SCENARIO = launchParams.webassembly === 'hidden' ? 'hidden' : launchParams.wasm === 'npm' ? 'npm-wasm' : 'wasm';
+var SCENARIO = launchParams.webassembly === 'hidden' ? 'hidden' : launchParams.wasm === 'npm' ? 'npm-wasm' :
+    launchParams.instantiate === 'fail' ? 'instantiate-fail' : 'wasm';
 // Variante e motivo que o carregador tem de escolher em cada cenário.
 var EXPECT = {
     wasm: { variant: 'wasm', reason: 'webassembly' },
     hidden: { variant: 'wasm2js', reason: 'no-webassembly' },
-    'npm-wasm': { variant: 'wasm2js', reason: 'compile-failed' }
+    'npm-wasm': { variant: 'wasm2js', reason: 'compile-failed' },
+    'instantiate-fail': { variant: 'wasm2js', reason: 'instantiate-failed' }
 }[SCENARIO];
-var WORKER_HASH = { wasm: '', hidden: '#webassembly=hidden', 'npm-wasm': '#wasm=npm' }[SCENARIO];
+var WORKER_HASH = {
+    wasm: '', hidden: '#webassembly=hidden', 'npm-wasm': '#wasm=npm', 'instantiate-fail': '#instantiate=fail'
+}[SCENARIO];
 var R = window.__smoke = {
     mode: BASELINE ? 'baseline' : 'core',
     scenario: BASELINE ? null : SCENARIO,
@@ -187,7 +191,7 @@ function runCore() {
         R.worker = stats;
         R.ok = R.discover.type === 'Ready' && R.discover.items > 0 &&
             R.board.catalogs > 0 && R.board.ready === R.board.catalogs && R.errors.length === 0 &&
-            stats.loader.variant === EXPECT.variant && stats.loader.reason === EXPECT.reason;
+            stats.loader.ok === true && stats.loader.variant === EXPECT.variant && stats.loader.reason === EXPECT.reason;
     }, function (err) {
         fail('fluxo', err);
     }).then(finish);

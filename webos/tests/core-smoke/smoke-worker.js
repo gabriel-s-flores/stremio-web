@@ -5,7 +5,10 @@
 //   (nenhum)               WebAssembly do Chromium 53 → espera a variante wasm;
 //   #webassembly=hidden    apaga o WebAssembly do worker antes de qualquer código do core → wasm2js;
 //   #wasm=npm              o carregador lê o .wasm do npm (pós-MVP), que o V8 5.8 recusa no
-//                          compile → wasm2js por falha de compilação.
+//                          compile → wasm2js por falha de compilação;
+//   #instantiate=fail      o instantiate nativo recebe imports vazios e o V8 5.8 recusa o link de
+//                          verdade (module is not an object or function), depois de um compile
+//                          bem-sucedido → wasm2js por falha de instanciação.
 var params = {};
 self.location.hash.replace(/^#/, '').split('&').forEach(function (pair) {
     var kv = pair.split('=');
@@ -27,6 +30,13 @@ function mark(name) {
     self.postMessage({ smokeMark: { name: name, t: performance.now() } });
 }
 mark('worker-start' + (hidden ? ' (WebAssembly escondido: ' + typeof WebAssembly + ')' : ''));
+
+if (params.instantiate === 'fail') {
+    var nativeInstantiate = WebAssembly.instantiate;
+    WebAssembly.instantiate = function (module) {
+        return nativeInstantiate.call(WebAssembly, module, {});
+    };
+}
 
 var loader = require('../../core/loader.js');
 loader.defaults.onStep = function (name, detail) {
