@@ -13,6 +13,9 @@ type Section = { id: string, title: string, rows: Row[] };
 type Report = { generatedAt: string, sections: Section[] };
 
 const REPORT_STORAGE_KEY = 'webos.diagnostics.report';
+// Cards stay shorter than the screen: the spatial navigation polyfill scrolls a candidate that is
+// not fully visible in 40 px steps before moving the focus, so a taller card would trap the arrows.
+const MAX_ROWS_PER_CARD = 10;
 
 // A developer tool for the Phase 8 session: English only, outside the translated UI (and the
 // i18n scan, which looks for literal JSX text).
@@ -24,6 +27,20 @@ const LABELS = {
     collecting: 'Collecting…',
     report: 'Report (selectable text)',
 };
+
+type Card = { key: string, title: string, rows: Row[] };
+
+const toCards = (sections: Section[]): Card[] => sections.reduce((cards: Card[], section) => {
+    const count = Math.max(1, Math.ceil(section.rows.length / MAX_ROWS_PER_CARD));
+    for (let index = 0; index < count; index++) {
+        cards.push({
+            key: section.id + ':' + index,
+            title: count > 1 ? `${section.title} (${index + 1}/${count})` : section.title,
+            rows: section.rows.slice(index * MAX_ROWS_PER_CARD, (index + 1) * MAX_ROWS_PER_CARD),
+        });
+    }
+    return cards;
+}, []);
 
 const WebosDiagnostics = () => {
     const [report, setReport] = useState<Report | null>(null);
@@ -135,11 +152,11 @@ const WebosDiagnostics = () => {
                     report === null ?
                         <div className={styles['notice']}>{LABELS.collecting}</div>
                         :
-                        report.sections.map((section) => (
-                            <div key={section.id} className={styles['section']} tabIndex={0}>
-                                <h3 className={styles['section-title']}>{section.title}</h3>
+                        toCards(report.sections).map((card) => (
+                            <div key={card.key} className={styles['section']} tabIndex={0}>
+                                <h3 className={styles['section-title']}>{card.title}</h3>
                                 {
-                                    section.rows.map(([label, value], index) => (
+                                    card.rows.map(([label, value], index) => (
                                         <div key={index} className={styles['row']}>
                                             <div className={styles['row-label']}>{label}</div>
                                             <div className={styles['row-value']}>{value}</div>
