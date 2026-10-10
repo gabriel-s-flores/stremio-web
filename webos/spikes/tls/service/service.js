@@ -195,9 +195,23 @@ function forward(req, res, target, redirects, originHost) {
                 forward(req, res, next, redirects + 1, originHost);
                 return;
             }
+            // Salto não seguido (método com corpo ou cadeia longa): o Location volta ao cliente
+            // apontando para o próprio proxy, ou seja, o mesmo origin para o navegador, que o segue
+            // reenviando o Authorization. Por isso só se devolve Location para o MESMO host https;
+            // para outro host (ou fora de https) a resposta é um erro, sem Location. Este é o único
+            // ponto em que o serviço emite Location: FORWARD_RESPONSE_HEADERS não repassa location,
+            // content-location nem refresh do upstream.
+            var nextHost = (url.parse(next).host || '').toLowerCase();
+            if (!/^https:/i.test(next) || nextHost !== originHost) {
+                stats.refused++;
+                log('redirect ' + originHost + ' -> ' + (nextHost || next.split(':')[0]) + ' não seguido (' + req.method + ', salto ' + (redirects + 1) + ')');
+                fail(res, 502, 'cross-host redirect not followed: ' + req.method + ' ' + originHost + ' -> ' + (nextHost || '?') +
+                    (redirects >= MAX_REDIRECTS ? ' (more than ' + MAX_REDIRECTS + ' redirects)' : ''));
+                return;
+            }
             res.proxyDone = true;
             setCors(res);
-            res.writeHead(up.statusCode, { Location: /^https:/i.test(next) ? proxiedUrl(next) : next });
+            res.writeHead(up.statusCode, { Location: proxiedUrl(next) });
             res.end();
             return;
         }

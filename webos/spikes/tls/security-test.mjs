@@ -1,20 +1,25 @@
 #!/usr/bin/env node
-// Bateria de segurança do serviço da F0.7 (regressões da revisão c1). Fala HTTP com o serviço
-// direto ou por um túnel SSH até 127.0.0.1:47443 do emulador; o cabeçalho Host é sempre o do
-// serviço, para a checagem anti-rebinding aceitar o túnel. Sai com código 1 se algum caso falhar.
+// Bateria de segurança do serviço da F0.7 (regressões das revisões c1 e c2). Fala HTTP com o
+// serviço direto ou por um túnel SSH até 127.0.0.1:47443 do emulador; o cabeçalho Host é sempre o
+// do serviço, para a checagem anti-rebinding aceitar o túnel. Com --cdp-port, os casos de
+// redirecionamento rodam também dentro do app de teste (Chromium 53), com fetch seguindo os
+// redirecionamentos de verdade. Sai com código 1 se algum caso falhar.
 //
-//   node security-test.mjs --base http://127.0.0.1:47543 --token <token> [--out security.json]
+//   node security-test.mjs --base http://127.0.0.1:47543 --token <token> [--cdp-port N] [--out security.json]
 import http from 'node:http';
 import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const argv = process.argv.slice(2);
-const opts = { base: 'http://127.0.0.1:47443', host: '127.0.0.1:47443', token: '', out: '' };
+const opts = { base: 'http://127.0.0.1:47443', host: '127.0.0.1:47443', token: '', out: '', 'cdp-port': '', target: 'webostls' };
 for (let i = 0; i < argv.length; i++) opts[argv[i].replace(/^--/, '')] = argv[++i];
 if (!opts.token) throw new Error('falta --token');
 const base = new URL(opts.base);
 const SECRET = 'F07-SECRET-' + Math.random().toString(36).slice(2, 10);
 
-function request(path, { method = 'GET', headers = {}, host = opts.host, abortAfterMs } = {}) {
+function request(path, { method = 'GET', headers = {}, host = opts.host, abortAfterMs, body } = {}) {
     return new Promise((resolve) => {
         const req = http.request({ hostname: base.hostname, port: base.port, path, method, headers: { Host: host, ...headers } }, (res) => {
             const chunks = [];
@@ -25,7 +30,7 @@ function request(path, { method = 'GET', headers = {}, host = opts.host, abortAf
         req.on('error', (e) => resolve({ status: 0, error: e.code || e.message, body: '' }));
         req.setTimeout(60000, () => req.destroy(new Error('timeout')));
         if (abortAfterMs) setTimeout(() => { req.destroy(); resolve({ status: 0, aborted: true, body: '' }); }, abortAfterMs);
-        req.end();
+        req.end(body);
     });
 }
 const proxy = (target, extra = {}) => request(`/proxy?t=${opts.token}&url=${encodeURIComponent(target)}`, extra);
@@ -65,6 +70,74 @@ await check('Authorization chega ao host pedido, sem redirect (postman-echo)', a
     const r = await proxy('https://postman-echo.com/headers', auth);
     return [r.status === 200 && r.body.includes(SECRET), `http=${r.status}`];
 });
+
+// 1b. Redirecionamentos que o serviço NÃO segue (método com corpo, cadeia acima de 5 saltos) e
+// devolve ao cliente (revisão c2). O cliente segue como o navegador: um Location que aponte para o
+// próprio proxy é o mesmo origin, então método (307/308), corpo e Authorization vão junto.
+const PROXY_ORIGINS = ['http://127.0.0.1:47443', 'http://localhost:47443'];
+async function followLikeBrowser(target, { method = 'GET', headers = {}, body } = {}) {
+    let path = `/proxy?t=${opts.token}&url=${encodeURIComponent(target)}`;
+    const hops = [];
+    for (let i = 0; i < 20; i++) {
+        const r = await request(path, { method, headers, body });
+        hops.push(r.status);
+        const loc = r.headers && r.headers.location;
+        if (!(r.status >= 300 && r.status < 400 && loc)) return { ...r, hops };
+        const origin = PROXY_ORIGINS.find((o) => loc.startsWith(o + '/'));
+        if (!origin) return { ...r, hops, externalLocation: loc };
+        path = loc.slice(origin.length);
+        if (r.status !== 307 && r.status !== 308 && method === 'POST') { method = 'GET'; body = undefined; }
+    }
+    throw new Error('redirecionamentos demais');
+}
+// Cadeia de n redirecionamentos no httpbin terminando em `final`.
+const chain = (n, final) => {
+    let u = final;
+    for (let i = 0; i < n; i++) u = 'https://httpbin.org/redirect-to?url=' + encodeURIComponent(u);
+    return u;
+};
+const post307 = (to) => 'https://httpbin.org/redirect-to?status_code=307&url=' + encodeURIComponent(to);
+const postAuth = { method: 'POST', headers: { Authorization: 'Bearer ' + SECRET, 'Content-Type': 'application/json' }, body: '{"f07":1}' };
+// [nome, alvo, opções, deve vazar? (true só nos controles do mesmo host), status esperado]
+const REDIRECT_CASES = [
+    ['POST 307 para outro host (httpbin → postman-echo)', post307('https://postman-echo.com/post'), postAuth, false, 502],
+    ['GET por 6 saltos terminando em outro host (6× httpbin → postman-echo)', chain(6, 'https://postman-echo.com/headers'), auth, false, 502],
+    ['GET por 7 saltos: Location do mesmo host devolvido e o salto cross-host seguido sem credencial', chain(7, 'https://postman-echo.com/headers'), auth, false, 200],
+    ['controle: POST 307 no mesmo host (httpbin → httpbin) mantém a credencial', post307('https://httpbin.org/post'), postAuth, true, 200],
+    ['controle: GET por 7 saltos no mesmo host mantém a credencial', chain(7, 'https://httpbin.org/headers'), auth, true, 200],
+];
+for (const [name, target, o, leak, expect] of REDIRECT_CASES) {
+    await check(`cliente que segue redirect (Node): ${name}`, async () => {
+        const r = await followLikeBrowser(target, o);
+        const has = r.body.includes(SECRET);
+        return [r.status === expect && has === leak && !r.externalLocation, `http=${r.status} saltos=${r.hops.join('>')} segredo no destino: ${has}${r.externalLocation ? ' Location externo: ' + r.externalLocation : ''} ${r.status === 502 ? r.body : ''}`];
+    });
+}
+
+// 1c. Os mesmos casos (e o do c1) no Chromium 53 do emulador, com o fetch do navegador seguindo
+// os redirecionamentos. Só com --cdp-port (app de teste aberto).
+if (opts['cdp-port']) {
+    const cdp = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../tools/cdp.mjs');
+    const browserFetch = (target, o) => {
+        // Expressão ES5 para o Chromium 53; o fetch segue redirecionamentos (redirect: 'follow').
+        const init = { method: o.method || 'GET', headers: o.headers, body: o.body };
+        const expr = `(function(){var u='http://127.0.0.1:47443/proxy?t=${opts.token}&url='+encodeURIComponent(${JSON.stringify(target)});` +
+            `return fetch(u,${JSON.stringify(init)}).then(function(r){return r.text().then(function(t){return JSON.stringify({status:r.status,redirected:r.url!==u,` +
+            `finalUrl:r.url.replace(/t=[0-9a-f]+/,'t=…').slice(0,160),leaked:t.indexOf(${JSON.stringify(SECRET)})>=0,body:t.slice(0,160)});});},` +
+            `function(e){return JSON.stringify({status:0,error:String(e)});});})()`;
+        const out = execFileSync('node', [cdp, '--port', opts['cdp-port'], '--target', opts.target, '--timeout', '90000', 'eval', expr], { encoding: 'utf8' });
+        return JSON.parse(out.trim());
+    };
+    const BROWSER_CASES = REDIRECT_CASES.concat([
+        ['GET com redirect para outro host seguido pelo serviço (caso do c1)', 'https://httpbin.org/redirect-to?url=' + encodeURIComponent('https://postman-echo.com/headers'), auth, false, 200],
+    ]);
+    for (const [name, target, o, leak, expect] of BROWSER_CASES) {
+        await check(`Chromium 53 (fetch no app): ${name}`, async () => {
+            const r = browserFetch(target, o);
+            return [r.status === expect && r.leaked === leak, `http=${r.status} segredo no destino: ${r.leaked} url final: ${r.finalUrl || r.error} ${r.status === 502 ? r.body : ''}`];
+        });
+    }
+}
 
 // 2. /status, token e Host (achado 2).
 await check('/status sem token → 403', async () => {

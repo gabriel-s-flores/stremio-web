@@ -60,7 +60,8 @@ ssh "${SSH_OPTS[@]}" -o ExitOnForwardFailure=yes -N -L "$LP:127.0.0.1:47443" dev
 TUNNEL_PID=$!
 for _ in $(seq 1 20); do (exec 3<>"/dev/tcp/127.0.0.1/$LP") 2>/dev/null && break; sleep 0.5; done
 sec=0
-node "$HERE/security-test.mjs" --base "http://127.0.0.1:$LP" --token "$TOKEN" --out "$OUT/security.json" | tee "$OUT/security.txt" || sec=$?
+node "$HERE/security-test.mjs" --base "http://127.0.0.1:$LP" --token "$TOKEN" --cdp-port "$EMU_CDP_PORT" --target "$APP_ID" \
+    --out "$OUT/security.json" | tee "$OUT/security.txt" || sec=$?
 kill "$TUNNEL_PID" 2>/dev/null || true
 
 # Log do serviço: o console não chega a /var/log/messages; as últimas linhas vêm pelo Luna status.
