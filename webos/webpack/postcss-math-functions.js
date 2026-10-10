@@ -5,14 +5,19 @@
 // why html, body and #app were 0px tall, see webos/styles/app.less). Each call is replaced by the
 // one of its arguments that wins in a reference environment, so the value stays an expression the
 // browser understands (`clamp(1.6rem, 6.5vw, 2.5rem)` -> `2.5rem`, `clamp(2rem, 5.2vh, 3.8rem)` ->
-// `5.2vh`, which still follows the viewport). The reference is a 1920x1080 TV at interface scale 1:
-//   1rem = 15px (src/App/styles.less sets the root font-size to 15px up to 2200px wide; the
-//   interface scale moves the thresholds of that media query and zooms the page, so at other scales
-//   the rem, and with it which argument wins, differs: F2.6 must reevaluate), 1vw = 19.2px,
-//   1vh = 10.8px, --interface-scale = 1
-//   --safe-area-inset-* and env(safe-area-inset-*) = 0 (webos/styles/app.less: a TV has no safe areas)
-//   --dynamic/small/large-viewport-* = the 100vw/100vh of the viewport (the dvw/svh/lvh branches of
-//   :root in src/App/styles.less need units Chromium 53 lacks, so the plain ones stay).
+// `5.2vh`, which still follows the viewport). The reference is the 1920x1080 TV at the default
+// interface scale of the webOS build, the TV scale of src/common/interfaceScale.webos.ts (F2.6):
+//   --interface-scale = TV.scale (the html zoom). The page is TV.width / TV.scale CSS pixels wide.
+//   1rem = TV.rem: src/App/styles.less sets the root font-size by media queries on the width, which the
+//   interface scale multiplies (a 1097px page gets the 14px of `max-width: 1600px`).
+//   1vw = 19.2px, 1vh = 10.8px: viewport units are not zoomed (the html zoom draws them TV.scale larger).
+//   --dynamic/small/large-viewport-* = 100vw/100vh over the zoom (the dvw/svh/lvh branches of :root in
+//   src/App/styles.less need units Chromium 53 lacks, so the plain ones stay).
+//   --safe-area-inset-* = the overscan margins of webos/styles/app.less (TV.overscan, screen pixels
+//   over the zoom); env(safe-area-inset-*) = 0 (Chromium 53 has no env(), it becomes its fallback).
+// A user setting other than 100% zooms the page further; the choices made here stay (they only guard
+// what the TV layout looks like). webos/tests/styles/tv-scale.test.js keeps TV equal to the scale of
+// interfaceScale.webos.ts and to the margins of app.less.
 // The same reference is used inside @media (max-width/max-height): the interface scale multiplies the
 // px of the media queries, so a "small screen" rule can match on a TV.
 // Arguments the reference cannot size (a % of the container, a custom property set from JS such as
@@ -27,14 +32,16 @@
 // the 30rem of the logo cap), while L is only a cap. It is a compromise per screen: where the column is
 // wide and sized by its content (MetaDetails) the cap matters, and webos/styles/app.less gives it
 // back for the logo there.
-// Consequence: max(1rem, var(--safe-area-inset-*)) is frozen at 1rem. An overscan margin set through
-// the --safe-area-inset-* variables must not rely on those paddings.
+// Consequence: max(1rem, var(--safe-area-inset-*)) keeps the variable when the overscan margin is the
+// larger one at TV.scale, and the 1rem when it is not.
 // Also in what is emitted: static calc() arithmetic is folded (`calc(3rem * 7)` -> `21rem`), env()
 // of the safe areas becomes 0rem and the dvw/dvh/svh/lvh units become vw/vh.
 // The webos:check-syntax step (webos/scripts/check-styles.js) fails if any call is left.
 
-const REM = 15;
-const VIEWPORT = { width: 1920, height: 1080 };
+// The TV the build is for (see the top). overscan: margins in screen pixels, as in webos/styles/app.less.
+const TV = { width: 1920, height: 1080, scale: 1.75, rem: 14, overscan: { x: 48, y: 33 } };
+const REM = TV.rem;
+const VIEWPORT = { width: TV.width, height: TV.height };
 
 // Units a length argument may use, in px (viewport units depend on VIEWPORT); `num` is a plain number.
 const UNIT_PX = {
@@ -54,18 +61,18 @@ const UNIT_PX = {
 
 // Custom properties of src/App/styles.less / webos/styles/app.less, as unit coefficients.
 const KNOWN_VARS = {
-    '--interface-scale': { num: 1 },
+    '--interface-scale': { num: TV.scale },
     '--viewport-height-diff': { px: 0 },
-    '--dynamic-viewport-width': { vw: 100 },
-    '--dynamic-viewport-height': { vh: 100 },
-    '--large-viewport-width': { vw: 100 },
-    '--large-viewport-height': { vh: 100 },
-    '--small-viewport-width': { vw: 100 },
-    '--small-viewport-height': { vh: 100 },
-    '--safe-area-inset-top': { rem: 0 },
-    '--safe-area-inset-right': { rem: 0 },
-    '--safe-area-inset-bottom': { rem: 0 },
-    '--safe-area-inset-left': { rem: 0 },
+    '--dynamic-viewport-width': { vw: 100 / TV.scale },
+    '--dynamic-viewport-height': { vh: 100 / TV.scale },
+    '--large-viewport-width': { vw: 100 / TV.scale },
+    '--large-viewport-height': { vh: 100 / TV.scale },
+    '--small-viewport-width': { vw: 100 / TV.scale },
+    '--small-viewport-height': { vh: 100 / TV.scale },
+    '--safe-area-inset-top': { px: TV.overscan.y / TV.scale },
+    '--safe-area-inset-right': { px: TV.overscan.x / TV.scale },
+    '--safe-area-inset-bottom': { px: TV.overscan.y / TV.scale },
+    '--safe-area-inset-left': { px: TV.overscan.x / TV.scale },
 };
 
 const CALL = /(?<![\w-])(min|max|clamp)\(/i;
@@ -355,3 +362,4 @@ plugin.resolveValue = resolveValue;
 plugin.CALL = CALL;
 
 module.exports = plugin;
+module.exports.TV = TV;

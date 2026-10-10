@@ -1,5 +1,6 @@
 // webOS TV 4.x build only (resolved instead of interfaceScale.ts by webos/webpack/app.js).
-// Same as interfaceScale.ts but for the same-origin check of the style sheets;
+// Same as interfaceScale.ts but for the same-origin check of the style sheets and, from F2.6, the TV
+// scale and the element rects in screen pixels (the `webOS:` blocks);
 // webos/tests/styles/interfaceScale.test.js fails when the two drift apart.
 
 // Copyright (C) 2017-2026 Smart code 203358507
@@ -8,6 +9,34 @@ import { INTERFACE_SCALES } from './CONSTANTS';
 
 const mediaQueries = new Map<CSSMediaRule, string>();
 let cssScale = 1;
+
+// webOS: the TV scale (F2.6). The interface scale setting multiplies it, so the default 100% is sized
+// for a 55" screen seen from 3 m: 1rem (14px at this zoom) is drawn 24.5px tall on the 1920x1080 page,
+// the minimum of LG's TV UI guideline (18pt), and the layout gets the 1097px wide viewport the app is
+// built for. webos/webpack/postcss-math-functions.js resolves min()/max() for this scale
+// (webos/tests/styles/tv-scale.test.js keeps the two equal).
+const TV_SCALE = 1.75;
+
+// webOS: Chromium before 128 (every webOS TV) gives getBoundingClientRect() in the unzoomed CSS pixels
+// of the element, while pointer coordinates, innerWidth and elementFromPoint() are in screen pixels.
+// The app (getInterfaceRect below, Slider, SeekBar) and spatial-navigation-polyfill (hitTest) are
+// written for the standardized zoom of Chromium 128+, where the rects are in screen pixels too. While
+// the zoom is not 1 on such an engine, rects are scaled to screen pixels (not getClientRects(): unused).
+const nativeGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+let rectScale = 1;
+
+function getScreenRect(this: Element) {
+    const { left, top, width, height } = nativeGetBoundingClientRect.call(this);
+    return new DOMRect(left * rectScale, top * rectScale, width * rectScale, height * rectScale);
+}
+
+const setRectScale = (scale: number) => {
+    // html is as wide as the screen: 100vw over the zoom, drawn zoomed (src/App/styles.less).
+    const { width } = nativeGetBoundingClientRect.call(document.documentElement);
+    const unzoomed = Math.abs(width * scale - window.innerWidth) < Math.abs(width - window.innerWidth);
+    rectScale = unzoomed ? scale : 1;
+    Element.prototype.getBoundingClientRect = rectScale === 1 ? nativeGetBoundingClientRect : getScreenRect;
+};
 
 const normalizeInterfaceScale = (value: number) => (
     INTERFACE_SCALES.includes(value) ? value : 100
@@ -21,7 +50,9 @@ const getInterfaceRect = (element: Element) => {
     return new DOMRect(x / cssScale, y / cssScale, width / cssScale, height / cssScale);
 };
 
-const setInterfaceScale = (scale: number) => {
+const setInterfaceScale = (setting: number) => {
+    // webOS: the TV scale.
+    const scale = setting * TV_SCALE;
     if (scale === cssScale) return;
 
     const collectMediaQueries = (rules: CSSRuleList) => {
@@ -52,6 +83,8 @@ const setInterfaceScale = (scale: number) => {
 
     cssScale = scale;
     document.documentElement.style.setProperty('--interface-scale', String(scale));
+    // webOS: rects in screen pixels.
+    setRectScale(scale);
     window.dispatchEvent(new Event('resize'));
 };
 

@@ -30,18 +30,22 @@ describe('webos/webpack/postcss-math-functions', () => {
             expect(resolveValue(input)).toBe(expected);
         });
 
-        test('keeps the winner viewport-relative when it is one (1920x1080, rem 15px: 5.2vh is 56px, 3.8rem is 57px)', () => {
-            expect(resolveValue('clamp(2rem, 5.2vh, 3.8rem)')).toBe('5.2vh');
+        test('keeps the winner viewport-relative when it is one (TV at zoom 1.75, rem 14px: 4.8vh is 52px, 3.8rem is 53px)', () => {
+            expect(resolveValue('clamp(2rem, 4.8vh, 3.8rem)')).toBe('4.8vh');
+            expect(resolveValue('clamp(2rem, 5.2vh, 3.8rem)')).toBe('3.8rem');
             expect(resolveValue('max(0.8rem, min(2.2vh, 1.75rem))')).toBe('2.2vh');
         });
 
-        test('uses the 15px root font-size of a 1920px page', () => {
+        test('uses the 14px root font-size of the 1097px page of a 1920px TV at the TV scale (F2.6)', () => {
             expect(resolveValue('max(6rem, min(20vh, 14rem))')).toBe('14rem');
             expect(resolveValue('max(1.5rem, min(5vw, 6rem))')).toBe('6rem');
+            expect(resolveValue('max(1rem, 14.5px)')).toBe('14.5px');
+            expect(resolveValue('calc(100vw - max(70rem, var(--dynamic-viewport-width)))')).toBe('calc(100vw - var(--dynamic-viewport-width))');
         });
 
         test('ties go to the first argument', () => {
-            expect(resolveValue('max(15px, 1rem)')).toBe('15px');
+            expect(resolveValue('max(14px, 1rem)')).toBe('14px');
+            expect(resolveValue('min(1rem, 14px)')).toBe('1rem');
         });
 
         test('plain numbers are compared with each other, and absolute units as px', () => {
@@ -56,12 +60,14 @@ describe('webos/webpack/postcss-math-functions', () => {
         });
     });
 
-    describe('safe areas are zero on a TV', () => {
+    // webos/styles/app.less: 48px left and right, 33px top and bottom on the screen, over the zoom
+    // (27.4px and 18.9px at 1.75); env() has no value on Chromium 53.
+    describe('safe areas are the overscan margins of the TV (F2.6)', () => {
         test.each([
-            ['max(1rem, var(--safe-area-inset-bottom))', '1rem'],
-            ['max(0.5rem, var(--safe-area-inset-top)) max(0.5rem, var(--safe-area-inset-left))', '0.5rem 0.5rem'],
-            ['max(0rem, calc(1rem - var(--safe-area-inset-left)))', 'calc(1rem - var(--safe-area-inset-left))'],
-            ['calc(100% - max(0.75rem, var(--safe-area-inset-top)))', 'calc(100% - 0.75rem)'],
+            ['max(1rem, var(--safe-area-inset-bottom))', 'var(--safe-area-inset-bottom)'],
+            ['max(0.5rem, var(--safe-area-inset-top)) max(0.5rem, var(--safe-area-inset-left))', 'var(--safe-area-inset-top) var(--safe-area-inset-left)'],
+            ['max(0rem, calc(1rem - var(--safe-area-inset-left)))', '0rem'],
+            ['calc(100% - max(0.75rem, var(--safe-area-inset-top)))', 'calc(100% - var(--safe-area-inset-top))'],
             ['0 clamp(1.5rem, 5vw, 6rem) max(2rem, var(--safe-area-inset-bottom))', '0 6rem 2rem'],
             ['min(calc(env(safe-area-inset-bottom, 0rem) / var(--interface-scale)), max(1rem, calc(var(--viewport-height-diff) - var(--safe-area-inset-top))))', 'calc(0rem / var(--interface-scale))'],
         ])('%s -> %s', (input, expected) => {

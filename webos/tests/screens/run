@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# Captures the main screens of the app (scenes.sh) in the page behind $CDP_PORT, the webOS app in
+# the emulator or the desktop build in Chrome (emulator.sh and desktop.sh call it). Per scene: the
+# route is opened, the action of the scene done (menu, dialog), one element focused with the
+# keyboard modality, then a screenshot and the probe of page.js (viewport, interface scale, safe
+# areas, box and focus styles of the focused element, JS errors).
+#   CDP_PORT=<port> webos/tests/screens/run <output folder> [scene...]
+# Environment: SCALE=<interface scale setting, e.g. 100> sets it through the core before the scenes;
+# STREAM_URL=<http url> adds the Player at the end (one media scenario per emulator boot);
+# CDP_TARGET=<part of the page url> picks the page; WAIT=<s> caps the wait for each scene (30).
+# Output: <folder>/<scene>.png, <folder>/<scene>.json and <folder>/run.log.
+set -uo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$HERE/../../.." && pwd)"
+OUT="$(realpath -m "${1:?usage: run <output folder> [scene...]}")"
+shift
+ONLY=" $* "
+WAIT="${WAIT:-30}"
+mkdir -p "$OUT"
+. "$HERE/scenes.sh"
+
+CDP=(node "$ROOT/webos/tools/cdp.mjs" --port "${CDP_PORT:?CDP_PORT}")
+[[ -n "${CDP_TARGET:-}" ]] && CDP+=(--target "$CDP_TARGET")
+cdp_eval() { "${CDP[@]}" eval "$1" 2>/dev/null | tail -1; }
+log() { echo "$*" | tee -a "$OUT/run.log"; }
+wait_for() { # <selectors> [seconds]: true when one matches
+    local i
+    for i in $(seq 1 "${2:-$WAIT}"); do
+        [[ "$(cdp_eval "window.__screens && window.__screens.wait('$1')")" == true ]] && return 0
+        sleep 1
+    done
+    return 1
+}
+go() { # <hash>: opens the route, through another one when it is already open (closes overlays)
+    if [[ "$(cdp_eval 'location.hash')" == "$1" ]]; then
+        cdp_eval "(location.hash = '#/settings', 1)" > /dev/null
+        sleep 2
+    fi
+    cdp_eval "(location.hash = '$1', 1)" > /dev/null
+}
+shoot() { # <name> <focus selectors> [JS run in the same call, before the focus]
+    local focused
+    focused="$(cdp_eval "(function() { ${3:-} return window.__screens.focus('$2'); })()")"
+    sleep 1
+    "${CDP[@]}" screenshot "$OUT/$1.png" > /dev/null 2>&1
+    cdp_eval 'window.__screens.probe()' > "$OUT/$1.json"
+    log "$1: focus=${focused:-none} $(head -c 300 "$OUT/$1.json")"
+}
+
+: > "$OUT/run.log"
+# The app is up when the core answers and the Board has catalogs.
+for _ in $(seq 1 120); do
+    n="$(cdp_eval 'window.core ? document.querySelectorAll("[class*=meta-item-container]").length : 0')"
+    [[ "${n:-0}" =~ ^[0-9]+$ && "$n" -gt 0 ]] && break
+    sleep 2
+done
+log "board: ${n:-0} items"
+cdp_eval "$(cat "$HERE/page.js")" > /dev/null
+if [[ -n "${SCALE:-}" ]]; then
+    cdp_eval "window.core.getState('ctx').then(function(ctx) { return window.core.dispatch({ action: 'Ctx', args: { action: 'UpdateSettings', args: Object.assign({}, ctx.profile.settings, { interfaceScale: $SCALE }) } }); }).then(function() { return 'ok'; })" > /dev/null
+    sleep 3
+    log "interface scale setting: $SCALE"
+fi
+
+for entry in "${SCENES[@]}"; do
+    IFS='|' read -r name hash action focus <<< "$entry"
+    [[ "$ONLY" == '  ' || "$ONLY" == *" $name "* ]] || continue
+    go "$hash"
+    wait_for "${focus//\'/\\\'}" > /dev/null || [[ -n "$action" ]] || log "$name: nothing to focus after ${WAIT}s"
+    sleep 2
+    case "$action" in
+        click:*) cdp_eval "window.__screens.click('${action#click:}')" > /dev/null; sleep 2 ;;
+        key:*) "${CDP[@]}" key "${action#key:}" > /dev/null 2>&1; sleep 2 ;;
+    esac
+    shoot "$name" "$focus"
+    # Menus and dialogs are closed by Back (the webOS back dispatcher closes overlays first).
+    [[ -n "$action" ]] && { "${CDP[@]}" key BACK > /dev/null 2>&1; sleep 1; }
+done
+
+if [[ -n "${STREAM_URL:-}" && ( "$ONLY" == '  ' || "$ONLY" == *' player '* ) ]]; then
+    encoded="$(cdp_eval "window.core.encodeStream({ name: 'screens', description: 'screens', url: '$STREAM_URL' })")"
+    cdp_eval "(location.hash = '#/player/' + encodeURIComponent('$encoded'), 1)" > /dev/null
+    for _ in $(seq 1 60); do
+        [[ "$(cdp_eval '(function() { var v = document.querySelector("video"); return !!v && v.currentTime > 1; })()')" == true ]] && break
+        sleep 1
+    done
+    # The control bar shows on pointer movement and hides a few seconds later: moved in the same call.
+    shoot player "$PLAYER_FOCUS" 'var c = document.querySelector("[class*=player-container]"); if (c) c.dispatchEvent(new MouseEvent("mousemove", { bubbles: true, clientX: 960, clientY: 900 }));'
+fi
+cdp_eval 'JSON.stringify(window.__screens ? window.__screens.errors : null)' > "$OUT/errors.json"
+log "errors: $(cat "$OUT/errors.json")"

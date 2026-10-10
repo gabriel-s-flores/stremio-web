@@ -93,3 +93,11 @@
 @media only screen and (max-width: @minimum) {
     .webos-columns(3);
 }
+
+// The TV scale (F2.6, src/common/interfaceScale.webos.ts) gives the page 1097px: the catalog beside
+// the preview is ~560px wide, and with the 4 columns above the titles broke mid-word ("Unabomb-er").
+// 3 columns in that range only, where nothing but the default TV zoom puts the page (the other
+// interface scale settings land outside it).
+@media only screen and (min-width: 1001px) and (max-width: @small) {
+    .webos-columns(3);
+}

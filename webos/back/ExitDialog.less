@@ -36,7 +36,9 @@
                 height: 3.5rem;
                 margin: 0 1rem;
                 padding: 0 2rem;
-                border: 2px solid transparent;
+                // The focus ring of the TV (webos/styles/app.less): the dialog keeps every key from the
+                // page, the focus-visible polyfill among them, so its own :focus draws it, as a border.
+                border: var(--focus-outline-size) solid transparent;
                 border-radius: 3.5rem;
                 outline: none;
                 background-color: var(--overlay-color);
@@ -50,7 +52,7 @@
                 }
 
                 &:focus {
-                    border-color: var(--primary-foreground-color);
+                    border-color: var(--webos-focus-color);
                 }
             }
         }
