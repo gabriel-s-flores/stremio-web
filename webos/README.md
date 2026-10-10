@@ -31,5 +31,10 @@ No emulador, dentro de uma reserva do pool:
   AbortController, `queueMicrotask`, `Element#append/prepend/scrollTo`); `index.js` entra no bundle da
   página e `worker.js` no do worker, via `webos/webpack/polyfills.js`. A sonda do emulador está em
   `webos/tests/polyfills/emulator/` (`run.sh`, dentro do `emu-run`).
+- `webos/persistence/mirror.js`: espelho do localStorage num IndexedDB (`stremio-webos-persist:<id>`),
+  restaurado antes do init do core quando o localStorage some (F3.5, recomendação do spike F0.8). Entra
+  pelo `src/core/createTransport.webos.js`; o motivo do boot e o último lote ficam em
+  `window.__stremioPersist.status()` (`inspect()`, `wipe()` para a tela de diagnóstico; `?resetMirror`
+  ou `{"resetMirror": true}` nos parâmetros de lançamento apagam a cópia).
 - `webos/app/`: `appinfo.json` (a versão vem do `package.json`), ícones e o `index.html` do webOS.
 - `webos/vendor/webOSTVjs-1.2.13/`: webOSTV.js da LG, sem alterações (origem e sha256 no README).
