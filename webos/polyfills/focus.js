@@ -3,8 +3,7 @@
 // polyfills set (attributes, not classes: CSS modules would hash a class name):
 //   :focus-visible  ->  [data-focus-visible-added]   (WICG focus-visible)
 //   :focus-within   ->  [focus-within]               (postcss-focus-within/browser)
-// Prefixed to the `main` entry by webos/webpack/postcss.js for now; once F1.3 is merged, this
-// import should move to webos/polyfills/index.js.
+// Imported by webos/polyfills/index.js.
 
 import 'focus-visible';
 import focusWithin from 'postcss-focus-within/browser';
