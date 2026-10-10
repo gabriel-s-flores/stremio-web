@@ -5,7 +5,8 @@
 #   webos/tools/emu-run -- webos/spikes/persistence/scenario.sh <pasta-de-evidências>
 #
 # Cada passo abre a sonda, espera ela terminar e salva <passo>.json (+ .png). O JSON diz, por
-# armazenamento, se achou o dado gravado antes e qual versão o gravou.
+# armazenamento, se o dado SOBREVIVEU (gravado antes de a sessão começar) e qual versão o gravou.
+# Os cortes de energia ficam no power-cut.sh.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 TOOLS="$(cd "$HERE/../../tools" && pwd)"
@@ -51,7 +52,7 @@ snap() {
     sleep 1
     cdp "$id" eval 'JSON.stringify(window.__persist)' > "$EVID/$step.json"
     cdp "$id" screenshot "$EVID/$step.png" >/dev/null || true
-    log "  -> $(node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1]));const f=(r.session&&r.session.firstLoad&&r.session.firstLoad.found)||{};console.log(r.version,"loads="+(r.session&&r.session.loadCount),Object.keys(f).map(k=>k+":"+(f[k]===null?"semAPI":(f[k]?"SIM("+f[k]+")":"nao"))).join(" "))' "$EVID/$step.json")"
+    log "  -> $(node "$HERE/summary.cjs" "$EVID/$step.json")"
 }
 
 uptime_s() { "${SSH[@]}" 'cut -d. -f1 /proc/uptime' 2>/dev/null || true; }
@@ -113,28 +114,4 @@ close "$APP"
 remove "$APP"
 install "$V2"
 snap 08-v2-apos-desinstalar-reinstalar
-close "$APP"
-remove "$APP"
-install "$V1"
-snap 09-v1-apos-desinstalar-reinstalar-v1   # grava dados novos (v1) para o teste de queda de energia
-
-log "=== G: queda de energia (QMP quit = corta a VM sem desligar o guest) 1 s depois de gravar ==="
-sleep 1
-$EMU stop >&2
-$EMU start headless --smp 2 >&2
-$EMU wait 240 >&2
-sleep 15
-snap 10-apos-queda-1s
-
-log "=== H: queda de energia 20 s depois de gravar ==="
-close "$APP"
-remove "$APP"
-install "$V1"
-snap 11-v1-regravar-para-queda-20s
-sleep 20
-$EMU stop >&2
-$EMU start headless --smp 2 >&2
-$EMU wait 240 >&2
-sleep 15
-snap 12-apos-queda-20s
-log "fim"
+log fim
