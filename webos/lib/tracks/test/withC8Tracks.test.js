@@ -36,6 +36,7 @@ const createElement = (audioTracks) => {
     element.removeEventListener = (name, handler) => {
         element.handlers[name] = (element.handlers[name] || []).filter((entry) => entry !== handler);
     };
+    element.fire = (name) => (element.handlers[name] || []).forEach((handler) => handler());
     return element;
 };
 
@@ -93,7 +94,9 @@ const setup = (options) => {
     });
     const last = (propName) => events.filter((event) => event[0].startsWith('prop') && event[1] === propName).slice(-1)[0][2];
     const load = () => video.dispatch({ type: 'command', commandName: 'load', commandArgs: { stream: { url: URL } } });
-    return { Inner, inner: Inner.instance, probe, probeCache, trackList, element, video, events, last, load };
+    const play = () => element.fire('playing');
+    const enabled = () => Array.from({ length: trackList.length }, (_, i) => trackList[i].enabled);
+    return { Inner, inner: Inner.instance, probe, probeCache, trackList, element, video, events, last, load, play, enabled };
 };
 
 describe('withC8Tracks', () => {
@@ -117,10 +120,12 @@ describe('withC8Tracks', () => {
         expect(t.last('selectedAudioTrackId')).toBe('EMBEDDED_0');
     });
 
-    it('probe done: the menu gets the file languages and codecs, and the subtitles', async () => {
+    it('probe done: the menu gets the file languages and codecs; the subtitles once the video plays', async () => {
         t.load();
         t.probe.resolve(kit);
         await flush();
+        expect(t.last('subtitlesTracks')).toEqual([]);
+        t.play();
         expect(t.last('audioTracks').map((track) => [track.id, track.lang, track.label, track.mode])).toEqual([
             ['EMBEDDED_0', 'eng', 'English AAC · AAC 1.0', 'showing'],
             ['EMBEDDED_1', 'por', 'Portugues AAC · AAC 1.0', 'disabled'],
@@ -133,6 +138,7 @@ describe('withC8Tracks', () => {
         t.load();
         t.probe.resolve(kit);
         await flush();
+        t.play();
         t.video.dispatch({ type: 'setProp', propName: 'selectedAudioTrackId', propValue: 'EMBEDDED_1' });
         expect([0, 1, 2].map((i) => t.trackList[i].enabled)).toEqual([false, true, false]);
         expect(t.inner.actions.filter((action) => action.type === 'setProp')).toEqual([]);
@@ -145,12 +151,13 @@ describe('withC8Tracks', () => {
         t.video.dispatch({ type: 'setProp', propName: 'selectedAudioTrackId', propValue: 'EMBEDDED_1' });
         expect(t.trackList[1].enabled).toBe(false);
         t.load();
+        t.play();
         t.video.dispatch({ type: 'setProp', propName: 'selectedAudioTrackId', propValue: 'EMBEDDED_7' });
         t.video.dispatch({ type: 'setProp', propName: 'selectedAudioTrackId', propValue: 'EXCLUSIVE_1' });
         expect([0, 1, 2].map((i) => t.trackList[i].enabled)).toEqual([true, false, false]);
     });
 
-    it('switch before the element lists its tracks: kept and applied when they show up', async () => {
+    it('switch before the video plays: shown as selected, applied on the first playing (the pipeline is left alone while it starts)', async () => {
         t = setup({ languages: [] });
         t.load();
         t.probe.resolve(kit);
@@ -159,8 +166,35 @@ describe('withC8Tracks', () => {
         expect(t.last('selectedAudioTrackId')).toBe('EMBEDDED_2');
         t.trackList.set(['en', 'pt', 'en'], 0);
         t.trackList.fire('addtrack');
-        expect([0, 1, 2].map((i) => t.trackList[i].enabled)).toEqual([false, false, true]);
+        t.element.fire('loadedmetadata');
+        expect(t.enabled()).toEqual([true, false, false]);
         expect(t.last('selectedAudioTrackId')).toBe('EMBEDDED_2');
+        t.play();
+        expect(t.enabled()).toEqual([false, false, true]);
+        expect(t.last('selectedAudioTrackId')).toBe('EMBEDDED_2');
+        expect(t.last('audioTracks').map((track) => track.mode)).toEqual(['disabled', 'disabled', 'showing']);
+    });
+
+    it('switch after the video played but before the element lists its tracks: applied when they show up', async () => {
+        t = setup({ languages: [] });
+        t.load();
+        t.play();
+        t.probe.resolve(kit);
+        await flush();
+        t.video.dispatch({ type: 'setProp', propName: 'selectedAudioTrackId', propValue: 'EMBEDDED_1' });
+        t.trackList.set(['en', 'pt', 'en'], 0);
+        t.trackList.fire('addtrack');
+        expect(t.enabled()).toEqual([false, true, false]);
+    });
+
+    it('a new load waits for its own first playing', async () => {
+        t.load();
+        t.play();
+        t.load();
+        t.video.dispatch({ type: 'setProp', propName: 'selectedAudioTrackId', propValue: 'EMBEDDED_1' });
+        expect(t.enabled()).toEqual([true, false, false]);
+        t.play();
+        expect(t.enabled()).toEqual([false, true, false]);
     });
 
     it('follows changes made on the element itself', async () => {
@@ -229,6 +263,7 @@ describe('withC8Tracks', () => {
         expect(t.last('subtitlesTracks')).toEqual([]);
         second.resolve(kit);
         await flush();
+        t.play();
         expect(t.last('subtitlesTracks').length).toBe(2);
     });
 
@@ -238,6 +273,7 @@ describe('withC8Tracks', () => {
         expect(commands(t.inner)).toEqual(['load', 'destroy']);
         expect(t.trackList.handlers.change).toEqual([]);
         expect(t.element.handlers.loadedmetadata).toEqual([]);
+        expect(t.element.handlers.playing).toEqual([]);
         expect(() => t.video.dispatch({ type: 'command', commandName: 'unload' })).toThrow('Video is destroyed');
     });
 });

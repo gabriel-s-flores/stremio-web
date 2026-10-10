@@ -2,6 +2,9 @@
 // header probe and the <video>'s audioTracks instead of the streaming server's /tracks (there is no
 // server, P3), and the audio switch enables the chosen track and disables the others on the
 // element. Everything else goes to WebOsVideo unchanged. Wired in by webos/webpack/player.js.
+// Nothing touches the pipeline before the video plays: an audio switch asked earlier waits for the
+// first `playing`, and the embedded subtitles are listed only then (choosing one makes WebOsVideo
+// call Luna). The audio list itself shows up as soon as the probe or the element has it.
 
 const {
     trackId,
@@ -47,7 +50,9 @@ const withC8Tracks = (Video, deps) => {
         let loadId = 0;
         let probe = null;
         let rules = null;
-        // A switch asked before the element listed its tracks; applied when they show up.
+        // The video played since the load (first `playing`).
+        let started = false;
+        // A switch asked before the video played or before the element listed its tracks.
         let pendingIndex = null;
 
         const emit = function(eventName) {
@@ -72,7 +77,7 @@ const withC8Tracks = (Video, deps) => {
                 values.subtitlesTracks = [];
             } else {
                 let element = readElementTracks(videoElement);
-                if (pendingIndex !== null && enableOnly(videoElement, pendingIndex)) {
+                if (pendingIndex !== null && started && enableOnly(videoElement, pendingIndex)) {
                     pendingIndex = null;
                     element = readElementTracks(videoElement);
                 }
@@ -81,7 +86,7 @@ const withC8Tracks = (Video, deps) => {
                 values.audioTracks = buildAudioTracks({ probe, rules, elementTracks: element, selectedIndex });
                 values.selectedAudioTrackId = values.audioTracks.some((track) => track.index === selectedIndex) ?
                     trackId(selectedIndex) : null;
-                values.subtitlesTracks = buildSubtitleTracks({ probe, rules });
+                values.subtitlesTracks = started ? buildSubtitleTracks({ probe, rules }) : [];
             }
             OWN_PROPS.forEach(publish);
         };
@@ -93,7 +98,15 @@ const withC8Tracks = (Video, deps) => {
         if (elementTrackList && typeof elementTrackList.addEventListener === 'function') {
             ELEMENT_TRACK_EVENTS.forEach((eventName) => elementTrackList.addEventListener(eventName, onElementTracks));
         }
-        if (videoElement) videoElement.addEventListener('loadedmetadata', onElementTracks);
+        const onPlaying = () => {
+            if (destroyed || started || stream === null) return;
+            started = true;
+            refresh();
+        };
+        if (videoElement) {
+            videoElement.addEventListener('loadedmetadata', onElementTracks);
+            videoElement.addEventListener('playing', onPlaying);
+        }
 
         const startProbe = (url, id) => {
             const startedAt = Date.now();
@@ -116,7 +129,7 @@ const withC8Tracks = (Video, deps) => {
         const selectAudioTrack = (id) => {
             const index = trackIndex(id);
             if (stream === null || index === null || !values.audioTracks.some((track) => track.index === index)) return;
-            pendingIndex = enableOnly(videoElement, index) ? null : index;
+            pendingIndex = started && enableOnly(videoElement, index) ? null : index;
             refresh();
             const selected = values.audioTracks.filter((track) => track.index === index)[0];
             if (log) log.info('[webos] tracks: audio ' + id + (pendingIndex !== null ? ' (pending)' : '') + ', enabled: ' + JSON.stringify(readElementTracks(videoElement).map((track) => track.enabled)));
@@ -128,6 +141,7 @@ const withC8Tracks = (Video, deps) => {
             stream = null;
             probe = null;
             rules = null;
+            started = false;
             pendingIndex = null;
         };
 
@@ -173,7 +187,10 @@ const withC8Tracks = (Video, deps) => {
                 if (elementTrackList && typeof elementTrackList.removeEventListener === 'function') {
                     ELEMENT_TRACK_EVENTS.forEach((eventName) => elementTrackList.removeEventListener(eventName, onElementTracks));
                 }
-                if (videoElement) videoElement.removeEventListener('loadedmetadata', onElementTracks);
+                if (videoElement) {
+                    videoElement.removeEventListener('loadedmetadata', onElementTracks);
+                    videoElement.removeEventListener('playing', onPlaying);
+                }
                 video.dispatch(action);
                 return;
             }
