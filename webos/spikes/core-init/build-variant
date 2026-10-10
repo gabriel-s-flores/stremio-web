@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# Monta uma variante do core para o spike de init (F0.11) a partir de um build do webos/core/build.
+#
+#   build-variant NOME --from DIR [--bindgen WASM] [--wasm-opt "-Oz"] [--wasm2js-opt "-O"]
+#                 [--minify none|default|ws] [--wrap factory|eager]
+#
+# --from: saída de um webos/core/build (a pasta com stremio_core_web.js, .wasm e .wasm2js.js; por
+#         exemplo webos/vendor/stremio-core-web). A glue vem sempre dela: cada build do cargo tem a
+#         sua (nomes dos closures mudam).
+# --bindgen: o .wasm do wasm-bindgen antes do wasm-opt (<work>/src/stremio-core-web/wasm_build/).
+#         Com ele, o .wasm sai de novo do wasm-opt com --wasm-opt e o wasm2js é refeito a partir
+#         desse .wasm com --wasm2js-opt. Sem ele, o .wasm e o .wasm2js.js de --from são usados.
+# --minify e --wrap passam para o webos/core/wasm2js-finish.js (o mesmo do webos/core/build):
+#         --minify default = as opções padrão do terser, o mesmo que o ares-package faz sem
+#         --no-minify (32,6 → 9,4 MB, byte a byte igual); ws = só espaços e comentários; none.
+#         --wrap: o embrulho é sempre o da F0.6 (a fábrica define o global stremio_core_web_wasm2js
+#         que o webos/core/loader.js espera); eager põe a fábrica e asmFunc entre parênteses depois
+#         da minificação (heurística de "função chamada logo" do V8). O código não muda.
+# Saída: build/variants/NOME/ com stremio_core_web.js, stremio_core_web_bg.wasm,
+# stremio_core_web_bg.wasm2js.js e variant.json (origem, opções, tamanhos, sha256). O .wasm passa
+# pelo gate webos/core/check-wasm.
+#
+# Exemplo (core com opt-level "z", sem mexer no vendor):
+#   CARGO_PROFILE_RELEASE_OPT_LEVEL=z webos/tools/build-run -- webos/core/build --out /tmp/z/out --work /tmp/z/work
+#   webos/spikes/core-init/build-variant z --from /tmp/z/out \
+#       --bindgen /tmp/z/work/src/stremio-core-web/wasm_build/stremio_core_web_bg.wasm --wasm-opt -Oz --minify default --wrap eager
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+REPO="$(cd "$HERE/../../.." && pwd)"
+SDK="${WEBOS_SDK:-$HOME/webos-tv-sdk}"
+BIN="$SDK/tools/binaryen-version_133/bin"
+W2JS=stremio_core_web_bg.wasm2js.js
+W2JS_GLOBAL=stremio_core_web_wasm2js
+
+NAME="${1:-}"
+[[ -n "$NAME" && "$NAME" != -* ]] || { sed -n '2,27p' "$0" >&2; exit 2; }
+shift
+FROM="" BINDGEN="" WASM_OPT="-O" WASM2JS_OPT="-O" WRAP=factory MINIFY=none
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --from) FROM="$(realpath "$2")"; shift 2 ;;
+        --bindgen) BINDGEN="$(realpath "$2")"; shift 2 ;;
+        --wasm-opt) WASM_OPT="$2"; shift 2 ;;
+        --wasm2js-opt) WASM2JS_OPT="$2"; shift 2 ;;
+        --minify) MINIFY="$2"; shift 2 ;;
+        --wrap) WRAP="$2"; shift 2 ;;
+        *) echo "opção desconhecida: $1" >&2; exit 2 ;;
+    esac
+done
+[[ -f "$FROM/stremio_core_web.js" ]] || { echo "erro: --from sem stremio_core_web.js: $FROM" >&2; exit 2; }
+[[ "$WRAP" == factory || "$WRAP" == eager ]] || { echo "erro: --wrap factory|eager" >&2; exit 2; }
+[[ "$MINIFY" =~ ^(none|default|ws)$ ]] || { echo "erro: --minify none|default|ws" >&2; exit 2; }
+OUT="$HERE/build/variants/$NAME"
+rm -rf "$OUT"
+mkdir -p "$OUT"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+cp "$FROM/stremio_core_web.js" "$OUT/"
+if [[ -n "$BINDGEN" ]]; then
+    # shellcheck disable=SC2086
+    "$BIN/wasm-opt" $WASM_OPT --signext-lowering "$BINDGEN" -o "$OUT/stremio_core_web_bg.wasm"
+    # shellcheck disable=SC2086
+    "$BIN/wasm2js" "$OUT/stremio_core_web_bg.wasm" $WASM2JS_OPT -o "$TMP/w2js.mjs"
+    # O mesmo reembalo do webos/core/build da F0.6: módulo ES → script clássico com a fábrica.
+    node - "$TMP/w2js.mjs" "$W2JS_GLOBAL" "$TMP/w2js.js" <<'EOF'
+const fs = require('fs');
+const [from, name, out] = process.argv.slice(2);
+const lines = fs.readFileSync(from, 'utf8').split('\n');
+const head = "import * as $_stremio_core_web_bg_js from './stremio_core_web_bg.js';";
+const tail = lines.indexOf('var retasmFunc = asmFunc({');
+const body = lines.slice(1, tail);
+if (lines[0] !== head || tail < 0 || body.some((l) => /^(import|export) /.test(l))
+    || body.filter((l) => l === 'function asmFunc(imports) {').length !== 1) {
+    console.error('erro: saída do wasm2js em formato inesperado');
+    process.exit(1);
+}
+fs.writeFileSync(out, [
+    '// @stremio/stremio-core-web 0.65.0 (MVP) traduzido pelo wasm2js; variante do spike F0.11.',
+    '// Define a fábrica asmFunc(imports), que devolve os exports do core como um WebAssembly.Instance.',
+    '(function (root, factory) {',
+    "    if (typeof module === 'object' && module.exports) module.exports = factory();",
+    '    else root.' + name + ' = factory();',
+    "})(typeof self !== 'undefined' ? self : this, function () {",
+    body.join('\n'),
+    'return asmFunc;',
+    '});',
+    ''
+].join('\n'));
+EOF
+else
+    cp "$FROM/stremio_core_web_bg.wasm" "$OUT/"
+    cp "$FROM/$W2JS" "$TMP/w2js.js"
+fi
+"$REPO/webos/core/check-wasm" "$OUT/stremio_core_web_bg.wasm" > "$OUT/check-wasm.txt" \
+    || { cat "$OUT/check-wasm.txt" >&2; exit 1; }
+
+# Minificação e marcação eager: o mesmo script do webos/core/build.
+FINISH=(--minify "$MINIFY")
+[[ "$WRAP" == eager ]] || FINISH+=(--no-eager)
+node --max-old-space-size=8000 "$REPO/webos/core/wasm2js-finish.js" "$TMP/w2js.js" "$OUT/$W2JS" "${FINISH[@]}"
+node --check "$OUT/$W2JS"
+
+node - "$OUT" "$NAME" "$FROM" "$BINDGEN" "$WASM_OPT" "$WASM2JS_OPT" "$MINIFY" "$WRAP" <<'EOF'
+const fs = require('fs');
+const crypto = require('crypto');
+const zlib = require('zlib');
+const [out, name, from, bindgen, wasmOpt, wasm2jsOpt, minify, wrap] = process.argv.slice(2);
+const files = {};
+for (const f of ['stremio_core_web.js', 'stremio_core_web_bg.wasm', 'stremio_core_web_bg.wasm2js.js']) {
+    const buf = fs.readFileSync(out + '/' + f);
+    files[f] = { bytes: buf.length, gzip: zlib.gzipSync(buf, { level: 9 }).length,
+                 sha256: crypto.createHash('sha256').update(buf).digest('hex') };
+}
+const variant = { name, from, bindgen: bindgen || null, wasmOpt: bindgen ? wasmOpt : null,
+                  wasm2jsOpt: bindgen ? wasm2jsOpt : null, minify, wrap, files };
+fs.writeFileSync(out + '/variant.json', JSON.stringify(variant, null, 2) + '\n');
+console.log(name + ': ' + Object.entries(files).map(([f, v]) => f + ' ' + v.bytes).join(', '));
+EOF

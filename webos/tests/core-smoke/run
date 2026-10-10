@@ -66,7 +66,10 @@ UPTIME_START="$(uptime)"
 echo "modo: $MODE · carga do host: $UPTIME_START"
 PKG_DIR="$(mktemp -d)"
 trap 'rm -rf "$PKG_DIR"; [[ -n "${MON:-}" ]] && kill "$MON" 2>/dev/null || true' EXIT
-ares-package "$APP_DIR" -o "$PKG_DIR" >/dev/null
+# --no-minify, como o webos/scripts/ares.sh do app: sem ele o ares-package roda o terser em todo .js,
+# e o smoke mediria outro wasm2js (o vendorizado já sai minificado e com a fábrica entre parênteses,
+# que o terser tiraria; veja webos/core/wasm2js-finish.js).
+ares-package --no-minify "$APP_DIR" -o "$PKG_DIR" >/dev/null
 ares-install -d "$EMU_DEVICE" "$PKG_DIR"/*.ipk
 
 "${SSH[@]}" "$SAMPLER" > "$BASE-mem.log" 2>/dev/null &

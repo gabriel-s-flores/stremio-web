@@ -171,6 +171,18 @@ node -e '
 ' "$SRC/stremio-core-web/wasm_build/$W2JS.mjs" "$SRC/stremio-core-web/$W2JS" "$W2JS_GLOBAL"
 node --check "$SRC/stremio-core-web/$W2JS"
 
+step "wasm2js: terser e fábrica eager (webos/core/wasm2js-finish.js)"
+# No V8 5.8 o embrulho acima custa três passadas de análise sobre o arquivo (importScripts, fábrica
+# e asmFunc); com a fábrica e asmFunc entre parênteses, uma só. O terser (opções padrão, o mesmo que
+# o ares-package aplicaria) leva o arquivo de 32,6 MB a 9,4 MB. No perfil c8 do emulador o init do
+# wasm2js cai de ~19 s para ~9 s (spike webos/spikes/core-init, F0.11). Usa o terser e o acorn do
+# node_modules do repo (pnpm install).
+node -e 'require.resolve("terser-webpack-plugin", { paths: [process.argv[1]] }); require.resolve("webpack", { paths: [process.argv[1]] })' "$REPO" \
+    || { echo "erro: falta o node_modules do repo (pnpm install --frozen-lockfile)" >&2; exit 1; }
+mv "$SRC/stremio-core-web/$W2JS" "$SRC/stremio-core-web/wasm_build/$W2JS.wrapped"
+node --max-old-space-size=8000 "$HERE/wasm2js-finish.js" "$SRC/stremio-core-web/wasm_build/$W2JS.wrapped" "$SRC/stremio-core-web/$W2JS"
+node --check "$SRC/stremio-core-web/$W2JS"
+
 step "Babel (devDependencies e .babelrc do upstream)"
 (
     cd "$SRC/stremio-core-web"
@@ -198,6 +210,8 @@ cp "$SRC/stremio-core-web/"{bridge.js,worker.js,stremio_core_web.js,stremio_core
 cp "$SRC/stremio-core-web/package.mvp.json" "$OUT/package.json"
 
 step "SOURCE.md"
+TERSER_VERSION="$(node -p 'require(require.resolve("terser/package.json", { paths: [require("path").dirname(require.resolve("terser-webpack-plugin", { paths: [process.argv[1]] }))] })).version' "$REPO")"
+ACORN_VERSION="$(node -p 'require(require.resolve("acorn/package.json", { paths: [require("path").dirname(require.resolve("webpack", { paths: [process.argv[1]] }))] })).version' "$REPO")"
 BABEL_VERSIONS="$(cd "$SRC/stremio-core-web" && node -p '
     ["@babel/core", "@babel/cli", "@babel/preset-env", "@babel/plugin-transform-runtime",
      "babel-plugin-bundled-import-meta"]
@@ -214,7 +228,7 @@ Gerado por \`webos/core/build\`. Não edite à mão: rode o script de novo.
 - **wasm-bindgen:** $("$BINDGEN" --version), \`--target web --no-typescript\`
 - **Binaryen:** $("$WASM_OPT" --version), \`wasm-opt -O --signext-lowering\`
 - **Babel:** $BABEL_VERSIONS, com o \`.babelrc\` do upstream (como \`scripts/build.sh\`)
-- **wasm2js:** $("$WASM2JS" --version), \`wasm2js -O\` sobre o mesmo \`stremio_core_web_bg.wasm\`; a saída (módulo ES) vira um script clássico que define a fábrica \`asmFunc(imports)\` no global \`$W2JS_GLOBAL\` (\`$W2JS\`). Usado só quando falta o WebAssembly ou a compilação/instanciação do wasm falha (\`webos/core/loader.js\`)
+- **wasm2js:** $("$WASM2JS" --version), \`wasm2js -O\` sobre o mesmo \`stremio_core_web_bg.wasm\`; a saída (módulo ES) vira um script clássico que define a fábrica \`asmFunc(imports)\` no global \`$W2JS_GLOBAL\` (\`$W2JS\`), minificado pelo terser $TERSER_VERSION (opções padrão) e com a fábrica e \`asmFunc\` entre parênteses para o V8 5.8 analisá-las numa passada só (\`webos/core/wasm2js-finish.js\`, acorn $ACORN_VERSION). Usado só quando falta o WebAssembly ou a compilação/instanciação do wasm falha (\`webos/core/loader.js\`)
 - **Glue** (a mesma para WASM e wasm2js):
   1. em \`getStringFromWasm0\`, \`TextDecoder.decode\` recebe \`slice()\` (cópia) em vez de \`subarray()\` (view da memória wasm). No Chromium 53 do webOS, certos usos de uma view do \`memory.buffer\` seguidos de \`memory.grow\` derrubam o processo do app (\`TextDecoder.decode(view)\`, \`crypto.getRandomValues(view)\`, \`new Uint8Array(view)\` depois de escrever na view). O resto da glue só usa padrões validados no emulador (escrita indexada na view inteira, \`subarray().set()\`, \`DataView\`); qualquer outro uso de view da memória precisa de repro no emulador antes. No wasm2js a cópia é inofensiva;
   2. e 3. o \`DataView\` e o \`Uint8Array\` em cache são refeitos quando \`buffer !== wasm.memory.buffer\`. No wasm2js o \`grow\` troca o \`ArrayBuffer\` sem destacar o antigo, e as checagens originais (\`detached\`, \`byteLength === 0\`) não percebem a troca;

@@ -8,7 +8,7 @@ Gerado por `webos/core/build`. Não edite à mão: rode o script de novo.
 - **wasm-bindgen:** wasm-bindgen 0.2.121, `--target web --no-typescript`
 - **Binaryen:** wasm-opt version 133 (version_133), `wasm-opt -O --signext-lowering`
 - **Babel:** @babel/core 7.24.3, @babel/cli 7.24.1, @babel/preset-env 7.24.3, @babel/plugin-transform-runtime 7.24.3, babel-plugin-bundled-import-meta 0.3.2, com o `.babelrc` do upstream (como `scripts/build.sh`)
-- **wasm2js:** wasm2js version 133 (version_133), `wasm2js -O` sobre o mesmo `stremio_core_web_bg.wasm`; a saída (módulo ES) vira um script clássico que define a fábrica `asmFunc(imports)` no global `stremio_core_web_wasm2js` (`stremio_core_web_bg.wasm2js.js`). Usado só quando falta o WebAssembly ou a compilação/instanciação do wasm falha (`webos/core/loader.js`)
+- **wasm2js:** wasm2js version 133 (version_133), `wasm2js -O` sobre o mesmo `stremio_core_web_bg.wasm`; a saída (módulo ES) vira um script clássico que define a fábrica `asmFunc(imports)` no global `stremio_core_web_wasm2js` (`stremio_core_web_bg.wasm2js.js`), minificado pelo terser 5.46.2 (opções padrão) e com a fábrica e `asmFunc` entre parênteses para o V8 5.8 analisá-las numa passada só (`webos/core/wasm2js-finish.js`, acorn 8.16.0). Usado só quando falta o WebAssembly ou a compilação/instanciação do wasm falha (`webos/core/loader.js`)
 - **Glue** (a mesma para WASM e wasm2js):
   1. em `getStringFromWasm0`, `TextDecoder.decode` recebe `slice()` (cópia) em vez de `subarray()` (view da memória wasm). No Chromium 53 do webOS, certos usos de uma view do `memory.buffer` seguidos de `memory.grow` derrubam o processo do app (`TextDecoder.decode(view)`, `crypto.getRandomValues(view)`, `new Uint8Array(view)` depois de escrever na view). O resto da glue só usa padrões validados no emulador (escrita indexada na view inteira, `subarray().set()`, `DataView`); qualquer outro uso de view da memória precisa de repro no emulador antes. No wasm2js a cópia é inofensiva;
   2. e 3. o `DataView` e o `Uint8Array` em cache são refeitos quando `buffer !== wasm.memory.buffer`. No wasm2js o `grow` troca o `ArrayBuffer` sem destacar o antigo, e as checagens originais (`detached`, `byteLength === 0`) não percebem a troca;
@@ -23,5 +23,5 @@ Gerado por `webos/core/build`. Não edite à mão: rode o script de novo.
 | `worker.js` | 5122 | `455af735f709befb35ea2b66ae70059551413d39fab5154b8de94823c288ddcc` |
 | `stremio_core_web.js` | 34361 | `cfc8663d44cf20681480dbff5aa5ed0e352c6d063bbce86d517e19cba772756c` |
 | `stremio_core_web_bg.wasm` | 4913718 | `0607123a2b13b4179cabf719d94980fbb10a0853d4a327d7dfa793e8368ea505` |
-| `stremio_core_web_bg.wasm2js.js` | 32649520 | `d57542c52e090f2910eecb51b7d88e4063a4f604c8599e23f4958d8146bd714e` |
+| `stremio_core_web_bg.wasm2js.js` | 9423199 | `923be7c5ff5499f908c0e1608ec9d2599afe949fcf7e266d71686aac96e5d2ff` |
 | `package.json` | 881 | `9dc4e0e231f1ae701b30e4116e519f9c375ecc07a51a426088b8946431d7d5d8` |

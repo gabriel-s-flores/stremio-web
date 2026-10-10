@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Empacota build/app-NOME em build/ipk-NOME (só se o IPK faltar ou estiver mais velho que o app), para
+# o run não comprimir ~37 MB no host durante as medições. Usa --no-minify, como o webos/scripts/ares.sh
+# do app: sem ele o ares-package roda o terser em todo .js e o wasm2js de 32,6 MB vira 9,4 MB (a
+# minificação é uma variante explícita do spike, build-variant --minify):
+#   webos/spikes/core-init/package NOME...
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+for name in "$@"; do
+    app="$HERE/build/app-$name"
+    ipk_dir="$HERE/build/ipk-$name"
+    [[ -f "$app/worker.js" ]] || { echo "erro: falta o build em $app (webpack)" >&2; exit 2; }
+    ipk="$(ls "$ipk_dir"/*.ipk 2>/dev/null | head -1 || true)"
+    if [[ -n "$ipk" && -z "$(find "$app" -newer "$ipk" -print -quit)" ]]; then continue; fi
+    rm -rf "$ipk_dir"
+    ares-package --no-minify "$app" -o "$ipk_dir" >/dev/null
+    echo "empacotado: $(ls "$ipk_dir"/*.ipk)"
+done

@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Quando o app aparece de fato na tela? A página mede a própria 1ª pintura, mas o WebAppMgr só mostra
+# a janela depois (as capturas do run aos 4 s ainda mostram a home do webOS ou preto). Este script
+# lança o app e tira capturas QMP em sequência (~2–3 por segundo), cada uma com o horário do host
+# desde o ares-launch, e classifica cada quadro pelo brilho médio:
+#   tv     "Welcome to the webOS TV emulator" (a camada de TV ao vivo do emulador, ~5);
+#   home   a home do webOS (cinza, ~73);
+#   preto  a transição de lançamento;
+#   app    o app (fundo #0c0b11 com o splash, ~12; com o Board, ~23).
+# A classificação e a tabela ficam no summarize.py (timeline), que relê os brilhos gravados.
+# Rode dentro do emu-run, com o app da variante já compilado e empacotado (webpack e package):
+#   webos/tools/emu-run --profile c8 -- webos/spikes/core-init/screen-timeline VARIANTE pasta-de-saída \
+#       '{}' '{"webassembly":"hidden"}' '{"nocore":true}' ...
+# Cada conjunto de parâmetros é lançado LAUNCHES vezes (padrão 2: o 1º sem Board no cache, o 2º com).
+# Saída: <pasta>/timeline-<variante>-<data>.jsonl (um lançamento por linha) e as capturas.
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+TOOLS="$(cd "$HERE/../../tools" && pwd)"
+APP_ID="io.github.gabrielsflores.coreinit"
+SECS="${SECS:-16}"
+LAUNCHES="${LAUNCHES:-2}"
+VARIANT="$1"; OUT_DIR="$(realpath -m "$2")"; shift 2
+: "${EMU_DEVICE:?rode dentro do webos/tools/emu-run}"
+mkdir -p "$OUT_DIR"
+STAMP="$(date +%Y%m%d-%H%M%S)"
+OUT="$OUT_DIR/timeline-$VARIANT-${EMU_PROFILE:-semperfil}-$STAMP.jsonl"
+SHOTS="$OUT_DIR/timeline-$VARIANT-$STAMP"
+mkdir -p "$SHOTS"
+"$HERE/package" "$VARIANT"
+ares-install -d "$EMU_DEVICE" "$HERE/build/ipk-$VARIANT"/*.ipk >/dev/null
+CDP=(node "$TOOLS/cdp.mjs" --target "$APP_ID")
+echo "screen-timeline $VARIANT · perfil ${EMU_PROFILE:-nenhum} · $(uptime)"
+n=0
+for params in "$@"; do
+    for launch in $(seq 1 "$LAUNCHES"); do
+        n=$((n + 1))
+        T0=$(date +%s%3N)
+        ares-launch -d "$EMU_DEVICE" "$APP_ID" -p "$params" >/dev/null &
+        LAUNCH_PID=$!
+        : > "$SHOTS/$n.txt"
+        while (( $(date +%s%3N) - T0 < SECS * 1000 )); do
+            t=$(( $(date +%s%3N) - T0 ))
+            "$TOOLS/emulator-qemu.sh" -i "$EMU_INSTANCE" screenshot "$SHOTS/$n-$t.png" >/dev/null 2>&1 \
+                && echo "$t $SHOTS/$n-$t.png" >> "$SHOTS/$n.txt"
+        done
+        wait "$LAUNCH_PID" || true
+        for _ in $(seq 1 60); do
+            "${CDP[@]}" eval 'window.__f011 && window.__f011.done' 2>/dev/null | grep -q true && break
+            sleep 1.5
+        done
+        H0=$(date +%s%3N)
+        page="$("${CDP[@]}" eval 'JSON.stringify(window.__f011)' 2>/dev/null || echo '{}')"
+        guest="$("${CDP[@]}" eval 'Date.now()' 2>/dev/null || echo 0)"
+        H1=$(date +%s%3N)
+        ares-launch -d "$EMU_DEVICE" --close "$APP_ID" >/dev/null 2>&1 || true
+        SPIKE_DIR="$HERE" python3 -I - "$OUT" "$SHOTS/$n.txt" "$params" "$launch" "$T0" "$H0" "$H1" "$guest" "$page" <<'EOF'
+import json, os, sys
+from PIL import Image, ImageStat
+sys.path.insert(0, os.environ['SPIKE_DIR'])
+from summarize import classify, first_stable
+out, shots, params, launch, t0, h0, h1, guest, raw = sys.argv[1:]
+try:
+    page = json.loads(raw)
+    page = json.loads(page) if isinstance(page, str) else page
+except ValueError:
+    page = {}
+page = page or {}
+timeline = []
+for line in open(shots):
+    t, path = line.split()
+    mean = ImageStat.Stat(Image.open(path).convert('L').resize((192, 108))).mean[0]
+    timeline.append({'ms': int(t), 'mean': round(mean, 1), 'class': classify(mean)})
+first_app, last_before = first_stable(timeline, lambda x: x['class'] == 'app')
+first_board, _ = first_stable(timeline, lambda x: x['class'] == 'app' and x['mean'] > 18)
+t = page.get('timings') or {}
+try:
+    offset = int(float(guest)) - (int(h0) + int(h1)) / 2
+    nav = round(page['navigationStart'] - offset - int(t0))
+except (KeyError, TypeError, ValueError):
+    nav = None
+row = {'params': json.loads(params), 'launch': int(launch), 'shots': len(timeline),
+       'firstAppOnScreenMs': first_app, 'lastShotBeforeAppMs': last_before, 'firstBoardOnScreenMs': first_board,
+       'launchToNavigationMs': nav,
+       'pageFirstPaintFromLaunchMs': round(nav + t['firstPaintMs']) if nav is not None and t.get('firstPaintMs') else None,
+       'pageCachedBoardFromLaunchMs': round(nav + t['cachedBoardPaintMs']) if nav is not None and t.get('cachedBoardPaintMs') else None,
+       'coreReadyFromLaunchMs': round(nav + t['initDoneMs']) if nav is not None and t.get('initDoneMs') else None,
+       'variant': (page.get('loader') or {}).get('variant'), 'ok': page.get('ok'), 'timeline': timeline}
+open(out, 'a').write(json.dumps(row) + '\n')
+print('%s L%s · app na tela entre %s e %s ms · Board na tela %s ms · página: navegação %s, 1ª pintura %s, Board do cache %s · core pronto %s · %s' % (
+    params, launch, last_before, first_app, first_board, nav, row['pageFirstPaintFromLaunchMs'],
+    row['pageCachedBoardFromLaunchMs'], row['coreReadyFromLaunchMs'], row['variant']))
+EOF
+        sleep 5
+    done
+done
+echo "$OUT · $(uptime)"

@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# Varredura de flags do V8 via "v8ExtraFlags" no appinfo.json (chave lida pelo WAM do webOS 4), numa
+# reserva só do emu-run: para cada conjunto de flags, reinstala o app da variante com o appinfo
+# alterado, lança uma vez, lê window.__f011 e fecha. Não mede memória (use o run para isso).
+#   webos/tools/emu-run [--profile c8] -- webos/spikes/core-init/flag-sweep [--hide-wasm] [--rounds N] \
+#       VARIANTE pasta-de-saída "" "--expose-gc" "--wasm-num-compilation-tasks=1" ...
+# O conjunto "" é o controle (sem v8ExtraFlags). Cada rodada percorre todos os conjuntos na ordem.
+# Saída: <pasta>/sweep-<variante>-<data>.jsonl (uma linha por lançamento) e o resumo no stdout.
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+TOOLS="$(cd "$HERE/../../tools" && pwd)"
+APP_ID="io.github.gabrielsflores.coreinit"
+PARAMS='{}'
+ROUNDS=2
+while [[ "${1:-}" == --* ]]; do
+    case "$1" in
+        --hide-wasm) PARAMS='{"webassembly":"hidden"}'; shift ;;
+        --rounds) ROUNDS="$2"; shift 2 ;;
+        *) echo "opção desconhecida: $1" >&2; exit 2 ;;
+    esac
+done
+VARIANT="$1"; OUT_DIR="$(realpath -m "$2")"; shift 2
+: "${EMU_DEVICE:?rode dentro do webos/tools/emu-run}"
+APP_DIR="$HERE/build/app-$VARIANT"
+[[ -f "$APP_DIR/worker.js" ]] || { echo "erro: falta o build em $APP_DIR" >&2; exit 2; }
+mkdir -p "$OUT_DIR"
+OUT="$OUT_DIR/sweep-$VARIANT-$([[ "$PARAMS" == '{}' ]] && echo wasm || echo wasm2js)-${EMU_PROFILE:-semperfil}-$(date +%Y%m%d-%H%M%S).jsonl"
+CDP=(node "$TOOLS/cdp.mjs" --target "$APP_ID")
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+echo "flag-sweep $VARIANT $PARAMS · perfil ${EMU_PROFILE:-nenhum} · $(uptime)"
+for round in $(seq 1 "$ROUNDS"); do
+    for flags in "$@"; do
+        rm -rf "$WORK/app" "$WORK/pkg"
+        cp -r "$APP_DIR" "$WORK/app"
+        python3 -I - "$WORK/app/appinfo.json" "$flags" <<'EOF'
+import json, sys
+path, flags = sys.argv[1:]
+info = json.load(open(path))
+if flags:
+    info['v8ExtraFlags'] = flags
+json.dump(info, open(path, 'w'), indent=4)
+EOF
+        ares-package "$WORK/app" -o "$WORK/pkg" >/dev/null
+        ares-install -d "$EMU_DEVICE" "$WORK/pkg"/*.ipk >/dev/null
+        ares-launch -d "$EMU_DEVICE" "$APP_ID" -p "$PARAMS" >/dev/null
+        done=0
+        for _ in $(seq 1 100); do
+            if "${CDP[@]}" eval 'window.__f011 && window.__f011.done' 2>/dev/null | grep -q true; then done=1; break; fi
+            sleep 1.5
+        done
+        page="$("${CDP[@]}" eval 'JSON.stringify({f: window.__f011, gc: typeof gc})' 2>/dev/null || echo '{}')"
+        ares-launch -d "$EMU_DEVICE" --close "$APP_ID" >/dev/null 2>&1 || true
+        python3 -I - "$OUT" "$round" "$flags" "$done" "$page" <<'EOF'
+import json, sys
+out, rnd, flags, done, raw = sys.argv[1:]
+try:
+    d = json.loads(raw)
+    d = json.loads(d) if isinstance(d, str) else d
+except ValueError:
+    d = {}
+f = d.get('f') or {}
+loader = f.get('loader') or {}
+row = {'round': int(rnd), 'flags': flags, 'completed': done == '1', 'ok': f.get('ok'), 'typeofGc': d.get('gc'),
+       'variant': loader.get('variant'), 'initMs': (f.get('timings') or {}).get('initMs'),
+       'loaderTimings': loader.get('timings'), 'errors': f.get('errors')}
+open(out, 'a').write(json.dumps(row, ensure_ascii=False) + '\n')
+print('%d %-40s ok=%s gc=%s init=%s %s' % (row['round'], repr(flags), row['ok'], row['typeofGc'], row['initMs'], row['loaderTimings']))
+EOF
+        sleep 4
+    done
+done
+echo "$OUT · $(uptime)"

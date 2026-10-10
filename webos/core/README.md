@@ -55,11 +55,19 @@ webos/core/check-wasm arquivo.wasm                  # gate sozinho (--json para 
 7. `wasm2js -O` (Binaryen 133) sobre esse mesmo wasm. A saída é um módulo ES que se instancia ao
    carregar; o build a reembala como script clássico que só define a fábrica `asmFunc(imports)` no
    global `stremio_core_web_wasm2js` (ou `module.exports` no Node). É ES5 e não passa pelo Babel.
-   O `-O` sai menor que o `-O2` (32,7 MB contra 34,3 MB; 3,7 MB contra 3,8 MB com gzip). No
-   emulador, o wasm2js usa memória parecida com a do WASM no estável e menor no pico, porque o V8
-   5.8 compila o wasm inteiro com o TurboFan e o JS é compilado sob demanda. No perfil C8 ele
-   também inicializa mais rápido (13,7–14,2 s contra 21,2–21,5 s, com o host ocioso); no emulador
-   padrão, os dois levam ~3,8 s (tabelas no relatório da F0.6).
+   O `-O` sai menor que o `-O2` (32,7 MB contra 34,3 MB). Por fim, `wasm2js-finish.js`:
+   - minifica com o terser do repo, opções padrão (o mesmo que o `ares-package` faria sem
+     `--no-minify`): 32,6 MB → 9,4 MB (3,4 MB com gzip);
+   - põe a fábrica e `asmFunc` entre parênteses, depois do terser, localizando-as pela AST. É a
+     heurística do V8 para "função chamada logo": o V8 5.8 analisa e compila as duas já no
+     `importScripts`, numa passada só, em vez de pré-analisar o arquivo, analisar a fábrica inteira
+     ao chamá-la e analisar `asmFunc` de novo ao chamá-la.
+
+   No perfil C8 do emulador, isso leva o init do wasm2js de ~19 s (arquivo de 32,6 MB, embrulho
+   simples) para ~9 s, com pico de memória menor (spike `webos/spikes/core-init`, relatório da
+   F0.11). Os números da F0.6 (13,7–14,2 s) eram do arquivo minificado sem querer pelo
+   `ares-package` do smoke, sem os parênteses. O WASM segue em ~21–25 s no C8: o V8 5.8 compila o
+   wasm inteiro com o TurboFan antes de rodar. No emulador padrão, os dois levam ~3,8 s.
 8. Babel com as `devDependencies` e o `.babelrc` do upstream (`npm ci` do lockfile do pacote), como
    o `scripts/build.sh` oficial. O `bridge.js` e o `worker.js` saem idênticos aos do npm.
 
@@ -125,8 +133,10 @@ plugins: [new CopyWebpackPlugin({ patterns: [
 ] })]
 ```
 
-O `.wasm2js.js` tem 32,7 MB: não pode passar pelo Babel nem pelo Terser (por isso é copiado, não
-importado, e vai marcado como `minimized`).
+O `.wasm2js.js` já sai minificado e com a fábrica entre parênteses: não pode passar de novo pelo
+Babel nem pelo Terser, que tirariam os parênteses (por isso é copiado, não importado, e vai marcado
+como `minimized`). Pelo mesmo motivo, empacote com `ares-package --no-minify` (como o
+`webos/scripts/ares.sh` e o `core-smoke/run`).
 
 ## Smoke no emulador
 
