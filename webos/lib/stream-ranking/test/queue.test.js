@@ -56,11 +56,57 @@ describe('createProbeQueue', () => {
         expect(calls.map((call) => call.url)).toEqual(['a', 'c', 'd', 'b']);
     });
 
-    it('cancel drops queued requests only; they can be asked for again', async () => {
+    it('cancel stops running probes too: transfer cancelled, nothing cached, the slot goes to the next one', async () => {
+        const cancelled = [];
+        const pending = {};
+        const probe = (url) => {
+            const promise = new Promise((resolve, reject) => {
+                pending[url] = { resolve, reject };
+            });
+            promise.cancel = () => {
+                cancelled.push(url);
+                pending[url].reject(new Error('probe cancelled'));
+            };
+            return promise;
+        };
+        const seen = [];
+        const queue = createProbeQueue({ probe, concurrency: 1 });
+        queue.subscribe((url) => seen.push(url));
+        queue.request('a', {});
+        queue.request('b', {});
+        queue.cancel(['a']);
+        expect(cancelled).toEqual(['a']);
+        expect(queue.has('a')).toBe(false);
+        await flush();
+        // The cancelled probe is neither cached nor announced; b took the free slot.
+        expect(seen).toEqual([]);
+        expect(queue.get('b').status).toBe('running');
+        queue.request('a', {});
+        pending.b.resolve({ b: true });
+        await flush();
+        expect(queue.get('a').status).toBe('running');
+        expect(queue.resultOf('b')).toEqual({ b: true });
+    });
+
+    it('a cancelled running probe that settles late does not overwrite a new request for the URL', async () => {
+        const resolvers = [];
+        const queue = createProbeQueue({ probe: () => new Promise((resolve) => resolvers.push(resolve)), concurrency: 2 });
+        queue.request('a', {});
+        queue.cancel(['a']);
+        queue.request('a', {});
+        resolvers[0]({ old: true });
+        await flush();
+        expect(queue.get('a').status).toBe('running');
+        resolvers[1]({ fresh: true });
+        await flush();
+        expect(queue.resultOf('a')).toEqual({ fresh: true });
+    });
+
+    it('cancel drops queued requests; they can be asked for again', async () => {
         const { calls, probe } = manualProbe();
         const queue = createProbeQueue({ probe, concurrency: 1 });
         ['a', 'b', 'c'].forEach((url) => queue.request(url, {}));
-        queue.cancel(['a', 'b']);
+        queue.cancel(['b']);
         expect(queue.get('a').status).toBe('running');
         expect(queue.has('b')).toBe(false);
         calls[0].resolve({});

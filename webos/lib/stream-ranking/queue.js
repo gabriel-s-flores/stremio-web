@@ -8,10 +8,14 @@ const LIST_PROBE_OPTIONS = {
     maxBytes: 2 * 1024 * 1024,
     maxRequests: 8,
     timeout: 10000,
+    // Only 206 answers (and the read at offset 0): a server that ignores Range would otherwise send
+    // up to maxSkipBytes per request before the wanted offset, outside the maxBytes count.
+    maxSkipBytes: 0,
 };
 
-// options.probe(url, stream) -> Promise<probe output v1>; concurrency (2); maxEntries (64): finished
-// entries beyond it are dropped, oldest first.
+// options.probe(url, stream) -> Promise<probe output v1>, optionally with a `cancel()` method that
+// stops the transfer; concurrency (2); maxEntries (64): finished entries beyond it are dropped,
+// oldest first.
 const createProbeQueue = (options) => {
     const settings = options || {};
     const run = settings.probe;
@@ -37,6 +41,11 @@ const createProbeQueue = (options) => {
 
     const finish = (url, entry, status, value) => {
         running -= 1;
+        // Cancelled while running: forgotten, not cached (it can be asked for again).
+        if (entries.get(url) !== entry) {
+            pump();
+            return;
+        }
         entry.status = status;
         if (status === 'done') entry.result = value;
         else entry.error = value && value.code ? value.code : String(value && value.message || value);
@@ -56,10 +65,13 @@ const createProbeQueue = (options) => {
             running += 1;
             let promise;
             try {
-                promise = Promise.resolve(run(url, entry.stream));
+                const started = run(url, entry.stream);
+                promise = started && typeof started.then === 'function' ? started : Promise.resolve(started);
             } catch (error) {
                 promise = Promise.reject(error);
             }
+            entry.promise = promise;
+            entry.cancelTransfer = typeof promise.cancel === 'function' ? promise.cancel : null;
             promise.then((result) => finish(url, entry, 'done', result), (error) => finish(url, entry, 'failed', error));
         }
     }
@@ -84,14 +96,19 @@ const createProbeQueue = (options) => {
         pump();
     };
 
-    // Drops the queued (not started) requests for `urls`; they can be asked for again later.
+    // Drops the queued requests for `urls` and stops the running ones (their transfer is cancelled
+    // when the probe allows it); they can be asked for again later. Finished entries stay cached.
     const cancel = (urls) => {
         urls.forEach((url) => {
             const entry = entries.get(url);
-            if (entry !== undefined && entry.status === 'queued') {
+            if (entry === undefined) return;
+            if (entry.status === 'queued') {
                 entries.delete(url);
                 const index = waiting.indexOf(url);
                 if (index !== -1) waiting.splice(index, 1);
+            } else if (entry.status === 'running') {
+                entries.delete(url);
+                if (entry.cancelTransfer !== null) entry.cancelTransfer();
             }
         });
     };

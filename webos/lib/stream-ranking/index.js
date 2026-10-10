@@ -46,15 +46,74 @@ const getRanker = () => {
     return ranker;
 };
 
-const probeStream = (url, stream) => {
+// fetch() for the probe whose transfers can be stopped (Chromium 53 has no AbortController): the
+// body readers the header probe takes are tracked, and cancel() cancels them, so the connection
+// closes and the probe fails at once instead of finishing its 256 KB reads.
+const createCancellableFetch = (fetchImpl) => {
+    const readers = [];
+    let cancelled = false;
+    const cancelledError = () => new Error('probe cancelled');
+
+    const wrapBody = (body) => ({
+        getReader: () => {
+            const reader = body.getReader();
+            readers.push(reader);
+            return {
+                // A read pending when cancel() runs ends with the error, not with a short body.
+                read: () => (cancelled ? Promise.reject(cancelledError()) : reader.read().then((step) => {
+                    if (cancelled) throw cancelledError();
+                    return step;
+                })),
+                cancel: (reason) => reader.cancel(reason),
+            };
+        },
+    });
+
+    const cancellableFetch = (url, init) => {
+        if (cancelled) return Promise.reject(cancelledError());
+        return fetchImpl(url, init).then((response) => {
+            const hasReader = response.body && typeof response.body.getReader === 'function';
+            if (cancelled) {
+                if (hasReader) response.body.cancel().catch(() => null);
+                throw cancelledError();
+            }
+            if (!hasReader) return response;
+            return {
+                status: response.status,
+                url: response.url,
+                redirected: response.redirected,
+                headers: response.headers,
+                body: wrapBody(response.body),
+                arrayBuffer: () => response.arrayBuffer(),
+            };
+        });
+    };
+
+    const cancel = () => {
+        cancelled = true;
+        readers.splice(0).forEach((reader) => {
+            Promise.resolve().then(() => reader.cancel()).catch(() => null);
+        });
+    };
+
+    return { fetch: cancellableFetch, cancel };
+};
+
+// The probe of one stream for the list: LIST_PROBE_OPTIONS, the addon's request headers, and a
+// promise with cancel() (the queue calls it when the list goes away).
+const probeStream = (url, stream, fetchImpl) => {
+    const headerProbe = require('../header-probe');
+    const transfer = createCancellableFetch(fetchImpl || ((input, init) => fetch(input, init)));
     const headers = rank.probeHeadersOf(stream);
-    const options = Object.assign({}, queue.LIST_PROBE_OPTIONS, headers !== null ? { headers } : {});
-    return require('../header-probe').probeUrl(url, options);
+    const options = Object.assign({}, queue.LIST_PROBE_OPTIONS, headers !== null ? { headers } : {}, { fetch: transfer.fetch });
+    const promise = headerProbe.probe(headerProbe.createFetchReadRange(url, options), options);
+    promise.cancel = transfer.cancel;
+    return promise;
 };
 
 // One queue (and cache) for the whole app: reopening a list reuses the probes already made.
 const getProbeQueue = () => {
-    if (probeQueue === null) probeQueue = queue.createProbeQueue({ probe: probeStream, concurrency: 2, maxEntries: 64 });
+    if (probeQueue === null) probeQueue = queue.createProbeQueue({ probe: (url, stream) => probeStream(url, stream), concurrency: 2, maxEntries: 64 });
     return probeQueue;
 };
 
@@ -91,6 +150,8 @@ module.exports = {
     getRules,
     getRanker,
     getProbeQueue,
+    probeStream,
+    createCancellableFetch,
     describe,
     preferencesOf,
     probeUrlOf: rank.probeUrlOf,

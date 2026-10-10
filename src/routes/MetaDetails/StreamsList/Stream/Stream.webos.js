@@ -43,6 +43,7 @@ const withC8 = (label, c8) => {
     return insertAfter(React, label, isPlayIcon, shown, {
         className: classnames(label.props.className, c8Styles[`tier-${c8.tier}`]),
         onFocus: chain(label.props.onFocus, c8.onFocus),
+        onBlur: chain(label.props.onBlur, c8.onBlur),
         'data-c8-tier': c8.tier,
         'data-c8-score': c8.score,
         'data-c8-source': c8.source,
@@ -72,6 +73,7 @@ Stream.propTypes = {
         labels: PropTypes.arrayOf(PropTypes.object),
         warnings: PropTypes.arrayOf(PropTypes.object),
         onFocus: PropTypes.func,
+        onBlur: PropTypes.func,
     }),
 };
 
