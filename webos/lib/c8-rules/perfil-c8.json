@@ -1,0 +1,104 @@
+{
+    "version": 1,
+    "device": "LG OLED55C8PSA (webOS TV 4.0, Chromium 53)",
+    "basis": "Plano do port, seção 2 e decisões D6 a D8; PESQUISA.md, seção 4. A Fase 8 ajusta este arquivo na TV real.",
+    "video": {
+        "codecs": {
+            "hevc": "ok",
+            "avc": "ok",
+            "av1": "unsupported",
+            "vp9": "unknown",
+            "vp8": "unknown",
+            "mpeg4": "unknown",
+            "unknown": "unknown"
+        },
+        "hdr": {
+            "hdr10": "hdr10",
+            "hdr10plus": "hdr10",
+            "hlg": "hlg",
+            "sdr": "sdr"
+        },
+        "dolbyVision": {
+            "mp4": {
+                "5": "dolby-vision",
+                "8.1": "dolby-vision",
+                "7-dual": "dolby-vision",
+                "default": "base-layer"
+            },
+            "mkv": {
+                "default": "base-layer"
+            },
+            "webm": {
+                "default": "base-layer"
+            },
+            "unknownContainer": "mkv"
+        }
+    },
+    "audio": {
+        "codecs": {
+            "eac3": { "status": "ok" },
+            "ac3": { "status": "ok" },
+            "aac": { "status": "ok" },
+            "mp3": { "status": "ok" },
+            "pcm": { "status": "ok" },
+            "flac": { "status": "ok", "maxChannels": 2 },
+            "truehd": { "status": "unsupported" },
+            "ac4": { "status": "unsupported" },
+            "dts": { "status": "unconfirmed" },
+            "opus": { "status": "unknown" },
+            "vorbis": { "status": "unknown" },
+            "unknown": { "status": "unknown" }
+        },
+        "profiles": {
+            "DTS Express": "unsupported",
+            "DTS-UHD": "unsupported"
+        },
+        "atmosCodecs": ["eac3"],
+        "preference": ["eac3-atmos", "eac3", "ac3", "aac", "pcm", "flac", "mp3", "opus", "vorbis", "dts"]
+    },
+    "subtitles": {
+        "text": "ok",
+        "bitmap": "unsupported"
+    },
+    "playback": {
+        "rates": [1]
+    },
+    "labels": {
+        "dv": "DV",
+        "hdr10": "HDR10",
+        "hlg": "HLG",
+        "hdr10-on-tv": "HDR10 nesta TV",
+        "hlg-on-tv": "HLG nesta TV",
+        "sdr-on-tv": "SDR nesta TV",
+        "atmos": "Atmos"
+    },
+    "scoring": {
+        "labels": {
+            "dv": 30,
+            "hdr10": 10,
+            "hlg": 10,
+            "hdr10-on-tv": 10,
+            "hlg-on-tv": 10,
+            "sdr-on-tv": 0,
+            "atmos": 15
+        },
+        "preferredLanguage": 20
+    },
+    "warnings": {
+        "VIDEO_UNSUPPORTED": { "severity": "hide", "score": -1000 },
+        "VIDEO_UNKNOWN": { "severity": "info", "score": -10 },
+        "DV_WRONG_COLORS": { "severity": "demote", "score": -200 },
+        "DV_WRONG_COLORS_POSSIBLE": { "severity": "demote", "score": -60 },
+        "DV_UNVERIFIED": { "severity": "info", "score": -10 },
+        "DV_BASE_LAYER": { "severity": "info", "score": 0 },
+        "DV_BASE_LAYER_UNKNOWN": { "severity": "info", "score": -10 },
+        "AUDIO_UNSUPPORTED": { "severity": "demote", "score": -200 },
+        "AUDIO_UNSUPPORTED_POSSIBLE": { "severity": "demote", "score": -60 },
+        "AUDIO_UNCONFIRMED": { "severity": "demote", "score": -40 },
+        "AUDIO_UNCONFIRMED_POSSIBLE": { "severity": "demote", "score": -20 },
+        "AUDIO_UNKNOWN": { "severity": "demote", "score": -40 },
+        "AUDIO_TRACK_SKIPPED": { "severity": "info", "score": 0 },
+        "SUBTITLES_HIDDEN": { "severity": "info", "score": 0 },
+        "PROBE_IGNORED": { "severity": "info", "score": 0 }
+    }
+}
