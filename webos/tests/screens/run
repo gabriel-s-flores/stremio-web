@@ -38,9 +38,9 @@ go() { # <hash>: opens the route, through another one when it is already open (c
     fi
     cdp_eval "(location.hash = '$1', 1)" > /dev/null
 }
-shoot() { # <name> <focus selectors>
+shoot() { # <name> <focus selectors> [JS run in the same call, before the focus]
     local focused
-    focused="$(cdp_eval "window.__screens.focus('$2')")"
+    focused="$(cdp_eval "(function() { ${3:-} return window.__screens.focus('$2'); })()")"
     sleep 1
     "${CDP[@]}" screenshot "$OUT/$1.png" > /dev/null 2>&1
     cdp_eval 'window.__screens.probe()' > "$OUT/$1.json"
@@ -84,10 +84,8 @@ if [[ -n "${STREAM_URL:-}" && ( "$ONLY" == '  ' || "$ONLY" == *' player '* ) ]];
         [[ "$(cdp_eval '(function() { var v = document.querySelector("video"); return !!v && v.currentTime > 1; })()')" == true ]] && break
         sleep 1
     done
-    # The control bar shows on pointer movement and hides a few seconds later.
-    cdp_eval '(function() { var c = document.querySelector("[class*=player-container]"); if (c) c.dispatchEvent(new MouseEvent("mousemove", { bubbles: true, clientX: 960, clientY: 900 })); return !!c; })()' > /dev/null
-    sleep 1
-    shoot player "$PLAYER_FOCUS"
+    # The control bar shows on pointer movement and hides a few seconds later: moved in the same call.
+    shoot player "$PLAYER_FOCUS" 'var c = document.querySelector("[class*=player-container]"); if (c) c.dispatchEvent(new MouseEvent("mousemove", { bubbles: true, clientX: 960, clientY: 900 }));'
 fi
 cdp_eval 'JSON.stringify(window.__screens ? window.__screens.errors : null)' > "$OUT/errors.json"
 log "errors: $(cat "$OUT/errors.json")"
