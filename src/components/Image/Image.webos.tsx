@@ -3,9 +3,10 @@
 // The upstream Image, with its https src going through the tlsproxy (webos/tlsproxy/README.md):
 // the Chromium 53 of webOS TV 4.x refuses Let's Encrypt certificates, like the ones of
 // images.metahub.space (posters and backgrounds). Known Let's Encrypt hosts are rewritten to the
-// local proxy; any other https image that fails is tried once through it before the upstream
-// fallback, and its host is learned if the proxy reports a Let's Encrypt issuer. The component
-// re-renders when the proxy becomes ready or learns a host.
+// local proxy (while the proxy is starting they show the placeholder instead of failing); any
+// other https image that fails is tried once through it before the upstream fallback, and its host
+// is learned if the proxy reports a Let's Encrypt issuer. The component re-renders when the proxy
+// becomes ready, restarts or learns a host.
 
 import React, { useCallback, useState, useSyncExternalStore } from 'react';
 import Image from './Image.tsx';
@@ -45,7 +46,8 @@ const ProxiedImage = ({ src, onError, onLoad, ...props }: Props) => {
         }
     }, [src, retryUrl, onLoad]);
 
-    return <Image {...props} src={retryUrl ?? proxied} onError={onImageError} onLoad={onImageLoad} />;
+    // proxied is null while the proxy for a known host is pending: no request, the placeholder.
+    return <Image {...props} src={retryUrl ?? proxied ?? undefined} onError={onImageError} onLoad={onImageLoad} />;
 };
 
 const WebosImage = (props: Props) => <ProxiedImage key={props.src} {...props} />;

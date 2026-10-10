@@ -218,11 +218,21 @@ export const createTlsProxy = (deps) => {
     const ready = () => state.mode === 'proxy' && state.ready;
     const proxyUrl = (url) => (ready() ? proxyUrlFor(state.port, state.token, url) : null);
 
-    // URL to use for an https resource: the proxy for known hosts in 'proxy' mode, else unchanged.
+    // Known hosts cannot load directly in 'proxy' mode: while the mode is being decided or the
+    // service is (re)starting, their images wait instead of failing. Not when the service is
+    // missing or the short retries (1 s, 5 s) failed too: then the request goes direct and fails
+    // like upstream, until the service comes back.
+    const waiting = () => state.mode === 'unknown' ||
+        (state.mode === 'proxy' && !state.ready && state.error !== 'webOS.service unavailable' && failures < RETRY_DELAYS.length);
+
+    // URL to use for an https resource: the proxy for known hosts in 'proxy' mode, null while the
+    // proxy for a known host is pending (the caller shows its placeholder and re-renders on
+    // subscribe), else unchanged.
     const proxify = (url) => {
-        if (!ready()) return url;
         const host = hostOf(url);
-        return host && hosts.has(host) ? proxyUrlFor(state.port, state.token, url) : url;
+        if (!host || !hosts.has(host)) return url;
+        if (ready()) return proxyUrlFor(state.port, state.token, url);
+        return waiting() ? null : url;
     };
 
     // An https URL that failed directly can be tried once through the proxy.

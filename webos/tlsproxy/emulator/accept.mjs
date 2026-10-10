@@ -193,9 +193,12 @@ await screenshot('4-detail.png');
 // 4. A Let's Encrypt addon: manifest and catalog fetched by the core worker.
 phase = 'addon';
 await go(`#/addons?addon=${encodeURIComponent(ADDON)}`);
-const modal = step('addon-modal', await waitFor('addon-modal', `(function(){var b=document.querySelector('[class*="install-button"]');return {ok:!!b, text:b&&b.textContent};})()`, 90));
+// The install button of the addon details modal appears once the core fetched the manifest.
+const INSTALL = '[class*="addon-details-modal-container"] [class*="install-button"]';
+const modal = step('addon-modal', await waitFor('addon-modal', `(function(){var b=document.querySelector('${INSTALL}');return {ok:!!b, text:b&&b.textContent};})()`, 90));
+await sleep(1000);
 await screenshot('5-addon-details.png');
-if (modal.ok) await evaluate(`(function(){document.querySelector('[class*="install-button"]').click();return true;})()`);
+if (modal.ok) await evaluate(`(function(){document.querySelector('${INSTALL}').click();return true;})()`);
 step('addon-installed', await waitFor('addon-installed', `window.core.getState('ctx').then(function(ctx){var a=(ctx.profile.addons||[]).filter(function(x){return x.transportUrl===${JSON.stringify(ADDON)};});return {ok:a.length===1, name:a[0]&&a[0].manifest.name, learned:window.__webosTlsProxy.status().learned};})`, 60));
 await go(`#/discover/${encodeURIComponent(ADDON)}/series/latest_anime_seasons`);
 step('addon-catalog', await waitFor('addon-catalog', `(function(){var n=document.querySelectorAll('[class*="meta-item-container"]').length;return {ok:n>0, items:n, hash:location.hash, learned:window.__webosTlsProxy.status().learned};})()`, 120));
@@ -221,7 +224,8 @@ step('recovery-worker', await (async () => {
 await screenshot('8-recovery-addon-catalog.png');
 result.recovery = { before, after: recovered.status, oldToken };
 
-// 6. Latency: 10 posters in sequence and 12 in parallel through the proxy (cache busted).
+// 6. Latency: 10 posters in sequence and 12 in parallel through the proxy (browser cache off; the
+// metahub CDN as the app sees it).
 phase = 'latency';
 await go('#/');
 await sleep(2000);
@@ -229,8 +233,8 @@ result.latency = await evaluate(`(function(){
   var p=window.__webosTlsProxy, ids=['tt0111161','tt0068646','tt0468569','tt0071562','tt0050083','tt0108052','tt0167260','tt0110912','tt0060196','tt0120737','tt0109830','tt0137523'];
   var bust=Date.now();
   return p.config().then(function(c){
-    function px(id,i){return 'http://127.0.0.1:'+c.port+'/proxy?t='+c.token+'&url='+encodeURIComponent('https://images.metahub.space/poster/small/'+id+'/img?b='+bust+'-'+i);}
-    function one(id,i){var t0=performance.now();return fetch(px(id,i)).then(function(r){return r.arrayBuffer().then(function(b){return {ms:Math.round(performance.now()-t0),status:r.status,bytes:b.byteLength,upstreamMs:Number(r.headers.get('X-Proxy-Upstream-Ms'))};});});}
+    function px(id,i){return 'http://127.0.0.1:'+c.port+'/proxy?t='+c.token+'&_='+bust+'-'+i+'&url='+encodeURIComponent('https://images.metahub.space/poster/small/'+id+'/img');}
+    function one(id,i){var t0=performance.now();return fetch(px(id,i),{cache:'no-store'}).then(function(r){return r.arrayBuffer().then(function(b){return {ms:Math.round(performance.now()-t0),status:r.status,bytes:b.byteLength,upstreamMs:Number(r.headers.get('X-Proxy-Upstream-Ms'))};});});}
     var seq=[], chain=Promise.resolve();
     ids.slice(0,10).forEach(function(id,i){chain=chain.then(function(){return one(id,i).then(function(x){seq.push(x);});});});
     return chain.then(function(){var t0=performance.now();return Promise.all(ids.map(function(id,i){return one(id,100+i);})).then(function(par){return {sequential:seq,parallel:par,parallelTotalMs:Math.round(performance.now()-t0)};});});
@@ -245,9 +249,12 @@ result.latency.boardImages = { count: resources.length, medianMs: resources[Math
 result.serviceLuna = await evaluate(`new Promise(function(resolve){webOS.service.request('luna://io.github.gabrielsflores.stremio.tlsproxy',{method:'status',parameters:{},onSuccess:resolve,onFailure:resolve});})`);
 result.final = await evaluate(STATUS);
 
-// Network summary: certificate errors outside the mode detection request.
+// Network summary. Certificate errors are expected only for the mode detection request and for
+// the first requests to a Let's Encrypt host not known yet (the ones that teach it: the addon).
 const all = [...requests.values()];
+const hostOf = (url) => (/^https:\/\/([^/?#]+)/i.exec(url) || [])[1];
 const insecure = all.filter((r) => /ERR_INSECURE_RESPONSE|CERT/i.test(r.errorText || ''));
+const learning = insecure.filter((r) => result.final.learned.indexOf(hostOf(r.url)) !== -1);
 const detection = insecure.filter((r) => r.url === PROBE_URL);
 result.network = {
     requests: all.length,
@@ -255,7 +262,9 @@ result.network = {
     proxied: all.filter((r) => r.url.indexOf('http://127.0.0.1:') === 0).length,
     proxiedFailed: all.filter((r) => r.url.indexOf('http://127.0.0.1:') === 0 && r.errorText && !r.canceled).map((r) => ({ phase: r.phase, url: r.url.replace(/t=[0-9a-f]+/, 't=…').slice(0, 160), errorText: r.errorText })),
     insecure: insecure.map((r) => ({ phase: r.phase, method: r.method, url: r.url.slice(0, 160) })),
-    insecureOutsideDetection: insecure.length - detection.length,
+    insecureDetection: detection.length,
+    insecureLearning: learning.map((r) => ({ phase: r.phase, url: r.url.slice(0, 160) })),
+    insecureOutsideDetection: insecure.length - detection.length - learning.length,
     failedOther: all.filter((r) => r.errorText && !r.canceled && !/ERR_INSECURE_RESPONSE/.test(r.errorText) && r.url.indexOf('http://127.0.0.1:') !== 0).map((r) => ({ phase: r.phase, url: r.url.slice(0, 160), errorText: r.errorText })),
 };
 fs.writeFileSync(path.join(opts.out, 'network.json'), JSON.stringify(all.map((r) => ({ ...r, url: r.url.replace(/t=[0-9a-f]+/, 't=…') })), null, 1));
@@ -270,12 +279,12 @@ const checks = {
     'Host do addon aprendido (emissor Let\'s Encrypt)': result.steps['addon-learned'].ok,
     'Serviço morto: imagens voltam sem recarregar': result.steps['recovery-images'].ok,
     'Serviço morto: worker volta sem recarregar': result.steps['recovery-worker'].ok,
-    'Nenhum ERR_INSECURE_RESPONSE fora da detecção': result.network.insecureOutsideDetection === 0,
+    'Nenhum ERR_INSECURE_RESPONSE fora da detecção e do aprendizado de hosts novos': result.network.insecureOutsideDetection === 0,
 };
 result.checks = checks;
 result.ok = Object.values(checks).every(Boolean);
 fs.writeFileSync(path.join(opts.out, 'accept.json'), JSON.stringify(result, null, 2));
 Object.entries(checks).forEach(([name, ok]) => console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}`));
-console.log(JSON.stringify({ latency: { sequentialMedianMs: result.latency.sequentialMedianMs, sequentialP90Ms: result.latency.sequentialP90Ms, parallelTotalMs: result.latency.parallelTotalMs, boardImages: result.latency.boardImages }, network: { requests: result.network.requests, proxied: result.network.proxied, insecure: result.network.insecure.length, insecureOutsideDetection: result.network.insecureOutsideDetection } }));
+console.log(JSON.stringify({ latency: { sequentialMedianMs: result.latency.sequentialMedianMs, sequentialP90Ms: result.latency.sequentialP90Ms, parallelTotalMs: result.latency.parallelTotalMs, boardImages: result.latency.boardImages }, network: { requests: result.network.requests, proxied: result.network.proxied, insecure: result.network.insecure.length, detection: result.network.insecureDetection, learning: result.network.insecureLearning.length, insecureOutsideDetection: result.network.insecureOutsideDetection } }));
 ws.close();
 process.exit(result.ok ? 0 : 1);

@@ -167,8 +167,10 @@ describe('service and proxify', () => {
     test('proxify rewrites only known hosts, once the service is ready', async () => {
         const { tlsProxy, webOS } = setup();
         tlsProxy.start();
+        expect(tlsProxy.proxify(POSTER)).toBeNull();
         await tick();
-        expect(tlsProxy.proxify(POSTER)).toBe(POSTER);
+        expect(tlsProxy.proxify(POSTER)).toBeNull();
+        expect(tlsProxy.proxify('https://api.strem.io/x')).toBe('https://api.strem.io/x');
         const listener = jest.fn();
         tlsProxy.subscribe(listener);
         ready(webOS, 47444, 'abc');
@@ -201,6 +203,30 @@ describe('service and proxify', () => {
         expect(tlsProxy.status()).toEqual(expect.objectContaining({ ready: true, failures: 0, error: null }));
     });
 
+    test('known hosts wait while the service starts, and go direct once the short retries (1 s, 5 s) ran out', async () => {
+        const { tlsProxy, webOS } = setup();
+        tlsProxy.start();
+        await tick();
+        const fail = () => webOS.last().params.onFailure({ errorText: 'Service does not exist' });
+        for (const delay of [1000, 5000]) {
+            fail();
+            expect(tlsProxy.proxify(POSTER)).toBeNull();
+            await tick(delay);
+        }
+        fail();
+        expect(tlsProxy.proxify(POSTER)).toBe(POSTER);
+        await tick(30000);
+        ready(webOS);
+        expect(tlsProxy.proxify(POSTER)).toMatch(/^http:\/\/127\.0\.0\.1:47443\/proxy/);
+    });
+
+    test('without webOS.service known hosts go direct (no endless wait)', async () => {
+        const { tlsProxy } = setup({ webOS: null });
+        tlsProxy.start();
+        await tick();
+        expect(tlsProxy.proxify(POSTER)).toBe(POSTER);
+    });
+
     test('a start answer without port or token counts as a failure', async () => {
         const { tlsProxy, webOS } = setup();
         tlsProxy.start();
@@ -218,7 +244,7 @@ describe('service and proxify', () => {
         const first = webOS.last();
         const pending = tlsProxy.restart(47443, 'old');
         expect(first.cancelled).toBe(true);
-        expect(tlsProxy.proxify(POSTER)).toBe(POSTER);
+        expect(tlsProxy.proxify(POSTER)).toBeNull();
         await tick(1000);
         expect(webOS.requests).toHaveLength(2);
         ready(webOS, 47445, 'new');
