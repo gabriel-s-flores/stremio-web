@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # F3.6 check in the emulator, with the remote control only: open the diagnostics screen with the
 # colour-key shortcut and from Settings, scroll it with the arrows, use Copy/Save, switch the core
-# variant (the app restarts) and come back with the history (what the Back key of F3.2 does).
+# variant (the app restarts) and come back with the Back key (F3.2).
 # Run inside a pool reservation, after `pnpm webos:package`:
 #   webos/tools/emu-run --timeout 15 -- webos/tests/diagnostics/remote.sh <output-dir>
 set -euo pipefail
@@ -57,11 +57,11 @@ log "shortcut -> $(focus)"
 shot 1-atalho-topo
 
 # 2. Arrows scroll the page: one DOWN per section, a screenshot at some of them.
-for target in 'AppApp version' 'EnvironmentUser' 'CoreVariant' 'Boot timesDOM' 'WebAssemblyWeb' 'TV capabilities' 'Media (canPlayType)' 'MemoryJS' 'Certificate proxy' 'Report (selectable'; do
-    press_until DOWN "$target" 3 || { log "FAIL: could not focus $target"; exit 1; }
-    case "$target" in CoreVariant) shot 2-rolagem-core ;; 'TV capabilities') shot 2-rolagem-tv ;; 'Media (canPlayType)') shot 2-rolagem-midia ;; 'Report (selectable') shot 2-rolagem-relatorio ;; esac
+for target in 'AppApp version' 'EnvironmentUser' 'CoreVariant' 'Boot timesDOM' 'WebAssemblyWeb' 'TV capabilities' 'Media (canPlayType) (1/3)' 'Media (canPlayType) (2/3)' 'Media (canPlayType) (3/3)' 'MemoryJS' 'Certificate proxy' 'Report (selectable'; do
+    press_until DOWN "$target" 8 || { log "FAIL: could not focus $target"; exit 1; }
+    case "$target" in CoreVariant) shot 2-rolagem-core ;; 'TV capabilities') shot 2-rolagem-tv ;; 'Media (canPlayType) (1/3)') shot 2-rolagem-midia-1 ;; 'Media (canPlayType) (3/3)') shot 2-rolagem-midia-3 ;; 'Report (selectable') shot 2-rolagem-relatorio ;; esac
 done
-press_until UP 'Refresh' 14 || { log "FAIL: UP did not come back to Refresh"; exit 1; }
+press_until UP 'Refresh' 80 || { log "FAIL: UP did not come back to Refresh"; exit 1; }
 shot 2-volta-ao-topo
 
 # 3. Copy and Save with the remote.
@@ -86,11 +86,11 @@ sleep 2
 log "after restart -> localStorage=$("${CDP[@]}" eval 'localStorage.getItem("webos.coreVariant")') $(focus)"
 "${CDP[@]}" eval 'JSON.stringify(window.__webos.diagnostics.sections.filter(function(s){ return s.id === "core" || s.id === "boot"; }), null, 2)' > "$OUT/core-wasm.json"
 shot 4-core-wasm
-press_until DOWN 'CoreVariant' 5
+press_until DOWN 'CoreVariant' 8
 shot 4-core-wasm-secao
 
 # 5. Back to the default; OK restarts again.
-press_until UP 'Refresh' 14
+press_until UP 'Refresh' 80
 press_until RIGHT 'Core: default' 6
 key OK
 sleep 8
@@ -99,13 +99,14 @@ sleep 2
 log "after reset -> localStorage=$("${CDP[@]}" eval 'String(localStorage.getItem("webos.coreVariant"))')"
 "${CDP[@]}" eval 'JSON.stringify(window.__webos.diagnostics.sections.filter(function(s){ return s.id === "core"; }), null, 2)' > "$OUT/core-default.json"
 
-# 6. History back (the Back key of F3.2 goes through it): leaves the screen for the previous route.
-"${CDP[@]}" eval '(history.back(), "back")' >/dev/null
+# 6. The Back key (461, the F3.2 dispatcher): leaves the screen for the route it came from. The
+# screen came back after a reload with its own hash as the only entry, so Back falls to the Board.
+key BACK
 sleep 3
-log "history.back -> $(focus)"
+log "BACK -> $(focus)"
 shot 6-voltar
 
-# 7. From Settings: Menu -> Diagnostics with the arrows.
+# 7. From Settings: Menu -> Diagnostics with the arrows, then Back returns to Settings.
 "${CDP[@]}" eval '(location.hash = "#/settings", "settings")' >/dev/null
 sleep 4
 shot 7-settings
@@ -116,6 +117,8 @@ key OK
 sleep 4
 log "settings -> OK -> $(focus)"
 shot 7-settings-aberta
-"${CDP[@]}" eval '(history.back(), "back")' >/dev/null
+key BACK
 sleep 3
-log "history.back -> $(focus)"
+log "BACK -> $(focus)"
+shot 7-settings-voltou
+[[ "$("${CDP[@]}" eval 'location.hash')" == '#/settings' ]] || { log "FAIL: Back did not return to Settings"; exit 1; }

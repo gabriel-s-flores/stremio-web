@@ -16,6 +16,8 @@ const REPORT_STORAGE_KEY = 'webos.diagnostics.report';
 // Cards stay shorter than the screen: the spatial navigation polyfill scrolls a candidate that is
 // not fully visible in 40 px steps before moving the focus, so a taller card would trap the arrows.
 const MAX_ROWS_PER_CARD = 10;
+const KEY_UP = 38;
+const KEY_DOWN = 40;
 
 // A developer tool for the Phase 8 session: English only, outside the translated UI (and the
 // i18n scan, which looks for literal JSX text).
@@ -48,6 +50,7 @@ const WebosDiagnostics = () => {
     const [notice, setNotice] = useState('');
     const [requested, setRequested] = useState<string | null>(() => getRequestedVariant(window.localStorage));
     const firstButtonRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
     const textRef = useRef<HTMLPreElement>(null);
     const mounted = useRef(true);
 
@@ -119,6 +122,26 @@ const WebosDiagnostics = () => {
         }
     }, [reportText]);
 
+    // The screen is a vertical list: the buttons row, then the cards. Up and down move the focus
+    // to the neighbouring stop at once; the spatial navigation polyfill would first scroll a card
+    // that is not fully visible, in 40 px steps, and the way up through the page would take dozens
+    // of presses.
+    const onContentKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.keyCode !== KEY_UP && event.keyCode !== KEY_DOWN) return;
+        const content = contentRef.current;
+        const active = document.activeElement as HTMLElement | null;
+        if (!content || !active || !content.contains(active)) return;
+        const cards = Array.from(content.querySelectorAll<HTMLElement>('[data-card]'));
+        const inActions = !!active.closest('[data-actions]');
+        const current = inActions ? -1 : cards.findIndex((card) => card === active || card.contains(active));
+        const next = event.keyCode === KEY_DOWN ? current + 1 : current - 1;
+        const target = next < 0 ? (current === 0 ? firstButtonRef.current : null) : cards[next];
+        if (!target) return;
+        event.preventDefault();
+        event.stopPropagation();
+        target.focus();
+    }, []);
+
     const variantButton = (variant: string, label: string) => (
         <Button
             className={styles['action']}
@@ -138,8 +161,8 @@ const WebosDiagnostics = () => {
                 backButton={true}
                 navMenu={true}
             />
-            <div className={styles['diagnostics-content']}>
-                <div className={styles['actions']}>
+            <div ref={contentRef} className={styles['diagnostics-content']} onKeyDown={onContentKeyDown}>
+                <div className={styles['actions']} data-actions={true}>
                     <Button ref={firstButtonRef} className={styles['action']} title={LABELS.refresh} onClick={collect}>{LABELS.refresh}</Button>
                     <Button className={styles['action']} title={LABELS.copy} onClick={onCopy}>{LABELS.copy}</Button>
                     <Button className={styles['action']} title={LABELS.save} onClick={onSave}>{LABELS.save}</Button>
@@ -153,7 +176,7 @@ const WebosDiagnostics = () => {
                         <div className={styles['notice']}>{LABELS.collecting}</div>
                         :
                         toCards(report.sections).map((card) => (
-                            <div key={card.key} className={styles['section']} tabIndex={0}>
+                            <div key={card.key} className={styles['section']} tabIndex={0} data-card={true}>
                                 <h3 className={styles['section-title']}>{card.title}</h3>
                                 {
                                     card.rows.map(([label, value], index) => (
@@ -166,7 +189,7 @@ const WebosDiagnostics = () => {
                             </div>
                         ))
                 }
-                <div className={styles['section']} tabIndex={0}>
+                <div className={styles['section']} tabIndex={0} data-card={true}>
                     <h3 className={styles['section-title']}>{LABELS.report}</h3>
                     <pre ref={textRef} className={styles['report']}>{reportText}</pre>
                 </div>
