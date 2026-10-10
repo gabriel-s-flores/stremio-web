@@ -14,6 +14,7 @@
         "lint": "eslint src --max-warnings 287",
         "scan-translations": "pnpx jest ./tests/i18nScan.test.js",
         "webos:build": "webpack --config webos/webpack/webpack.config.js --mode production",
+        "webos:check-syntax": "webos/scripts/check-syntax.sh",
         "webos:package": "pnpm webos:build && webos/scripts/ares.sh package",
         "webos:install": "webos/scripts/ares.sh install",
         "webos:launch": "webos/scripts/ares.sh launch"
