@@ -1,37 +1,65 @@
 // webos/back/platform.js: the virtual keyboard layer and quitting the app.
 
-const { EXIT_FALLBACK_MS, closeVirtualKeyboard, exitApp } = require('../../back/platform');
+const { EXIT_FALLBACK_MS, trackKeyboard, closeVirtualKeyboard, exitApp } = require('../../back/platform');
 
-const setup = ({ keyboardVisible, focused = 'input' }) => {
+const setup = ({ palmVisible, focused = 'input' } = {}) => {
     const body = { blur: jest.fn() };
     const input = { blur: jest.fn() };
-    const doc = { body, activeElement: focused === 'input' ? input : focused === 'body' ? body : null };
+    const doc = new EventTarget();
+    doc.body = body;
+    doc.activeElement = focused === 'input' ? input : focused === 'body' ? body : null;
     const win = { document: doc };
-    if (keyboardVisible !== undefined) {
-        win.PalmSystem = { isKeyboardVisible: keyboardVisible };
+    if (palmVisible !== undefined) {
+        win.PalmSystem = { isKeyboardVisible: palmVisible };
     }
-    return { win, input, body };
+    return { win, doc, input, body };
 };
+
+const keyboardStateChange = (doc, detail) => {
+    const event = new Event('keyboardStateChange');
+    event.detail = detail;
+    doc.dispatchEvent(event);
+};
+
+describe('trackKeyboard', () => {
+    test('uses PalmSystem.isKeyboardVisible until the system sends keyboardStateChange', () => {
+        const { win, doc } = setup({ palmVisible: true });
+        const isVisible = trackKeyboard(win);
+        expect(isVisible()).toBe(true);
+        // On Back the system hides the keyboard itself; the PalmSystem flag stays true.
+        keyboardStateChange(doc, { visibility: false });
+        expect(isVisible()).toBe(false);
+        keyboardStateChange(doc, { visibility: true });
+        expect(isVisible()).toBe(true);
+    });
+
+    test('ignores events without a boolean visibility, and is false without PalmSystem (desktop)', () => {
+        const { win, doc } = setup();
+        const isVisible = trackKeyboard(win);
+        keyboardStateChange(doc, null);
+        keyboardStateChange(doc, { visibility: 'yes' });
+        expect(isVisible()).toBe(false);
+    });
+});
 
 describe('closeVirtualKeyboard', () => {
     test('blurs the focused field while the keyboard is up', () => {
-        const { win, input } = setup({ keyboardVisible: true });
-        expect(closeVirtualKeyboard(win)).toBe(true);
+        const { win, input } = setup();
+        expect(closeVirtualKeyboard(win, () => true)).toBe(true);
         expect(input.blur).toHaveBeenCalledTimes(1);
     });
 
-    test('passes the press on when the keyboard is down or there is no PalmSystem (desktop)', () => {
-        [setup({ keyboardVisible: false }), setup({})].forEach(({ win, input }) => {
-            expect(closeVirtualKeyboard(win)).toBe(false);
-            expect(input.blur).not.toHaveBeenCalled();
-        });
+    test('passes the press on when the keyboard is down', () => {
+        const { win, input } = setup();
+        expect(closeVirtualKeyboard(win, () => false)).toBe(false);
+        expect(input.blur).not.toHaveBeenCalled();
     });
 
-    test('passes the press on when nothing can be blurred, so a stale flag never blocks Back', () => {
-        const onBody = setup({ keyboardVisible: true, focused: 'body' });
-        expect(closeVirtualKeyboard(onBody.win)).toBe(false);
+    test('passes the press on when nothing can be blurred, so a stale state never blocks Back', () => {
+        const onBody = setup({ focused: 'body' });
+        expect(closeVirtualKeyboard(onBody.win, () => true)).toBe(false);
         expect(onBody.body.blur).not.toHaveBeenCalled();
-        expect(closeVirtualKeyboard(setup({ keyboardVisible: true, focused: null }).win)).toBe(false);
+        expect(closeVirtualKeyboard(setup({ focused: null }).win, () => true)).toBe(false);
     });
 });
 

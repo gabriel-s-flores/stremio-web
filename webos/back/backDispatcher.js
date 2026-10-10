@@ -5,12 +5,13 @@
 
 const { PRIORITY, createBackDispatcher } = require('./dispatcher');
 const { closeTopOverlay } = require('./overlays');
-const { closeVirtualKeyboard } = require('./platform');
+const { trackKeyboard, closeVirtualKeyboard } = require('./platform');
 
 const backDispatcher = createBackDispatcher();
 
 backDispatcher.install(window);
-backDispatcher.register(() => closeVirtualKeyboard(window), { priority: PRIORITY.KEYBOARD, name: 'keyboard' });
+const isKeyboardVisible = trackKeyboard(window);
+backDispatcher.register(() => closeVirtualKeyboard(window, isKeyboardVisible), { priority: PRIORITY.KEYBOARD, name: 'keyboard' });
 backDispatcher.register((context) => {
     context.detail = closeTopOverlay(window);
     return context.detail !== null;

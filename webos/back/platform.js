@@ -1,10 +1,25 @@
 // webOS pieces of the Back dispatcher (owner: F3.2): the virtual keyboard and quitting the app.
 
-// The system keyboard is up while a text field has the focus; PalmSystem.isKeyboardVisible is what
-// webOS.keyboard.isShowing() of webOSTV.js reads. Taking the focus away from the field closes it.
-// Without a field to blur the press goes on, so a stale flag never leaves Back without effect.
-const closeVirtualKeyboard = (win, doc = win.document) => {
-    if (!win.PalmSystem || win.PalmSystem.isKeyboardVisible !== true) {
+// While the system keyboard is up, the system takes Back itself and hides the keyboard: the page
+// gets no key at all (measured on the emulator). PalmSystem.isKeyboardVisible (what
+// webOS.keyboard.isShowing() of webOSTV.js reads) stays true after that, so the visibility comes
+// from the keyboardStateChange events the system sends; the PalmSystem flag is only used until the
+// first event. Without this, the next Back would be spent on a keyboard that is already hidden.
+const trackKeyboard = (win, doc = win.document) => {
+    let visible = null;
+    doc.addEventListener('keyboardStateChange', (event) => {
+        if (event.detail && typeof event.detail.visibility === 'boolean') {
+            visible = event.detail.visibility;
+        }
+    });
+    return () => (visible !== null ? visible : Boolean(win.PalmSystem && win.PalmSystem.isKeyboardVisible === true));
+};
+
+// If Back does reach the page with the keyboard up (a system that leaves it to the app), taking
+// the focus away from the text field closes the keyboard. Without a field to blur the press goes
+// on, so a stale state never leaves Back without effect.
+const closeVirtualKeyboard = (win, isKeyboardVisible, doc = win.document) => {
+    if (!isKeyboardVisible()) {
         return false;
     }
     const active = doc.activeElement;
@@ -31,6 +46,7 @@ const exitApp = (win) => {
 
 module.exports = {
     EXIT_FALLBACK_MS,
+    trackKeyboard,
     closeVirtualKeyboard,
     exitApp,
 };

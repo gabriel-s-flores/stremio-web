@@ -16,10 +16,19 @@ engolidos sem disparar nada: segurar o Back não desmonta a pilha inteira.
 
 | Prioridade | Camada | O que faz |
 |---|---|---|
-| `KEYBOARD` (400) | `platform.js` | Teclado virtual aberto (`PalmSystem.isKeyboardVisible`): tira o foco do campo, o que fecha o teclado |
+| `KEYBOARD` (400) | `platform.js` | Teclado virtual aberto: tira o foco do campo, o que fecha o teclado (ver abaixo) |
 | `HANDLER` (300) | `useBackHandler` | Handlers dos componentes (diálogo de saída; F4.3 e F4.1x daqui em diante) |
 | `OVERLAY` (200) | `overlays.js` | Ponte para os overlays do upstream: fecha o de cima, um por toque |
 | `ROUTE` (100) | `BackNavigation.js` + `routes.js` | Volta da página/rota; no Board, abre o diálogo de saída |
+
+### Teclado virtual
+
+Medido no emulador: com o teclado do sistema aberto, **o próprio sistema trata o Back** e esconde o
+teclado; a página não recebe tecla nenhuma. O próximo Back já chega ao app e segue a pilha (fecha o
+modal, volta a rota). O `PalmSystem.isKeyboardVisible` continua `true` depois disso, então a camada
+acompanha a visibilidade pelos eventos `keyboardStateChange` (`detail.visibility`) e só usa o
+`PalmSystem` antes do primeiro evento. A camada fica como garantia para um sistema que deixe o Back
+para o app com o teclado aberto.
 
 ### Ponte de overlays (`overlays.js`)
 
