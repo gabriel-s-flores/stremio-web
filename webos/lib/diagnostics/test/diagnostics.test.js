@@ -104,7 +104,7 @@ describe('collectDiagnostics', () => {
 
         expect(report.generatedAt).toBe('2026-10-10T12:00:00.000Z');
         expect(report.sections.map((section) => section.id)).toEqual([
-            'app', 'environment', 'core', 'boot', 'webAssembly', 'tv', 'media', 'memory', 'certificateProxy',
+            'app', 'environment', 'core', 'boot', 'webAssembly', 'tv', 'media', 'memory', 'persistence', 'certificateProxy',
         ]);
         expect(getSection(report, 'app')).toEqual({ version: '5.0.0-beta.41', commit: 'abc1234', coreVersion: '0.65.0-mvp' });
         expect(getSection(report, 'environment')).toMatchObject({
@@ -205,6 +205,39 @@ describe('collectDiagnostics', () => {
         expect(hung.memoryManager).toEqual({ available: false, error: 'timeout' });
         const noBridge = getSection(await collect({ request: null }), 'memory');
         expect(noBridge.memoryManager.available).toBe(false);
+    });
+
+    describe('persistence section (the F3.5 mirror)', () => {
+        const status = {
+            appId: 'io.github.gabrielsflores.stremio', result: { reason: 'localStorage-ok' }, flushes: 2,
+            lastFlush: { keys: 3, snapshot: true }, error: null, broken: false, holding: false, pending: 0,
+        };
+
+        it('reports the mirror status and what the IndexedDB copy holds', async () => {
+            const persist = {
+                status: () => status,
+                inspect: () => Promise.resolve({ meta: { epoch: 'e1' }, keys: { profile: 10, library: 5 }, chars: 15 }),
+            };
+            const report = await collect({ window: makeWindow({ __stremioPersist: persist }) });
+            expect(getSection(report, 'persistence')).toEqual({
+                available: true, status, copy: { keys: 2, chars: 15, meta: { epoch: 'e1' } },
+            });
+            const text = formatReport(report);
+            expect(text).toContain('Boot result: {"reason":"localStorage-ok"}');
+            expect(text).toContain('Copy writes: 2 flushes, 0 pending');
+            expect(text).toContain('Copy in IndexedDB: 2 keys, 15 chars');
+        });
+
+        it('survives an unreadable copy and a missing mirror', async () => {
+            const stuck = { status: () => ({ ...status, holding: true }), inspect: () => new Promise(() => {}) };
+            const unreadable = await collect({ window: makeWindow({ __stremioPersist: stuck }), timeoutMs: 20 });
+            expect(getSection(unreadable, 'persistence')).toMatchObject({ available: true, copy: null, copyError: 'timeout' });
+            expect(formatReport(unreadable)).toContain('holding (core not initialised yet)');
+            expect(formatReport(unreadable)).toContain('Copy in IndexedDB: unreadable: timeout');
+            const missing = await collect();
+            expect(getSection(missing, 'persistence')).toEqual({ available: false });
+            expect(formatReport(missing)).toContain('localStorage mirror: not installed');
+        });
     });
 
     it('has an extension point: the certificate proxy placeholder and registered sections', async () => {

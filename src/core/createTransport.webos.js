@@ -1,7 +1,8 @@
 // webOS TV 4.x build only (resolved instead of createTransport.ts by webos/webpack/app.js).
 //
-// The same transport, with the localStorage mirror of webos/persistence/mirror.js (F3.5) around the
-// core init: the core keeps everything in localStorage, which uninstalling the app (and, per LG,
+// The same transport (createTransport.diagnostics.ts: upstream plus the boot marks and the core loader
+// status of the diagnostics screen, F3.6), with the localStorage mirror of webos/persistence/mirror.js
+// (F3.5) around the core init: the core keeps everything in localStorage, which uninstalling the app (and, per LG,
 // even updating it) wipes, so a copy is kept in IndexedDB and put back before the core reads it.
 // - The mirror starts when this module loads (CoreProvider creates the transport at import time),
 //   before the first render; init waits for it, at most 3 s counted from init, and never fails
@@ -13,7 +14,7 @@
 // - Error.tsx's "Clear data" (localStorage.clear() + reload()) goes through the wrapped clear().
 // Diagnostics (F3.6): window.__stremioPersist.status() has the boot reason and the last batch.
 
-const createTransport = require('./createTransport.ts').default;
+const createTransport = require('./createTransport.diagnostics.ts').default;
 const { createMirror } = require('../../webos/persistence/mirror');
 const appinfo = require('../../webos/app/appinfo.json');
 

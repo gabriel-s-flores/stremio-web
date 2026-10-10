@@ -201,6 +201,33 @@ const collectMemory = (context) => {
     });
 };
 
+const withTimeout = (promise, ms) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms);
+    promise.then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+    }, (error) => {
+        clearTimeout(timer);
+        reject(error);
+    });
+});
+
+// The localStorage mirror of F3.5 (webos/persistence/mirror.js): window.__stremioPersist.
+const collectPersistence = (context) => {
+    const persist = context.window.__stremioPersist;
+    if (!persist || typeof persist.status !== 'function') return Promise.resolve({ available: false });
+    const status = persist.status();
+    if (typeof persist.inspect !== 'function') return Promise.resolve({ available: true, status, copy: null });
+    return withTimeout(Promise.resolve(persist.inspect()), context.timeoutMs).then(
+        (copy) => ({
+            available: true,
+            status,
+            copy: { keys: Object.keys(copy.keys || {}).length, chars: orNull(copy.chars), meta: orNull(copy.meta) },
+        }),
+        (error) => ({ available: true, status, copy: null, copyError: errorText(error) })
+    );
+};
+
 // Sections registered by other modules (webos/lib/diagnostics/registry.js). The certificate proxy
 // (F3.7) fills "certificateProxy"; until it does, the report says so.
 const collectExtensions = (context) => {
@@ -236,6 +263,8 @@ const flatten = (value, prefix) => {
 };
 
 // [label, value] rows of each section, in the order the screen and the text report show them.
+const json = (value) => (value === null || value === undefined ? '—' : JSON.stringify(value));
+
 const SECTION_ROWS = {
     app: (d) => [
         ['App version', text(d.version)],
@@ -299,6 +328,15 @@ const SECTION_ROWS = {
         entry.group + ' · ' + entry.label,
         'canPlayType=' + (entry.canPlayType === '' ? 'no' : text(entry.canPlayType)) + (entry.mse === null ? '' : ' mse=' + yesNo(entry.mse)),
     ])),
+    persistence: (d) => (d.available ? [
+        ['Boot result', json(d.status.result)],
+        ['Copy writes', d.status.flushes + ' flushes, ' + d.status.pending + ' pending' +
+            (d.status.holding ? ', holding (core not initialised yet)' : '') + (d.status.broken ? ', IndexedDB broken' : '')],
+        ['Last flush', json(d.status.lastFlush)],
+        ['Mirror error', text(d.status.error)],
+        ['Copy in IndexedDB', d.copy ? d.copy.keys + ' keys, ' + d.copy.chars + ' chars' : 'unreadable: ' + text(d.copyError)],
+        ['Copy meta', d.copy ? json(d.copy.meta) : '—'],
+    ] : [['localStorage mirror', 'not installed (window.__stremioPersist missing)']]),
     memory: (d) => [
         ['JS heap used / total / limit', d.jsHeap ? [d.jsHeap.usedMB, d.jsHeap.totalMB, d.jsHeap.limitMB].map(mb).join(' / ') : 'not exposed'],
         ['Device memory', d.deviceMemoryGB === null ? 'not exposed' : d.deviceMemoryGB + ' GB'],
@@ -315,9 +353,10 @@ const SECTION_TITLES = {
     tv: 'TV capabilities (Luna)',
     media: 'Media (canPlayType)',
     memory: 'Memory',
+    persistence: 'Persistence (localStorage mirror)',
 };
 
-const SECTION_ORDER = ['app', 'environment', 'core', 'boot', 'webAssembly', 'tv', 'media', 'memory'];
+const SECTION_ORDER = ['app', 'environment', 'core', 'boot', 'webAssembly', 'tv', 'media', 'memory', 'persistence'];
 
 const COLLECTORS = {
     app: collectApp,
@@ -328,6 +367,7 @@ const COLLECTORS = {
     tv: collectTv,
     media: collectMedia,
     memory: collectMemory,
+    persistence: collectPersistence,
 };
 
 // `rows` of a section whose data is {error}: the rows builders expect real data.

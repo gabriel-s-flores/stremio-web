@@ -25,6 +25,7 @@ Na tela: setas para cima e para baixo percorrem os botões e as seções (cada s
 | TV capabilities (Luna) | `supportDolbyHDRContents`, `supportDolbyTVATMOS`, `edidType`, `hw.dtsType`, modelo/firmware/SDK, configs desconhecidas (nova leitura forçada, `readCapabilities(true)` da F3.1) |
 | Media (canPlayType) | `canPlayType` e `MediaSource.isTypeSupported` das linhas da tabela da C8 (`canplay.js`): H.264, HEVC Main10, VP9, AV1, DV P5/P7/P8 (`dvh1`/`dvhe`), AAC, AC-3, E-AC-3/JOC, TrueHD, DTS (`dtsc/dtsh/dtse/dtsx`), FLAC, Opus, MKV, MPEG-TS, HLS |
 | Memory | `performance.memory` (quantizado pelo Chromium 53: serve para tendência, não para valor exato), `deviceMemory`, serviço Luna `com.webos.memorymanager/getCurrentMemState` (tentativa; um app comum recebe "Denied" no emulador, e a resposta fica no relatório) |
+| Persistence | espelho do localStorage da F3.5 (`window.__stremioPersist`): resultado do boot, lotes gravados, último lote, erro e o que a cópia no IndexedDB guarda (`inspect()`, só leitura) |
 | Certificate proxy | ponto de extensão da F3.7 (veja abaixo); sem a F3.7, "not integrated yet" |
 
 `canPlayType` só diz que o pipeline conhece o tipo, nunca que vai tocar: a resposta real é o checklist de mídia da Fase 8. JOC (Atmos) viaja no codec `ec-3`, que o `canPlayType` não distingue do E-AC-3 comum.
@@ -57,7 +58,7 @@ collectDiagnostics({ app: { version, commit, coreVersion } })  // nunca rejeita
     });
 ```
 
-- Ids: `app`, `environment`, `core`, `boot`, `webAssembly`, `tv`, `media`, `memory`, `certificateProxy`.
+- Ids: `app`, `environment`, `core`, `boot`, `webAssembly`, `tv`, `media`, `memory`, `persistence`, `certificateProxy`.
 - Cada fonte falha sozinha: um erro vira `{ error }` (ou "unavailable: …") na própria seção.
 - Opções para teste: `window`, `request` (compatível com `webOS.service.request`), `getCoreStatus()`, `readCapabilities(force)`, `registry`, `timeoutMs`, `now()`.
 - `getRequestedVariant(storage)` / `setRequestedVariant(storage, variant)` leem e gravam a chave da variante; `VARIANT_KEY` é igual ao `PREFER_KEY` do carregador (um teste garante).
@@ -76,7 +77,7 @@ registerSection('certificateProxy', 'Certificate proxy', () => ({ running: true,
 
 `mark(nome)` guarda `performance.now()` (a mesma linha do tempo da definição de "core pronto" da F1.4: `window.core` atribuído). Quem marca:
 
-- `coreInitStart` e `coreReady`: `src/core/createTransport.webos.ts` (override gerado, `webos/tests/no-server/overrides.js`);
+- `coreInitStart` e `coreReady`: `src/core/createTransport.diagnostics.ts` (cópia gerada do upstream com os ganchos, `webos/tests/no-server/overrides.js`), que o `createTransport.webos.js` da F3.5 (espelho do localStorage) usa no lugar do `createTransport.ts`. Por isso o `coreInitStart` conta a partir da chamada real ao `init` do core, depois da espera pelo espelho;
 - `boardMounted` e `boardFirstItem`: `src/router/routerPaths.webos.js`, na rota do Board (primeiro `[class*="meta-item-container"]` dentro de `.routes-container`).
 
 `boardFirstItem` é o primeiro item de catálogo no DOM, não o primeiro quadro pintado (a definição de "Board visível" da F1.6, medida por uma sonda externa com `requestAnimationFrame`): costuma ser um pouco anterior.
@@ -84,7 +85,7 @@ registerSection('certificateProxy', 'Certificate proxy', () => ({ running: true,
 ## Testes
 
 - Unitários (Luna, `window` e status do core simulados): `pnpm exec jest webos/lib/diagnostics`.
-- Os overrides gerados (`createTransport.webos.ts`, `Menu.webos.tsx`) seguem o teste de deriva do upstream: `pnpm exec jest webos/tests/no-server`.
+- Os arquivos gerados (`createTransport.diagnostics.ts`, `Menu.webos.tsx`) seguem o teste de deriva do upstream: `pnpm exec jest webos/tests/no-server`.
 - Emulador, depois de `pnpm webos:package`:
   - `webos/tools/emu-run --timeout 15 [--profile c8] -- webos/tests/diagnostics/emulator.sh <pasta>`: sobe até o Board, abre a tela, salva o relatório (JSON e texto) e uma captura;
   - `webos/tools/emu-run --timeout 15 -- webos/tests/diagnostics/remote.sh <pasta>`: só com o controle remoto (atalho, setas, Copy/Save, troca da variante do core com reinício, Settings → Diagnostics).

@@ -10,7 +10,9 @@ const read = (file) => fs.readFileSync(path.join(CORE, file), 'utf8');
 describe('createTransport.webos', () => {
     test('wraps the upstream transport and waits for the mirror before init', () => {
         const source = read('createTransport.webos.js');
-        expect(source).toContain("require('./createTransport.ts').default");
+        // createTransport.diagnostics.ts is the upstream transport plus the diagnostics hooks (F3.6, generated
+        // and checked against upstream by webos/tests/no-server).
+        expect(source).toContain("require('./createTransport.diagnostics.ts').default");
         expect(source).toMatch(/^mirror\.start\(\);$/m);
         expect(source).toMatch(/mirror\.ready\(\)\s*\.then\([\s\S]*transport\.init\(args\)/);
         expect(source).toMatch(/mirror\.initSucceeded\(\)/);

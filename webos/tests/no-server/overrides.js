@@ -132,13 +132,14 @@ const OVERRIDES = [
     },
     {
         upstream: 'src/core/createTransport.ts',
-        override: 'src/core/createTransport.webos.ts',
+        override: 'src/core/createTransport.diagnostics.ts',
         banner: [
-            '// webOS TV 4.x build only (resolved instead of createTransport.ts by webos/webpack/app.js, F3.6).',
-            '// Same as createTransport.ts plus two boot marks for the diagnostics screen (core init start and',
-            '// core ready, just timestamps) and getCoreLoaderStatus: the status of the core loader that runs in',
-            '// the worker (webos/core/loader.js), read on demand. webos/tests/no-server/no-server.test.js',
-            '// fails when the two drift apart.',
+            '// webOS TV 4.x build only (F3.6): the transport that src/core/createTransport.webos.js (the localStorage',
+            '// mirror, F3.5) wraps instead of createTransport.ts. Same as createTransport.ts plus two boot marks for the',
+            '// diagnostics screen (core init start and core ready, just timestamps) and getCoreLoaderStatus: the status',
+            '// of the core loader that runs in the worker (webos/core/loader.js), read on demand. A separate file name,',
+            '// not createTransport.webos.ts, because the .webos.ts extension would win over the .webos.js of F3.5.',
+            '// webos/tests/no-server/no-server.test.js fails when it drifts from the upstream file.',
             '',
         ].join('\n'),
         edits: [
