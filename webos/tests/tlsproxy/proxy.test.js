@@ -132,8 +132,12 @@ const status = async () => JSON.parse((await request(`/status?t=${TOKEN}`)).body
 
 describe('access', () => {
     test('/proxy and /status need the token', async () => {
-        expect((await request('/status')).status).toBe(403);
-        expect((await request(`/proxy?url=${encodeURIComponent(`${A}/echo`)}`)).status).toBe(403);
+        const noToken = await request('/status');
+        expect(noToken.status).toBe(401);
+        expect(noToken.headers['x-proxy-error']).toBe('bad-token');
+        expect(noToken.headers['access-control-expose-headers']).toMatch(/X-Proxy-Error/);
+        expect((await request(`/proxy?url=${encodeURIComponent(`${A}/echo`)}`)).status).toBe(401);
+        expect((await request(`/proxy?t=old&url=${encodeURIComponent(`${A}/echo`)}`)).headers['x-proxy-error']).toBe('bad-token');
         const ok = await request(`/status?t=${TOKEN}`);
         expect(ok.status).toBe(200);
         expect(Object.keys(JSON.parse(ok.body))).not.toEqual(expect.arrayContaining(['pid']));
@@ -242,6 +246,12 @@ describe('media is never proxied (P3)', () => {
         ['MP3 frame without ID3', pad(Buffer.from([0xff, 0xfb, 0x90, 0x64]))],
         ['#EXTM3U', Buffer.from('#EXTM3U\n#EXT-X-VERSION:3\n')],
         ['ID3', pad(Buffer.from('ID3\x04\x00'))],
+        ['MOV starting with a wide atom', pad(Buffer.concat([Buffer.from([0, 0, 0, 8]), Buffer.from('wide'), Buffer.from([0, 0, 0, 0x30]), Buffer.from('mdat')]))],
+        ['MOV starting with a free atom', pad(Buffer.concat([Buffer.from([0, 0, 0, 8]), Buffer.from('free'), Buffer.from([0, 0, 0, 0x30]), Buffer.from('mdat')]))],
+        ['MOV starting with a skip atom', pad(Buffer.concat([Buffer.from([0, 0, 0, 8]), Buffer.from('skip')]))],
+        ['MOV starting with a preview (pnot)', pad(Buffer.concat([Buffer.from([0, 0, 0, 0x14]), Buffer.from('pnot')]))],
+        ['MPEG-PS (00 00 01 BA)', pad(Buffer.from([0, 0, 1, 0xba, 0x44, 0, 4, 0]))],
+        ['MPEG video elementary stream (00 00 01 B3)', pad(Buffer.from([0, 0, 1, 0xb3, 0x16, 0, 0xf0, 0x15]))],
     ])('%s served as text/html → 403', async (_, buf) => {
         const r = await viaProxy(bytes(buf));
         expect(r.status).toBe(403);

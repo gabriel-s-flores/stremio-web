@@ -6,15 +6,21 @@
 //   next to worker.js), and 127.0.0.1/localhost.
 // - In 'proxy' mode, hosts known to have Let's Encrypt certificates go through the proxy, with
 //   method, headers and body.
-// - Another https host that fails with a TypeError is tried once through the proxy; its response
-//   is used, and the host learned, only if the proxy reports a Let's Encrypt/ISRG issuer. A
-//   TypeError may also be CORS, and the proxy must not become a way around it.
-// - If the proxy itself does not answer, the page restarts the service and the request is tried
-//   once more.
+// - Another https host whose GET or HEAD fails with a TypeError is tried once through the proxy;
+//   its response is used, and the host learned, only if the proxy reports a Let's Encrypt/ISRG
+//   issuer. A TypeError may also be CORS, and the proxy must not become a way around it. Other
+//   methods are never sent twice: a CORS TypeError comes after the server already handled them.
+// - If the proxy does not answer (the service died), or answers 401 bad-token (the page already
+//   restarted the service, with a new token), the page gives the current configuration (restarting
+//   the service if it was still the one that failed) and the request is tried once more.
 // The configuration comes from the page (window.__webosTlsProxy, webos/tlsproxy/page.js) through
 // the Bridge protocol; requests made before it is decided wait for it up to 3 s, then go direct.
 
 import { hostOf, isLetsEncrypt, proxyUrlFor, ISSUER_HEADER } from './client';
+
+const ERROR_HEADER = 'X-Proxy-Error';
+// The proxy answered, but to a token of a previous service process.
+const isStaleToken = (response) => response.status === 401 && response.headers.get(ERROR_HEADER) === 'bad-token';
 
 const PAGE_OBJECT = '__webosTlsProxy';
 export const CALL_TIMEOUT = 5000;
@@ -89,16 +95,24 @@ export const install = (scope) => {
         ));
     };
 
-    // Through the proxy; if the proxy does not answer, restart it (page) and try once more.
+    // Through the proxy. If it does not answer or no longer knows the token, ask the page for the
+    // current service (restart(port, token) only drops it if it is still this one) and try once
+    // more with a copy of the request.
     const viaProxy = (value, request) => {
         const spare = request.clone();
-        return toProxy(value, request).then(direct).catch((error) => {
-            if (!(error instanceof TypeError)) throw error;
-            return callPage('restart', [value.port, value.token]).then(setConfig).then((fresh) => {
-                if (!fresh || fresh.mode !== 'proxy' || !fresh.ready) throw error;
-                return toProxy(fresh, spare).then(direct);
-            });
-        });
+        const again = () => callPage('restart', [value.port, value.token]).then(setConfig).then((fresh) => (
+            fresh && fresh.mode === 'proxy' && fresh.ready ? toProxy(fresh, spare).then(direct) : null
+        ));
+        return toProxy(value, request).then(direct).then(
+            (response) => (isStaleToken(response) ? again().then((retried) => retried || response) : response),
+            (error) => {
+                if (!(error instanceof TypeError)) throw error;
+                return again().then((retried) => {
+                    if (!retried) throw error;
+                    return retried;
+                });
+            }
+        );
     };
 
     scope.fetch = function fetch(input, init) {
@@ -119,10 +133,11 @@ export const install = (scope) => {
                 });
             }
             if (hosts.has(host)) return viaProxy(value, request);
+            if (request.method !== 'GET' && request.method !== 'HEAD') return direct(request);
             const spare = request.clone();
             return direct(request).catch((error) => {
                 if (!(error instanceof TypeError)) throw error;
-                return toProxy(value, spare).then(direct).then((response) => {
+                return viaProxy(value, spare).then((response) => {
                     if (!isLetsEncrypt(response.headers.get(ISSUER_HEADER))) throw error;
                     hosts.add(host);
                     callPage('learn', [host]).catch(noop);

@@ -32,8 +32,13 @@ var FORWARD_RESPONSE_HEADERS = ['content-type', 'content-length', 'cache-control
 var ISSUER_HEADER = 'X-Proxy-Issuer-O';
 // Marcas `ftyp` de imagem (AVIF/HEIF) que não são vídeo.
 var IMAGE_FTYP_BRANDS = ['avif', 'avis', 'heic', 'heix', 'mif1', 'msf1'];
-// Caixas ISO BMFF que abrem segmentos fMP4 sem `ftyp` (DASH/HLS/CMAF) ou MP4 com o moov na frente.
-var MEDIA_BOXES = ['styp', 'moof', 'sidx', 'moov', 'mdat'];
+// Caixas ISO BMFF que abrem segmentos fMP4 sem `ftyp` (DASH/HLS/CMAF), MP4 com o moov na frente e
+// MOV do QuickTime, que pode começar com átomos de preenchimento (wide, free, skip) ou preview (pnot).
+var MEDIA_BOXES = ['styp', 'moof', 'sidx', 'moov', 'mdat', 'wide', 'free', 'skip', 'pnot'];
+// Cabeçalho das recusas do próprio proxy (o upstream nunca o define: não está em
+// FORWARD_RESPONSE_HEADERS). `bad-token` diz ao app que a porta e o token que ele usa são de um
+// serviço anterior: ele pede a configuração atual e repete a requisição.
+var ERROR_HEADER = 'X-Proxy-Error';
 
 function isMediaType(contentType) {
     return /^(video|audio)\//i.test(contentType || '') || /mpegurl|dash\+xml/i.test(contentType || '');
@@ -49,6 +54,8 @@ function mediaSignature(buf) {
     if (buf.length >= 12 && ascii.substr(4, 4) === 'ftyp' && IMAGE_FTYP_BRANDS.indexOf(ascii.substr(8, 4)) === -1) return 'mp4/mov (ftyp ' + ascii.substr(8, 4) + ')';
     if (buf.length >= 8 && MEDIA_BOXES.indexOf(ascii.substr(4, 4)) !== -1) return 'iso bmff (' + ascii.substr(4, 4) + ')';
     if (buf.length >= 4 && buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) return 'matroska/webm (EBML)';
+    // MPEG-PS (pack header 00 00 01 BA, .mpg/.vob) e MPEG-1/2 elementar (sequence header 00 00 01 B3).
+    if (buf.length >= 4 && buf[0] === 0 && buf[1] === 0 && buf[2] === 1 && (buf[3] === 0xba || buf[3] === 0xb3)) return buf[3] === 0xba ? 'mpeg-ps' : 'mpeg video (es)';
     if (buf.length > 188 && buf[0] === 0x47 && buf[188] === 0x47 && (buf.length <= 376 || buf[376] === 0x47)) return 'mpeg-ts';
     if (/^(\xef\xbb\xbf)?\s*#EXTM3U/.test(ascii)) return 'hls (#EXTM3U)';
     if (/<MPD[\s>]/.test(ascii)) return 'dash (MPD)';
@@ -110,13 +117,13 @@ function createProxy(options) {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', ALLOWED_METHODS.join(', ') + ', OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
-        res.setHeader('Access-Control-Expose-Headers', 'Content-Type, Content-Length, ETag, X-Proxy-Upstream-Ms, ' + ISSUER_HEADER);
+        res.setHeader('Access-Control-Expose-Headers', 'Content-Type, Content-Length, ETag, X-Proxy-Upstream-Ms, ' + ISSUER_HEADER + ', ' + ERROR_HEADER);
     }
 
     // Resposta final já decidida: erros que o upstream emitir depois (ex.: ao ser destruído numa
     // recusa) não podem mais mexer nela. Com os cabeçalhos já enviados, o corpo é cortado
     // (destroy) para o cliente ver a falha em vez de um 200 truncado.
-    function fail(res, status, reason) {
+    function fail(res, status, reason, code) {
         if (res.clientGone || res.proxyDone) return;
         res.proxyDone = true;
         if (res.headersSent) { res.destroy(); return; }
@@ -124,6 +131,7 @@ function createProxy(options) {
         FORWARD_RESPONSE_HEADERS.concat(['x-proxy-upstream-ms', ISSUER_HEADER.toLowerCase()]).forEach(function (name) { res.removeHeader(name); });
         var body = JSON.stringify({ error: reason });
         setCors(res);
+        res.setHeader(ERROR_HEADER, code || 'refused');
         res.writeHead(status, { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) });
         res.end(body);
     }
@@ -345,7 +353,8 @@ function createProxy(options) {
             return fail(res, 405, 'method not allowed');
         }
         if (u.pathname !== '/proxy' && u.pathname !== '/status') return fail(res, 404, 'not found');
-        if (u.query.t !== token) return fail(res, 403, 'bad token');
+        // 401 + bad-token: o app tem o token de um serviço anterior (este reiniciou) e pede o atual.
+        if (u.query.t !== token) return fail(res, 401, 'bad token', 'bad-token');
         if (u.pathname === '/status') {
             setCors(res);
             res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -416,5 +425,6 @@ module.exports = {
     createProxy: createProxy,
     mediaSignature: mediaSignature,
     MAX_REDIRECTS: MAX_REDIRECTS,
-    ISSUER_HEADER: ISSUER_HEADER
+    ISSUER_HEADER: ISSUER_HEADER,
+    ERROR_HEADER: ERROR_HEADER
 };

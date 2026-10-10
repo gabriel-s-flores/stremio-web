@@ -51,11 +51,16 @@ const fakePage = (config) => ({
 
 // Upstream: direct requests to `failing` hosts reject with a TypeError (certificate), the others
 // answer; the proxy answers with the issuer of `issuers` and echoes method, headers and body.
-const network = ({ failing = [], issuers = {}, deadPorts = [] } = {}) => async (url, raw, init) => {
+// tokens: the token the service on each port accepts now (others get 401 bad-token, like proxy.js).
+const network = ({ failing = [], issuers = {}, deadPorts = [], tokens = {} } = {}) => async (url, raw, init) => {
     if (url.startsWith(PROXY)) {
         const input = typeof raw === 'string' ? new Request(url, init) : raw;
         const port = Number(url.slice(PROXY.length).split('/')[0]);
         if (deadPorts.includes(port)) throw new TypeError('Failed to fetch');
+        const token = /[?&]t=([^&]*)/.exec(url)[1];
+        if (tokens[port] && tokens[port]() !== token) {
+            return new Response('{"error":"bad token"}', { status: 401, headers: { 'X-Proxy-Error': 'bad-token' } });
+        }
         const target = decodeURIComponent(url.split('&url=')[1]);
         const host = new URL(target).host;
         const body = input.method === 'GET' || input.method === 'HEAD' ? '' : await input.text();
@@ -136,10 +141,57 @@ describe('proxy mode', () => {
         expect(page.learn).not.toHaveBeenCalled();
     });
 
-    test('the body of a POST that failed directly is still sent through the proxy', async () => {
-        const { scope } = makeScope(fakePage(proxyConfig()), network({ failing: ['le.example.com'], issuers: { 'le.example.com': 'ISRG' } }));
-        const json = await (await scope.fetch('https://le.example.com/api', { method: 'POST', body: 'payload' })).json();
+    test('a POST to an unknown host that failed directly is not sent again through the proxy', async () => {
+        const { scope, original } = makeScope(fakePage(proxyConfig()), network({ failing: ['le.example.com'], issuers: { 'le.example.com': 'ISRG' } }));
+        await expect(scope.fetch('https://le.example.com/api', { method: 'POST', body: 'payload' })).rejects.toThrow('Failed to fetch');
+        expect(original).toHaveBeenCalledTimes(1);
+    });
+
+    test('a POST to a known host goes through the proxy with its body', async () => {
+        const { scope } = makeScope(fakePage(proxyConfig()), network());
+        const json = await (await scope.fetch('https://debrid-link.com/api', { method: 'POST', body: 'payload' })).json();
         expect(json).toEqual(expect.objectContaining({ via: 'proxy', method: 'POST', body: 'payload' }));
+    });
+
+    // Revisão c1 da F3.7: the service died and the page restarted it (image health check), with
+    // a new token on the same port; the worker still had the old one.
+    test('401 bad-token after the page restarted the service: current configuration, then one more try', async () => {
+        let current = proxyConfig(47443, 'old', [...SEED, 'victorgveloso.github.io']);
+        const page = fakePage(() => current);
+        page.restart.mockImplementation(() => Promise.resolve(current));
+        const { scope } = makeScope(page, network({ tokens: { 47443: () => current.token } }));
+        const url = 'https://victorgveloso.github.io/animes-season-addon/catalog/movie/x.json';
+        expect((await scope.fetch(url)).status).toBe(200);
+        current = { ...current, token: 'new' };
+        const response = await scope.fetch(url, { method: 'POST', body: 'kept' });
+        expect(response.status).toBe(200);
+        expect(await response.json()).toEqual(expect.objectContaining({ via: 'proxy', body: 'kept' }));
+        expect(page.restart).toHaveBeenCalledWith(47443, 'old');
+        // The new configuration is kept: no more restarts.
+        expect((await scope.fetch(url)).status).toBe(200);
+        expect(page.restart).toHaveBeenCalledTimes(1);
+    });
+
+    test('401 bad-token while learning a host: retried with the current token, then learned', async () => {
+        let current = proxyConfig(47443, 'old');
+        const page = fakePage(() => current);
+        page.restart.mockImplementation(() => Promise.resolve(current));
+        const { scope } = makeScope(page, network({ failing: ['addon.example.com'], issuers: { 'addon.example.com': "Let's Encrypt" }, tokens: { 47443: () => current.token } }));
+        await scope.fetch('https://images.metahub.space/a');
+        current = { ...current, token: 'new' };
+        const json = await (await scope.fetch('https://addon.example.com/manifest.json')).json();
+        expect(json).toEqual(expect.objectContaining({ via: 'proxy', target: 'https://addon.example.com/manifest.json' }));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(page.learn).toHaveBeenCalledWith('addon.example.com');
+    });
+
+    test('401 bad-token and the page has no newer service: the 401 is returned (no loop)', async () => {
+        const page = fakePage(proxyConfig(47443, 'old'));
+        page.restart.mockImplementation(() => Promise.resolve({ mode: 'proxy', ready: false, hosts: SEED }));
+        const { scope } = makeScope(page, network({ tokens: { 47443: () => 'other' } }));
+        const response = await scope.fetch('https://images.metahub.space/a');
+        expect(response.status).toBe(401);
+        expect(page.restart).toHaveBeenCalledTimes(1);
     });
 
     test('errors other than TypeError are not retried', async () => {
