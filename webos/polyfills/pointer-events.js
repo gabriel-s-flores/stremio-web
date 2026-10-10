@@ -37,8 +37,15 @@ const pointerDefaults = (init) => ({
     isPrimary: true,
 });
 
+const LEAVING = { pointerout: true, pointerleave: true };
+const ENTERING = { pointerover: true, pointerenter: true };
+
 // A MouseEvent with the PointerEvent fields and prototype: the MouseEvent getters keep working
 // (they check the native event, not the prototype) and `instanceof MouseEvent` still holds.
+// toElement/fromElement follow the mouse event of the same kind. Chromium 53's legacy getters only
+// know mouseout/mouseover and give the target itself for any other type, and React reads
+// `relatedTarget || toElement`: a pointerout leaving the page (relatedTarget null) would look like
+// a move onto its own target, and no onPointerLeave would fire.
 const createPointerEventClass = (global) => {
     function PointerEvent(type, init = {}) {
         const event = new global.MouseEvent(type, init);
@@ -50,6 +57,18 @@ const createPointerEventClass = (global) => {
                 enumerable: true,
                 configurable: true,
             });
+        });
+        Object.defineProperties(event, {
+            toElement: {
+                get: () => (LEAVING[type] ? event.relatedTarget : event.target),
+                enumerable: true,
+                configurable: true,
+            },
+            fromElement: {
+                get: () => (ENTERING[type] ? event.relatedTarget : event.target),
+                enumerable: true,
+                configurable: true,
+            },
         });
         return event;
     }

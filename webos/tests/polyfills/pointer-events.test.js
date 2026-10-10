@@ -98,6 +98,34 @@ describe('Pointer Events polyfill', () => {
         }).toThrow(TypeError);
     });
 
+    test('toElement and fromElement follow the mouse event of the same kind (React reads them)', () => {
+        const global = createGlobal();
+        install(global);
+        const target = new Target();
+        const related = new Target();
+        // React's EnterLeaveEventPlugin: `to` of an out event, `related` of an over event.
+        const reactTo = (event) => event.relatedTarget || event.toElement;
+        const reactFrom = (event) => event.relatedTarget || event.fromElement;
+
+        const leaving = new global.PointerEvent('pointerout', { bubbles: true, relatedTarget: null });
+        target.dispatchEvent(leaving);
+        expect(reactTo(leaving)).toBe(null);
+        expect(leaving.fromElement).toBe(target);
+
+        const entering = new global.PointerEvent('pointerover', { bubbles: true, relatedTarget: null });
+        target.dispatchEvent(entering);
+        expect(reactFrom(entering)).toBe(null);
+        expect(entering.toElement).toBe(target);
+
+        const moving = new global.PointerEvent('pointerout', { relatedTarget: related });
+        target.dispatchEvent(moving);
+        expect(reactTo(moving)).toBe(related);
+        expect(new global.PointerEvent('pointerleave').toElement).toBe(null);
+        const down = new global.PointerEvent('pointerdown');
+        target.dispatchEvent(down);
+        expect([down.toElement, down.fromElement]).toEqual([target, target]);
+    });
+
     test('listens to every mouse event in the capture phase of the window', () => {
         const global = createGlobal();
         install(global);
