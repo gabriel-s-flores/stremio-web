@@ -14,6 +14,9 @@ describe('src/common/interfaceScale.webos.ts', () => {
         const upstream = read('interfaceScale.ts');
         const webos = read('interfaceScale.webos.ts');
         expect(upstream).toContain(UPSTREAM_CHECK);
+        // The fix itself: without it core-js gives main.css the origin "null" and no media query is rescaled.
+        expect(webos).toContain(WEBOS_CHECK);
+        expect(webos).not.toContain(UPSTREAM_CHECK);
         const body = webos
             .replace(/^(\/\/ .*\n)+\n/, '')
             .replace(/( {8}\/\/ .*\n)+(?= {8}if \(sheet\.href)/, '')
