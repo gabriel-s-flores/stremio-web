@@ -20,8 +20,9 @@ jest.mock('react', () => ({
     },
     useCallback: (fn, deps) => {
         const i = mockHooks.index++;
-        if (!(i in mockHooks.refs)) mockHooks.refs[i] = { current: fn };
-        return deps.length === 0 ? mockHooks.refs[i].current : fn;
+        const previous = mockHooks.refs[i];
+        if (!previous || deps.some((dep, k) => dep !== previous.deps[k])) mockHooks.refs[i] = { current: fn, deps };
+        return mockHooks.refs[i].current;
     },
     useEffect: (fn, deps) => {
         const i = mockHooks.index++;

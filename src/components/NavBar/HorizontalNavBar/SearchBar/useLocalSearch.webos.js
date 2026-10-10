@@ -39,7 +39,7 @@ const useLocalSearch = () => {
                 }
             },
         });
-    }, []);
+    }, [core]);
 
     const search = React.useCallback((query) => {
         lastQuery.current = query;
@@ -48,7 +48,7 @@ const useLocalSearch = () => {
             setAction(LOAD_ACTION);
         }
         dispatchSearch(query);
-    }, []);
+    }, [dispatchSearch]);
 
     // The records arrive after the query that asked for them: search again on the two state changes
     // of the load (Loading, then Ready or an error), so the suggestions show up without another key.
@@ -68,7 +68,7 @@ const useLocalSearch = () => {
         };
         core.on('state', onState);
         return () => core.off('state', onState);
-    }, [action]);
+    }, [action, core, dispatchSearch]);
 
     return {
         items,
