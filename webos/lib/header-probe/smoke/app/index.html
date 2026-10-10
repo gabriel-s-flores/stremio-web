@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Header Probe Smoke</title>
+<style>
+    body { margin: 0; padding: 40px 60px; background: #0c0b11; color: #e6e6f0; font: 20px/1.35 sans-serif; }
+    h1 { font-size: 34px; margin: 0 0 8px; }
+    #status { color: #9a9ab0; margin-bottom: 18px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #2a2a38; vertical-align: top; }
+    th { color: #9a9ab0; font-weight: normal; }
+    .ok { color: #7bd88f; }
+    .fail { color: #ff6b6b; }
+</style>
+</head>
+<body>
+<h1>Header probe · smoke (webOS TV 4.0, Chromium 53)</h1>
+<div id="status">aguardando runSmoke(baseUrl, files)</div>
+<table><thead><tr><th>arquivo</th><th>resultado</th><th>vídeo / HDR / DV</th><th>áudio</th><th>legendas</th><th>req / bytes / ms</th></tr></thead><tbody id="rows"></tbody></table>
+<script src="probe.bundle.js"></script>
+<script>
+// ES5 only: this file is not transpiled.
+(function () {
+    var rows = document.getElementById('rows');
+    var status = document.getElementById('status');
+    function cell(text, className) {
+        var td = document.createElement('td');
+        td.textContent = text;
+        if (className) td.className = className;
+        return td;
+    }
+    function describe(result) {
+        var s = result.summary;
+        var dv = s.dolbyVision ? ' DV P' + s.dolbyVision.profileName + ' (BL ' + s.dolbyVision.baseLayer + ')' : '';
+        var audio = result.tracks.filter(function (t) { return t.type === 'audio'; }).map(function (t) {
+            return t.codec + (t.audio.profile ? ' [' + t.audio.profile + ']' : '') + ' ' + t.audio.channels + 'ch ' + (t.language || '?') + (t.default ? '*' : '');
+        }).join(', ');
+        var subs = result.tracks.filter(function (t) { return t.type === 'subtitle'; }).map(function (t) {
+            return t.codec + ' ' + (t.language || '?');
+        }).join(', ');
+        return [result.container + ' ' + (s.videoCodec || '-') + ' ' + (s.width || '?') + 'x' + (s.height || '?'), (s.hdr || 'sdr?') + dv, audio || '-', subs || '-'];
+    }
+    window.__smoke = { started: false, complete: false, results: [] };
+    window.runSmoke = function (baseUrl, files) {
+        window.__smoke = { started: true, complete: false, userAgent: navigator.userAgent, results: [] };
+        status.textContent = 'rodando ' + files.length + ' arquivo(s) em ' + baseUrl;
+        var chain = Promise.resolve();
+        files.forEach(function (file) {
+            chain = chain.then(function () {
+                var started = Date.now();
+                return HeaderProbe.probeUrl(baseUrl + file).then(function (result) {
+                    result.elapsedMs = Date.now() - started;
+                    window.__smoke.results.push({ file: file, ok: true, result: result });
+                    var tr = document.createElement('tr');
+                    var parts = describe(result);
+                    tr.appendChild(cell(file));
+                    tr.appendChild(cell('ok', 'ok'));
+                    tr.appendChild(cell(parts[0] + ' · ' + parts[1]));
+                    tr.appendChild(cell(parts[2]));
+                    tr.appendChild(cell(parts[3]));
+                    tr.appendChild(cell(result.stats.requests + ' / ' + Math.round(result.stats.bytesRead / 1024) + ' KB / ' + result.elapsedMs));
+                    rows.appendChild(tr);
+                }, function (error) {
+                    window.__smoke.results.push({ file: file, ok: false, error: { code: error && error.code, message: error && error.message } });
+                    var tr = document.createElement('tr');
+                    tr.appendChild(cell(file));
+                    tr.appendChild(cell('erro ' + (error && error.code) + ': ' + (error && error.message), 'fail'));
+                    rows.appendChild(tr);
+                });
+            });
+        });
+        return chain.then(function () {
+            window.__smoke.complete = true;
+            status.textContent = 'concluído: ' + window.__smoke.results.filter(function (r) { return r.ok; }).length + '/' + files.length + ' ok · ' + navigator.userAgent;
+            return JSON.stringify(window.__smoke);
+        });
+    };
+})();
+</script>
+</body>
+</html>
