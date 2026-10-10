@@ -16,6 +16,9 @@ const presetEnv = ['@babel/preset-env', {
     bugfixes: true,
     useBuiltIns: 'usage',
     corejs: CORE_JS_VERSION,
+    // queueMicrotask comes from webos/polyfills (F1.3), prefixed to the page and the worker.
+    // Otherwise core-js is injected into that very module and installs its own first.
+    exclude: ['web.queue-microtask'],
 }];
 
 const babelLoader = (presets) => ({
