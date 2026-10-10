@@ -1,0 +1,95 @@
+// webOS TV 4.x build only (resolved instead of styles.less by webos/webpack/app.js): the upstream
+// styles plus fixes for Chromium 53, which has neither CSS Grid nor `display: contents`.
+
+@import './styles.less';
+
+// The grid of the catalog becomes a wrapping flex row in the same DOM order, so the spatial
+// navigation moves through it as before. The gap is split into half a gap on each side of every
+// item and half a gap less of padding on the container, so the items have the width of the grid
+// columns: (W - 2 × (1.5 - 0.25)rem) / N - 0.5rem = (W - 3rem - (N - 1) × 0.5rem) / N.
+// The number of columns comes from --webos-columns, set below with the media queries of the grid.
+.discover-container {
+    .discover-content {
+        .catalog-container {
+            .meta-items-container {
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                padding: 0 1.25rem;
+
+                > * {
+                    flex: none;
+                    width: calc(100% / var(--webos-columns) - 0.5rem);
+                    margin: 0 0.25rem 0.5rem;
+                }
+            }
+
+            // `display: contents` is unknown: the wrapper became a block and the select inputs
+            // stacked up. As a flex row filling the container, they lay out as its own children.
+            // Now that the wrapper has a box, the `overflow: hidden` every element gets from
+            // src/App/styles.less would clip the dropdowns, which open below it.
+            // The EPG layout has its own wrapper styles.
+            .selectable-inputs-container:not(.epg-inputs) {
+                .selectable-inputs {
+                    flex: 1;
+                    display: flex;
+                    min-width: 0;
+                    overflow: visible;
+                }
+            }
+        }
+    }
+}
+
+.webos-columns(@columns) {
+    .discover-container {
+        .discover-content {
+            .catalog-container {
+                .meta-items-container {
+                    --webos-columns: @columns;
+                }
+            }
+        }
+    }
+}
+
+@media only screen and (min-width: @xxlarge) {
+    .webos-columns(10);
+}
+
+@media only screen and (max-width: @xxlarge) {
+    .webos-columns(9);
+}
+
+@media only screen and (max-width: @xlarge) {
+    .webos-columns(8);
+}
+
+@media only screen and (max-width: @large) {
+    .webos-columns(7);
+}
+
+@media only screen and (max-width: @normal) {
+    .webos-columns(6);
+}
+
+@media only screen and (max-width: @medium) {
+    .webos-columns(5);
+}
+
+@media only screen and (max-width: @small) {
+    .webos-columns(4);
+}
+
+@media only screen and (max-width: @xsmall) {
+    .webos-columns(5);
+}
+
+@media only screen and (max-width: @xxsmall) {
+    .webos-columns(4);
+}
+
+@media only screen and (max-width: @minimum) {
+    .webos-columns(3);
+}
