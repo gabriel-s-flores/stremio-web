@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Reserva uma instância livre do pool de emuladores, sobe um boot limpo, roda o comando e desliga.
 # A reserva é uma trava flock por instância (sem daemon): vários agentes testam ao mesmo tempo
-# sem colisão, e a trava some sozinha se o processo morrer.
+# sem colisão, e a trava some sozinha se o processo morrer. Nenhum filho herda o FD da trava
+# (`{LOCKFD}>&-`): um QEMU em segundo plano que o herdasse a seguraria depois de um SIGKILL do emu-run.
+# Se o emu-run morrer à força, o QEMU fica órfão mas a trava é liberada; a próxima reserva da
+# instância o encerra (`emulator-qemu.sh stop`) antes do boot limpo.
 #
 #   emu-run [--instance N] [--keep-state] [--timeout MIN] [--profile c8] -- <comando...>
 #
@@ -49,20 +52,25 @@ else
 fi
 [[ -n "$EMU_N" ]] || { echo "erro: nenhuma instância livre" >&2; exit 1; }
 
-EMU="$HERE/emulator-qemu.sh -i $EMU_N"
-cleanup() { $EMU stop >/dev/null 2>&1 || true; }
+# Todo filho roda sem o FD da trava (ver o topo).
+emu() { "$HERE/emulator-qemu.sh" -i "$EMU_N" "$@" {LOCKFD}>&-; }
+cleanup() { emu stop >/dev/null 2>&1 || true; }
 trap cleanup EXIT
-$EMU stop >/dev/null 2>&1 || true
-[[ "$keep" == 1 ]] || $EMU reset >/dev/null
+# QEMU órfão de uma reserva anterior que morreu sem limpar (SIGKILL, crash do host): encerra antes do boot.
+if orphan="$(emu pid 2>/dev/null)"; then
+    echo "emu-run: QEMU órfão (pid $orphan) na instância $EMU_N; encerrando" >&2
+fi
+emu stop >/dev/null 2>&1 || true
+[[ "$keep" == 1 ]] || emu reset >/dev/null
 if [[ -n "$profile" ]]; then
     # Com cota de CPU o boot é bem mais lento: espera mais.
-    $EMU start headless --profile "$profile" >&2
-    $EMU wait "${EMU_BOOT_WAIT:-900}" >&2
+    emu start headless --profile "$profile" >&2
+    emu wait "${EMU_BOOT_WAIT:-900}" >&2
 else
-    $EMU start headless --smp 2 >&2
-    $EMU wait 240 >&2
+    emu start headless --smp 2 >&2
+    emu wait 240 >&2
 fi
-eval "$($EMU env)"
+eval "$(emu env)"
 echo "emu-run: instância $EMU_N pronta (ares $EMU_DEVICE, inspector $EMU_CDP_PORT)" >&2
 [[ -z "$profile" ]] || export EMU_PROFILE="$profile"
-timeout "$((timeout_min * 60))" "$@"
+timeout "$((timeout_min * 60))" "$@" {LOCKFD}>&-

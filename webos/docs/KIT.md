@@ -18,6 +18,7 @@ source ~/webos-tv-sdk/env.sh
 | `sdk/Emulator/v4.0.0/` | Emulador oficial LG webOS TV 4.0 (imagem `4.0.0-152 04.00.014 20180604`, VM VirtualBox) |
 | `sdk/Resources/Jre/` | JRE 8 da LG para o launcher gráfico do emulador (só com VirtualBox) |
 | `webos/tools/emulator-qemu.sh` | **Emulador sem root:** a mesma imagem em QEMU/KVM (QEMU do flatpak `org.gnome.Boxes`, instalado com `--user`) com overlay qcow2 em `run/` |
+| `webos/tools/emu-run` | Reserva uma instância livre do pool (trava `flock` por instância), boot limpo, roda o comando e desliga; ver [Pool de emuladores](#pool-de-emuladores-travas-e-recuperação) |
 | `webos/tools/emulator.sh` | O mesmo controle para o VirtualBox, se ele for instalado |
 | `webos/tools/cdp.mjs` | DevTools Protocol no Web Inspector (porta 9998): `targets`, `eval`, `screenshot`, `key`, `console`, `reload` |
 | `webos/tools/remote.mjs` | Teclas do controle remoto no emulador (porta 19001, protocolo do launcher LG) |
@@ -70,6 +71,22 @@ node webos/tools/media-server.mjs &                       # serve media-tests/fi
 emulator-qemu.sh start && emulator-qemu.sh wait && ares-launch -d emulator io.github.gabrielsflores.webosprobe
 webos/tools/play-test.sh http://10.0.2.2:8099/redirect/t2_multi.mkv 8 15   # 8 s, seek para 15 s
 ```
+
+## Pool de emuladores: travas e recuperação
+
+`webos/tools/emu-run -- <comando>` reserva uma instância livre (0 a 3; `--instance N` escolhe uma) com um `flock` em `~/webos-tv-sdk/run/emu-N.lock`, sobe um boot limpo, roda o comando e desliga. Só o próprio `emu-run` segura a trava: o QEMU e o comando rodam sem o FD dela. Se o `emu-run` morrer à força (SIGKILL, crash do host, reinício do T3), a trava é liberada na hora e o QEMU fica órfão; a próxima reserva da instância avisa (`QEMU órfão (pid …)`), encerra o órfão e segue com o boot limpo. Nada a fazer à mão nesse caso.
+
+Recuperação manual, se uma instância parecer presa (o `emu-run` ficando em "aguardando a instância N…"):
+
+```bash
+fuser -v ~/webos-tv-sdk/run/emu-N.lock          # quem segura a trava
+webos/tools/emulator-qemu.sh -i N pid           # PID do QEMU da instância (sai com 1 se parada)
+```
+
+- Se quem segura a trava é um `emu-run` vivo (e o `emu-run.log` do agente dele anda), a instância está em uso: espere ou use outra.
+- Se quem segura é só um `qemu-system-x86` (de um `emu-run` antigo que herdou o FD; os atuais não herdam), a instância não tem dono: `webos/tools/emulator-qemu.sh -i N stop` encerra o QEMU e libera a trava.
+- Nunca pare instâncias em uso por outros agentes.
+- Teste do cenário (sem emulador, ~20 s, usa a instância 9, fora do pool): `webos/tests/emu-run/lock-kill.sh`.
 
 ## TV real (só na Fase 8, quando tudo estiver pronto)
 
