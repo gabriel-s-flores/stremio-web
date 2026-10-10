@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 # Roda o smoke do core vendorizado num emulador reservado pelo emu-run e salva as evidências:
 #   webos/tools/build-run -- npx webpack --config webos/tests/core-smoke/webpack.config.js
-#   webos/tools/emu-run -- webos/tests/core-smoke/run [--baseline] [--app DIR] [pasta-de-saída]
+#   webos/tools/emu-run -- webos/tests/core-smoke/run [--baseline|--hide-wasm|--npm-wasm|--instantiate-fail]
+#       [--max-steady-mb N] [--app DIR] [pasta-de-saída]
+# Sem opção: o core com o WebAssembly do Chromium 53 (a variante tem de ser wasm).
+# --hide-wasm: o worker apaga o WebAssembly antes do core; o carregador tem de usar o wasm2js.
+# --npm-wasm: o carregador lê o .wasm do npm (pós-MVP), que o V8 5.8 recusa no compile; tem de
+# trocar para o wasm2js.
+# --instantiate-fail: o instantiate nativo recebe imports vazios e o V8 5.8 recusa o link depois de
+# um compile bem-sucedido; tem de trocar para o wasm2js (e soltar o Module compilado).
+# --max-steady-mb N: reprova se o processo do app passar de N MB no estável.
 # --baseline: a mesma página com um worker vazio (sem o core), medida pelo mesmo amostrador.
 # --app: pasta do app a empacotar (padrão: build/app), por exemplo uma variante de diagnóstico.
 # POST_SECS (padrão 120): segundos de amostragem de memória depois do fim do smoke; "steady" é a
@@ -15,13 +23,19 @@ TOOLS="$(cd "$HERE/../../tools" && pwd)"
 APP_ID="io.github.gabrielsflores.coresmoke"
 APP_DIR="$HERE/build/app"
 MODE=core
+PARAMS=""
+MAX_STEADY_MB=""
 POST_SECS="${POST_SECS:-120}"
 OUT_DIR=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --baseline) MODE=baseline; shift ;;
+        --baseline) MODE=baseline; PARAMS='{"mode":"baseline"}'; shift ;;
+        --hide-wasm) MODE=wasm2js-hidden; PARAMS='{"webassembly":"hidden"}'; shift ;;
+        --npm-wasm) MODE=wasm2js-npm; PARAMS='{"wasm":"npm"}'; shift ;;
+        --instantiate-fail) MODE=wasm2js-instfail; PARAMS='{"instantiate":"fail"}'; shift ;;
+        --max-steady-mb) MAX_STEADY_MB="$2"; shift 2 ;;
         --app) APP_DIR="$(realpath "$2")"; shift 2 ;;
-        -*) echo "uso: run [--baseline] [--app DIR] [pasta-de-saída]" >&2; exit 2 ;;
+        -*) echo "uso: run [--baseline|--hide-wasm|--npm-wasm|--instantiate-fail] [--max-steady-mb N] [--app DIR] [pasta-de-saída]" >&2; exit 2 ;;
         *) OUT_DIR="$1"; shift ;;
     esac
 done
@@ -60,8 +74,8 @@ MON=$!
 sleep 5
 G_LAUNCH="$(guest_now)"
 T_LAUNCH=$(date +%s%3N)
-if [[ "$MODE" == baseline ]]; then
-    ares-launch -d "$EMU_DEVICE" "$APP_ID" -p '{"mode":"baseline"}'
+if [[ -n "$PARAMS" ]]; then
+    ares-launch -d "$EMU_DEVICE" "$APP_ID" -p "$PARAMS"
 else
     ares-launch -d "$EMU_DEVICE" "$APP_ID"
 fi
@@ -86,9 +100,9 @@ MON=""
 "${SSH[@]}" free > "$BASE-free.txt" 2>&1 || true
 
 python3 -I - "$BASE" "$MODE" "$UPTIME_START" "$(uptime)" "$T_LAUNCH" "$T_DONE" "$done" \
-    "$G_LAUNCH" "$G_DONE" "$G_END" <<'EOF'
+    "$G_LAUNCH" "$G_DONE" "$G_END" "$MAX_STEADY_MB" "${EMU_PROFILE:-}" <<'EOF'
 import json, sys
-base, mode, up_start, up_end, t_launch, t_done, done, g_launch, g_done, g_end = sys.argv[1:]
+base, mode, up_start, up_end, t_launch, t_done, done, g_launch, g_done, g_end, max_steady, profile = sys.argv[1:]
 g_launch, g_done, g_end = int(g_launch), int(g_done), int(g_end)
 raw = open(base + '-page.json').read().strip()
 try:
@@ -152,13 +166,27 @@ if page.get('ok') is not True:
     failures.append('ok=%s' % page.get('ok'))
 if page.get('errors'):
     failures.append('erros na página: %s' % json.dumps(page['errors'])[:300])
-if mode == 'core':
+if mode != 'baseline':
+    expect = page.get('expect') or {}
+    got = (page.get('worker') or {}).get('loader') or {}
+    if not expect or (got.get('variant'), got.get('reason')) != (expect.get('variant'), expect.get('reason')):
+        failures.append('variante %s (%s), esperada %s (%s)' % (
+            got.get('variant'), got.get('reason'), expect.get('variant'), expect.get('reason')))
     board = page.get('board') or {}
     if not board.get('catalogs') or board.get('ready') != board.get('catalogs'):
         failures.append('Board incompleto: %s' % board)
 
+steady_app = mem.get('steady', {}).get('appProcessMB')
+if max_steady:
+    if steady_app is None:
+        failures.append('sem medição estável do processo do app (limite %s MB)' % max_steady)
+    elif steady_app > float(max_steady):
+        failures.append('processo do app com %s MB no estável, acima do limite de %s MB' % (steady_app, max_steady))
+
 result = {
     'mode': mode,
+    'profile': profile or None,
+    'maxSteadyMB': float(max_steady) if max_steady else None,
     'passed': not failures,
     'failures': failures,
     'page': page,
@@ -167,8 +195,10 @@ result = {
     'guestMemory': mem,
 }
 json.dump(result, open(base + '.json', 'w'), indent=2, ensure_ascii=False)
-print('resultado: %s · init=%s ms · discover=%s · board=%s' % (
+loader = (page.get('worker') or {}).get('loader') or {}
+print('resultado: %s · variante=%s (%s) · init=%s ms · discover=%s · board=%s' % (
     'PASSOU' if not failures else 'FALHOU: ' + '; '.join(failures),
+    loader.get('variant'), loader.get('reason'),
     page.get('timings', {}).get('initMs'), page.get('discover'), page.get('board')))
 print('memória: pico %s · estável %s' % (mem.get('peak'), mem.get('steady')))
 print(base + '.json')

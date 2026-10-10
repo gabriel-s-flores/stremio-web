@@ -5,10 +5,11 @@
 #   webos/core/build [--out DIR] [--work DIR] [--jobs N]
 #
 # Receita A: Rust 1.77.2 com gloo-utils 0.2 (recipe-a.patch), cargo build wasm32-unknown-unknown,
-# wasm-bindgen CLI 0.2.121 --target web, wasm-opt -O --signext-lowering, uma correção de uma linha
-# na glue (abaixo) e a glue, o bridge e o worker transpilados com o Babel do próprio pacote (mesmas
-# versões e .babelrc do build oficial).
-# Saída padrão: webos/vendor/stremio-core-web/ (mesmos nomes do pacote npm) + SOURCE.md.
+# wasm-bindgen CLI 0.2.121 --target web, wasm-opt -O --signext-lowering, correções na glue (abaixo)
+# e a glue, o bridge e o worker transpilados com o Babel do próprio pacote (mesmas versões e
+# .babelrc do build oficial). Do mesmo wasm sai a variante wasm2js (fallback sem WebAssembly).
+# Saída padrão: webos/vendor/stremio-core-web/ (mesmos nomes do pacote npm, mais o
+# stremio_core_web_bg.wasm2js.js) + SOURCE.md.
 # Termina com o gate webos/core/check-wasm.
 #
 # Só depende do kit em ~/webos-tv-sdk: o clone em src/stremio-core (tag stremio-core-web-v0.65.0,
@@ -26,11 +27,15 @@ VERSION="0.65.0-mvp"
 TOOLCHAIN="1.77.2"
 BINDGEN="$SDK/tools/bin/wasm-bindgen-0.2.121"
 WASM_OPT="$SDK/tools/binaryen-version_133/bin/wasm-opt"
+WASM2JS="$SDK/tools/binaryen-version_133/bin/wasm2js"
 PATCH="$HERE/recipe-a.patch"
 OUT="$REPO/webos/vendor/stremio-core-web"
 WORK="$SDK/run/core-build"
 JOBS=4
-FILES=(bridge.js worker.js stremio_core_web.js stremio_core_web_bg.wasm package.json)
+W2JS=stremio_core_web_bg.wasm2js.js
+# Nome do global que o $W2JS define quando carregado por importScripts (webos/core/loader.js).
+W2JS_GLOBAL=stremio_core_web_wasm2js
+FILES=(bridge.js worker.js stremio_core_web.js stremio_core_web_bg.wasm "$W2JS" package.json)
 # bridge.js e worker.js não dependem do wasm: têm de sair iguais aos do npm 0.65.0.
 NPM_SHA256="51c490dcde610baad20f6bf0c2cfc87e6b886830c2c6f80080ce4a7a796199d1  bridge.js
 455af735f709befb35ea2b66ae70059551413d39fab5154b8de94823c288ddcc  worker.js"
@@ -86,29 +91,85 @@ step "wasm-bindgen --target web"
 "$BINDGEN" --target web --no-typescript --out-dir "$SRC/stremio-core-web/wasm_build" \
     "$WORK/target/wasm32-unknown-unknown/release/stremio_core_web.wasm"
 
-step "glue: TextDecoder recebe cópia da memória wasm"
-# No Chromium 53 do webOS, certos usos de uma view do memory.buffer seguidos de memory.grow derrubam
-# o processo do app (medido no emulador): TextDecoder.decode(view), crypto.getRandomValues(view) e
-# até new Uint8Array(view) depois de escrever na view. O core caía no primeiro grow, em
-# get_state('ctx'), pelo TextDecoder da glue; com slice() ele recebe uma cópia. O resto da glue só
-# usa padrões validados no emulador (escrita indexada na view inteira, subarray().set(), DataView).
-# Qualquer outro uso de view da memória precisa de repro no emulador antes.
+step "glue: correções para o Chromium 53 e para o wasm2js"
+# A glue é a mesma para as duas variantes (WASM e wasm2js). Cada trecho tem de aparecer uma vez.
+#
+# 1. TextDecoder recebe cópia da memória: no Chromium 53 do webOS, certos usos de uma view do
+#    memory.buffer seguidos de memory.grow derrubam o processo do app (medido no emulador):
+#    TextDecoder.decode(view), crypto.getRandomValues(view) e até new Uint8Array(view) depois de
+#    escrever na view. O core caía no primeiro grow, em get_state('ctx'), pelo TextDecoder da glue;
+#    com slice() ele recebe uma cópia. O resto da glue só usa padrões validados no emulador (escrita
+#    indexada na view inteira, subarray().set(), DataView). Qualquer outro uso de view da memória
+#    precisa de repro no emulador antes. No wasm2js a cópia é inofensiva (só custa a cópia).
+# 2 e 3. Views em cache refeitas quando o buffer muda: no wasm2js a memória é um ArrayBuffer comum,
+#    trocado por outro maior no grow, e o antigo não é destacado (byteLength continua > 0). Sem isso
+#    a glue lê e escreve no buffer velho (no spike: strings UTF-8 inválidas e o trap "abort"). No WASM o buffer
+#    também muda a cada grow, então a checagem equivale à original.
+# 4. Gancho no __wbg_load: se o argumento traz webosInstantiate(imports), a glue entrega os imports
+#    a ele, que devolve { instance, module }. É assim que webos/core/loader.js escolhe WASM ou
+#    wasm2js em runtime sem que a glue precise do objeto WebAssembly.
 node -e '
     const fs = require("fs");
     const file = process.argv[1];
-    const from = "cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len))";
-    const src = fs.readFileSync(file, "utf8");
-    const count = src.split(from).length - 1;
-    if (count !== 1) {
-        console.error("erro: trecho da glue encontrado " + count + " vezes (esperado 1): " + from);
-        process.exit(1);
+    const edits = [
+        ["cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len))",
+         "cachedTextDecoder.decode(getUint8ArrayMemory0().slice(ptr, ptr + len))"],
+        ["cachedDataViewMemory0 === null || cachedDataViewMemory0.buffer.detached === true || (cachedDataViewMemory0.buffer.detached === undefined && cachedDataViewMemory0.buffer !== wasm.memory.buffer)",
+         "cachedDataViewMemory0 === null || cachedDataViewMemory0.buffer !== wasm.memory.buffer"],
+        ["cachedUint8ArrayMemory0 === null || cachedUint8ArrayMemory0.byteLength === 0",
+         "cachedUint8ArrayMemory0 === null || cachedUint8ArrayMemory0.buffer !== wasm.memory.buffer"],
+        ["async function __wbg_load(module, imports) {\n",
+         "async function __wbg_load(module, imports) {\n" +
+         "    if (module && typeof module.webosInstantiate === \"function\") return await module.webosInstantiate(imports);\n"]
+    ];
+    let src = fs.readFileSync(file, "utf8");
+    for (const [from, to] of edits) {
+        const count = src.split(from).length - 1;
+        if (count !== 1) {
+            console.error("erro: trecho da glue encontrado " + count + " vezes (esperado 1): " + from);
+            process.exit(1);
+        }
+        src = src.replace(from, () => to);
     }
-    fs.writeFileSync(file, src.replace(from, from.replace(".subarray(", ".slice(")));
+    fs.writeFileSync(file, src);
 ' "$SRC/stremio-core-web/wasm_build/stremio_core_web.js"
 
 step "wasm-opt -O --signext-lowering"
 "$WASM_OPT" -O --signext-lowering "$SRC/stremio-core-web/wasm_build/stremio_core_web_bg.wasm" \
     -o "$SRC/stremio-core-web/stremio_core_web_bg.wasm"
+
+step "wasm2js -O (variante sem WebAssembly)"
+# O mesmo wasm MVP traduzido para JS. A saída do wasm2js é um módulo ES que importa a glue e se
+# instancia ao carregar; aqui ela vira um script clássico que só define a fábrica asmFunc(imports)
+# (no global $W2JS_GLOBAL, ou module.exports no Node), para o carregador instanciar com os imports
+# da glue quando faltar o WebAssembly.
+"$WASM2JS" "$SRC/stremio-core-web/stremio_core_web_bg.wasm" -O -o "$SRC/stremio-core-web/wasm_build/$W2JS.mjs"
+node -e '
+    const fs = require("fs");
+    const [from, to, name] = process.argv.slice(1);
+    const lines = fs.readFileSync(from, "utf8").split("\n");
+    const head = "import * as $_stremio_core_web_bg_js from \x27./stremio_core_web_bg.js\x27;";
+    const tail = lines.indexOf("var retasmFunc = asmFunc({");
+    const body = lines.slice(1, tail);
+    if (lines[0] !== head || tail < 0 || body.some((l) => /^(import|export) /.test(l))
+        || body.filter((l) => l === "function asmFunc(imports) {").length !== 1) {
+        console.error("erro: saída do wasm2js em formato inesperado (" + from + ")");
+        process.exit(1);
+    }
+    fs.writeFileSync(to, [
+        "// @stremio/stremio-core-web 0.65.0 (MVP) traduzido pelo wasm2js; gerado por webos/core/build.",
+        "// Define a fábrica asmFunc(imports), que devolve os exports do core como um WebAssembly.Instance.",
+        "(function (root, factory) {",
+        "    if (typeof module === \x27object\x27 && module.exports) module.exports = factory();",
+        "    else root." + name + " = factory();",
+        "})(typeof self !== \x27undefined\x27 ? self : this, function () {",
+        body.join("\n"),
+        "return asmFunc;",
+        "});",
+        ""
+    ].join("\n"));
+' "$SRC/stremio-core-web/wasm_build/$W2JS.mjs" "$SRC/stremio-core-web/$W2JS" "$W2JS_GLOBAL"
+node --check "$SRC/stremio-core-web/$W2JS"
 
 step "Babel (devDependencies e .babelrc do upstream)"
 (
@@ -133,7 +194,7 @@ step "Babel (devDependencies e .babelrc do upstream)"
 step "copiando para $OUT"
 mkdir -p "$OUT"
 for f in "${FILES[@]}"; do rm -f "$OUT/$f"; done
-cp "$SRC/stremio-core-web/"{bridge.js,worker.js,stremio_core_web.js,stremio_core_web_bg.wasm} "$OUT/"
+cp "$SRC/stremio-core-web/"{bridge.js,worker.js,stremio_core_web.js,stremio_core_web_bg.wasm,"$W2JS"} "$OUT/"
 cp "$SRC/stremio-core-web/package.mvp.json" "$OUT/package.json"
 
 step "SOURCE.md"
@@ -153,8 +214,12 @@ Gerado por \`webos/core/build\`. Não edite à mão: rode o script de novo.
 - **wasm-bindgen:** $("$BINDGEN" --version), \`--target web --no-typescript\`
 - **Binaryen:** $("$WASM_OPT" --version), \`wasm-opt -O --signext-lowering\`
 - **Babel:** $BABEL_VERSIONS, com o \`.babelrc\` do upstream (como \`scripts/build.sh\`)
-- **Glue:** em \`getStringFromWasm0\`, \`TextDecoder.decode\` recebe \`slice()\` (cópia) em vez de \`subarray()\` (view da memória wasm). No Chromium 53 do webOS, certos usos de uma view do \`memory.buffer\` seguidos de \`memory.grow\` derrubam o processo do app (\`TextDecoder.decode(view)\`, \`crypto.getRandomValues(view)\`, \`new Uint8Array(view)\` depois de escrever na view). O resto da glue só usa padrões validados no emulador (escrita indexada na view inteira, \`subarray().set()\`, \`DataView\`); qualquer outro uso de view da memória precisa de repro no emulador antes
-- **Diferenças para o pacote npm:** só o \`stremio_core_web_bg.wasm\` (MVP), a glue \`stremio_core_web.js\` gerada para ele (com a correção acima) e a versão \`$VERSION\` no \`package.json\`. O \`bridge.js\` e o \`worker.js\` saem da mesma fonte e do mesmo Babel. \`README.md\` e \`rust-toolchain.toml\` do pacote npm não são copiados.
+- **wasm2js:** $("$WASM2JS" --version), \`wasm2js -O\` sobre o mesmo \`stremio_core_web_bg.wasm\`; a saída (módulo ES) vira um script clássico que define a fábrica \`asmFunc(imports)\` no global \`$W2JS_GLOBAL\` (\`$W2JS\`). Usado só quando falta o WebAssembly ou a compilação/instanciação do wasm falha (\`webos/core/loader.js\`)
+- **Glue** (a mesma para WASM e wasm2js):
+  1. em \`getStringFromWasm0\`, \`TextDecoder.decode\` recebe \`slice()\` (cópia) em vez de \`subarray()\` (view da memória wasm). No Chromium 53 do webOS, certos usos de uma view do \`memory.buffer\` seguidos de \`memory.grow\` derrubam o processo do app (\`TextDecoder.decode(view)\`, \`crypto.getRandomValues(view)\`, \`new Uint8Array(view)\` depois de escrever na view). O resto da glue só usa padrões validados no emulador (escrita indexada na view inteira, \`subarray().set()\`, \`DataView\`); qualquer outro uso de view da memória precisa de repro no emulador antes. No wasm2js a cópia é inofensiva;
+  2. e 3. o \`DataView\` e o \`Uint8Array\` em cache são refeitos quando \`buffer !== wasm.memory.buffer\`. No wasm2js o \`grow\` troca o \`ArrayBuffer\` sem destacar o antigo, e as checagens originais (\`detached\`, \`byteLength === 0\`) não percebem a troca;
+  4. \`__wbg_load\` aceita um objeto com \`webosInstantiate(imports)\`, que devolve \`{ instance, module }\`: é por ele que o carregador entrega à glue o core WASM ou o wasm2js
+- **Diferenças para o pacote npm:** o \`stremio_core_web_bg.wasm\` (MVP), o \`$W2JS\` (novo), a glue \`stremio_core_web.js\` gerada para o MVP (com as correções acima) e a versão \`$VERSION\` no \`package.json\`. O \`bridge.js\` e o \`worker.js\` saem da mesma fonte e do mesmo Babel. \`README.md\` e \`rust-toolchain.toml\` do pacote npm não são copiados.
 
 ## Checksums (sha256)
 

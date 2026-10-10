@@ -632,7 +632,7 @@ function getArrayU8FromWasm0(ptr, len) {
 }
 var cachedDataViewMemory0 = null;
 function getDataViewMemory0() {
-  if (cachedDataViewMemory0 === null || cachedDataViewMemory0.buffer.detached === true || cachedDataViewMemory0.buffer.detached === undefined && cachedDataViewMemory0.buffer !== wasm.memory.buffer) {
+  if (cachedDataViewMemory0 === null || cachedDataViewMemory0.buffer !== wasm.memory.buffer) {
     cachedDataViewMemory0 = new DataView(wasm.memory.buffer);
   }
   return cachedDataViewMemory0;
@@ -642,7 +642,7 @@ function getStringFromWasm0(ptr, len) {
 }
 var cachedUint8ArrayMemory0 = null;
 function getUint8ArrayMemory0() {
-  if (cachedUint8ArrayMemory0 === null || cachedUint8ArrayMemory0.byteLength === 0) {
+  if (cachedUint8ArrayMemory0 === null || cachedUint8ArrayMemory0.buffer !== wasm.memory.buffer) {
     cachedUint8ArrayMemory0 = new Uint8Array(wasm.memory.buffer);
   }
   return cachedUint8ArrayMemory0;
@@ -790,61 +790,70 @@ function _wbg_load() {
             }
             return false;
           };
+          if (!(module && typeof module.webosInstantiate === "function")) {
+            _context.next = 5;
+            break;
+          }
+          _context.next = 4;
+          return module.webosInstantiate(imports);
+        case 4:
+          return _context.abrupt("return", _context.sent);
+        case 5:
           if (!(typeof Response === 'function' && module instanceof Response)) {
-            _context.next = 25;
+            _context.next = 29;
             break;
           }
           if (!(typeof WebAssembly.instantiateStreaming === 'function')) {
-            _context.next = 17;
+            _context.next = 21;
             break;
           }
-          _context.prev = 3;
-          _context.next = 6;
+          _context.prev = 7;
+          _context.next = 10;
           return WebAssembly.instantiateStreaming(module, imports);
-        case 6:
+        case 10:
           return _context.abrupt("return", _context.sent);
-        case 9:
-          _context.prev = 9;
-          _context.t0 = _context["catch"](3);
+        case 13:
+          _context.prev = 13;
+          _context.t0 = _context["catch"](7);
           validResponse = module.ok && expectedResponseType(module.type);
           if (!(validResponse && module.headers.get('Content-Type') !== 'application/wasm')) {
-            _context.next = 16;
+            _context.next = 20;
             break;
           }
           console.warn("`WebAssembly.instantiateStreaming` failed because your server does not serve Wasm with `application/wasm` MIME type. Falling back to `WebAssembly.instantiate` which is slower. Original error:\n", _context.t0);
-          _context.next = 17;
+          _context.next = 21;
           break;
-        case 16:
+        case 20:
           throw _context.t0;
-        case 17:
-          _context.next = 19;
+        case 21:
+          _context.next = 23;
           return module.arrayBuffer();
-        case 19:
+        case 23:
           bytes = _context.sent;
-          _context.next = 22;
+          _context.next = 26;
           return WebAssembly.instantiate(bytes, imports);
-        case 22:
+        case 26:
           return _context.abrupt("return", _context.sent);
-        case 25:
-          _context.next = 27;
+        case 29:
+          _context.next = 31;
           return WebAssembly.instantiate(module, imports);
-        case 27:
+        case 31:
           instance = _context.sent;
           if (!(instance instanceof WebAssembly.Instance)) {
-            _context.next = 32;
+            _context.next = 36;
             break;
           }
           return _context.abrupt("return", {
             instance: instance,
             module: module
           });
-        case 32:
+        case 36:
           return _context.abrupt("return", instance);
-        case 33:
+        case 37:
         case "end":
           return _context.stop();
       }
-    }, _callee, null, [[3, 9]]);
+    }, _callee, null, [[7, 13]]);
   }));
   return _wbg_load.apply(this, arguments);
 }
