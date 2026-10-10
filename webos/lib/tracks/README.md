@@ -38,6 +38,8 @@ Faixas de áudio e legendas embutidas do Player no webOS (F5.4): de onde vem a l
 ## Medido no emulador (`webos/tests/player/tracks.sh`)
 
 - **A troca pelo elemento funciona:** depois de escolher "Português" no menu, só `audioTracks[1].enabled` fica `true`, o vídeo segue andando e o menu marca a faixa. Nenhuma chamada Luna `selectTrack` de áudio.
+- **Escolha inicial:** com o idioma `eng` (configuração do modo convidado), o probe termina em ~0,6 s, antes de o vídeo tocar; a troca para `AC3 5.1` fica pendente e é aplicada no 1º `playing` (`audioTracks` = `[false, false, true]` já na 1ª amostra).
+- **Estabilidade:** a 1ª mídia após o boot às vezes trava em `readyState 0` com o host carregado (vários emuladores do pool ao mesmo tempo). Num A/B nas mesmas condições, a base sem nada desta lib travou também (2 de 2), e uma variante com o probe adiado para depois do `playing` travou uma vez sem ter feito probe: o probe não é a causa.
 - **Log do pipeline:** não dá para ler no emulador com o usuário `developer` (`/var/log` aponta para `/tmp/var/log`, que só tem `bootd.log` e `configd.log`; `crashd` sem permissão). A evidência da troca é o `audioTracks[i].enabled` (o emulador também não tem placa de som).
 
 ## Testes
