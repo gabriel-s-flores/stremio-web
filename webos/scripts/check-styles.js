@@ -2,8 +2,8 @@
 // Guard of the webOS root styles (part of pnpm webos:check-syntax):
 //   node webos/scripts/check-styles.js [build-webos]
 // The main.css of the build must carry the html:root rule of webos/styles/app.less: html sized by
-// --dynamic-viewport-* and the --safe-area-inset-* set to zero, without max() or env(), which
-// Chromium 53 lacks. Without it html, body and #app are 0px tall and the screen shows only the
+// --dynamic-viewport-* and the --safe-area-inset-* set to the overscan margins of the TV (F2.6),
+// without max() or env(), which Chromium 53 lacks. Without it html, body and #app are 0px tall and the screen shows only the
 // background color. It also checks that the pointer-events flex-gap-polyfill adds were turned into
 // the switches the Button root sets (webos/webpack/postcss-fgp-pointer-events.js); left as they are,
 // buttons with a gap do not take clicks on their background. No min()/max()/clamp() may be left
@@ -14,6 +14,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..', '..');
+const { TV } = require('../webpack/postcss-math-functions');
 
 // The postcss the build uses (through postcss-loader; not a direct dependency).
 const postcss = require(require.resolve('postcss', {
@@ -27,11 +28,14 @@ const MAX_REPORTED = 10;
 const REQUIRED = {
     'width': 'var(--dynamic-viewport-width)',
     'height': 'var(--dynamic-viewport-height)',
-    '--safe-area-inset-top': '0rem',
-    '--safe-area-inset-right': '0rem',
-    '--safe-area-inset-bottom': '0rem',
-    '--safe-area-inset-left': '0rem',
+    '--safe-area-inset-top': `calc(${TV.overscan.y}px / var(--interface-scale))`,
+    '--safe-area-inset-right': `calc(${TV.overscan.x}px / var(--interface-scale))`,
+    '--safe-area-inset-bottom': `calc(${TV.overscan.y}px / var(--interface-scale))`,
+    '--safe-area-inset-left': `calc(${TV.overscan.x}px / var(--interface-scale))`,
 };
+
+// cssnano drops the spaces around `/` in calc().
+const same = (a, b) => a !== undefined && a.replace(/\s+/g, '') === b.replace(/\s+/g, '');
 
 // Problems with the root rule in a CSS text ([] if it is there), and pointer-events left by
 // flex-gap-polyfill (webos/webpack/postcss-fgp-pointer-events.js drops them).
@@ -66,7 +70,7 @@ const stylesProblems = (css) => {
         problems.push(`${rawMath.length} declaration(s) still use min()/max()/clamp(), which Chromium 53 drops: ${shown}${more}`);
     }
     Object.entries(REQUIRED).forEach(([prop, value]) => {
-        if (declarations[prop] !== value) {
+        if (!same(declarations[prop], value)) {
             problems.push(`html:root needs ${prop}: ${value} (found ${declarations[prop] === undefined ? 'nothing' : declarations[prop]})`);
         }
     });

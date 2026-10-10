@@ -32,6 +32,14 @@ describe('webos/styles/app.less', () => {
 describe('webos/scripts/check-styles', () => {
     test('accepts the rule', () => {
         expect(stylesProblems(rule(GOOD))).toEqual([]);
+        // as cssnano writes it
+        expect(stylesProblems(rule(GOOD.replace(/ \/ /g, '/')))).toEqual([]);
+    });
+
+    test('rejects safe areas left at zero: they hold the overscan margins (F2.6)', () => {
+        expect(stylesProblems(rule(GOOD.replace(/--safe-area-inset-top:[^;]*/, '--safe-area-inset-top:0rem')))).toEqual([
+            'html:root needs --safe-area-inset-top: calc(33px / var(--interface-scale)) (found 0rem)',
+        ]);
     });
 
     test('rejects a missing or empty rule', () => {
@@ -43,7 +51,7 @@ describe('webos/scripts/check-styles', () => {
         expect(stylesProblems(rule(GOOD.replace('height:var(--dynamic-viewport-height)', 'height:100%')))).toEqual([
             'html:root needs height: var(--dynamic-viewport-height) (found 100%)',
         ]);
-        expect(stylesProblems(rule(GOOD.replace(/--safe-area-inset-left:0rem;?/, '')))).toHaveLength(1);
+        expect(stylesProblems(rule(GOOD.replace(/--safe-area-inset-left:[^;]*;?/, '')))).toHaveLength(1);
     });
 
     test('rejects max() and env()', () => {

@@ -11,12 +11,43 @@ html:root {
     height: var(--dynamic-viewport-height);
 
     // The safe area insets come from env(), which Chromium 53 lacks: every declaration using them
-    // (paddings, top/bottom, calc()) would be invalid and fall back to its initial value. A TV has
-    // no safe areas; overscan margins are a TV-scale task (F2.6).
-    --safe-area-inset-top: 0rem;
-    --safe-area-inset-right: 0rem;
-    --safe-area-inset-bottom: 0rem;
-    --safe-area-inset-left: 0rem;
+    // (paddings, top/bottom, calc()) would be invalid and fall back to its initial value.
+    // On a TV they hold the overscan margins (F2.6), so the components that keep their content off
+    // the screen edges for a phone notch (nav bars, MetaDetails, Player bars, popups, toasts) keep it
+    // inside the area every TV shows, while backgrounds and the video still fill the screen.
+    // 48px x 33px on the 1920x1080 screen: the safe area of LG's TV UI guideline (1216x666 of
+    // 1280x720, i.e. 2.5% and 3.1% per side), more than the 20px of LG's webOS TV overscan guide.
+    // Screen pixels: over the html zoom, like env() in src/App/styles.less.
+    // webos/webpack/postcss-math-functions.js resolves max(L, var(--safe-area-inset-*)) with these.
+    --safe-area-inset-top: calc(33px / var(--interface-scale));
+    --safe-area-inset-right: calc(48px / var(--interface-scale));
+    --safe-area-inset-bottom: calc(33px / var(--interface-scale));
+    --safe-area-inset-left: calc(48px / var(--interface-scale));
+
+    // Focus seen from 3 m (F2.6). The upstream ring is 2px; the html zoom of the TV scale
+    // (src/common/interfaceScale.webos.ts) draws this one ~5px wide.
+    --focus-outline-size: 3px;
+    --webos-focus-color: rgb(255, 255, 255);
+    --webos-focus-glow: 0 0 1rem 0.2rem rgba(123, 91, 245, 0.9);
+}
+
+// Whatever has the focus of the remote gets the same white ring, whatever its component draws.
+// [data-focus-visible-added] is the :focus-visible of webos/polyfills/focus.js, written as the
+// attribute Chromium 53 matches: the pointer of the Magic Remote does not show it. Inside the box:
+// the global `overflow: hidden` of src/App/styles.less clips what goes outside. !important: the
+// components set `outline: none` or their own thin outline on :focus, with selectors of any weight.
+// Chromium 53 does not round an outline: on rounded buttons the ring keeps square corners.
+html:root body [data-focus-visible-added]:not([class*='meta-item-link']) {
+    outline: var(--focus-outline-size) solid var(--webos-focus-color) !important;
+    outline-offset: calc(-1 * var(--focus-outline-size)) !important;
+}
+
+// Posters (MetaItem): the ring is drawn on the poster, as upstream, thicker, with the accent glow,
+// and the poster grows 5%, inside the 1rem padding of the item. A selected item (the preview of
+// Discover) and the pointer keep the thin upstream ring, so the focus stands out from them.
+html:root body [class*='meta-item-link'][data-focus-visible-added] [class*='poster-container'] {
+    box-shadow: 0 0 0 0.3rem var(--webos-focus-color), var(--webos-focus-glow);
+    transform: scale(1.05);
 }
 
 // The MetaPreview logo is capped by `max-width: min(30rem, 100%)`. Chromium 53 drops min(), so
