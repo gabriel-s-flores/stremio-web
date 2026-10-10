@@ -2,13 +2,18 @@
 // :hover on the last element under the pointer after webOS hides it, and only a real mouse move
 // updates it (measured in the emulator), so a hovered button would stay highlighted next to the
 // focused item while the user navigates with the arrows.
-// Each :hover becomes `:hover:not(*)`, which never matches, through CSSStyleRule.selectorText: the
-// rule keeps its place and its specificity, so the cascade is the same as before once it is back.
-// A selector list loses only its :hover branches. The rules are collected on the first switch
-// (not at boot) and again when a stylesheet is added.
+// Through CSSStyleRule.selectorText, each :hover becomes `:hover:not(*)`, which never matches, and
+// each :not(:hover) becomes `:not([data-webos-hover-off])`, which always does (nothing has that
+// attribute); both keep the specificity, and the rule keeps its place, so the cascade is the same
+// once it is back. A selector list loses only its :hover branches. Selectors that Chromium 53 would
+// reject after the change are left as they are: `::-webkit-scrollbar-thumb:hover` (no pseudo-class
+// after that :not). The rules are collected on the first switch (not at boot) and again when a
+// stylesheet is added.
 
+const NOT_HOVER = /:not\(:hover\)/g;
+const ALWAYS = ':not([data-webos-hover-off])';
 const HOVER = /:hover/g;
-const DISABLED_HOVER = ':hover:not(*)';
+const NEVER = ':hover:not(*)';
 
 const STYLE_RULE = 1;
 
@@ -37,7 +42,7 @@ const readRules = (sheet) => {
     }
 };
 
-export const disabledSelector = (selector) => selector.replace(HOVER, DISABLED_HOVER);
+export const disabledSelector = (selector) => selector.replace(NOT_HOVER, ALWAYS).replace(HOVER, NEVER);
 
 export const createHoverRules = (document) => {
     let sheets = null;

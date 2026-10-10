@@ -219,6 +219,8 @@ describe('Magic Remote: CSS :hover rules', () => {
         expect(disabledSelector('.a:hover .b, .a.active .b')).toBe('.a:hover:not(*) .b, .a.active .b');
         expect(disabledSelector('.a:hover::before')).toBe('.a:hover:not(*)::before');
         expect(disabledSelector('.a:hover .b:hover')).toBe('.a:hover:not(*) .b:hover:not(*)');
+        // Not hovered: always true while the pointer is hidden, with the same specificity (0,1,0).
+        expect(disabledSelector('.info:not(:hover)::-webkit-scrollbar-thumb, .x:hover')).toBe('.info:not([data-webos-hover-off])::-webkit-scrollbar-thumb, .x:hover:not(*)');
     });
 
     test('switches every :hover rule off and back, also inside @media, and skips other rules', () => {
