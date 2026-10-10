@@ -3,10 +3,11 @@
 # A reserva é uma trava flock por instância (sem daemon): vários agentes testam ao mesmo tempo
 # sem colisão, e a trava some sozinha se o processo morrer.
 #
-#   emu-run [--instance N] [--keep-state] [--timeout MIN] -- <comando...>
+#   emu-run [--instance N] [--keep-state] [--timeout MIN] [--profile c8] -- <comando...>
 #
 # Dentro do comando ficam definidos: EMU_INSTANCE, EMU_DEVICE (dispositivo ares), EMU_SSH_PORT,
 # EMU_CDP_PORT (= CDP_PORT, usado pelo cdp.mjs), EMU_REMOTE_PORT, EMU_QMP (= WEBOS_QMP).
+# --profile c8 (ou EMU_PROFILE=c8): VM com o perfil C8 (1 GB, 2 vCPUs, cota de CPU); sem ele, o boot é o de sempre.
 # Padrão: overlay recriado a cada reserva (estado de fábrica). --keep-state reaproveita o disco.
 # Tamanho do pool: $EMU_POOL_SIZE (padrão 4). Um cenário de mídia por reserva: o emulador só
 # reproduz de forma confiável a primeira mídia após o boot.
@@ -14,14 +15,15 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 RUN="$HOME/webos-tv-sdk/run"
 POOL="${EMU_POOL_SIZE:-4}"
-want="" keep=0 timeout_min=60
+want="" keep=0 timeout_min=60 profile="${EMU_PROFILE:-}"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --instance) want="$2"; shift 2 ;;
         --keep-state) keep=1; shift ;;
         --timeout) timeout_min="$2"; shift 2 ;;
+        --profile) profile="$2"; shift 2 ;;
         --) shift; break ;;
-        *) echo "uso: emu-run [--instance N] [--keep-state] [--timeout MIN] -- comando" >&2; exit 1 ;;
+        *) echo "uso: emu-run [--instance N] [--keep-state] [--timeout MIN] [--profile c8] -- comando" >&2; exit 1 ;;
     esac
 done
 [[ $# -gt 0 ]] || { echo "erro: falta o comando" >&2; exit 1; }
@@ -52,8 +54,15 @@ cleanup() { $EMU stop >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 $EMU stop >/dev/null 2>&1 || true
 [[ "$keep" == 1 ]] || $EMU reset >/dev/null
-$EMU start headless --smp 2 >&2
-$EMU wait 240 >&2
+if [[ -n "$profile" ]]; then
+    # Com cota de CPU o boot é bem mais lento: espera mais.
+    $EMU start headless --profile "$profile" >&2
+    $EMU wait "${EMU_BOOT_WAIT:-900}" >&2
+else
+    $EMU start headless --smp 2 >&2
+    $EMU wait 240 >&2
+fi
 eval "$($EMU env)"
 echo "emu-run: instância $EMU_N pronta (ares $EMU_DEVICE, inspector $EMU_CDP_PORT)" >&2
+[[ -z "$profile" ]] || export EMU_PROFILE="$profile"
 timeout "$((timeout_min * 60))" "$@"
