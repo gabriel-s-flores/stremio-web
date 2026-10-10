@@ -233,11 +233,34 @@ await go('#/detail/series/tt0903747');
 const recovered = step('recovery-images', await waitFor('recovery-images', `(function(){var s=${IMAGES};var st=window.__webosTlsProxy.status();s.status=st;s.ok=st.ready&&st.starts>${before.starts}&&s.loaded>0&&s.token!==${JSON.stringify(oldToken)};return s;})()`, 60));
 await sleep(1500);
 await screenshot('8-recovery-detail.png');
-step('recovery-worker', await (async () => {
-    await go(`#/discover/${encodeURIComponent(ADDON)}/movie/latest_anime_seasons`);
-    return waitFor('recovery-worker', `(function(){var n=document.querySelectorAll('[class*="meta-item-container"]').length;return {ok:n>0, items:n, hash:location.hash};})()`, 90);
-})());
+// The worker after the page restarted the service: its port/token are from the dead process
+// (revisão c1: 403 until the app was reopened). A catalog of the addon never loaded before (new
+// `genre`) can only come from the worker, through the proxy (the host was learned); the core
+// state, not the DOM, tells if it came (Ready with items) or failed (Err).
+const CATALOG = (type, genre) => `#/discover/${encodeURIComponent(ADDON)}/${type}/latest_anime_seasons?genre=${genre}`;
+const CATALOG_STATE = (genre) => `window.core.getState('discover').then(function(s){var sel=JSON.stringify(s&&s.selected||null);` +
+    `var c=s&&s.catalog&&s.catalog.content;var t=c&&c.type;var n=t==='Ready'&&c.content?c.content.length:0;var mine=sel.indexOf('${genre}')!==-1;` +
+    `return {ok:mine&&(t==='Ready'||t==='Err'), success:mine&&t==='Ready'&&n>0, type:t, items:n, error:t==='Err'?JSON.stringify(c.content).slice(0,200):null, selected:sel.slice(0,240), status:window.__webosTlsProxy.status()};})`;
+const catalogStep = async (name, type, genre) => {
+    await go(CATALOG(type, genre));
+    const state = await waitFor(name, CATALOG_STATE(genre), 90);
+    state.ok = !!state.success;
+    return step(name, state);
+};
+await catalogStep('recovery-worker-after-page', 'movie', 'WINTER');
+await waitFor('recovery-worker-items', `(function(){var n=document.querySelectorAll('[class*="meta-item-container"]').length;return {ok:n>0, items:n};})()`, 30);
+await sleep(3000);
 await screenshot('9-recovery-addon-catalog.png');
+
+// The service dies again and this time the next request is a worker fetch of a new catalog: the
+// worker finds the proxy gone (TypeError), the page starts the service and the fetch is retried.
+const beforeSecond = await evaluate(STATUS);
+step('quit-2', await evaluate(`new Promise(function(resolve){webOS.service.request('luna://io.github.gabrielsflores.stremio.tlsproxy',{method:'quit',parameters:{},onSuccess:function(r){resolve(r);},onFailure:function(e){resolve(e);}});})`));
+await sleep(1500);
+const second = await catalogStep('recovery-worker-first', 'series', 'SPRING');
+second.ok = second.ok && second.status.starts > beforeSecond.starts;
+await sleep(3000);
+await screenshot('10-recovery-worker-first.png');
 result.recovery = { before, after: recovered.status, oldToken };
 
 // 6. Latency: 10 posters in sequence and 12 in parallel through the proxy (browser cache off; the
@@ -295,7 +318,8 @@ const checks = {
     'Linha do addon no Board': result.steps['addon-board'].ok,
     'Host do addon aprendido (emissor Let\'s Encrypt)': result.steps['addon-learned'].ok,
     'Serviço morto: imagens voltam sem recarregar': result.steps['recovery-images'].ok,
-    'Serviço morto: worker volta sem recarregar': result.steps['recovery-worker'].ok,
+    'Serviço morto e reiniciado pela página: worker busca catálogo novo (token novo)': result.steps['recovery-worker-after-page'].ok,
+    'Serviço morto e encontrado pelo worker: reinício e catálogo novo': result.steps['recovery-worker-first'].ok,
     'Nenhum ERR_INSECURE_RESPONSE fora da detecção e do aprendizado de hosts novos': result.network.insecureOutsideDetection === 0,
 };
 result.checks = checks;

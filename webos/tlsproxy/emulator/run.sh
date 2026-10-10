@@ -7,8 +7,9 @@
 #    killed and recovered, latency, network log);
 # 3. runs security-test.mjs against the app's service through an SSH tunnel, with the redirect
 #    cases also in the app's fetch (Chromium 53);
-# 4. closes the app and checks that the service exits by itself.
-# Exit status: non-zero if accept.mjs or security-test.mjs failed.
+# 4. runs node012-test.js (proxy.js on the emulator's Node 0.12, local HTTPS upstreams);
+# 5. closes the app and checks that the service exits by itself.
+# Exit status: non-zero if accept.mjs, security-test.mjs or node012-test.js failed.
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
@@ -58,11 +59,21 @@ kill "$TUNNEL_PID" 2>/dev/null || true
 "${CDP[@]}" eval 'new Promise(function(r){webOS.service.request("luna://io.github.gabrielsflores.stremio.tlsproxy",{method:"status",parameters:{},onSuccess:r,onFailure:r});})' > "$OUT/service-status.json" 2>&1
 node -e 'const s=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log((s.log||[]).join("\n"))' "$OUT/service-status.json" > "$OUT/service-log.txt" 2>&1 || true
 
+# proxy.js on the emulator's own Node 0.12 against local HTTPS upstreams (short body, timeout,
+# A -> B -> A, 0xFF signatures): node012-test.js with proxy.js and the test fixtures in /tmp.
+REMOTE=/tmp/f37-node012
+"${SSH[@]}" "rm -rf $REMOTE && mkdir -p $REMOTE"
+for f in "$ROOT/webos/tlsproxy/service/proxy.js" "$HERE/node012-test.js" "$ROOT"/webos/tests/tlsproxy/fixtures/{ca.pem,leaf.pem,leaf.key}; do
+    "${SSH[@]}" "cat > $REMOTE/$(basename "$f")" < "$f"
+done
+"${SSH[@]}" "NODE=\$(command -v node || ls /usr/bin/node* 2>/dev/null | head -1); echo \"node: \$NODE\"; \$NODE $REMOTE/node012-test.js $REMOTE; echo exit=\$?; rm -rf $REMOTE" 2>&1 | tee "$OUT/node012.txt"
+node012=1; grep -q '^exit=0$' "$OUT/node012.txt" && node012=0
+
 # Closing the app drops the subscription: the service must exit by itself (idle timer, 5 s).
 ares-launch -d "$EMU_DEVICE" --close "$APP" >> "$OUT/info.txt" 2>&1
 sleep 15
 kill $SAMPLER_PID 2>/dev/null || true
 "${SSH[@]}" 'for s in /proc/[0-9]*/status; do sed -n "s/^Name:\t//p" "$s"; done | grep -c "^io.github.gabri"' > "$OUT/service-after-close.txt" 2>&1
-echo "end $(date -Is) · accept=$accept security=$security · service processes after close: $(cat "$OUT/service-after-close.txt")" | tee -a "$OUT/info.txt"
+echo "end $(date -Is) · accept=$accept security=$security node012=$node012 · service processes after close: $(cat "$OUT/service-after-close.txt")" | tee -a "$OUT/info.txt"
 node "$HERE/memory.mjs" "$OUT/mem.log" | tee "$OUT/memory.txt"
-[[ $accept -eq 0 && $security -eq 0 ]]
+[[ $accept -eq 0 && $security -eq 0 && $node012 -eq 0 ]]

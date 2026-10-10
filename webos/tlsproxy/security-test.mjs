@@ -150,9 +150,9 @@ if (opts['cdp-port']) {
 }
 
 // 2. /status, token e Host (achado 2).
-await check('/status sem token → 403', async () => {
+await check('/status sem token → 401 bad-token', async () => {
     const r = await request('/status');
-    return [r.status === 403, `http=${r.status}`];
+    return [r.status === 401 && r.headers['x-proxy-error'] === 'bad-token', `http=${r.status} ${r.headers['x-proxy-error']}`];
 });
 await check('/status com token → 200, sem recent nem pid', async () => {
     const r = await request(`/status?t=${opts.token}`);
@@ -168,9 +168,10 @@ await check('localhost:<porta> aceito', async () => {
     const r = await request(`/status?t=${opts.token}`, { host: `localhost:${opts.port}` });
     return [r.status === 200, `http=${r.status}`];
 });
-await check('/proxy sem token → 403', async () => {
-    const r = await request('/proxy?url=' + encodeURIComponent('https://example.com/'));
-    return [r.status === 403, `http=${r.status}`];
+await check('/proxy sem token ou com token de outro processo → 401 bad-token', async () => {
+    const a = await request('/proxy?url=' + encodeURIComponent('https://example.com/'));
+    const b = await request('/proxy?t=0123456789abcdef0123456789abcdef&url=' + encodeURIComponent('https://example.com/'));
+    return [a.status === 401 && b.status === 401 && b.headers['x-proxy-error'] === 'bad-token', `http=${a.status},${b.status} ${b.headers['x-proxy-error']}`];
 });
 await check('alvo http:// → 400', async () => {
     const r = await proxy('http://images.metahub.space/poster/medium/tt0111161/img');
@@ -198,8 +199,11 @@ const sniffCases = [
     ['DASH <MPD> como text/html', Buffer.from('<MPD type="static" minBufferTime="PT2S"></MPD> '), true],
     ['segmento fMP4 sem ftyp (styp) como text/html', pad(Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from('stypmsdh')]), 64), true],
     ['fragmento fMP4 (moof) como text/html', pad(Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from('moof')]), 64), true],
-    // AAC ADTS, MP3 sem ID3 e o controle JPEG começam com 0xFF, que o httpbin não serve (só UTF-8):
-    // ficam no Jest, com upstream local (webos/tests/tlsproxy/proxy.test.js).
+    // Revisão c1 da F3.7: MOV que começa com átomo de preenchimento antes do mdat.
+    ['MOV com átomo wide antes do mdat como text/html', pad(Buffer.from('AAAACHdpZGUAAAAwbWRhdA==', 'base64'), 64), true],
+    ['MOV com átomo free antes do mdat como text/html', pad(Buffer.from('AAAACGZyZWUAAAAwbWRhdA==', 'base64'), 64), true],
+    // AAC ADTS, MP3 sem ID3, MPEG-PS e o controle JPEG têm bytes que o httpbin não serve (só UTF-8):
+    // ficam no Jest e no node012-test.js (Node 0.12 do emulador), com upstream local.
     ['controle: ftyp avif (imagem) passa', pad(Buffer.concat([Buffer.from([0, 0, 0, 0x1c]), Buffer.from('ftypavif')]), 64), false],
     ['controle: texto comum passa', Buffer.from('{"ok":true,"text":"nada de midia aqui"}'), false],
 ];
