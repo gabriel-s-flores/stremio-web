@@ -1,0 +1,21 @@
+{
+    "id": "dv-p5-nobam-mkv",
+    "source": "derived:nobam-mux-dv-p5-truehd.mkv",
+    "size": 2306747,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 32768
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 32768
+        },
+        {
+            "offset": 51116,
+            "length": 32768
+        }
+    ],
+    "bytes": 65536,
+    "sha256": "6e477d76fe2c2beaefb6f32c4f9d336457e07bca3a739a2075d42d7f674d5c42"
+}

@@ -42,9 +42,36 @@ Os valores esperados nos testes são a saída do `ffprobe` 9.0.1 para o arquivo 
 | `dts-hdma-mp4` | 66.494 / 201.034 | `131d6ad334befde38685f99d388bed8eaa11cb51cc4f4e860c0fe77ece2651ae` | DTS-HD MA 7.1 (`mp4a`), eng; `moov` no fim | [AX] `mp4/sample_dts_hd_ma.mp4` | Apache-2.0 |
 | `dtsc-mp4` | 711 / 711 | `c36c18925a30710974692ccb339874be9391162053039edb3f4a1a987ce26ffc` | DTS (`dtsc`) 5.1 48 kHz (só o `moov`) | [CR] `bear_dtsc.mp4` | BSD-3-Clause |
 | `dtsx-mp4` | 1.335 / 1.335 | `01e7818b744fc2ba1a43577c3764a5c6fe7d8a0b92929c4480fdd5f2be64d43e` | DTS:X (`dtsx`) 6 canais (só o `moov`) | [CR] `bear_dtsx.mp4` | BSD-3-Clause |
+| `dv-p5-nobam-mkv` | 65.536 / 2.306.747 | `6e477d76fe2c2beaefb6f32c4f9d336457e07bca3a739a2075d42d7f674d5c42` | **Derivado modificado** do remux `mux-dv-p5-truehd.mkv`: `BlockAddIDType` `dvcC` renomeado (DV sem `BlockAdditionMapping`, como num mkvmerge antigo); o RPU do 1º quadro diz P5 | [J1] + [AX] | CC BY-SA 4.0 + Apache-2.0 |
+| `dv-p81-nobam-mkv` | 32.768 / 78.891 | `a3a404acc5a031201282c4ebc4aa2c4a214168073773fe3489805becb94ee034` | **Derivado modificado** do `regular.mkv` (dovi_tool): `BlockAddIDType` `dvvC` renomeado; o RPU diz P8, PQ → 8.1 | [DT] | MIT |
+| `kit-hevc10-mkv` | 98.304 / 1.329.702 | `bba55564eecb320278b2fb951582530039f114819fd18c6d36bde2c8e08d13be` | HEVC Main 10 sem DV + E-AC-3 5.1 (controle negativo da varredura de RPU) | remux (`ffmpeg -c copy -t 2`) de `~/webos-tv-sdk/media-tests/files/t3_hevc10_eac3.mp4` (sintético) | gerado pelo projeto |
 | `kit-multi-mkv` | 32.768 / 8.401.787 | `087c4080a52352365903f0e6806fb24967c4f36c152a0c98f98ea16ef2c4f8c9` | H.264 + AAC eng/por + AC-3 5.1 eng + SRT eng/por | `~/webos-tv-sdk/media-tests/files/t2_multi.mkv` (`webos/tools/gen-media.sh`, sintético) | gerado pelo projeto |
 
-Todas as fixtures são **trechos**, isto é, só alguns intervalos de bytes do arquivo original. É a única modificação nas fixtures que não são remux.
+Todas as fixtures são **trechos**, isto é, só alguns intervalos de bytes do arquivo original. É a única modificação nas fixtures que não são remux nem "derivado".
+
+Os derivados "sem `BlockAdditionMapping`" trocam a primeira letra do FourCC `dvcC`/`dvvC` por `x` nos primeiros 64 KB do arquivo (1 byte), de modo que o mapeamento deixa de ser Dolby Vision. O resto do arquivo, inclusive o bitstream com o RPU, é o original.
+
+sha256 dos arquivos originais (inteiros) de onde as fixtures foram gravadas:
+
+| Original | sha256 | Fixture |
+|---|---|---|
+| Jellyfin `Test Jellyfin 1080p DV P5.mp4` | `c0dedeeef7d11c404955e126f9544318cdeb6eab62423528cfde9b567e8ca1a4` | `dv-p5-mp4` |
+| Jellyfin `Test Jellyfin 1080p DV P8.1.mp4` | `266cda3ffbf46bb73daaf38716ed7dfb2b49e689ca5eb18c585426c1a57957d4` | `dv-p81-mp4` |
+| dovi_tool `regular.mkv` | `8f1df1bf34973e1fa146800de0d9c8e6fad60dd2f229c88541b7534f720ff38f` | `dv-p81-mkvmerge-mkv` |
+| androidx `sample_eac3joc.mp4` | `febd1b3f77b8412ee72096c6535c0c1dc50d1bdfbaf2f6d9b44ebcab27df56c6` | `eac3-joc-mp4` |
+| androidx `sample_eac3.mp4` | `bd0abdde84bcc042ce03e3ef166db4954605a6b66fc514fb0db605bd0c91f142` | `eac3-mp4` |
+| androidx `sample_dthd.mp4` | `554d59072c039e880e995b9568390b664323c906ddc835030d4c51f88e1b6877` | `truehd-atmos-mp4` |
+| androidx `sample_with_dts.mkv` | `e8120f9c38a21d2aecc6ab1c47628ca7baa1c2d91b6d4c39e2e7e37e87e41791` | `dts-core-mkv` |
+| androidx `sample_with_dts_hd_ma.mkv` | `522b99f24c104c4273beede93f7cdffe794e7c36376149706dcf41a9ed0c7df5` | `dts-hdma-mkv` |
+| androidx `sample_with_dts_x.mkv` | `f97a1adcfb5811895961f084a9e3c4dc214ddde189fd7f0120fb5c7d3b9ae4ff` | `dts-x-mkv` |
+| androidx `sample_with_dts_express.mka` | `a1ae2b5bbe048ce4bf8efc3bf6ee59c5a7af49962ff5c2116129566fb43b8ce8` | `dts-express-mka` |
+| androidx `sample_dts_hd_ma.mp4` | `7968430b42c910cdb36b97c9893fa6fd90a23a4202088dac4dddd3c0c3f53efd` | `dts-hdma-mp4` |
+| Chromium `bear_dtsc.mp4` | `c36c18925a30710974692ccb339874be9391162053039edb3f4a1a987ce26ffc` | `dtsc-mp4` (arquivo inteiro) |
+| Chromium `bear_dtsx.mp4` | `01e7818b744fc2ba1a43577c3764a5c6fe7d8a0b92929c4480fdd5f2be64d43e` | `dtsx-mp4` (arquivo inteiro) |
+| kit `t2_multi.mkv` | `9ee21b51d0a5020527e495974ebd2d2f2b81488781a0c5a995ba4cb0fd11b50f` | `kit-multi-mkv` |
+| derivado `nobam-mux-dv-p5-truehd.mkv` | `c1d768fea67d8d731b6e7abc46fe0a0aedb298fca1f7b1c2a04e9c5949d74387` | `dv-p5-nobam-mkv` |
+| derivado `nobam-regular.mkv` | `a235a3170339478f1264577a1e259ac0cc6e063787c30ea22ff7270f3af4f42a` | `dv-p81-nobam-mkv` |
+| remux `kit-hevc10.mkv` | `6ffb7b6594f90ff045cd2443ee2bea3cf95dbe4d9ce5b4522ab3b2a30cf48d4e` | `kit-hevc10-mkv` (sha256 depende da versão do ffmpeg) |
 
 ## Fontes, atribuição e licenças
 

@@ -99,6 +99,18 @@ describe('createFetchReadRange', () => {
         await expect(readRange(2000, 4)).rejects.toMatchObject({ code: 'RANGE_NOT_SUPPORTED' });
     });
 
+    it('rejects partial responses that do not start at the requested offset', async () => {
+        const partial = (values, data) => () => Promise.resolve({ status: 206, url: 'http://host/a.mkv', headers: headers(values), body: stream(data) });
+        const late = createFetchReadRange('http://host/a.mkv', { fetch: partial({ 'content-range': 'bytes 200-299/5000' }, file.subarray(200, 300)) });
+        await expect(late(100, 100)).rejects.toMatchObject({ code: 'HTTP' });
+        // Content-Range hidden (CORS): a body larger than the requested range cannot be trusted…
+        const hiddenLarge = createFetchReadRange('http://host/a.mkv', { fetch: partial({ 'content-length': '5000' }, file) });
+        await expect(hiddenLarge(100, 100)).rejects.toMatchObject({ code: 'HTTP' });
+        // …but one no larger than the range is the range.
+        const hiddenExact = createFetchReadRange('http://host/a.mkv', { fetch: partial({ 'content-length': '100' }, file.subarray(100, 200)) });
+        expect(Array.from((await hiddenExact(100, 100)).data.subarray(0, 2))).toEqual([100, 101]);
+    });
+
     it('maps HTTP errors and network failures to ProbeError', async () => {
         const notFound = createFetchReadRange('http://host/a.mkv', { fetch: () => Promise.resolve({ status: 404, headers: headers({}) }) });
         await expect(notFound(0, 10)).rejects.toMatchObject({ code: 'HTTP' });

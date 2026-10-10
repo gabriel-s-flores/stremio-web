@@ -29,6 +29,19 @@ const pick = (track) => ({ id: track.id, type: track.type, codec: track.codec, l
 
 const audioOf = (result) => result.tracks.filter((track) => track.type === 'audio');
 
+// Runs a fixture after editing a copy of its bytes: edit(bytes, offsetOfPiece) per piece.
+const runPatched = (id, edit, options) => {
+    const fixture = loadFixture(id);
+    fixture.pieces = fixture.pieces.map((piece) => {
+        const data = new Uint8Array(piece.data);
+        edit(data, piece.offset);
+        return { offset: piece.offset, data };
+    });
+    return probe(replayReadRange(fixture), Object.assign({}, fixture.meta.options, options));
+};
+
+const indexOfText = (data, textValue) => Buffer.from(data.buffer, data.byteOffset, data.length).indexOf(textValue, 0, 'latin1');
+
 describe('fixtures', () => {
     const ids = fs.readdirSync(FIXTURES).filter((name) => name.endsWith('.json')).map((name) => name.slice(0, -5));
 
@@ -50,7 +63,7 @@ describe('Dolby Vision', () => {
         expect(result.tracks[0].video).toMatchObject({ width: 1920, height: 1080, profile: 'Main 10', bitDepth: 10, hdr: 'dolby-vision' });
         expect(result.summary.dolbyVision).toEqual({
             profile: 5, profileName: '5', level: 5, compatibilityId: 0, baseLayer: 'none',
-            rpuPresent: true, elPresent: false, blPresent: true, version: '1.0',
+            rpuPresent: true, elPresent: false, blPresent: true, version: '1.0', source: 'config',
         });
         expect(result.stats.requests).toBe(2);
     });
@@ -103,7 +116,70 @@ describe('Dolby Vision', () => {
     });
 });
 
+describe('Dolby Vision in MKV without BlockAdditionMapping (type renamed, as in an old mkvmerge)', () => {
+    it('P5 is found from the RPU NAL unit of the first video frame', async () => {
+        const result = await run('dv-p5-nobam-mkv');
+        expect(result.tracks[0].video.dolbyVision).toMatchObject({ profile: 5, profileName: '5', baseLayer: 'none', rpuPresent: true, elPresent: false, source: 'rpu' });
+        expect(result.summary).toMatchObject({ hdr: 'dolby-vision' });
+        expect(result.warnings).toEqual([]);
+    });
+
+    it('P8.1 (mkvmerge file) is found from the RPU, with the base layer from the PQ colour', async () => {
+        const result = await run('dv-p81-nobam-mkv');
+        expect(result.summary.dolbyVision).toMatchObject({ profile: 8, profileName: '8.1', compatibilityId: 1, baseLayer: 'hdr10', source: 'rpu' });
+    });
+
+    it('a 10-bit HEVC MKV without RPU is not Dolby Vision, without warnings', async () => {
+        const result = await run('kit-hevc10-mkv');
+        expect(result.tracks[0].video).toMatchObject({ profile: 'Main 10', dolbyVision: null });
+        expect(result.summary.dolbyVision).toBeNull();
+        expect(result.warnings).toEqual([]);
+    });
+
+    it('without frame inspection the output says DV_UNKNOWN for the track', async () => {
+        const fixture = loadFixture('dv-p5-nobam-mkv');
+        const result = await probe(replayReadRange(fixture), Object.assign({}, fixture.meta.options, { sniffFrames: false }));
+        expect(result.tracks[0].video.dolbyVision).toBeNull();
+        expect(result.warnings).toContainEqual(expect.objectContaining({ code: 'DV_UNKNOWN', track: 1 }));
+    });
+});
+
+describe('robustness', () => {
+    it('a dec3 promising more substreams than it holds does not break the ProbeError contract', async () => {
+        const result = await runPatched('eac3-mp4', (data) => {
+            const box = indexOfText(data, 'dec3');
+            data[box + 5] = 0x21;
+        });
+        expect(audioOf(result)[0].codec).toBe('eac3');
+    });
+
+    it('any parser exception leaves probe() as ProbeError INVALID', async () => {
+        const failing = () => Promise.reject(new TypeError('boom'));
+        await expect(probe(failing)).rejects.toMatchObject({ name: 'ProbeError', code: 'INVALID' });
+    });
+});
+
 describe('Dolby audio', () => {
+    it('E-AC-3 in MP4 whose dec3 has no JOC extension: Atmos decided from the first sample', async () => {
+        // Derived from eac3-joc-mp4: the dec3 box is shortened by its 2 extension bytes.
+        const result = await runPatched('eac3-joc-mp4', (data) => {
+            const box = indexOfText(data, 'dec3') - 4;
+            data[box + 3] -= 2;
+        });
+        expect(audioOf(result)[0].audio).toMatchObject({ atmos: true, profile: 'E-AC-3 JOC' });
+        expect(result.warnings).toEqual([]);
+    });
+
+    it('E-AC-3 JOC in MP4 whose dec3 extension was zeroed: the first sample still says Atmos', async () => {
+        const result = await runPatched('eac3-joc-mp4', (data) => {
+            const box = indexOfText(data, 'dec3') - 4;
+            const size = data[box + 3];
+            data[box + size - 2] = 0;
+            data[box + size - 1] = 0;
+        });
+        expect(audioOf(result)[0].audio).toMatchObject({ atmos: true, profile: 'E-AC-3 JOC' });
+    });
+
     it('DD+ Atmos (E-AC-3 JOC) in MP4, from dec3', async () => {
         const result = await run('eac3-joc-mp4');
         expect(audioOf(result).map(pick)).toEqual([{ id: 1, type: 'audio', codec: 'eac3', language: null, default: true }]);
@@ -158,7 +234,7 @@ describe('DTS', () => {
     it.each([
         ['dts-core-mkv', 'DTS', 6, null, false],
         ['dts-hdma-mkv', 'DTS-HD MA', 8, 'eng', true],
-        ['dts-x-mkv', 'DTS:X', 8, 'eng', true],
+        ['dts-x-mkv', 'DTS-HD MA + DTS:X', 8, 'eng', true],
         ['dts-express-mka', 'DTS Express', 6, null, false],
     ])('%s in Matroska is %s (first frame)', async (id, profile, channels, language, isDefault) => {
         const result = await run(id);
@@ -175,13 +251,13 @@ describe('DTS', () => {
         expect(audioOf(result)[0]).toMatchObject({ codecId: 'mp4a', audio: { channels: 8, sampleRate: 48000, profile: 'DTS-HD MA' } });
     });
 
-    it('DTS in MP4: dtsc (core) and dtsx (DTS:X) sample entries', async () => {
+    it('DTS in MP4: dtsc (core) and dtsx (DTS-UHD, no core) sample entries', async () => {
         const core = await run('dtsc-mp4');
         expect(core.tracks.map(pick)).toEqual([{ id: 1, type: 'audio', codec: 'dts', language: null, default: true }]);
         expect(core.tracks[0].audio).toMatchObject({ channels: 6, sampleRate: 48000, profile: 'DTS', atmos: false });
         const x = await run('dtsx-mp4');
         expect(x.tracks[0]).toMatchObject({ codec: 'dts', codecId: 'dtsx' });
-        expect(x.tracks[0].audio).toMatchObject({ channels: 6, profile: 'DTS:X' });
+        expect(x.tracks[0].audio).toMatchObject({ channels: 6, profile: 'DTS-UHD' });
     });
 });
 

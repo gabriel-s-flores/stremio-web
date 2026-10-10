@@ -1,0 +1,17 @@
+{
+    "id": "dv-p81-nobam-mkv",
+    "source": "derived:nobam-regular.mkv",
+    "size": 78891,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 32768
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 32768
+        }
+    ],
+    "bytes": 32768,
+    "sha256": "a3a404acc5a031201282c4ebc4aa2c4a214168073773fe3489805becb94ee034"
+}
