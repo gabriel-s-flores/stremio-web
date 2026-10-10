@@ -23,6 +23,7 @@ api('DocumentFragment.prototype.append', DocumentFragment.prototype.append);
 api('Element.prototype.scrollTo', Element.prototype.scrollTo);
 api('Element.prototype.scrollBy', Element.prototype.scrollBy);
 api('Element.prototype.scroll', Element.prototype.scroll);
+api('Node.prototype.getRootNode', Node.prototype.getRootNode);
 api('DOMRect', window.DOMRect);
 api('DOMRectReadOnly', window.DOMRectReadOnly);
 
@@ -176,6 +177,18 @@ check('DOMRect from a bounding box, scaled like getInterfaceRect', function () {
     var detail = JSON.stringify(rect.toJSON());
     assert(rect instanceof DOMRectReadOnly && rect.right === 280 && rect.bottom === 140, detail);
     return detail;
+});
+
+check('getRootNode', function () {
+    var box = document.createElement('div');
+    var inner = document.createElement('span');
+    box.appendChild(inner);
+    assert(inner.getRootNode() === box, 'detached subtree');
+    document.body.appendChild(box);
+    var root = inner.getRootNode();
+    document.body.removeChild(box);
+    assert(root === document, 'attached: ' + root);
+    return 'document';
 });
 
 check('append and prepend', function () {

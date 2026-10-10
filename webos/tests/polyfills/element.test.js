@@ -91,6 +91,45 @@ describe('Element polyfill', () => {
         expect(typeof NativeElement.prototype.scroll).toBe('function');
     });
 
+    describe('getRootNode', () => {
+        class TreeNode {
+            constructor(parentNode = null, host = null) {
+                this.parentNode = parentNode;
+                this.host = host;
+            }
+        }
+
+        beforeAll(() => {
+            install({ Node: TreeNode });
+        });
+
+        test('is installed on Node and keeps a native one', () => {
+            expect(typeof TreeNode.prototype.getRootNode).toBe('function');
+            const native = () => {};
+            class NativeNode {}
+            NativeNode.prototype.getRootNode = native;
+            install({ Node: NativeNode });
+            expect(NativeNode.prototype.getRootNode).toBe(native);
+        });
+
+        test('returns the top of the tree, or the node itself when it has no parent', () => {
+            const doc = new TreeNode();
+            const leaf = new TreeNode(new TreeNode(doc));
+            expect(leaf.getRootNode()).toBe(doc);
+            expect(doc.getRootNode()).toBe(doc);
+        });
+
+        test('stops at a shadow root unless composed', () => {
+            const doc = new TreeNode();
+            const host = new TreeNode(doc);
+            const shadowRoot = new TreeNode(null, host);
+            const inside = new TreeNode(shadowRoot);
+            expect(inside.getRootNode()).toBe(shadowRoot);
+            expect(inside.getRootNode({ composed: false })).toBe(shadowRoot);
+            expect(inside.getRootNode({ composed: true })).toBe(doc);
+        });
+    });
+
     test('works when interfaces are missing', () => {
         expect(() => install({})).not.toThrow();
     });

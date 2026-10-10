@@ -1,5 +1,6 @@
-// DOM methods missing from Chromium 53 (webOS TV 4.x): ParentNode#append/prepend (native since 54)
-// and Element#scroll/scrollTo/scrollBy (native since 61). Page only.
+// DOM methods missing from Chromium 53 (webOS TV 4.x): ParentNode#append/prepend (native since 54),
+// Element#scroll/scrollTo/scrollBy (native since 61) and Node#getRootNode (native since 54; react-aria's
+// focus helpers call it without a guard). Page only.
 // Scrolling is always instant: `behavior: 'smooth'` is accepted and ignored.
 
 const toNode = (document, nodes) => {
@@ -78,6 +79,22 @@ function scrollBy() {
     }
 }
 
+// The root of the node's tree: the document, a detached subtree's top or a ShadowRoot; with
+// { composed: true }, shadow roots are crossed through their host.
+function getRootNode(options) {
+    const composed = Boolean(options && options.composed);
+    let node = this;
+    for (;;) {
+        if (node.parentNode) {
+            node = node.parentNode;
+        } else if (composed && node.host) {
+            node = node.host;
+        } else {
+            return node;
+        }
+    }
+}
+
 const define = (prototype, name, value) => {
     if (!prototype || typeof prototype[name] === 'function') {
         return;
@@ -99,4 +116,5 @@ export const install = (global) => {
     define(global.Element && global.Element.prototype, 'scroll', scrollTo);
     define(global.Element && global.Element.prototype, 'scrollTo', scrollTo);
     define(global.Element && global.Element.prototype, 'scrollBy', scrollBy);
+    define(global.Node && global.Node.prototype, 'getRootNode', getRootNode);
 };
