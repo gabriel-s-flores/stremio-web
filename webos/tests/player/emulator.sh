@@ -4,8 +4,9 @@
 # com.webos.media/subscribe. One media scenario per boot (webos/docs/PESQUISA.md §7). Run inside a
 # pool reservation, after `pnpm webos:package`:
 #   webos/tools/emu-run --timeout 15 -- webos/tests/player/emulator.sh <output-dir> [file]
-# <file> is served from ~/webos-tv-sdk/media-tests/suite (gen-media.sh, GOP=24) through
-# /redirect/<file> (302, like a debrid link); default t1_h264_aac.mp4. The Player is opened by route
+# <file> is served from $MEDIA_DIR (default ~/webos-tv-sdk/media-tests/suite: gen-media.sh, GOP=24)
+# through /redirect/<file> (302, like a debrid link); default t1_h264_aac.mp4. With --profile c8 the
+# Player takes ~30 s to start and CDP calls slow down: use a clip longer than the 20 s of the suite. The Player is opened by route
 # (#/player/<encoded stream>), the same path as the app's "Play URL": no account and no addon.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
