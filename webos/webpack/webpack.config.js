@@ -8,8 +8,9 @@ const baseConfig = require('../../webpack.config.js');
 const steps = [
     require('./app'),
     require('./babel'),
-    require('./polyfills'),
+    // core before polyfills: core replaces the worker entry path, polyfills then prefixes it.
     require('./core'),
+    require('./polyfills'),
     require('./trim'),
     require('./postcss'),
 ];

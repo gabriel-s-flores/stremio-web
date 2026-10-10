@@ -15,15 +15,15 @@ Plano, pesquisa e regras do orquestrador ficam no kit da máquina de desenvolvim
 
 ```bash
 pnpm webos:build      # build-webos/ (webos/webpack/webpack.config.js sobre o webpack.config.js da raiz)
-pnpm webos:package    # build + dist-webos/<id>_<versão>_all.ipk (sem os .map)
-pnpm webos:install    # instala o IPK em $WEBOS_DEVICE, $EMU_DEVICE ou "emulator"
+pnpm webos:package    # build + dist-webos/<id>_<versão>_all.ipk (JS como o webpack gerou, sem os .map)
+pnpm webos:install    # instala o IPK em $WEBOS_DEVICE ou $EMU_DEVICE (sem padrão)
 pnpm webos:launch     # abre o app no mesmo dispositivo
 ```
 
 No emulador, dentro de uma reserva do pool:
 `webos/tools/emu-run -- sh -c 'pnpm webos:install && pnpm webos:launch && …'`.
 
-- `webos/webpack/`: um módulo por assunto (`app`, `babel`, `polyfills`, `core`, `trim`, `postcss`),
+- `webos/webpack/`: um módulo por assunto (`app`, `babel`, `core`, `polyfills`, `trim`, `postcss`),
   compostos em `webpack.config.js`. O `webpack.config.js` da raiz não muda.
 - Overrides: `require('./styles')` usa `styles.webos.less` (ou `.webos.js`, `.webos.tsx`…) quando o
   arquivo existe, só no build webOS.
