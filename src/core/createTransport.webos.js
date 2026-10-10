@@ -50,7 +50,8 @@ const createWebosTransport = () => {
     const init = (args) => boot
         .then((result) => {
             if (!/^(localStorage-ok|nothing-to-restore)$/.test(result.reason)) {
-                console.warn('[persist] boot:', JSON.stringify(result));
+                // One string: the Chromium 53 console (Console.messageAdded) keeps only the first argument.
+                console.warn(`[persist] boot: ${JSON.stringify(result)}`);
             }
             return transport.init(args);
         })
