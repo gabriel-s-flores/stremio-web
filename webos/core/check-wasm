@@ -1,0 +1,403 @@
+#!/usr/bin/env python3
+"""Gate do core para o webOS TV 4.x: o .wasm precisa ser WebAssembly MVP puro.
+
+    webos/core/check-wasm [--json] arquivo.wasm [...]
+
+Reprova (saída 1) se encontrar:
+  - qualquer recurso pós-MVP no binário (opcodes, tipos, seções, flags de segmentos e memórias):
+    sign-ext, bulk memory, conversões sem trap, reference types/externref, multivalue, SIMD,
+    threads, exceções, tail call, GC, memory64, multi-memory;
+  - i64 na assinatura de funções importadas ou exportadas (o V8 5.8 não tem BigInt na fronteira);
+  - global mutável importado ou exportado (mutable-globals não existe no V8 5.8);
+  - seção target_features com algo além de +mutable-globals.
+Aprova (saída 0) quando nada disso aparece; arquivo que não decodifica como MVP também reprova.
+Decodifica todas as seções e todas as instruções da seção de código (base: spikes/core-mvp/wasmfeat.py).
+"""
+import json
+import sys
+from collections import Counter
+
+ALLOWED_TARGET_FEATURES = {'+mutable-globals'}
+VALTYPES = {0x7F: 'i32', 0x7E: 'i64', 0x7D: 'f32', 0x7C: 'f64', 0x7B: 'v128', 0x70: 'funcref', 0x6F: 'externref'}
+MVP_VALTYPES = {0x7F, 0x7E, 0x7D, 0x7C}
+FC_NAMES = {0: 'i32.trunc_sat_f32_s', 1: 'i32.trunc_sat_f32_u', 2: 'i32.trunc_sat_f64_s', 3: 'i32.trunc_sat_f64_u',
+            4: 'i64.trunc_sat_f32_s', 5: 'i64.trunc_sat_f32_u', 6: 'i64.trunc_sat_f64_s', 7: 'i64.trunc_sat_f64_u',
+            8: 'memory.init', 9: 'data.drop', 10: 'memory.copy', 11: 'memory.fill', 12: 'table.init',
+            13: 'elem.drop', 14: 'table.copy', 15: 'table.grow', 16: 'table.size', 17: 'table.fill'}
+
+
+class Undecodable(Exception):
+    pass
+
+
+class Reader:
+    def __init__(self, data, pos=0, end=None):
+        self.b = data
+        self.p = pos
+        self.end = len(data) if end is None else end
+
+    def byte(self):
+        if self.p >= self.end:
+            raise Undecodable('fim inesperado em %d' % self.p)
+        v = self.b[self.p]
+        self.p += 1
+        return v
+
+    def u(self):
+        r = s = 0
+        while True:
+            x = self.byte()
+            r |= (x & 0x7F) << s
+            s += 7
+            if not x & 0x80:
+                return r
+
+    def s(self, bits=64):
+        r = s = 0
+        while True:
+            x = self.byte()
+            r |= (x & 0x7F) << s
+            s += 7
+            if not x & 0x80:
+                if s < bits and x & 0x40:
+                    r |= -(1 << s)
+                return r
+
+    def name(self):
+        n = self.u()
+        v = self.b[self.p:self.p + n]
+        self.p += n
+        return v.decode('utf-8', 'replace')
+
+    def limits(self, F, what):
+        flags = self.u()
+        self.u()
+        if flags & 1:
+            self.u()
+        if flags & 2:
+            F['threads: %s compartilhada' % what] += 1
+        if flags & 4:
+            F['memory64: %s' % what] += 1
+        return flags
+
+
+def valtype(t, F, where):
+    if t not in MVP_VALTYPES:
+        F['%s em %s' % (VALTYPES.get(t, 'tipo 0x%02x' % t), where)] += 1
+
+
+def blocktype(r, F, types):
+    b = r.b[r.p]
+    if b == 0x40 or b in VALTYPES:
+        r.p += 1
+        if b != 0x40:
+            valtype(b, F, 'resultado de bloco')
+        return
+    idx = r.s(33)
+    F['multivalue: bloco com tipo indexado (%s)' % ('ok' if idx < len(types) else 'índice inválido')] += 1
+
+
+def scan_expr(r, F, types, const_expr=False):
+    """Percorre as instruções até o fim da expressão (const_expr) ou até r.end (corpo de função)."""
+    while r.p < r.end:
+        op = r.byte()
+        if op == 0x0B:
+            if const_expr:
+                return
+        elif op in (0x02, 0x03, 0x04):
+            blocktype(r, F, types)
+        elif op == 0x06:
+            blocktype(r, F, types)
+            F['exceptions: try'] += 1
+        elif op in (0x07, 0x08, 0x09, 0x18):
+            r.u()
+            F['exceptions: op 0x%02x' % op] += 1
+        elif op in (0x0A, 0x19):
+            F['exceptions: op 0x%02x' % op] += 1
+        elif op in (0x0C, 0x0D):
+            r.u()
+        elif op == 0x0E:
+            for _ in range(r.u() + 1):
+                r.u()
+        elif op == 0x10:
+            r.u()
+        elif op == 0x11:
+            r.u()
+            if r.u() != 0:
+                F['reference-types: call_indirect em tabela != 0'] += 1
+        elif op in (0x12, 0x13):
+            r.u()
+            if op == 0x13:
+                r.u()
+            F['tail-call'] += 1
+        elif op in (0x14, 0x15):
+            r.u()
+            F['typed-function-references: call_ref'] += 1
+        elif op == 0x1C:
+            for _ in range(r.u()):
+                r.byte()
+            F['reference-types: select tipado'] += 1
+        elif op in (0x20, 0x21, 0x22, 0x23, 0x24):
+            r.u()
+        elif op in (0x25, 0x26):
+            r.u()
+            F['reference-types: table.get/set'] += 1
+        elif 0x28 <= op <= 0x3E:
+            align = r.u()
+            if align & 0x40:
+                r.u()
+                F['multi-memory: memarg'] += 1
+            r.u()
+        elif op in (0x3F, 0x40):
+            if r.byte() != 0:
+                F['multi-memory: memory.size/grow'] += 1
+        elif op == 0x41:
+            r.s(32)
+        elif op == 0x42:
+            r.s(64)
+        elif op == 0x43:
+            r.p += 4
+        elif op == 0x44:
+            r.p += 8
+        elif 0xC0 <= op <= 0xC4:
+            F['sign-ext: op 0x%02x' % op] += 1
+        elif op == 0xD0:
+            r.s(33)
+            F['reference-types: ref.null'] += 1
+        elif op == 0xD1:
+            F['reference-types: ref.is_null'] += 1
+        elif op == 0xD2:
+            r.u()
+            F['reference-types: ref.func'] += 1
+        elif op in (0xD3, 0xD4, 0xD5, 0xD6):
+            raise Undecodable('typed references/GC (op 0x%02x)' % op)
+        elif op == 0xFC:
+            sub = r.u()
+            nm = FC_NAMES.get(sub, 'fc %d' % sub)
+            if sub <= 7:
+                F['nontrapping-fptoint: ' + nm] += 1
+            elif sub <= 14:
+                F['bulk-memory: ' + nm] += 1
+            else:
+                F['reference-types: ' + nm] += 1
+            imm = {8: 'ub', 9: 'u', 10: 'bb', 11: 'b', 12: 'uu', 13: 'u', 14: 'uu', 15: 'u', 16: 'u', 17: 'u'}
+            if sub > 17:
+                raise Undecodable('prefixo 0xFC %d' % sub)
+            for k in imm.get(sub, ''):
+                r.u() if k == 'u' else r.byte()
+        elif op == 0xFD:
+            raise Undecodable('SIMD (prefixo 0xFD)')
+        elif op == 0xFE:
+            raise Undecodable('threads/atomics (prefixo 0xFE)')
+        elif op == 0xFB:
+            raise Undecodable('GC (prefixo 0xFB)')
+        elif op in (0x00, 0x01, 0x05, 0x0F, 0x1A, 0x1B) or 0x45 <= op <= 0xBF:
+            pass
+        else:
+            raise Undecodable('opcode desconhecido 0x%02x em %d' % (op, r.p - 1))
+
+
+def analyze(path):
+    data = open(path, 'rb').read()
+    if data[:4] != b'\0asm':
+        raise Undecodable('não é wasm')
+    F = Counter()            # recurso pós-MVP -> ocorrências
+    boundary = Counter()     # problemas na fronteira JS (i64, globais mutáveis)
+    info = {'version': int.from_bytes(data[4:8], 'little')}
+    if info['version'] != 1:
+        F['versão do binário %d' % info['version']] += 1
+    types, func_types, global_mut = [], [], []
+    r = Reader(data, 8)
+    while r.p < len(data):
+        sid = r.byte()
+        size = r.u()
+        start = r.p
+        end = start + size
+        sr = Reader(data, start, end)
+        if sid == 0:
+            nm = sr.name()
+            info.setdefault('custom', []).append(nm)
+            if nm == 'target_features':
+                info['target_features'] = [chr(sr.byte()) + sr.name() for _ in range(sr.u())]
+            elif nm == 'producers':
+                prod = {}
+                for _ in range(sr.u()):
+                    field = sr.name()
+                    prod[field] = ['%s %s' % (sr.name(), sr.name()) for _ in range(sr.u())]
+                info['producers'] = prod
+        elif sid == 1:
+            for _ in range(sr.u()):
+                form = sr.byte()
+                if form != 0x60:
+                    raise Undecodable('forma de tipo 0x%02x (GC/rec)' % form)
+                ps = [sr.byte() for _ in range(sr.u())]
+                rs = [sr.byte() for _ in range(sr.u())]
+                for t in ps + rs:
+                    valtype(t, F, 'assinatura de função')
+                if len(rs) > 1:
+                    F['multivalue: função com mais de um resultado'] += 1
+                types.append((ps, rs))
+            info['types'] = len(types)
+        elif sid == 2:
+            kinds = Counter()
+            for _ in range(sr.u()):
+                mod, fld = sr.name(), sr.name()
+                kind = sr.byte()
+                if kind == 0:
+                    ti = sr.u()
+                    func_types.append(ti)
+                    kinds['func'] += 1
+                    ps, rs = types[ti]
+                    if 0x7E in ps + rs:
+                        boundary['i64 na assinatura do import %s.%s' % (mod, fld)] += 1
+                elif kind == 1:
+                    rt = sr.byte()
+                    if rt != 0x70:
+                        valtype(rt, F, 'tabela importada')
+                    sr.limits(F, 'tabela importada')
+                    kinds['table'] += 1
+                elif kind == 2:
+                    sr.limits(F, 'memória importada')
+                    kinds['memory'] += 1
+                elif kind == 3:
+                    vt, mut = sr.byte(), sr.byte()
+                    valtype(vt, F, 'global importado')
+                    global_mut.append(mut)
+                    kinds['global'] += 1
+                    if mut:
+                        boundary['global mutável importado %s.%s' % (mod, fld)] += 1
+                else:
+                    F['import de tipo %d (tag?)' % kind] += 1
+                    raise Undecodable('import de tipo %d' % kind)
+            info['imports'] = dict(kinds)
+        elif sid == 3:
+            n = sr.u()
+            func_types.extend(sr.u() for _ in range(n))
+            info['defined_funcs'] = n
+        elif sid == 4:
+            n = sr.u()
+            info['tables'] = n
+            if n > 1:
+                F['reference-types: mais de uma tabela'] += 1
+            for _ in range(n):
+                rt = sr.byte()
+                if rt != 0x70:
+                    valtype(rt, F, 'tabela')
+                sr.limits(F, 'tabela')
+        elif sid == 5:
+            n = sr.u()
+            if n > 1:
+                F['multi-memory: %d memórias' % n] += 1
+            info['memories'] = n
+            for _ in range(n):
+                sr.limits(F, 'memória')
+        elif sid == 6:
+            n = sr.u()
+            for _ in range(n):
+                vt, mut = sr.byte(), sr.byte()
+                valtype(vt, F, 'global')
+                global_mut.append(mut)
+                scan_expr(sr, F, types, const_expr=True)
+            info['globals'] = n
+        elif sid == 7:
+            kinds = Counter()
+            for _ in range(sr.u()):
+                nm = sr.name()
+                kind = sr.byte()
+                idx = sr.u()
+                kinds[('func', 'table', 'memory', 'global', 'tag')[kind] if kind < 5 else kind] += 1
+                if kind == 0:
+                    ps, rs = types[func_types[idx]]
+                    if 0x7E in ps + rs:
+                        boundary['i64 na assinatura do export %s' % nm] += 1
+                elif kind == 3 and global_mut[idx]:
+                    boundary['global mutável exportado %s' % nm] += 1
+            info['exports'] = dict(kinds)
+        elif sid == 9:
+            for _ in range(sr.u()):
+                flags = sr.u()
+                if flags != 0:
+                    F['bulk-memory/reference-types: segmento de elementos com flag %d' % flags] += 1
+                    break   # o binário já reprova; não vale decodificar as variantes
+                scan_expr(sr, F, types, const_expr=True)
+                for _ in range(sr.u()):
+                    sr.u()
+        elif sid == 10:
+            n = sr.u()
+            info['code_bodies'] = n
+            for _ in range(n):
+                sz = sr.u()
+                br = Reader(data, sr.p, sr.p + sz)
+                for _ in range(br.u()):
+                    br.u()
+                    valtype(br.byte(), F, 'local')
+                scan_expr(br, F, types)
+                sr.p += sz
+        elif sid == 11:
+            for _ in range(sr.u()):
+                flags = sr.u()
+                if flags == 1:
+                    F['bulk-memory: segmento de dados passivo'] += 1
+                elif flags == 2:
+                    sr.u()
+                    F['multi-memory: segmento de dados com memória explícita'] += 1
+                elif flags != 0:
+                    raise Undecodable('segmento de dados com flag %d' % flags)
+                if flags in (0, 2):
+                    scan_expr(sr, F, types, const_expr=True)
+                n = sr.u()
+                sr.p += n
+        elif sid == 12:
+            F['bulk-memory: seção datacount'] += 1
+        elif sid == 13:
+            F['exceptions: seção de tags'] += 1
+        elif sid > 13:
+            F['seção desconhecida %d' % sid] += 1
+        r.p = end
+    return F, boundary, info
+
+
+def check(path):
+    result = {'file': path, 'ok': False, 'reasons': []}
+    try:
+        F, boundary, info = analyze(path)
+    except (Undecodable, IndexError, OSError) as e:
+        result['error'] = str(e)
+        result['reasons'].append('não decodificável como MVP: %s' % e)
+        return result
+    result.update(info=info, post_mvp=dict(F), boundary=dict(boundary))
+    feats = info.get('target_features', [])
+    extra = [f for f in feats if f not in ALLOWED_TARGET_FEATURES]
+    result['reasons'] += ['recurso pós-MVP: %s (%d)' % (k, v) for k, v in sorted(F.items())]
+    result['reasons'] += ['fronteira JS: %s' % k for k in sorted(boundary)]
+    if extra:
+        result['reasons'].append('target_features fora do permitido: %s' % ', '.join(extra))
+    result['ok'] = not result['reasons']
+    return result
+
+
+def main(argv):
+    as_json = '--json' in argv
+    paths = [a for a in argv if a != '--json']
+    if not paths:
+        print(__doc__.strip(), file=sys.stderr)
+        return 2
+    results = [check(p) for p in paths]
+    if as_json:
+        print(json.dumps(results, indent=2, ensure_ascii=False))
+    else:
+        for res in results:
+            print('=' * 72)
+            print(res['file'])
+            for k, v in res.get('info', {}).items():
+                print('  %-16s %s' % (k, v))
+            print('  RESULTADO: %s' % ('APROVADO (MVP puro)' if res['ok'] else 'REPROVADO'))
+            for reason in res['reasons'][:40]:
+                print('    - ' + reason)
+            if len(res['reasons']) > 40:
+                print('    … mais %d' % (len(res['reasons']) - 40))
+    return 0 if all(res['ok'] for res in results) else 1
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
