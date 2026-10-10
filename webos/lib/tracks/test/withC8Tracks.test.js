@@ -79,7 +79,7 @@ const setup = (options) => {
     const opts = options || {};
     const Inner = createInnerVideo();
     const probe = deferred();
-    const probeCache = { get: jest.fn(() => probe.promise) };
+    const probeCache = { get: jest.fn(() => probe.promise), peek: jest.fn(() => null) };
     const trackList = createTrackList(opts.languages || [], opts.enabled === undefined ? null : opts.enabled);
     const element = createElement(trackList);
     const containerElement = { querySelector: () => element };
@@ -111,19 +111,33 @@ describe('withC8Tracks', () => {
         expect(Video.canPlayStream).toBe(t.Inner.canPlayStream);
     });
 
-    it('load: WebOsVideo loads first, the probe starts without waiting, once per load', () => {
+    it('load: WebOsVideo loads first, then the probe starts (without waiting), once per load', () => {
         t.load();
         expect(commands(t.inner)).toEqual(['load']);
+        expect(t.probeCache.get).toHaveBeenCalledTimes(1);
         expect(t.probeCache.get).toHaveBeenCalledWith(URL);
         // the element already lists its tracks: they show up at once (language only)
         expect(t.last('audioTracks').map((track) => [track.id, track.lang])).toEqual([['EMBEDDED_0', 'en'], ['EMBEDDED_1', 'pt'], ['EMBEDDED_2', 'en']]);
         expect(t.last('selectedAudioTrackId')).toBe('EMBEDDED_0');
+        t.play();
+        expect(t.probeCache.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('a probe already in the cache is used at load, without a request', () => {
+        t.probeCache.peek.mockReturnValue(kit);
+        t.load();
+        expect(t.probeCache.peek).toHaveBeenCalledWith(URL);
+        expect(t.last('audioTracks').map((track) => track.label)).toEqual(['English AAC · AAC 1.0', 'Portugues AAC · AAC 1.0', 'AC3 5.1']);
+        t.play();
+        expect(t.probeCache.get).not.toHaveBeenCalled();
+        expect(t.last('subtitlesTracks').length).toBe(2);
     });
 
     it('probe done: the menu gets the file languages and codecs; the subtitles once the video plays', async () => {
         t.load();
         t.probe.resolve(kit);
         await flush();
+        expect(t.last('audioTracks').length).toBe(3);
         expect(t.last('subtitlesTracks')).toEqual([]);
         t.play();
         expect(t.last('audioTracks').map((track) => [track.id, track.lang, track.label, track.mode])).toEqual([
@@ -136,9 +150,9 @@ describe('withC8Tracks', () => {
 
     it('switch: enables the chosen track, disables the others, and does not go to WebOsVideo (no Luna)', async () => {
         t.load();
+        t.play();
         t.probe.resolve(kit);
         await flush();
-        t.play();
         t.video.dispatch({ type: 'setProp', propName: 'selectedAudioTrackId', propValue: 'EMBEDDED_1' });
         expect([0, 1, 2].map((i) => t.trackList[i].enabled)).toEqual([false, true, false]);
         expect(t.inner.actions.filter((action) => action.type === 'setProp')).toEqual([]);
@@ -159,9 +173,8 @@ describe('withC8Tracks', () => {
 
     it('switch before the video plays: shown as selected, applied on the first playing (the pipeline is left alone while it starts)', async () => {
         t = setup({ languages: [] });
+        t.probeCache.peek.mockReturnValue(kit);
         t.load();
-        t.probe.resolve(kit);
-        await flush();
         t.video.dispatch({ type: 'setProp', propName: 'selectedAudioTrackId', propValue: 'EMBEDDED_2' });
         expect(t.last('selectedAudioTrackId')).toBe('EMBEDDED_2');
         t.trackList.set(['en', 'pt', 'en'], 0);
@@ -206,6 +219,7 @@ describe('withC8Tracks', () => {
 
     it('probe failure: the element list stays', async () => {
         t.load();
+        t.play();
         t.probe.reject(Object.assign(new Error('x'), { code: 'TIMEOUT' }));
         await flush();
         expect(t.last('audioTracks').map((track) => track.lang)).toEqual(['en', 'pt', 'en']);
@@ -237,6 +251,7 @@ describe('withC8Tracks', () => {
 
     it('unload, or WebOsVideo unloading on its own after an error: empty lists, a late probe is dropped', async () => {
         t.load();
+        t.play();
         t.video.dispatch({ type: 'command', commandName: 'unload' });
         expect(commands(t.inner)).toEqual(['load', 'unload']);
         expect(t.last('audioTracks')).toEqual([]);
@@ -257,13 +272,14 @@ describe('withC8Tracks', () => {
         const second = deferred();
         t.probeCache.get.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
         t.load();
+        t.play();
         t.load();
+        t.play();
         first.resolve(kit);
         await flush();
         expect(t.last('subtitlesTracks')).toEqual([]);
         second.resolve(kit);
         await flush();
-        t.play();
         expect(t.last('subtitlesTracks').length).toBe(2);
     });
 

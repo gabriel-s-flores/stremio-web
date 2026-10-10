@@ -2,9 +2,9 @@
 // header probe and the <video>'s audioTracks instead of the streaming server's /tracks (there is no
 // server, P3), and the audio switch enables the chosen track and disables the others on the
 // element. Everything else goes to WebOsVideo unchanged. Wired in by webos/webpack/player.js.
-// Nothing touches the pipeline before the video plays: an audio switch asked earlier waits for the
-// first `playing`, and the embedded subtitles are listed only then (choosing one makes WebOsVideo
-// call Luna). The audio list itself shows up as soon as the probe or the element has it.
+// The probe starts right after WebOsVideo's load and does not hold it. Nothing touches the pipeline
+// before the video plays: an audio switch asked earlier waits for the first `playing`, and the
+// embedded subtitles are listed only then (choosing one makes WebOsVideo call Luna).
 
 const {
     trackId,
@@ -32,7 +32,7 @@ const enableOnly = (videoElement, index) => {
     return true;
 };
 
-// deps.probeCache: { get(url) -> Promise }, deps.log (optional): console-like.
+// deps.probeCache: { get(url) -> Promise, peek(url) -> result | null }, deps.log (optional): console-like.
 const withC8Tracks = (Video, deps) => {
     const probeCache = deps.probeCache;
     const log = deps.log || null;
@@ -108,12 +108,16 @@ const withC8Tracks = (Video, deps) => {
             videoElement.addEventListener('playing', onPlaying);
         }
 
-        const startProbe = (url, id) => {
+        const useProbe = (result) => {
+            probe = result;
+            rules = evaluate({ probe: result, stream });
+        };
+
+        function startProbe(url, id) {
             const startedAt = Date.now();
             probeCache.get(url).then((result) => {
                 if (destroyed || id !== loadId) return;
-                probe = result;
-                rules = evaluate({ probe: result, stream });
+                useProbe(result);
                 if (log) {
                     log.info('[webos] tracks: probe ' + result.container + ', ' + result.summary.audioTracks + ' audio, ' +
                         result.summary.subtitleTracks + ' subtitles, ' + (Date.now() - startedAt) + ' ms');
@@ -124,7 +128,7 @@ const withC8Tracks = (Video, deps) => {
                 // The element's own list (language only) stays.
                 if (log) log.warn('[webos] tracks: probe failed (' + ((error && error.code) || error) + '), using video.audioTracks');
             });
-        };
+        }
 
         const selectAudioTrack = (id) => {
             const index = trackIndex(id);
@@ -204,7 +208,11 @@ const withC8Tracks = (Video, deps) => {
                 reset();
                 if (args.stream && typeof args.stream.url === 'string') {
                     stream = args.stream;
-                    startProbe(stream.url, loadId);
+                    // A probe already in the cache (same stream again, or the stream list probed
+                    // it) is used at once; otherwise it runs next to the pipeline start.
+                    const cached = probeCache.peek(stream.url);
+                    if (cached) useProbe(cached);
+                    else startProbe(stream.url, loadId);
                 }
                 refresh();
             }
