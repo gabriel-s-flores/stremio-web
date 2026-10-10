@@ -9,6 +9,25 @@ import { selectors, categories } from './plural-data';
 // Intl.PluralRules#selectRange is not used by the app: the factory gets a stub for it.
 const getRangeSelector = () => () => 'other';
 
+// Same lookup as the factory: drop subtags until a language with rules is found.
+const hasRules = (locale) => {
+    for (let tag = locale; tag; tag = tag.replace(/-?[^-]*$/, '')) {
+        if (selectors[tag]) return true;
+    }
+    return false;
+};
+
+// When no requested locale has rules, the factory takes the host locale from `new NumberFormat()`.
+// If the TV's locale has none either, it ends up with no rules and throws a TypeError, so the
+// host locale given to it falls back to English.
+const withEnglishHost = (NumberFormat) => function(locales, options) {
+    if (locales === undefined) {
+        const host = new NumberFormat().resolvedOptions().locale;
+        return new NumberFormat(hasRules(host) ? host : 'en', options);
+    }
+    return new NumberFormat(locales, options);
+};
+
 export const install = (global) => {
     if (!global.Intl) {
         global.Intl = {};
@@ -17,7 +36,7 @@ export const install = (global) => {
         return;
     }
     const PluralRules = getPluralRules(
-        global.Intl.NumberFormat,
+        withEnglishHost(global.Intl.NumberFormat),
         (locale) => selectors[locale],
         (locale, ordinal) => categories[locale][ordinal ? 'ordinal' : 'cardinal'],
         getRangeSelector
@@ -29,4 +48,3 @@ export const install = (global) => {
         enumerable: false
     });
 };
-

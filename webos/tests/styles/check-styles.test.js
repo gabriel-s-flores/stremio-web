@@ -1,0 +1,78 @@
+// webos/scripts/check-styles.js (in webos:check-syntax) and the content of webos/styles/app.less:
+// the html:root rule that keeps html, body and #app from being 0px tall on Chromium 53.
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { REQUIRED, stylesProblems, checkBuild } = require('../../scripts/check-styles');
+
+const ROOT = path.resolve(__dirname, '..', '..', '..');
+const APP_LESS = path.join(ROOT, 'webos', 'styles', 'app.less');
+
+// app.less through less, as the build does before PostCSS (no imports, so no loader options matter).
+const compileAppLess = async () => {
+    const less = require(require.resolve('less', { paths: [ROOT] }));
+    const { css } = await less.render(fs.readFileSync(APP_LESS, 'utf8'), { filename: APP_LESS });
+    return css;
+};
+
+const rule = (body) => `html{width:calc(max(1px,2px));height:calc(max(1px,2px))}html:root{${body}}`;
+const GOOD = Object.entries(REQUIRED).map(([prop, value]) => `${prop}:${value}`).join(';');
+
+describe('webos/styles/app.less', () => {
+    test('compiles to the html:root rule the check expects', async () => {
+        expect(stylesProblems(await compileAppLess())).toEqual([]);
+    });
+
+    test('does not use max(), min(), clamp() or env() in its declarations', () => {
+        const declarations = fs.readFileSync(APP_LESS, 'utf8').split('\n').filter((line) => !line.trim().startsWith('//'));
+        expect(declarations.join('\n')).not.toMatch(/\b(max|min|clamp|env)\(/);
+    });
+});
+
+describe('webos/scripts/check-styles', () => {
+    test('accepts the rule', () => {
+        expect(stylesProblems(rule(GOOD))).toEqual([]);
+    });
+
+    test('rejects a missing or empty rule', () => {
+        expect(stylesProblems('html{height:100%}')).toHaveLength(Object.keys(REQUIRED).length);
+        expect(stylesProblems(rule(''))).toHaveLength(Object.keys(REQUIRED).length);
+    });
+
+    test('rejects the height or a safe area left out', () => {
+        expect(stylesProblems(rule(GOOD.replace('height:var(--dynamic-viewport-height)', 'height:100%')))).toEqual([
+            'html:root needs height: var(--dynamic-viewport-height) (found 100%)',
+        ]);
+        expect(stylesProblems(rule(GOOD.replace(/--safe-area-inset-left:0rem;?/, '')))).toHaveLength(1);
+    });
+
+    test('rejects max() and env()', () => {
+        const withMax = rule(`${GOOD};min-height:max(100vh,1px)`);
+        expect(stylesProblems(withMax)).toEqual(['html:root min-height uses max(100vh,1px), which Chromium 53 drops']);
+        expect(stylesProblems(rule(`${GOOD};padding-top:env(safe-area-inset-top)`))).toHaveLength(1);
+    });
+
+    test('rejects the pointer-events of flex-gap-polyfill left as they were', () => {
+        const raw = `${rule(GOOD)}.a{--has-fgp: ;pointer-events:var(--has-fgp) none}.a>*{pointer-events:var(--parent-has-fgp) auto}.b{pointer-events:none}`;
+        expect(stylesProblems(raw)).toEqual([
+            '2 pointer-events from flex-gap-polyfill left as they were (buttons with a gap would not take clicks)',
+            'no --fgp-pointer-events: auto (the Button root must turn the flex-gap-polyfill pointer-events on)',
+        ]);
+        const switched = `${rule(GOOD)}.a{--has-fgp: ;pointer-events:var(--has-fgp) var(--fgp-pointer-events, none)}.button-container-x{--fgp-pointer-events:auto}`;
+        expect(stylesProblems(switched)).toEqual([]);
+    });
+
+    test('checks the one main.css of a build folder', () => {
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'check-styles-'));
+        try {
+            expect(checkBuild(dir)).toEqual([`expected one <commit>/styles/main.css in ${dir}, found 0`]);
+            fs.mkdirSync(path.join(dir, 'abc', 'styles'), { recursive: true });
+            fs.writeFileSync(path.join(dir, 'abc', 'styles', 'main.css'), rule(GOOD));
+            expect(checkBuild(dir)).toEqual([]);
+            fs.writeFileSync(path.join(dir, 'abc', 'styles', 'main.css'), 'html{height:100%}');
+            expect(checkBuild(dir)[0]).toMatch(/^abc\/styles\/main\.css: html:root needs width/);
+        } finally {
+            fs.rmSync(dir, { recursive: true, force: true });
+        }
+    });
+});

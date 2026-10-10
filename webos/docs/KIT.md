@@ -27,6 +27,7 @@ source ~/webos-tv-sdk/env.sh
 | `webos/tools/baseline-c8.sh` | Baseline de CPU de uma instância (boot, sonda, microbenchmark de JS, compilação do core); rode dentro do `emu-run`, com ou sem `--profile c8` ([docs/BASELINE-C8.md](docs/BASELINE-C8.md)) |
 | `webos/tools/media-server.mjs` | Servidor de mídia para o emulador: Range (seek), CORS e `/redirect/<arquivo>` (302, como links de debrid) |
 | `webos/tools/play-test.sh` | Teste padronizado de reprodução: eventos, faixas, progresso e seek |
+| `webos/tools/media-suite/` | Bateria de testes de mídia: cenários de reprodução em paralelo no pool de emuladores (um por boot), expectativas derivadas com `ffprobe` e relatório em markdown (`node webos/tools/media-suite/run.mjs`; detalhes no README da pasta) |
 | `webos/tools/switch-test.js` | Teste de trocas seguidas de stream (estratégias de liberação do pipeline) |
 | `media-tests/files/` | Mídias sintéticas: H.264 e HEVC 10-bit, AAC, AC3 5.1 e E-AC3 5.1, MP4/MKV, multi-áudio, SRT |
 | `probe/` | App-sonda (IPK): sintaxe JS, APIs, CSS, codecs (`canPlayType`/MSE), Luna, CORS, Worker; `probePlay(url)` para testes de mídia |

@@ -1,0 +1,20 @@
+// Root layout fixes for webOS TV 4.x (Chromium 53), appended after the app styles by
+// webos/webpack/styles.js. `html:root` outranks both `html` and `:root` of src/App/styles.less,
+// so these win regardless of the order of the rules in main.css.
+
+html:root {
+    // src/App/styles.less sizes html with max() of the small and dynamic viewport sizes. Chromium 53
+    // has no max(), so the declarations were dropped and html, body and #app ended up 0px tall: the
+    // DOM had the Board but the screen showed only the background color. Without svh/dvh both sizes
+    // are 100vw/100vh over the interface scale, which is what --dynamic-viewport-* holds here.
+    width: var(--dynamic-viewport-width);
+    height: var(--dynamic-viewport-height);
+
+    // The safe area insets come from env(), which Chromium 53 lacks: every declaration using them
+    // (paddings, top/bottom, calc()) would be invalid and fall back to its initial value. A TV has
+    // no safe areas; overscan margins are a TV-scale task (F2.6).
+    --safe-area-inset-top: 0rem;
+    --safe-area-inset-right: 0rem;
+    --safe-area-inset-bottom: 0rem;
+    --safe-area-inset-left: 0rem;
+}

@@ -23,6 +23,9 @@ api('DocumentFragment.prototype.append', DocumentFragment.prototype.append);
 api('Element.prototype.scrollTo', Element.prototype.scrollTo);
 api('Element.prototype.scrollBy', Element.prototype.scrollBy);
 api('Element.prototype.scroll', Element.prototype.scroll);
+api('Node.prototype.getRootNode', Node.prototype.getRootNode);
+api('DOMRect', window.DOMRect);
+api('DOMRectReadOnly', window.DOMRectReadOnly);
 
 var pending = [];
 var check = function (name, run) {
@@ -162,6 +165,32 @@ check('ResizeObserver notifies on resize', function () {
         assert(detail === '100x50 then 240x50', detail);
         return detail;
     });
+});
+
+check('DOMRect from a bounding box, scaled like getInterfaceRect', function () {
+    var box = document.createElement('div');
+    box.style.cssText = 'position:absolute;left:100px;top:50px;width:250px;height:125px';
+    document.body.appendChild(box);
+    // The same read as getInterfaceRect: x and y, which Chromium 53's ClientRect only has through the polyfill.
+    var b = box.getBoundingClientRect();
+    var x = b.x, y = b.y, width = b.width, height = b.height;
+    document.body.removeChild(box);
+    var rect = new DOMRect(x / 1.25, y / 1.25, width / 1.25, height / 1.25);
+    var detail = (b.constructor && b.constructor.name) + ' ' + JSON.stringify(rect.toJSON());
+    assert(rect instanceof DOMRectReadOnly && rect.left === 80 && rect.top === 40 && rect.right === 280 && rect.bottom === 140, detail);
+    return detail;
+});
+
+check('getRootNode', function () {
+    var box = document.createElement('div');
+    var inner = document.createElement('span');
+    box.appendChild(inner);
+    assert(inner.getRootNode() === box, 'detached subtree');
+    document.body.appendChild(box);
+    var root = inner.getRootNode();
+    document.body.removeChild(box);
+    assert(root === document, 'attached: ' + root);
+    return 'document';
 });
 
 check('append and prepend', function () {

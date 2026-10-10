@@ -91,6 +91,55 @@ describe('Element polyfill', () => {
         expect(typeof NativeElement.prototype.scroll).toBe('function');
     });
 
+    describe('getRootNode', () => {
+        class TreeNode {
+            constructor(parentNode = null, host = null, nodeType = 1) {
+                this.parentNode = parentNode;
+                this.host = host;
+                this.nodeType = nodeType;
+            }
+        }
+
+        beforeAll(() => {
+            install({ Node: TreeNode });
+        });
+
+        test('is installed on Node and keeps a native one', () => {
+            expect(typeof TreeNode.prototype.getRootNode).toBe('function');
+            const native = () => {};
+            class NativeNode {}
+            NativeNode.prototype.getRootNode = native;
+            install({ Node: NativeNode });
+            expect(NativeNode.prototype.getRootNode).toBe(native);
+        });
+
+        test('returns the top of the tree, or the node itself when it has no parent', () => {
+            const doc = new TreeNode();
+            const leaf = new TreeNode(new TreeNode(doc));
+            expect(leaf.getRootNode()).toBe(doc);
+            expect(doc.getRootNode()).toBe(doc);
+        });
+
+        test('stops at a shadow root unless composed', () => {
+            const doc = new TreeNode();
+            const host = new TreeNode(doc);
+            const shadowRoot = new TreeNode(null, host, 11);
+            const inside = new TreeNode(shadowRoot);
+            expect(inside.getRootNode()).toBe(shadowRoot);
+            expect(inside.getRootNode({ composed: false })).toBe(shadowRoot);
+            expect(inside.getRootNode({ composed: true })).toBe(doc);
+        });
+
+        test('does not follow the string host of a detached link, even when composed', () => {
+            const link = new TreeNode(null, 'example.com');
+            const child = new TreeNode(link);
+            expect(child.getRootNode({ composed: true })).toBe(link);
+            expect(link.getRootNode({ composed: true })).toBe(link);
+            const fragment = new TreeNode(null, null, 11);
+            expect(new TreeNode(fragment).getRootNode({ composed: true })).toBe(fragment);
+        });
+    });
+
     test('works when interfaces are missing', () => {
         expect(() => install({})).not.toThrow();
     });
