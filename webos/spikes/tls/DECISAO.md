@@ -50,15 +50,23 @@ app (file://, Chromium 53)                               serviço io.github.gabr
   - Assim o serviço confia nas raízes padrão **e** nas ISRG. No emulador o `/status` confirmou `strategy: merged-root-store`, Node v0.12.2 e OpenSSL 1.0.2k.
   - Se esse caminho interno não existir, o código cai para `ca` só com ISRG (vale apenas para hosts LE).
 - **Vida do serviço:** a assinatura Luna de `/start` aberta pelo app mantém o serviço de pé (também tenta `activityManager`). Subida a frio: **~0,4–0,6 s** do `luna start` até a porta pronta.
-- **Proteções:**
-  - escuta só em `127.0.0.1`;
-  - token aleatório por processo (outras páginas da TV não usam o proxy sem o token);
-  - só `https://`;
-  - `Range` recusado com 403;
-  - respostas `video/*`, `audio/*`, HLS e DASH recusadas;
-  - corpo acima de 16 MB cortado;
-  - timeout de 20 s;
-  - redirecionamentos `https` seguidos dentro do serviço.
+- **Proteções** (revisadas no ciclo 1; bateria em `security-test.mjs`, 25/25 contra o serviço no emulador):
+  - **Acesso:**
+    - escuta só em `127.0.0.1`;
+    - token aleatório por processo, exigido em `/proxy` **e** em `/status`. Outro app não obtém o token: a Luna recusa `start` de outro id;
+    - `Host` diferente de `127.0.0.1:<porta>` ou `localhost:<porta>` dá 403 (contra DNS rebinding).
+  - **Credenciais em redirect:** redirecionamentos `https` são seguidos dentro do serviço (só GET/HEAD), mas `Authorization` **só vai ao host pedido pelo app**. Num salto para outro host ou porta, ele é removido antes de seguir, como faz o navegador. No mesmo host é mantido.
+  - **Mídia (P3):**
+    - `Range` recusado com 403;
+    - `Content-Type` `video/*`, `audio/*`, HLS e DASH recusado;
+    - **assinatura de contêiner** nos primeiros 512 bytes de toda resposta (os cabeçalhos só saem depois da inspeção): `ftyp` (exceto marcas de imagem AVIF/HEIF), EBML, MPEG-TS, `#EXTM3U`, `<MPD`, Ogg, FLAC, ID3, FLV, AVI/WAVE e RealMedia são recusados com 403.
+  - **Tamanho:** 4 MB para imagens, **2 MB para binário genérico** (`application/octet-stream` ou sem tipo) e 16 MB para o resto. Timeout de 20 s.
+  - **Ciclo da requisição:**
+    - se o cliente desiste (`close`), o download no upstream é cancelado;
+    - `HEAD`, `204` e `304` repassam os cabeçalhos sem juntar corpo (o `Content-Length` do `HEAD` é o do recurso).
+  - **Diagnóstico:**
+    - `/status` (com token) traz só estado, memória e contadores; `tlsErrors` é indexado por `err.code`, sem nomes de host;
+    - o log e o pid saem só pelo método Luna `status`, que o sistema restringe ao próprio app. O console do serviço não chega a `/var/log/messages` no emulador; o log fica em memória (últimas 100 linhas).
 - **Imagens são juntadas antes de responder** (uma escrita, `Content-Length` exato, limite de 4 MB). Repassar os pedaços do TLS (12 B e depois 1 KB por vez) fez o `<img>` do Chromium 53 dar `onerror` de forma intermitente com o corpo íntegro: 30 de 36 no modo repasse contra 36 de 36 juntando. O diagnóstico completo está em `evidencias/diagnostico-img-intermitente.txt`. A causa exata dentro do Chromium não foi isolada; a correção foi validada.
 
 ## 4. Critérios de aceite (emulador, boot limpo, `SOAK=600 emu-run -- run.sh`)
@@ -68,6 +76,11 @@ app (file://, Chromium 53)                               serviço io.github.gabr
 | 1 | Pôster de `images.metahub.space` numa `<img>` pela solução | ✅ Nas duas passadas: direto `ERR_INSECURE_RESPONSE`; via serviço **200, 500x750**. Estabilidade 20/20 no combo que falhava. Capturas `run1-app.png`, `run2-app.png` |
 | 2 | `fetch` a host Let's Encrypt pela solução | ✅ `debrid-link.com/api/v2/downloader/domains`: direto `TypeError: Failed to fetch` (`ERR_INSECURE_RESPONSE` no CDP); via serviço **HTTP 200, `success=true`, 151 domínios** |
 | 3 | Documento com decisão, riscos, custo e plano para a F3.7 | Este arquivo |
+
+Reconfirmados no ciclo 1, com o serviço corrigido (`evidencias/ciclo1/`):
+- os critérios 1 e 2 nas duas passadas, com estabilidade 20/20;
+- a carga de 600 pôsteres sem falhas, com RSS estável em 38–40 MB;
+- `security-test.mjs` 25/25.
 
 ## 5. Custo de desempenho (medido no emulador, 2 vCPU, 1 GB)
 
@@ -101,9 +114,10 @@ app (file://, Chromium 53)                               serviço io.github.gabr
 | O sistema encerrar o serviço por ociosidade ou memória | Média | Médio | Assinatura Luna aberta enquanto o app vive; o cliente refaz o `start` e repete a requisição uma vez em erro de conexão |
 | Raízes Let's Encrypt novas (Gen Z…) ou fim das assinaturas cruzadas | Baixa (anos) | Médio | `gen-ca.sh` regenera `ca.js`; as raízes YE/YR já embutidas cobrem as cadeias curtas sem cruzamento |
 | Cifras e protocolo: hosts que exijam só TLS 1.3 (o OpenSSL 1.0.2 vai até TLS 1.2) | Baixa | Médio | Hoje todos os hosts medidos aceitam TLS 1.2 GCM; o `/status` registra erros por código para diagnóstico |
-| Segurança: proxy local acessível a outros apps da TV | Baixa | Médio | Só em `127.0.0.1`, token aleatório por processo, só https, sem mídia, limite de tamanho |
+| Segurança: proxy local acessível a outros apps ou páginas da TV | Baixa | Médio | Só em `127.0.0.1`, token por processo em `/proxy` e `/status` (a Luna nega o `start` a outro app), checagem de `Host`, só https, sem mídia, limites de tamanho |
+| Token de debrid ou addon vazar para outro host via redirecionamento | Baixa (corrigido no ciclo 1) | Médio | `Authorization` removido em salto cross-host; caso de regressão no `security-test.mjs` e no aceite da F3.7 |
 | Falha intermitente do `<img>` com repasse fragmentado (causa não isolada no Chromium) | Baixa (corrigida) | Médio | Imagens sempre juntadas no serviço; em JSON grande, juntar também se aparecer sintoma; o cliente tenta de novo uma vez |
-| Vídeo do debrid passar pelo serviço (violaria a P3 e o pipeline nativo) | Baixa | Alto | O cliente nunca passa URLs de stream ao proxy (seção 7) **e** o serviço recusa `Range`, `video/*`, `audio/*`, HLS, DASH e corpos acima de 16 MB |
+| Vídeo do debrid passar pelo serviço (violaria a P3 e o pipeline nativo) | Baixa | Alto | O cliente nunca passa URLs de stream ao proxy (seção 7) **e** o serviço recusa `Range`, `video/*`, `audio/*`, HLS, DASH, assinaturas de contêiner de mídia, binário genérico acima de 2 MB e qualquer corpo acima de 16 MB |
 | Proxy de terceiros (b) indisponível ou bloqueado | — | Médio | Só alternativa documentada; não entra no build |
 
 ## 7. Plano de integração (F3.7)
@@ -115,9 +129,16 @@ Pré-requisitos: build `WEBOS=1` e empacotamento IPK da Fase 1, e webOSTV.js (F3
 2. O script de empacotamento da F1 passa a chamar `ares-package <app> <service>`.
 3. Checagens no build: `acorn --ecma5` em `service/*.js` (o serviço não passa pelo Babel), e `gen-ca.sh` conferindo que `ca.js` corresponde a `certs/`.
 4. Ajustes no serviço:
-   - remover o modo `_stream=1` (só existia para o A/B) e o histórico `recent`;
-   - manter o `/status`;
+   - remover o modo `_stream=1` (só existia para o A/B);
    - porta fixa 47443 com fallback para a próxima livre, devolvida no `start`.
+5. **Segurança: obrigações que já estão no spike e não podem regredir.** O `security-test.mjs` vai para o repositório junto com o serviço e roda no aceite da F3.7:
+   - `Authorization` (e qualquer cabeçalho de credencial que venha a ser repassado) nunca segue um redirecionamento para outro host ou porta;
+   - token em `/proxy` e `/status`; diagnóstico detalhado (log, pid) só pela Luna;
+   - checagem de `Host`;
+   - recusa de mídia por `Content-Type` **e** por assinatura, com limite menor para binário genérico;
+   - aborto do upstream quando o cliente desiste; `HEAD`/`204`/`304` sem corpo juntado;
+   - `tlsErrors` por código.
+6. Endurecimento a decidir na F3.7: restringir os métodos a `GET`, `HEAD` e `POST`, se nenhum addon usado precisar de outro. Hoje o proxy aceita qualquer método para qualquer host `https`, inclusive IPs da rede local, o que é aceitável porque só o próprio app tem o token.
 
 **7.2 Cliente na página: `src/webos/tlsProxy.js`** (no desktop, `tlsProxy.desktop.js` com `proxify = url => url`)
 1. `start()`:
@@ -127,6 +148,7 @@ Pré-requisitos: build `WEBOS=1` e empacotamento IPK da Fase 1, e webOSTV.js (F3
    - Se der certo, a TV já confia na ISRG: `mode = 'direct'`, o serviço nem sobe e `proxify` vira identidade.
    - Se falhar, `mode = 'proxy'`.
    - O resultado fica em `localStorage` com a versão do firmware, para não repetir o teste a cada abertura.
+   - Ressalva: o `localStorage` de apps `file://` pode ser compartilhado entre apps, então outro app poderia gravar `mode='direct'` ou hosts falsos. O impacto é só de disponibilidade. Mesmo com `mode='direct'` guardado, uma falha de rede num host do conjunto refaz a detecção, e os hosts lidos do `localStorage` são validados (só nomes de host, tamanho limitado).
 3. `proxify(url)`: só reescreve quando `mode === 'proxy'`, o proxy está pronto, a URL é `https:` e o host está no conjunto LE.
    - O conjunto começa com `images.metahub.space`, `debrid-link.com` e `debrid-link.fr`.
    - Ele aprende hosts novos (seção 7.4) e é persistido em `localStorage`.
@@ -153,13 +175,14 @@ Pré-requisitos: build `WEBOS=1` e empacotamento IPK da Fase 1, e webOSTV.js (F3
    - **passam direto:** URLs relativas, `file:` e o mesmo origin (o `.wasm` é carregado por `fetch`, linha 864), `127.0.0.1` e qualquer coisa fora de `https:`;
    - **host no conjunto:** reconstrói o `Request` com a URL do proxy, mantendo método, cabeçalhos e corpo;
    - **`TypeError` de rede em host `https:` fora do conjunto:** tenta uma vez pelo proxy e, se der certo, avisa a página (`postMessage`) para aprender o host.
+   - **Aprender só quando a causa é certificado.** O `TypeError` do `fetch` também cobre CORS, e o serviço responde `Access-Control-Allow-Origin: *`; sem esse cuidado, o proxy viraria um contorno de CORS e "aprenderia" hosts sem problema de certificado. Na F3.7 o serviço devolve, no `/proxy`, um cabeçalho com o emissor da cadeia do upstream (ex.: `X-Proxy-Issuer-O: Let's Encrypt`, lido de `getPeerCertificate()`), e o host só é aprendido quando esse emissor é Let's Encrypt/ISRG.
    - Cópia de `Request` com corpo no Chromium 53: testar na F3.7. Se `new Request(url, req)` não preservar o corpo, usar `req.clone().arrayBuffer()`.
 4. Requisições que chegam antes da configuração esperam até 3 s e depois seguem direto.
 
 **7.5 O que nunca passa pelo proxy (P3)**
 - A URL do stream (`Player.js:541-570` → `useVideo.js:62` → stremio-video) vai direto ao `<video src>`. O pipeline de mídia tem outro repositório de CAs e já tocou HTTPS Let's Encrypt (PESQUISA §7).
 - O `HEAD` de `HTMLVideo/getContentType.js:10` e os `fetch` do stremio-video ficam na página, onde não há wrapper global: o patch é só no worker e nos componentes de imagem.
-- Defesa em profundidade no serviço: `Range`, `video/*`, `audio/*`, HLS e DASH recusados, mais o limite de tamanho.
+- Defesa em profundidade no serviço: `Range`, `video/*`, `audio/*`, HLS e DASH recusados, assinaturas de contêiner recusadas e limites de tamanho (seção 3).
 - Legendas remotas (`withHTMLSubtitles.js:515,670`) são texto e poderiam passar pelo proxy. Ficam fora da F3.7 e entram como item da F5 se aparecer um host LE de legendas.
 
 **7.6 Aceite da F3.7 no emulador**
@@ -170,6 +193,7 @@ Pré-requisitos: build `WEBOS=1` e empacotamento IPK da Fase 1, e webOSTV.js (F3
 5. Tela de diagnóstico (F3.6) mostrando modo, porta, `/status` e hosts aprendidos.
 6. Memória do serviço somada à do app na medição da Fase 7.
 7. Testes Jest para `proxify`, aprendizado de hosts e o wrapper do worker: passagem do mesmo origin, do `.wasm` e de `127.0.0.1`, e cópia do `Request`.
+8. **`security-test.mjs` 100% contra o serviço no emulador**, incluindo o caso de regressão "`Authorization` não chega ao segundo host num redirecionamento cross-host" (e continua chegando no mesmo host).
 
 **7.7 Alternativa (b), só documentada**
 - Se o serviço JS falhar na TV real (Fase 8), as imagens podem passar por `https://wsrv.nl/?url=<host/caminho>` (cadeia GTS/GlobalSign, aceita pelo Chromium 53, ~30–40 ms por pôster no emulador), atrás de uma configuração explícita.
@@ -180,8 +204,10 @@ Pré-requisitos: build `WEBOS=1` e empacotamento IPK da Fase 1, e webOSTV.js (F3
 ```bash
 # no worktree, com o ares CLI no PATH
 webos/spikes/tls/gen-ca.sh                                    # só se as raízes em certs/ mudarem
-SOAK=600 webos/tools/emu-run -- webos/spikes/tls/run.sh /tmp/f07   # boot limpo, 2 passadas + carga
+SOAK=600 webos/tools/emu-run -- webos/spikes/tls/run.sh /tmp/f07   # boot limpo, 2 passadas + carga + segurança
 ```
+
+O `run.sh` termina com código ≠ 0 se algum caso do `security-test.mjs` falhar.
 
 | Arquivo | O que é |
 |---|---|
@@ -189,4 +215,5 @@ SOAK=600 webos/tools/emu-run -- webos/spikes/tls/run.sh /tmp/f07   # boot limpo,
 | `service/ca.js`, `certs/*.pem`, `gen-ca.sh` | Raízes ISRG X1, X2, Root YE, Root YR (SHA-256 nos comentários) |
 | `app/` | App de teste (Chromium 53): direto × serviço × wsrv, custo, estabilidade, `__tlsSoak(n)` |
 | `cdp-net.mjs` | Log de rede via CDP (`Network.*`), com `--go` para capturar a 1ª passada a frio |
-| `run.sh` | Instala, roda as passadas, captura telas, memória (`/proc` por SSH) e grava tudo em OUT |
+| `security-test.mjs` | Bateria de segurança (25 casos): credenciais em redirect, token, `Host`, mídia por tipo e por assinatura, limites, `HEAD`, aborto, validação TLS (badssl) |
+| `run.sh` | Instala, roda as passadas, a carga e a bateria de segurança (túnel SSH até a porta do serviço), captura telas, memória (`/proc` por SSH) e o log do serviço (Luna `status`), e grava tudo em OUT |
