@@ -84,6 +84,19 @@ Modelos: **O** = `claude-opus-5-5`, **S** = `claude-sonnet-5-5`; effort entre pa
   um; cabeçalhos baixados e catalogados.
 - **Evidências:** relatório da bateria, catálogo das amostras.
 
+### F0.11 · Init do core no perfil C8 (remediação do G0)
+- **Depende de:** F0.5, F0.9 (usa o loader da F0.6 quando mergeado)  · **Modelo:** O (high)
+- **Escopo:** spike em `webos/spikes/core-init/`. No perfil c8 o core leva ~21–29 s (WASM: `WebAssembly.compile`
+  síncrono do V8 5.8) e ~23–24 s (wasm2js: parse de 32,7 MB) contra a meta de 10 s do G0. Medir com o host livre,
+  quebrar o tempo por etapa, verificar se a UI fica bloqueada enquanto o core compila e testar remediações
+  (build otimizado para tamanho, compilação fora do caminho crítico com o Board renderizado antes, cache de código
+  do V8 para o wasm2js no 2º boot, dividir o wasm2js, outras).
+- **Aceite:** tabela variante × (init por etapa, tempo até a 1ª tela útil, memória pico/estável) no perfil c8,
+  ≥ 3 execuções por variante com o host livre; recomendação para o G0 com a variante escolhida e o custo de
+  adotá-la; se alguma variante atingir a meta (ou uma meta revista por tempo até a 1ª tela útil), PR com ela
+  mantendo build reprodutível e o gate `check-wasm`.
+- **Evidências:** JSONs dos smokes, tabela, capturas.
+
 ### G0 · Gate de viabilidade
 - **Depende de:** F0.5, F0.6, F0.7, F0.9
 - **Critérios:** core (WASM e wasm2js) inicializa no perfil C8 em menos de 10 s; a F0.7 tem
