@@ -21,8 +21,11 @@ trap cleanup EXIT
 node "$HERE/materialize.mjs" "$WORK/media" "$SYNTHETIC"/t2_multi.mkv "$SYNTHETIC"/t3_hevc10_eac3.mp4 > "$WORK/files.txt"
 FILES=()
 while read -r name; do FILES+=("$name"); done < "$WORK/files.txt"
-# Um arquivo também pela rota de redirect (302), como os links de debrid.
-FILES+=("redirect/${FILES[0]}")
+# Um arquivo também pela rota de redirect (302), como os links de debrid. O dv-p5-mp4 precisa de
+# 2 pedidos (moov no fim): o 2º deve ir direto à URL final, sem repetir o redirect.
+REDIRECTED="dv-p5-mp4.mp4"
+[[ -f "$WORK/media/$REDIRECTED" ]] || REDIRECTED="${FILES[0]}"
+FILES+=("redirect/$REDIRECTED")
 
 PORT=$((18100 + RANDOM % 800))
 node "$TOOLS/media-server.mjs" "$WORK/media" "$PORT" > "$OUT/media-server.log" 2>&1 &
@@ -43,8 +46,15 @@ LIST="$(printf '"%s",' "${FILES[@]}")"
 "${CDP[@]}" screenshot "$OUT/emulator-app.png" >/dev/null || true
 "$TOOLS/emulator-qemu.sh" -i "$EMU_INSTANCE" screenshot "$OUT/emulator-tela.png" >/dev/null 2>&1 || true
 
+# O emulador deve passar pelo 302 uma vez só e fazer os pedidos seguintes direto na URL final.
+{
+    echo "redirect: pedidos do emulador em /redirect/$REDIRECTED: $(grep -c " /redirect/$REDIRECTED " "$OUT/media-server.log")"
+    echo "redirect: pedidos do emulador direto em /$REDIRECTED: $(grep -c " /$REDIRECTED " "$OUT/media-server.log")"
+} > "$OUT/redirect.txt"
+
 # Referência: o mesmo probe no Node, lendo os mesmos arquivos pelo mesmo servidor.
 for name in "${FILES[@]}"; do
     node "$HERE/../tools/probe.mjs" "http://127.0.0.1:$PORT/$name" > "$WORK/node-${name//\//_}.json"
 done
 node "$HERE/compare.mjs" "$OUT/emulator.json" "$WORK" | tee "$OUT/compare.txt"
+cat "$OUT/redirect.txt"
