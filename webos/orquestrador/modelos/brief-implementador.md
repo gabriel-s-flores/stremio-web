@@ -32,6 +32,8 @@ a conversa.
 
 ## Como trabalhar
 
+0. A worktree é nova e não tem `node_modules`: rode primeiro
+   `webos/tools/build-run -- pnpm install --frozen-lockfile`.
 1. Leia a tarefa, o plano e o código envolvido com amplitude antes de mudar algo. Use subagentes
    (ferramenta Agent) para explorar ou rodar baterias de teste — eles aparecem no painel de Agentes
    desta thread.

@@ -20,6 +20,7 @@ evidência**: verifique por conta própria.
 
 ## Como revisar
 
+0. A worktree é nova: rode primeiro `webos/tools/build-run -- pnpm install --frozen-lockfile`.
 1. Leia a tarefa inteira, o diff completo (`git diff origin/webos...HEAD`) e o relatório.
 2. Rode você mesmo: `pnpm lint`, `pnpm test`, `pnpm build` (desktop) e, quando existirem, o build
    webOS e a checagem de sintaxe (via `webos/tools/build-run -- …`).
