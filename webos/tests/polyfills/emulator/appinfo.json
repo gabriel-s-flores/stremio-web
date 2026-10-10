@@ -1,0 +1,12 @@
+{
+    "id": "io.github.gabrielsflores.polyfillsprobe",
+    "version": "0.0.1",
+    "vendor": "gabriel-s-flores",
+    "type": "web",
+    "main": "index.html",
+    "title": "Polyfills probe",
+    "icon": "icon.png",
+    "largeIcon": "icon.png",
+    "resolution": "1920x1080",
+    "disableBackHistoryAPI": true
+}

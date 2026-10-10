@@ -27,5 +27,9 @@ No emulador, dentro de uma reserva do pool:
   compostos em `webpack.config.js`. O `webpack.config.js` da raiz não muda.
 - Overrides: `require('./styles')` usa `styles.webos.less` (ou `.webos.js`, `.webos.tsx`…) quando o
   arquivo existe, só no build webOS.
+- `webos/polyfills/`: polyfills só do webOS (ResizeObserver, `Intl.PluralRules` com os idiomas do app,
+  AbortController, `queueMicrotask`, `Element#append/prepend/scrollTo`); `index.js` entra no bundle da
+  página e `worker.js` no do worker, via `webos/webpack/polyfills.js`. A sonda do emulador está em
+  `webos/tests/polyfills/emulator/` (`run.sh`, dentro do `emu-run`).
 - `webos/app/`: `appinfo.json` (a versão vem do `package.json`), ícones e o `index.html` do webOS.
 - `webos/vendor/webOSTVjs-1.2.13/`: webOSTV.js da LG, sem alterações (origem e sha256 no README).
