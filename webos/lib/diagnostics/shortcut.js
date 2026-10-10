@@ -8,7 +8,8 @@
 const COLOR_KEYS = { RED: 403, GREEN: 404, YELLOW: 405, BLUE: 406 };
 const SEQUENCE = [COLOR_KEYS.RED, COLOR_KEYS.GREEN, COLOR_KEYS.YELLOW, COLOR_KEYS.BLUE];
 const SEQUENCE_GAP_MS = 2500;
-const DIAGNOSTICS_HASH = '#/webos-diagnostics';
+const DIAGNOSTICS_PATH = '/webos-diagnostics';
+const DIAGNOSTICS_HASH = '#' + DIAGNOSTICS_PATH;
 
 // Returns onKey(keyCode, at): true when the key completes the sequence. `at` is a millisecond
 // timestamp (the event's timeStamp or Date.now()).
@@ -31,8 +32,9 @@ const createSequenceMatcher = (sequence, gapMs) => {
     };
 };
 
-// Starts listening on `win` (capture phase on window). Opens the screen by setting the hash of the
-// HashRouter, so Back returns to where the user was. Returns a function that stops listening.
+// Starts listening on `win` (capture phase on window). `options.open` opens the screen; the app passes
+// the router's navigate() (ShortcutHandler.js), which keeps the history index the Back key of F3.2 needs.
+// The default sets the hash, for use without a router. Returns a function that stops listening.
 const installDiagnosticsShortcut = (win, options) => {
     const target = win || (typeof window !== 'undefined' ? window : null);
     if (!target || typeof target.addEventListener !== 'function') return () => {};
@@ -53,6 +55,7 @@ module.exports = {
     COLOR_KEYS,
     SEQUENCE,
     SEQUENCE_GAP_MS,
+    DIAGNOSTICS_PATH,
     DIAGNOSTICS_HASH,
     createSequenceMatcher,
     installDiagnosticsShortcut,

@@ -113,6 +113,9 @@ const WebosDiagnostics = () => {
 
     const onSave = useCallback(() => {
         try {
+            // One report at a time: the F3.5 mirror copies localStorage to IndexedDB and restores it after
+            // a reinstall, so an old report would otherwise outlive the app.
+            window.localStorage.removeItem(REPORT_STORAGE_KEY);
             window.localStorage.setItem(REPORT_STORAGE_KEY, reportText);
             // eslint-disable-next-line no-console
             console.info('[webos-diagnostics]\n' + reportText);

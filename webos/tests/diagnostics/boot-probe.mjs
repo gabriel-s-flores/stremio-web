@@ -5,8 +5,8 @@
 //   coreReadyAt  window.core assigned (the F1.4 definition), ms on the page's performance.now()
 //   firstRowAt   first frame (rAF) with a Board catalog item that has a box inside the screen
 //   screenFullAt two Board rows with items on screen
-//   scripts      the .js files the page had loaded by then, from Page.getResourceTree (the diagnostics
-//                chunk must not be there)
+//   chunks       ids of the lazy webpack chunks that had run by then (self.webpackChunk<name>); the
+//                diagnostics chunk (641) must not be there
 //
 //   node boot-probe.mjs --port <cdp> [--timeout s]
 const argv = process.argv.slice(2);
@@ -78,12 +78,7 @@ async function connect() {
         pending.set(id, { resolve: (r) => resolve(r.result && r.result.value), reject });
         ws.send(JSON.stringify({ id, method: 'Runtime.evaluate', params: { expression, returnByValue: true } }));
     });
-    const send = (method) => new Promise((resolve, reject) => {
-        const id = nextId++;
-        pending.set(id, { resolve, reject });
-        ws.send(JSON.stringify({ id, method }));
-    });
-    return { evaluate, send, close: () => ws.close() };
+    return { evaluate, close: () => ws.close() };
 }
 
 const session = await connect();
@@ -97,10 +92,9 @@ while (Date.now() < deadline) {
     } catch (e) { /* the document is being replaced */ }
     await sleep(500);
 }
-let scripts = null;
+let chunks = null;
 try {
-    const tree = await session.send('Page.getResourceTree');
-    scripts = (tree.frameTree.resources || []).filter((r) => /\.js(\?|$)/.test(r.url)).map((r) => r.url.split('/').pop());
+    chunks = JSON.parse(await session.evaluate(`JSON.stringify((function(){ var k = Object.keys(window).filter(function(n){ return /^webpackChunk/.test(n); })[0]; return k ? window[k].map(function(c){ return c[0]; }) : null; })())`));
 } catch (e) { /* not available */ }
 session.close();
 const round = (value) => (typeof value === 'number' ? Math.round(value) : value);
@@ -110,6 +104,6 @@ console.log(JSON.stringify({
     firstRowAt: round(hooks.firstRowAt),
     screenFullAt: round(hooks.screenFullAt),
     heap: state && state.heap,
-    scripts,
+    chunks,
     ok: !!(state && hooks.screenFullAt !== null),
 }));

@@ -7,9 +7,9 @@ Tela de diagnóstico do app no webOS TV 4.x (F3.6, plano D10): reúne o que a TV
 
 ## Como abrir a tela
 
-1. **Atalho do controle remoto, de qualquer rota:** as quatro teclas coloridas em ordem, **vermelho, verde, amarelo, azul**, cada uma até 2,5 s depois da anterior (`shortcut.js`). Não consome as teclas. Existe porque a barra de navegação ainda não é alcançável por setas (F4.1) e a sessão na TV não pode depender dela.
+1. **Atalho do controle remoto, de qualquer rota:** as quatro teclas coloridas em ordem, **vermelho, verde, amarelo, azul**, cada uma até 2,5 s depois da anterior (`shortcut.js`). Não consome as teclas. Existe porque a barra de navegação ainda não é alcançável por setas (F4.1) e a sessão na TV não pode depender dela. O `ShortcutHandler.js` fica montado **dentro do Router**, ao lado do `BackNavigation` (`src/App/index.webos.js`), e abre a tela com o `navigate()` do router: assim a entrada de histórico tem `history.state.idx` e o Back da F3.2 volta para a rota de onde se veio (atribuir `location.hash` deixaria a entrada sem `idx`, e o Back cairia no Board).
 2. **Settings → Diagnostics:** item no fim do menu da esquerda de Settings (`Menu.webos.tsx`), alcançável com as setas.
-3. **Rota direta:** `#/webos-diagnostics` (a rota é comum: o Back da F3.2 volta pelo histórico, para a rota de onde se veio).
+3. **Rota direta:** `#/webos-diagnostics` (a rota é comum: o Back da F3.2 volta pelo histórico, para a rota de onde se veio). Ela fica na camada `view: 5` do router, **acima do Player** (`view: 4`): o `Routes.tsx` troca a rota de mesma camada, e a tela aberta durante a reprodução desmontaria o `<video>`. Um teste mantém a camada acima das rotas do upstream. Com a tela aberta, o Player continua montado (oculto) e tocando por baixo, e o Back volta a ele.
 
 Na tela: setas para cima e para baixo percorrem os botões e as seções (cada seção é focável para a página rolar).
 
@@ -41,7 +41,7 @@ Os botões **Core: wasm2js / WebAssembly / default + restart** gravam `localStor
 Sem `navigator.clipboard` no Chromium 53, e sem biblioteca de QR code (seria uma dependência nova para um relatório de ~7 KB, grande para um QR): o relatório fica num **bloco de texto selecionável** no fim da tela (um Magic Remote seleciona arrastando). Os botões:
 
 - **Copy report:** seleciona o bloco e chama `document.execCommand('copy')` (funciona onde houver área de transferência, como no emulador com o inspector).
-- **Save report:** grava em `localStorage['webos.diagnostics.report']` e registra o texto no console (`[webos-diagnostics]`), para ler pelo inspector (`ares-inspect`).
+- **Save report:** grava em `localStorage['webos.diagnostics.report']` (apagando o anterior antes: o espelho da F3.5 copia o localStorage para o IndexedDB e o restaura depois de reinstalar, então só um relatório fica, o mais recente) e registra o texto no console (`[webos-diagnostics]`), para ler pelo inspector (`ares-inspect`).
 - Para sondas CDP: `window.__webos.diagnostics` (objeto) e `window.__webos.diagnosticsText` (texto), atualizados a cada coleta.
 
 ## API (`index.js`)
@@ -89,4 +89,6 @@ registerSection('player', 'Player', () => ({ pipeline: 'ok', audioTracks: 2 }));
 - Os arquivos gerados (`createTransport.diagnostics.ts`, `Menu.webos.tsx`) seguem o teste de deriva do upstream: `pnpm exec jest webos/tests/no-server`.
 - Emulador, depois de `pnpm webos:package`:
   - `webos/tools/emu-run --timeout 15 [--profile c8] -- webos/tests/diagnostics/emulator.sh <pasta>`: sobe até o Board, abre a tela, salva o relatório (JSON e texto) e uma captura;
+  - `webos/tools/emu-run --timeout 15 -- webos/tests/diagnostics/back-origin.sh <pasta>`: MetaDetails → atalho → Back volta ao MetaDetails;
+  - `webos/tools/emu-run --timeout 15 -- webos/tests/diagnostics/player.sh <pasta>` (cenário de mídia, um por reserva): atalho durante a reprodução, o Player continua montado e o Back volta a ele;
   - `webos/tools/emu-run --timeout 15 -- webos/tests/diagnostics/remote.sh <pasta>`: só com o controle remoto (atalho, setas, Copy/Save, troca da variante do core com reinício, Settings → Diagnostics).

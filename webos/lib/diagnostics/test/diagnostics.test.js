@@ -100,7 +100,10 @@ describe('collectDiagnostics', () => {
         registry.mark('coreReady', 12000.26);
         registry.mark('boardMounted', 14000);
         registry.mark('boardFirstItem', 26000);
-        const report = await collect();
+        const readCapabilities = jest.fn(() => Promise.resolve(EMULATOR_CAPABILITIES));
+        const report = await collect({ readCapabilities });
+        // a fresh Luna read, not the cache of the boot (F3.1)
+        expect(readCapabilities).toHaveBeenCalledWith(true);
 
         expect(report.generatedAt).toBe('2026-10-10T12:00:00.000Z');
         expect(report.sections.map((section) => section.id)).toEqual([
@@ -454,5 +457,63 @@ describe('remote shortcut', () => {
 
     it('does nothing without a window', () => {
         expect(installDiagnosticsShortcut(null, {})).toBeInstanceOf(Function);
+    });
+});
+
+describe('remote shortcut inside the router (ShortcutHandler)', () => {
+    const loadHandler = () => {
+        const effects = [];
+        const navigate = jest.fn();
+        jest.resetModules();
+        jest.doMock('react', () => ({ useRef: (value) => ({ current: value }), useEffect: (fn) => effects.push(fn) }));
+        jest.doMock('react-router', () => ({ useNavigate: () => navigate }));
+        const ShortcutHandler = require('../ShortcutHandler');
+        return { ShortcutHandler, effects, navigate };
+    };
+
+    afterEach(() => {
+        jest.dontMock('react');
+        jest.dontMock('react-router');
+        delete global.window;
+    });
+
+    it('opens the screen with the router navigate(), not with location.hash', () => {
+        const listeners = {};
+        global.window = {
+            addEventListener: (type, fn) => { listeners[type] = fn; },
+            removeEventListener: (type) => { delete listeners[type]; },
+            location: { hash: '#/metadetails/movie/tt1' },
+        };
+        const { ShortcutHandler, effects, navigate } = loadHandler();
+        expect(ShortcutHandler()).toBeNull();
+        const stop = effects[0]();
+        [403, 404, 405, 406].forEach((keyCode) => listeners.keydown({ keyCode }));
+        expect(navigate).toHaveBeenCalledWith('/webos-diagnostics');
+        expect(window.location.hash).toBe('#/metadetails/movie/tt1');
+        // already on the screen: nothing to do
+        window.location.hash = '#/webos-diagnostics';
+        navigate.mockClear();
+        [403, 404, 405, 406].forEach((keyCode) => listeners.keydown({ keyCode }));
+        expect(navigate).not.toHaveBeenCalled();
+        stop();
+        expect(listeners.keydown).toBeUndefined();
+    });
+});
+
+describe('diagnostics route layer', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const read = (file) => fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', file), 'utf8');
+    const views = (source) => (source.match(/\bview: (\d+)/g) || []).map((match) => Number(match.replace('view: ', '')));
+
+    it('is above every upstream route, the Player included, so it never replaces one of them', () => {
+        const upstream = views(read('src/router/routerPaths.tsx'));
+        const [diagnostics] = views(read('src/router/routerPaths.webos.js'));
+        expect(upstream.length).toBeGreaterThan(5);
+        expect(diagnostics).toBeGreaterThan(Math.max(...upstream));
+    });
+
+    it('is opened by the shortcut handler mounted next to BackNavigation, inside the router', () => {
+        expect(read('src/App/index.webos.js')).toMatch(/<BackNavigation \/>[\s\S]*<DiagnosticsShortcut \/>/);
     });
 });
