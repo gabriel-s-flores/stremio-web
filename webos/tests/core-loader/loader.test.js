@@ -67,7 +67,9 @@ describe('core loader', () => {
         expect(scope.stremio_core_web_wasm2js).toBeUndefined();
 
         const status = scope.getCoreLoaderStatus();
-        expect(status).toMatchObject({ variant: 'wasm2js', reason: 'no-webassembly', error: null, hasWebAssembly: false });
+        expect(status).toMatchObject({
+            ok: true, stage: 'ready', variant: 'wasm2js', reason: 'no-webassembly', error: null, hasWebAssembly: false
+        });
         expect(status.memoryBytes).toBe(3 * 65536);
     });
 
@@ -85,7 +87,7 @@ describe('core loader', () => {
         expect(result).toEqual({ instance, module });
         expect(global.importScripts).not.toHaveBeenCalled();
         expect(loader.getStatus()).toMatchObject({
-            variant: 'wasm', reason: 'webassembly', error: null, hasWebAssembly: true, wasmBytes: 4, memoryBytes: 65536
+            ok: true, stage: 'ready', variant: 'wasm', reason: 'webassembly', error: null, hasWebAssembly: true, wasmBytes: 4, memoryBytes: 65536
         });
     });
 
@@ -110,13 +112,47 @@ describe('core loader', () => {
         const result = await (await loader.loadCore()).webosInstantiate(imports);
         expect(factory).toHaveBeenCalledWith(imports);
         expect(result.instance.exports).toBe(wasm2jsExports);
-        expect(loader.getStatus()).toMatchObject({ variant: 'wasm2js', reason: 'instantiate-failed', error: 'out of memory' });
+        expect(loader.getStatus()).toMatchObject({ ok: true, variant: 'wasm2js', reason: 'instantiate-failed', error: 'out of memory' });
+    });
+
+    test('the source handed to the glue is single-use and stops holding the compiled module', async () => {
+        const module = {};
+        global.WebAssembly = {
+            compile: () => Promise.resolve(module),
+            instantiate: jest.fn(() => Promise.reject(new Error('link error')))
+        };
+        const loader = load();
+        const source = await loader.loadCore();
+        await source.webosInstantiate(imports);
+        // A promessa de loadCore() fica no cache do webpack: o objeto não pode mais chegar ao Module.
+        await expect(source.webosInstantiate(imports)).rejects.toThrow('já foi chamado');
+        expect(global.WebAssembly.instantiate).toHaveBeenCalledTimes(1);
+    });
+
+    test('records the failing stage when wasm2js cannot load after the choice', async () => {
+        delete global.WebAssembly;
+        global.importScripts = jest.fn(() => { throw new Error('net::ERR_FILE_NOT_FOUND'); });
+        const loader = load();
+        const source = await loader.loadCore();
+        await expect(source.webosInstantiate(imports)).rejects.toThrow('ERR_FILE_NOT_FOUND');
+        expect(loader.getStatus()).toMatchObject({
+            ok: false, stage: 'wasm2js-load', variant: 'wasm2js', reason: 'no-webassembly', error: 'net::ERR_FILE_NOT_FOUND'
+        });
+    });
+
+    test('records the failing stage when the wasm2js factory throws after instantiate failed', async () => {
+        global.WebAssembly = { compile: () => Promise.resolve({}), instantiate: () => Promise.reject(new Error('link error')) };
+        factory.mockImplementation(() => { throw new Error('abort'); });
+        const loader = load();
+        await expect((await loader.loadCore()).webosInstantiate(imports)).rejects.toThrow('abort');
+        expect(loader.getStatus()).toMatchObject({ ok: false, stage: 'wasm2js-instantiate', reason: 'instantiate-failed', error: 'abort' });
     });
 
     test('rejects when the .wasm cannot be read instead of hiding a packaging error', async () => {
         global.WebAssembly = { compile: jest.fn(), instantiate: jest.fn() };
         const loader = load();
         await expect(loader.loadCore({ wasmUrl: 'missing.wasm' })).rejects.toThrow('missing.wasm');
+        expect(loader.getStatus()).toMatchObject({ ok: false, stage: 'wasm-read', variant: null, error: expect.stringContaining('missing.wasm') });
         expect(global.WebAssembly.compile).not.toHaveBeenCalled();
         expect(global.importScripts).not.toHaveBeenCalled();
     });

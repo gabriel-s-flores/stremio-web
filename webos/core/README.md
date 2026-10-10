@@ -9,7 +9,7 @@ nomes de arquivos do npm (`bridge.js`, `worker.js`, `stremio_core_web.js`,
 falha. Origem e checksums ficam em `SOURCE.md`.
 
 ```bash
-webos/tools/build-run -- webos/core/build          # ~4 min; termina com o gate
+webos/tools/build-run -- webos/core/build          # ~5–11 min, conforme a carga; termina com o gate
 webos/core/check-wasm arquivo.wasm                  # gate sozinho (--json para saída em JSON)
 ```
 
@@ -97,8 +97,18 @@ alias, para `wasm-module.js`, que devolve `loadCore()`: a promessa de um objeto 
 - Os bytes do `.wasm` vêm por **XHR** (`fetch()` de `file://` é recusado no worker do Chromium 53).
   O wasm2js entra por `importScripts`, só quando escolhido. Falha ao ler um arquivo do pacote
   rejeita em vez de cair no wasm2js: é erro de empacotamento, não do motor.
+- **Memória:** o `WebAssembly.Module` compilado (código nativo do wasm inteiro, ~100 MB no V8 5.8)
+  só fica vivo enquanto a glue o usa. A promessa de `loadCore()` fica no cache de módulos do webpack
+  durante toda a vida do worker, então o objeto entregue à glue é de uso único: na primeira chamada
+  ele solta o `Module`, e se o `instantiate` falha o handler solta a sua cópia antes de subir o
+  wasm2js. Sem isso, o caminho `instantiate-failed` ficava com o código nativo e o wasm2js juntos
+  (+34 MB no estável, pico mais longo). Mesmo assim, o pico desse caminho (~255–295 MB no processo)
+  dura até o GC coletar o `Module`, uns 50 s depois do init.
 - **Diagnóstico (F3.6):** `getStatus()` e, no worker, `self.getCoreLoaderStatus()`, que a página lê
-  com `bridge.call(['getCoreLoaderStatus'])`: `variant`, `reason`, `error`, `hasWebAssembly`, URLs,
+  com `bridge.call(['getCoreLoaderStatus'])`: `ok` (`null` carregando, `true` pronto, `false` se uma
+  etapa falhou), `stage` (a etapa em andamento ou a que falhou: `wasm-read`, `wasm-compile`,
+  `wasm-instantiate`, `wasm2js-load`, `wasm2js-instantiate`, `ready`), `variant`, `reason`, `error`
+  (o motivo da troca ou, com `ok: false`, o erro que parou o core), `hasWebAssembly`, URLs,
   `wasmBytes`, `memoryBytes` (tamanho atual da memória do core) e `timings` (`readMs`, `compileMs`,
   `instantiateMs` ou `wasm2jsLoadMs` e `wasm2jsInstantiateMs`).
 - **Configuração:** `require('webos/core/loader').defaults` (`wasmUrl`, `wasm2jsUrl`, relativos ao
@@ -128,13 +138,18 @@ webos/tools/build-run -- npx webpack --config webos/tests/core-smoke/webpack.con
 webos/tools/emu-run -- webos/tests/core-smoke/run <pasta-de-saída>              # WASM
 webos/tools/emu-run -- webos/tests/core-smoke/run --hide-wasm <pasta-de-saída>  # sem WebAssembly → wasm2js
 webos/tools/emu-run -- webos/tests/core-smoke/run --npm-wasm <pasta-de-saída>   # compile falha → wasm2js
+webos/tools/emu-run -- webos/tests/core-smoke/run --instantiate-fail <pasta>     # instantiate falha → wasm2js
+webos/tools/emu-run --profile c8 --timeout 15 -- webos/tests/core-smoke/run …    # perfil C8 (F0.9)
 webos/tools/emu-run -- webos/tests/core-smoke/run --baseline <pasta-de-saída>   # linha de base
 ```
 
 `--hide-wasm` apaga o `WebAssembly` do worker antes de qualquer código do core; `--npm-wasm` dá ao
-carregador o `.wasm` do npm (pós-MVP), que o V8 5.8 recusa no `compile`. O `run` sai com 1 se o app
-cair, estourar o tempo, terminar com `ok=false`, escolher outra variante ou não carregar todo o
-Board. A memória do convidado (`MemAvailable` e RSS de cada processo WebAppMgr) é amostrada a cada
+carregador o `.wasm` do npm (pós-MVP), que o V8 5.8 recusa no `compile`; `--instantiate-fail` passa
+imports vazios ao `instantiate` nativo, e o V8 5.8 recusa o link de verdade
+(`module is not an object or function`). O `run` sai com 1 se o app cair, estourar o tempo, terminar
+com `ok=false`, escolher outra variante, não carregar todo o Board ou, com `--max-steady-mb N`,
+passar de N MB no estável do processo do app (155 MB pega a retenção do `Module` no
+`instantiate-failed`: 163 MB com ela, 129 MB sem ela; o maior estável normal medido foi 145 MB). A memória do convidado (`MemAvailable` e RSS de cada processo WebAppMgr) é amostrada a cada
 segundo, desde antes do lançamento até `POST_SECS` (padrão 120 s) depois do fim. O JSON registra:
 
 - `peak`: o pior momento desde o lançamento;

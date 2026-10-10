@@ -16,8 +16,15 @@
 // pacote do app roda de file://. O wasm2js é um script clássico (define self.stremio_core_web_wasm2js)
 // e entra por importScripts só quando escolhido.
 //
-// O estado (variante, motivo, erro e tempos) fica em getStatus() e, no worker, em
+// O estado (variante, motivo, erro, etapa e tempos) fica em getStatus() e, no worker, em
 // self.getCoreLoaderStatus(), que a página lê pelo Bridge: bridge.call(['getCoreLoaderStatus']).
+// ok: null enquanto carrega, true com o core instanciado, false se uma etapa falhou (stage diz
+// qual e error, o porquê).
+//
+// Memória: o WebAssembly.Module compilado (código nativo do wasm inteiro, ~100 MB no V8 5.8) só
+// pode ficar vivo enquanto a glue o usa. A promessa de loadCore() fica no cache de módulos do
+// webpack enquanto o worker viver, então o objeto entregue à glue é de uso único e solta o Module
+// na primeira chamada; se o instantiate falha, nada mais o segura antes de subir o wasm2js.
 // ES5: roda no Chromium 53 sem Babel.
 
 /* global importScripts */
@@ -33,6 +40,8 @@ var defaults = {
 };
 
 var status = {
+    ok: null,
+    stage: null,
     variant: null,
     reason: null,
     error: null,
@@ -87,6 +96,18 @@ function step(options, name, detail) {
     }
 }
 
+// Marca a etapa em andamento: se ela falhar, o status diz onde.
+function enter(options, stage, detail) {
+    status.stage = stage;
+    step(options, stage, detail);
+}
+
+function fail(err) {
+    status.ok = false;
+    status.error = errorText(err);
+    throw err;
+}
+
 function choose(variant, reason, err) {
     status.variant = variant;
     status.reason = reason;
@@ -95,20 +116,26 @@ function choose(variant, reason, err) {
 
 function instantiateWasm2js(options, imports) {
     var start = now();
-    step(options, 'wasm2js-load', status.wasm2jsUrl);
+    enter(options, 'wasm2js-load', status.wasm2jsUrl);
     var root = typeof self === 'object' ? self : {};
     if (typeof root[WASM2JS_GLOBAL] !== 'function') importScripts(status.wasm2jsUrl);
     var factory = root[WASM2JS_GLOBAL];
     if (typeof factory !== 'function') throw new Error('o wasm2js não definiu ' + WASM2JS_GLOBAL + ': ' + status.wasm2jsUrl);
     status.timings.wasm2jsLoadMs = round(now() - start);
     start = now();
-    step(options, 'wasm2js-instantiate');
+    enter(options, 'wasm2js-instantiate');
     var exports = factory(imports);
     delete root[WASM2JS_GLOBAL];
     status.timings.wasm2jsInstantiateMs = round(now() - start);
     memory = exports.memory;
-    step(options, 'wasm2js-ok');
+    ready(options, 'wasm2js-ok');
     return { instance: { exports: exports }, module: undefined };
+}
+
+function ready(options, name) {
+    status.ok = true;
+    status.stage = 'ready';
+    step(options, name);
 }
 
 function wasm2jsSource(options) {
@@ -116,27 +143,34 @@ function wasm2jsSource(options) {
         webosInstantiate: function (imports) {
             return new Promise(function (resolve) {
                 resolve(instantiateWasm2js(options, imports));
-            });
+            }).then(null, fail);
         }
     };
 }
 
-function wasmSource(options, module) {
+function wasmSource(options, compiled) {
     return {
         webosInstantiate: function (imports) {
+            // Uso único: o objeto deixa de segurar o Module (veja o cabeçalho).
+            var module = compiled;
+            compiled = null;
+            if (!module) return Promise.reject(new Error('webosInstantiate já foi chamado'));
             var start = now();
-            step(options, 'wasm-instantiate');
+            enter(options, 'wasm-instantiate');
             return WebAssembly.instantiate(module, imports).then(function (instance) {
                 status.timings.instantiateMs = round(now() - start);
                 memory = instance.exports.memory;
-                step(options, 'wasm-ok');
+                ready(options, 'wasm-ok');
                 return { instance: instance, module: module };
             }, function (err) {
                 // Nada do core rodou ainda (a glue só chama __wbindgen_start depois): dá para trocar.
+                // Solta o Module antes: senão o código nativo do wasm fica vivo junto com o wasm2js.
+                module = null;
+                status.timings.instantiateMs = round(now() - start);
                 choose('wasm2js', 'instantiate-failed', err);
                 step(options, 'fallback', status.reason + ': ' + status.error);
                 return instantiateWasm2js(options, imports);
-            });
+            }).then(null, fail);
         }
     };
 }
@@ -148,6 +182,8 @@ function loadCore(options) {
     for (key in defaults) opts[key] = defaults[key];
     for (key in options || {}) opts[key] = options[key];
     var start = now();
+    status.ok = null;
+    status.stage = 'start';
     status.hasWebAssembly = typeof WebAssembly === 'object' && WebAssembly !== null &&
         typeof WebAssembly.compile === 'function' && typeof WebAssembly.instantiate === 'function';
     status.wasmUrl = resolveUrl(opts.wasmUrl);
@@ -160,11 +196,12 @@ function loadCore(options) {
         return Promise.resolve(wasm2jsSource(opts));
     }
 
+    enter(opts, 'wasm-read', status.wasmUrl);
     return readBytes(status.wasmUrl).then(function (bytes) {
         status.timings.readMs = round(now() - start);
         status.wasmBytes = bytes.byteLength;
         var compileStart = now();
-        step(opts, 'wasm-compile', bytes.byteLength + ' bytes');
+        enter(opts, 'wasm-compile', bytes.byteLength + ' bytes');
         return WebAssembly.compile(bytes).then(function (module) {
             status.timings.compileMs = round(now() - compileStart);
             choose('wasm', 'webassembly', null);
@@ -175,7 +212,7 @@ function loadCore(options) {
             step(opts, 'fallback', status.reason + ': ' + status.error);
             return wasm2jsSource(opts);
         });
-    });
+    }).then(null, fail);
 }
 
 function getStatus() {
