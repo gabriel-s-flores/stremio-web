@@ -7,14 +7,41 @@
 //   disk.reopen();                 // fechar e abrir o app: o sessionStorage some
 //   disk.reinstall();              // desinstalar + reinstalar: o localStorage some, o IndexedDB fica
 //   disk.idb.mode = 'fail' | 'hang' | 'ok'; disk.idb.openDelay = ms; disk.idb.failTx = true
+//   disk.idb.commitDelay = ms      as transações readwrite só commitam depois de ms
+//   disk.rejectKeys.add('library') o setItem dessa chave estoura a cota (QuotaExceededError)
+//
+// Tudo roda com os timers falsos do jest (jest.useFakeTimers, que também congela o Date.now): o tempo
+// só anda com tick(ms) e until(promessa), então nenhum teste depende do relógio real nem da carga do
+// host. Durações (ms, waitedMs) são exatas.
 
 const { createMirror } = require('../../persistence/mirror');
 
-const tick = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
+// Avança o relógio virtual em ms (rodando os timers e as promessas no caminho).
+const tick = (ms = 0) => jest.advanceTimersByTimeAsync(ms);
+
+// Avança o relógio virtual de 1 em 1 ms até a promessa terminar (no máximo maxMs virtuais).
+async function until(promise, maxMs = 60000) {
+    let done = false, value, error;
+    promise.then((v) => { done = true; value = v; }, (e) => { done = true; error = e; });
+    await jest.advanceTimersByTimeAsync(0);
+    for (let t = 0; !done && t < maxMs; t++) await jest.advanceTimersByTimeAsync(1);
+    if (!done) throw new Error(`a promessa não terminou em ${maxMs} ms virtuais`);
+    if (error) throw error;
+    return value;
+}
+
+function useFakeClock() {
+    beforeEach(() => {
+        jest.useFakeTimers({ doNotFake: ['nextTick', 'queueMicrotask'], now: new Date('2026-10-10T12:00:00Z') });
+    });
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+}
 
 function createFakeIndexedDB() {
     const databases = new Map();   // nome -> { version, stores: { kv: Map, meta: Map } }
-    const fake = { mode: 'ok', openDelay: 0, failTx: false, opens: 0, databases };
+    const fake = { mode: 'ok', openDelay: 0, commitDelay: 0, failTx: false, opens: 0, databases };
 
     function request() {
         return { result: undefined, error: null, onsuccess: null, onerror: null };
@@ -37,6 +64,7 @@ function createFakeIndexedDB() {
                 const queue = [];
                 let finished = false;
                 const t = { oncomplete: null, onerror: null, onabort: null, error: null };
+                const readonly = mode !== 'readwrite';
                 const run = () => {
                     if (finished) return;
                     if (queue.length) {
@@ -53,8 +81,12 @@ function createFakeIndexedDB() {
                         return;
                     }
                     finished = true;
-                    Object.keys(work).forEach((s) => { entry.stores[s] = work[s]; });
-                    if (t.oncomplete) t.oncomplete();
+                    const commit = () => {
+                        Object.keys(work).forEach((s) => { entry.stores[s] = work[s]; });
+                        if (t.oncomplete) t.oncomplete();
+                    };
+                    if (!readonly && fake.commitDelay) setTimeout(commit, fake.commitDelay);
+                    else commit();
                 };
                 const enqueue = (fn) => {
                     const req = request();
@@ -64,7 +96,6 @@ function createFakeIndexedDB() {
                     });
                     return req;
                 };
-                const readonly = mode !== 'readwrite';
                 const write = (fn) => () => {
                     if (readonly) throw Object.assign(new Error('ReadOnlyError'), { name: 'ReadOnlyError' });
                     return fn();
@@ -147,7 +178,7 @@ function createFakeIndexedDB() {
 }
 
 // Um Storage com protótipo próprio por página: o mirror embrulha o protótipo, como no navegador.
-function makeStorageClass() {
+function makeStorageClass(rejectKeys = new Set()) {
     class FakeStorage {
         constructor(data) {
             Object.defineProperty(this, '_d', { value: data });
@@ -155,7 +186,10 @@ function makeStorageClass() {
         get length() { return this._d.size; }
         key(i) { return [...this._d.keys()][i] ?? null; }
         getItem(k) { return this._d.has(String(k)) ? this._d.get(String(k)) : null; }
-        setItem(k, v) { this._d.set(String(k), String(v)); }
+        setItem(k, v) {
+            if (rejectKeys.has(String(k))) throw Object.assign(new Error('cota esgotada (simulado)'), { name: 'QuotaExceededError' });
+            this._d.set(String(k), String(v));
+        }
         removeItem(k) { this._d.delete(String(k)); }
         clear() { this._d.clear(); }
     }
@@ -167,6 +201,7 @@ function createDisk() {
         local: new Map(),
         session: new Map(),
         idb: createFakeIndexedDB(),
+        rejectKeys: new Set(),
         reopen() { disk.session = new Map(); },
         reinstall() { disk.local = new Map(); disk.session = new Map(); },
     };
@@ -186,7 +221,7 @@ function listeners() {
 }
 
 function openPage(disk, options = {}) {
-    const Storage = makeStorageClass();
+    const Storage = makeStorageClass(disk.rejectKeys);
     const localStorage = new Storage(disk.local);
     const sessionStorage = new Storage(disk.session);
     const events = listeners();
@@ -205,7 +240,7 @@ function openPage(disk, options = {}) {
     const page = { mirror, localStorage, sessionStorage, events, doc, dbName: mirror.dbName };
     // O fluxo do createTransport.webos.js: start() -> init do core -> initSucceeded/initFailed.
     // core(ls) simula o init; lança para simular a falha.
-    page.boot = async (core = defaultCore) => {
+    const bootImpl = async (core) => {
         mirror.start();
         const result = await mirror.ready();
         page.result = result;
@@ -219,14 +254,17 @@ function openPage(disk, options = {}) {
         await mirror.initSucceeded();
         return result;
     };
+    page.boot = (core = defaultCore) => until(bootImpl(core));
+    page.ready = () => until(mirror.ready());
+    page.run = (promise) => until(promise);
     page.copy = () => disk.idb.dump(mirror.dbName);
     page.ls = () => {
         const out = {};
         for (let i = 0; i < localStorage.length; i++) out[localStorage.key(i)] = localStorage.getItem(localStorage.key(i));
         return out;
     };
-    // Espera o snapshot adiado e os lotes.
-    page.settle = () => tick(TIMINGS.settleMs + TIMINGS.flushMs + 40);
+    // Espera o snapshot adiado e os lotes (com folga para as transações do IndexedDB falso).
+    page.settle = () => tick(TIMINGS.settleMs + TIMINGS.flushMs + 100);
     return page;
 }
 
@@ -239,4 +277,4 @@ function failingCore() {
     throw new Error('StorageSchemaVersionUpgrade (simulado)');
 }
 
-module.exports = { createDisk, openPage, tick, defaultCore, failingCore, APP_ID, TIMINGS };
+module.exports = { createDisk, openPage, tick, until, useFakeClock, defaultCore, failingCore, APP_ID, TIMINGS };

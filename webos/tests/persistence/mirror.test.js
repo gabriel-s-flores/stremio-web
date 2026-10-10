@@ -1,8 +1,10 @@
 // Lógica do espelho do localStorage no IndexedDB (F3.5, webos/persistence/mirror.js), com um
-// IndexedDB falso. Os casos B* são os do break.sh do revisor da F0.8 (revisões c1–c3); os M*, os
-// do mirror-test.sh do spike (webos/spikes/persistence).
+// IndexedDB falso e os timers falsos do jest (o tempo só anda quando o teste manda: nada depende do
+// relógio real nem da carga do host). Os casos B* são os do break.sh do revisor da F0.8 (revisões
+// c1–c3); os M*, os do mirror-test.sh do spike (webos/spikes/persistence); os R*, os achados da
+// revisão F3.5 c1.
 
-const { createDisk, openPage, tick, failingCore, APP_ID, TIMINGS } = require('./fake-env');
+const { createDisk, openPage, tick, useFakeClock, failingCore, APP_ID, TIMINGS } = require('./fake-env');
 const { EPOCH_KEY, NO_RESTORE_KEY, SKIPPED_KEY, DB_PREFIX } = require('../../persistence/mirror');
 
 const USER_STATE = {
@@ -27,6 +29,8 @@ async function seed(disk, state = USER_STATE) {
 const appKeys = (obj) => Object.fromEntries(Object.entries(obj).filter(([k]) => !k.startsWith('stremio_webos_persist_')));
 
 describe('webos persistence mirror', () => {
+    useFakeClock();
+
     test('the database name carries the app id', () => {
         const page = openPage(createDisk());
         expect(page.dbName).toBe(`${DB_PREFIX}${APP_ID}`);
@@ -50,8 +54,8 @@ describe('webos persistence mirror', () => {
         disk.reopen();
         const opensBefore = disk.idb.opens;
         const page = openPage(disk);
-        const r = await page.mirror.ready();
-        expect(r).toMatchObject({ restored: false, reason: 'localStorage-ok', fast: true, keys: 6 });
+        const r = await page.ready();
+        expect(r).toMatchObject({ restored: false, reason: 'localStorage-ok', fast: true, keys: 6, waitedMs: 0 });
         expect(disk.idb.opens).toBe(opensBefore);
     });
 
@@ -64,7 +68,7 @@ describe('webos persistence mirror', () => {
         disk.reopen();
         const opensBefore = disk.idb.opens;
         const page = openPage(disk);
-        const r = await page.mirror.ready();
+        const r = await page.ready();
         expect(r).toMatchObject({ reason: 'localStorage-ok', fast: true, keys: 1, waitedMs: 0 });
         expect(disk.idb.opens).toBe(opensBefore);
     });
@@ -86,23 +90,20 @@ describe('webos persistence mirror', () => {
         const page = openPage(disk);
         page.mirror.start();
         await tick(TIMINGS.timeoutMs * 2);          // a página montando, antes do init
-        const r = await page.mirror.ready();
-        expect(r).toMatchObject({ restored: true, reason: 'restored' });
+        const r = await page.ready();
+        expect(r).toMatchObject({ restored: true, reason: 'restored', ms: TIMINGS.timeoutMs * 2 });
         expect(r.waitedMs).toBeLessThan(TIMINGS.timeoutMs);
-        expect(r.ms).toBeGreaterThanOrEqual(TIMINGS.timeoutMs * 2);
     });
 
-    test('a hung IndexedDB makes init wait timeoutMs from ready(), whatever happened before', async () => {
+    test('a hung IndexedDB makes init wait exactly timeoutMs from ready(), whatever happened before', async () => {
         const disk = createDisk();
         disk.idb.mode = 'hang';
         const page = openPage(disk);
         page.mirror.start();
         await tick(TIMINGS.timeoutMs * 2);
         expect(page.mirror.getStatus().result).toBeNull();
-        const r = await page.mirror.ready();
-        expect(r.reason).toBe('idb-timeout');
-        expect(r.waitedMs).toBeGreaterThanOrEqual(TIMINGS.timeoutMs - 5);
-        expect(r.waitedMs).toBeLessThan(TIMINGS.timeoutMs + 100);
+        const r = await page.ready();
+        expect(r).toMatchObject({ reason: 'idb-timeout', waitedMs: TIMINGS.timeoutMs, ms: TIMINGS.timeoutMs * 3 });
     });
 
     test('all localStorage keys are mirrored (webos.coreVariant included), our own keys are not', async () => {
@@ -113,15 +114,28 @@ describe('webos persistence mirror', () => {
         expect(Object.keys(copy.kv).some((k) => k.startsWith('stremio_webos_persist_'))).toBe(false);
     });
 
+    test('R6 #22: a write to one of our own keys is not tracked nor mirrored', async () => {
+        const disk = createDisk();
+        const page = await seed(disk);
+        page.localStorage.setItem('stremio_webos_persist_qualquer', 'x');
+        page.localStorage.setItem(SKIPPED_KEY, '1');
+        expect(page.mirror.getStatus().pending).toBe(0);
+        await tick(TIMINGS.flushMs * 3);
+        expect(Object.keys(page.copy().kv).some((k) => k.startsWith('stremio_webos_persist_'))).toBe(false);
+    });
+
     test('nothing reaches IndexedDB before the core init succeeds; then writes go in batches', async () => {
         const disk = createDisk();
         const page = openPage(disk);
         let release;
-        const booting = page.boot((ls) => {
-            ls.setItem('schema_version', '15');
-            ls.setItem('profile', 'P1');
-            return new Promise((resolve) => { release = resolve; });
-        });
+        const booting = page.run((async () => {
+            page.mirror.start();
+            await page.mirror.ready();
+            page.localStorage.setItem('schema_version', '15');
+            page.localStorage.setItem('profile', 'P1');
+            await new Promise((resolve) => { release = resolve; });
+            await page.mirror.initSucceeded();
+        })());
         await tick(TIMINGS.settleMs * 3);
         expect(page.copy().kv).toEqual({});
         release();
@@ -135,9 +149,19 @@ describe('webos persistence mirror', () => {
         page.localStorage.setItem('library', 'L1');
         page.localStorage.removeItem('schema_version');
         expect(page.copy().kv.profile).toBe('P1');
-        await tick(TIMINGS.flushMs + 30);
+        await tick(TIMINGS.flushMs + 50);
         expect(page.copy().kv).toEqual({ profile: 'P3', library: 'L1' });
         expect(page.mirror.getStatus().flushes).toBe(flushes + 1);
+    });
+
+    test('R6 #20: the snapshot after init waits settleMs, then runs', async () => {
+        const disk = createDisk();
+        const page = openPage(disk);
+        await page.boot((ls) => { ls.setItem('schema_version', '15'); });
+        await tick(TIMINGS.settleMs - 1);
+        expect(page.copy().kv).toEqual({});
+        await tick(50);
+        expect(page.copy().kv).toEqual({ schema_version: '15' });
     });
 
     test('pagehide and visibilitychange flush at once', async () => {
@@ -176,11 +200,11 @@ describe('webos persistence mirror', () => {
         await seed(disk);
         disk.reinstall();
         const page = openPage(disk);
-        const r = await page.mirror.ready();
+        const r = await page.ready();
         expect(r).toMatchObject({ restored: true, reason: 'restored', keys: 6 });
         expect(appKeys(page.ls())).toEqual(USER_STATE);
         expect(page.copy().meta.pendingRestore).toBe(true);
-        await page.mirror.initSucceeded();
+        await page.run(page.mirror.initSucceeded());
         expect(page.copy().meta.pendingRestore).toBe(false);
     });
 
@@ -196,31 +220,81 @@ describe('webos persistence mirror', () => {
         expect(page.localStorage.getItem('profile')).toBe(USER_STATE.profile);
     });
 
-    test('M8: essential keys from another epoch are the truth, but the copy keeps what they lack', async () => {
+    test('M8 / R3 (E2): essential keys from another epoch are the truth; the copy keeps what they lack, for good', async () => {
         const disk = createDisk();
         await seed(disk);
         disk.reinstall();
         disk.local.set('schema_version', '15');
         disk.local.set('profile', 'PERFIL_NOVO');
         const page = openPage(disk);
-        const r = await page.boot();
-        expect(r.reason).toBe('localStorage-ok');
+        expect((await page.boot()).reason).toBe('localStorage-ok');
         await page.settle();
-        const copy = page.copy();
-        expect(copy.kv.profile).toBe('PERFIL_NOVO');
-        expect(copy.kv.library).toBe('BIBLIOTECA_DO_USUARIO');
+        expect(page.copy().kv).toMatchObject({ profile: 'PERFIL_NOVO', library: 'BIBLIOTECA_DO_USUARIO' });
+        // Boots seguintes (agora com a mesma época): a biblioteca continua na cópia.
+        for (let i = 0; i < 2; i++) {
+            disk.reopen();
+            const next = openPage(disk);
+            expect((await next.boot()).reason).toBe('localStorage-ok');
+            await next.settle();
+            expect(next.copy().kv.library).toBe('BIBLIOTECA_DO_USUARIO');
+        }
     });
 
-    test('same epoch: the copy becomes an exact picture of localStorage', async () => {
+    test('R3 (E1): same epoch, localStorage lost the profile and the library -> the copy keeps them', async () => {
         const disk = createDisk();
         await seed(disk);
-        disk.local.delete('library_recent');
+        disk.local.delete('profile');                 // perda parcial (ex.: corte de energia)
+        disk.local.delete('library');
         disk.reopen();
         const page = openPage(disk);
-        await page.boot();
+        const r = await page.boot();
+        expect(r).toMatchObject({ reason: 'localStorage-ok', fast: true });
         await page.settle();
+        expect(page.copy().kv).toMatchObject({ profile: USER_STATE.profile, library: 'BIBLIOTECA_DO_USUARIO' });
+        // E se o localStorage sumir depois, a restauração traz tudo de volta.
+        disk.reinstall();
+        const again = openPage(disk);
+        expect((await again.boot()).reason).toBe('restored');
+        expect(appKeys(again.ls())).toEqual(USER_STATE);
+    });
+
+    test('a key the core removes (removeItem) is removed from the copy too', async () => {
+        const disk = createDisk();
+        const page = await seed(disk);
+        page.localStorage.removeItem('library_recent');
+        await tick(TIMINGS.flushMs + 50);
         expect(page.copy().kv.library_recent).toBeUndefined();
-        expect(page.mirror.getStatus().lastFlush).toMatchObject({ snapshot: true, replaced: true });
+        // ...também quando a remoção acontece antes do snapshot adiado.
+        disk.reopen();
+        const next = openPage(disk);
+        await next.boot((ls) => { ls.removeItem('library'); });
+        await next.settle();
+        expect(next.copy().kv.library).toBeUndefined();
+        expect(next.copy().kv.profile).toBe(USER_STATE.profile);
+    });
+
+    test('R4 (E3): a key that does not fit during a restore stays in the copy', async () => {
+        const disk = createDisk();
+        await seed(disk);
+        disk.reinstall();
+        disk.rejectKeys.add('library');
+        const page = openPage(disk);
+        const r = await page.boot();
+        expect(r).toMatchObject({ restored: true, reason: 'restored', keys: 5, failed: 1 });
+        expect(page.localStorage.getItem('library')).toBeNull();
+        await page.settle();
+        expect(page.copy().kv.library).toBe('BIBLIOTECA_DO_USUARIO');
+        disk.reopen();
+        const next = openPage(disk);
+        await next.boot();
+        await next.settle();
+        expect(next.copy().kv.library).toBe('BIBLIOTECA_DO_USUARIO');
+        // Quando couber de novo, uma reinstalação a traz de volta.
+        disk.rejectKeys.clear();
+        disk.reinstall();
+        const later = openPage(disk);
+        await later.boot();
+        expect(later.localStorage.getItem('library')).toBe('BIBLIOTECA_DO_USUARIO');
     });
 
     test('a copy written by another app id is dropped (app-mismatch)', async () => {
@@ -256,7 +330,7 @@ describe('webos persistence mirror', () => {
 
         test('control: the same reload without the marker WOULD restore the bad state', async () => {
             const disk = createDisk();
-            const page = await seed(disk);
+            await seed(disk);
             disk.local.clear();                        // clear() que não passa pelo espelho
             const r = await openPage(disk).boot();
             expect(r.reason).toBe('restored');
@@ -316,12 +390,12 @@ describe('webos persistence mirror', () => {
         await seed(disk);
         disk.reinstall();
         const page = openPage(disk);
-        expect((await page.mirror.ready()).reason).toBe('restored');   // o app fecha antes do init terminar
+        expect((await page.ready()).reason).toBe('restored');   // o app fecha antes do init terminar
         disk.reopen();
         const reopened = openPage(disk);
-        expect((await reopened.mirror.ready()).reason).toBe('localStorage-ok');
+        expect((await reopened.ready()).reason).toBe('localStorage-ok');
         expect(reopened.copy().meta.pendingRestore).toBe(true);
-        disk.reinstall();                                               // perde o localStorage de novo
+        disk.reinstall();                                        // perde o localStorage de novo
         const r = await openPage(disk).boot();
         expect(r).toMatchObject({ restored: false, reason: 'unconfirmed-restore' });
     });
@@ -340,19 +414,15 @@ describe('webos persistence mirror', () => {
         await page.settle();
         expect(disk.idb.databases.size).toBe(0);
         // A promessa rejeitada do open não fica guardada: uma nova tentativa na mesma página abre.
-        await expect(page.mirror.wipe()).resolves.toBeUndefined();
+        await expect(page.run(page.mirror.wipe())).resolves.toBeUndefined();
     });
 
-    test('B5b: IndexedDB open never answers -> idb-timeout in ~timeoutMs', async () => {
+    test('B5b: IndexedDB open never answers -> idb-timeout, init waits exactly timeoutMs', async () => {
         const disk = createDisk();
         disk.idb.mode = 'hang';
         const page = openPage(disk);
-        const t0 = Date.now();
         const r = await page.boot();
-        const ms = Date.now() - t0;
-        expect(r.reason).toBe('idb-timeout');
-        expect(ms).toBeGreaterThanOrEqual(TIMINGS.timeoutMs - 5);
-        expect(ms).toBeLessThan(TIMINGS.timeoutMs + 100);
+        expect(r).toMatchObject({ reason: 'idb-timeout', waitedMs: TIMINGS.timeoutMs });
     });
 
     test('B5c/B6: slow IndexedDB during a restore, profile changed in that session -> the library is not lost', async () => {
@@ -368,7 +438,7 @@ describe('webos persistence mirror', () => {
         });
         expect(r.reason).toBe('idb-timeout');
         expect(page.localStorage.getItem(SKIPPED_KEY)).toBe('1');
-        await tick(120);
+        await tick(200);
         // B5c: a restauração tardia não mexeu no localStorage e a cópia boa continua lá.
         expect(page.localStorage.getItem('library')).toBeNull();
         expect(page.copy().kv.library).toBe('BIBLIOTECA_DO_USUARIO');
@@ -393,6 +463,41 @@ describe('webos persistence mirror', () => {
         expect(boot2.copy().kv.library).toBe('BIBLIOTECA_DO_USUARIO');
     });
 
+    test('R2: the timeout expires while the pendingRestore write is in flight -> localStorage untouched, mark undone', async () => {
+        const disk = createDisk();
+        await seed(disk);
+        disk.reinstall();
+        disk.idb.commitDelay = TIMINGS.timeoutMs + 50;   // abrir e ler são rápidos; gravar demora
+        const page = openPage(disk);
+        const r = await page.boot((ls) => { ls.setItem('schema_version', '15'); });
+        expect(r.reason).toBe('idb-timeout');
+        await tick((TIMINGS.timeoutMs + 50) * 3);       // a marca commita, e depois a reversão
+        expect(page.copy().meta.pendingRestore).toBe(false);
+        expect(appKeys(page.ls())).toEqual({ schema_version: '15' });
+        expect(page.localStorage.getItem(EPOCH_KEY)).toBeNull();
+        expect(page.copy().kv.library).toBe('BIBLIOTECA_DO_USUARIO');
+    });
+
+    test('R5 (E5): skipped marker + an undone-too-late pendingRestore -> restored-after-skip, the copy is kept', async () => {
+        const disk = createDisk();
+        const page0 = await seed(disk);
+        // O estado em que a janela do achado 5 deixa o app: o prazo venceu com a marca pendingRestore em
+        // voo, o app fechou antes da reversão; o core rodou sem a cópia e gravou um estado novo.
+        const db = disk.idb.databases.get(page0.dbName);
+        db.stores.meta.set('meta', { ...db.stores.meta.get('meta'), pendingRestore: true });
+        disk.reinstall();
+        disk.local.set('schema_version', '15');
+        disk.local.set('profile', 'PERFIL_DA_SESSAO_PULADA');
+        disk.local.set(SKIPPED_KEY, '1');
+        const page = openPage(disk);
+        const r = await page.boot();
+        expect(r).toMatchObject({ restored: true, reason: 'restored-after-skip' });
+        expect(appKeys(page.ls())).toEqual(USER_STATE);
+        await page.settle();
+        expect(page.copy().meta.pendingRestore).toBe(false);
+        expect(page.copy().kv.library).toBe('BIBLIOTECA_DO_USUARIO');
+    });
+
     test('timeout on a first install leaves no bad marker: the next boot keeps what the session wrote', async () => {
         const disk = createDisk();
         disk.idb.mode = 'hang';
@@ -411,7 +516,7 @@ describe('webos persistence mirror', () => {
         await seed(disk);
         disk.reopen();
         const page = openPage(disk, { reset: true });
-        const r = await page.mirror.ready();
+        const r = await page.ready();
         expect(r.reason).toBe('reset');
         expect(page.copy().kv).toEqual({});
         expect(appKeys(page.ls())).toEqual(USER_STATE);
@@ -422,11 +527,11 @@ describe('webos persistence mirror', () => {
         const page = await seed(disk);
         disk.idb.failTx = true;
         page.localStorage.setItem('library', 'L2');
-        await tick(TIMINGS.flushMs + 30);
+        await tick(TIMINGS.flushMs + 50);
         expect(page.mirror.getStatus().error).toMatch(/falha simulada/);
         disk.idb.failTx = false;
         page.localStorage.setItem('profile', 'P2');
-        await tick(TIMINGS.flushMs + 30);
+        await tick(TIMINGS.flushMs + 50);
         expect(page.copy().kv).toMatchObject({ library: 'L2', profile: 'P2' });
     });
 
@@ -434,7 +539,7 @@ describe('webos persistence mirror', () => {
         const disk = createDisk();
         const name = openPage(disk).dbName;
         // Um indexedDB.open(nome) sem versão, antes do espelho: banco v1 sem stores.
-        await new Promise((resolve) => { disk.idb.open(name).onsuccess = resolve; });
+        await openPage(disk).run(new Promise((resolve) => { disk.idb.open(name).onsuccess = resolve; }));
         expect(disk.idb.databases.get(name)).toMatchObject({ version: 1, stores: {} });
         const page = await seed(disk);
         expect(page.mirror.getStatus().broken).toBe(false);
@@ -445,16 +550,17 @@ describe('webos persistence mirror', () => {
     test('inspect() reports the copy without changing it', async () => {
         const disk = createDisk();
         const page = await seed(disk);
-        const info = await page.mirror.inspect();
+        const info = await page.run(page.mirror.inspect());
         expect(info.meta).toMatchObject({ appId: APP_ID, pendingRestore: false });
         expect(info.keys).toEqual(Object.fromEntries(Object.entries(USER_STATE).map(([k, v]) => [k, v.length])));
     });
 
-    test('only localStorage writes are tracked, not sessionStorage', async () => {
+    test('R6 #17: only localStorage writes are tracked, not sessionStorage', async () => {
         const disk = createDisk();
         const page = await seed(disk);
         page.sessionStorage.setItem('foo', 'bar');
-        await tick(TIMINGS.flushMs + 30);
+        expect(page.mirror.getStatus().pending).toBe(0);
+        await tick(TIMINGS.flushMs + 50);
         expect(page.copy().kv.foo).toBeUndefined();
     });
 });

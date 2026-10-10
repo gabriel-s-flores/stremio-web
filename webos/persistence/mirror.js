@@ -21,13 +21,15 @@
 //      época de uma cópia, o localStorage é a verdade e o ready() resolve na hora, SEM abrir o
 //      IndexedDB. É o boot comum (um convidado que nunca mudou nada não tem profile, mas tem a época
 //      depois do primeiro lote), que assim não espera nada. A cópia é atualizada depois do init
-//      (snapshot adiado; se a época não bater com a da cópia, ele só mescla, como na regra 3).
+//      (snapshot adiado), que acrescenta e atualiza, mas nunca apaga o que falta no localStorage.
 //   1. Marcador de "Limpar dados" (ou ?resetMirror): não restaura e apaga a cópia (clear-data, reset).
 //   2. Marcador de restauração pulada (ver abaixo): a cópia vale mais que o localStorage, que veio
 //      de uma sessão que começou sem ela; restaura a cópia por cima (restored-after-skip).
-//   3. O localStorage tem a época da cópia, ou não há cópia: ele é a verdade (localStorage-ok).
+//   3. O localStorage tem a época da cópia, ou não há cópia: ele é a verdade (localStorage-ok). "Verdade"
+//      quer dizer que o core lê ele como está; a cópia não perde o que ele não tem (ver o flush()).
 //   4. Sem cópia (nothing-to-restore); cópia de outro app (app-mismatch, descarta); restauração
-//      anterior não confirmada (unconfirmed-restore, descarta em vez de repetir).
+//      anterior não confirmada (unconfirmed-restore, descarta em vez de repetir; com o marcador de
+//      restauração pulada, a marca é de uma sessão que rodou sem a cópia, e vale a regra 2).
 //   5. Senão restaura (localStorage vazio: restored) ou mescla só as chaves que faltam (merged).
 //      Grava pendingRestore = true e espera o commit ANTES de mexer no localStorage.
 // IndexedDB com erro ou sem resposta: idb-error / idb-timeout; o app segue só com o localStorage e
@@ -305,7 +307,10 @@ function createMirror(options) {
                 return keys.length ? result('localStorage-ok', { keys: keys.length }) : result('nothing-to-restore');
             }
             if (meta.appId !== appId) return drop('app-mismatch');
-            if (pending) return drop('unconfirmed-restore');
+            // pendingRestore com o marcador de restauração pulada não é "uma restauração derrubou o
+            // init": o init rodou SEM a cópia (o prazo venceu com a marca em voo e o app fechou antes de
+            // desfazê-la). Descartar aqui apagaria a cópia boa; restaura por cima.
+            if (pending && !skipped) return drop('unconfirmed-restore');
             return readKv().then(function (kvData) {
                 if (aborted) return timedOut();
                 return restore(kvData, skipped, keys.length > 0);
@@ -387,7 +392,7 @@ function createMirror(options) {
         var snapshot = snapshotPending, batch = dirty;
         var keys = Object.keys(batch);
         if (snapshot) {
-            // Todas as chaves de agora, mais as removidas desde o boot (para a mescla apagá-las).
+            // Todas as chaves de agora, mais as removidas pelo removeItem desde o boot.
             keys = lsAppKeys().concat(keys.filter(function (k) { return lsGet(k) === null; }));
         }
         if (!keys.length && !snapshot) return Promise.resolve();
@@ -401,13 +406,17 @@ function createMirror(options) {
                 var same = !!(cur && cur.appId === appId && cur.state === 'valid' && cur.epoch);
                 if (same) epoch = cur.epoch;
                 else if (!epoch) epoch = newEpoch();
-                // Snapshot: se o localStorage continua a cópia (mesma época) ou não há cópia válida, a
-                // cópia vira o retrato exato dele; senão (só tem as chaves essenciais) ele só acrescenta
-                // e atualiza, sem apagar o que a cópia tem a mais.
-                if (snapshot && (!same || lsGet(EPOCH_KEY) === cur.epoch)) {
+                // A cópia nunca perde uma chave só porque ela falta no localStorage: ele pode ter perdido
+                // dados (corte de energia, uma chave que não coube na restauração, uma sessão que começou
+                // sem a cópia) e a cópia é o único lugar que os tem. Ela só perde chaves por remoção
+                // rastreada (removeItem espelhado), "Limpar dados", wipe() ou initFailed(). A única
+                // limpeza é quando ela não é uma cópia válida deste app.
+                if (snapshot && !same) {
                     kv.clear();
                     replaced = true;
                 }
+                // keys = as do localStorage agora + as marcadas pelo removeItem: uma chave sem valor aqui
+                // só pode ser uma remoção rastreada.
                 keys.forEach(function (k) {
                     var v = lsGet(k);               // o valor mais recente, não o do momento da escrita
                     if (v === null) kv['delete'](k); else kv.put(v, k);
