@@ -21,20 +21,6 @@ class FakeElement extends EventTarget {
         this.nodeType = 1;
         this.attributes = {};
         this.dispatched = [];
-        this.style = {};
-        this.childNodes = [];
-        this.scrollTop = 0;
-    }
-    appendChild(node) {
-        if (node.parentNode) node.parentNode.removeChild(node);
-        node.parentNode = this;
-        this.childNodes.push(node);
-        return node;
-    }
-    removeChild(node) {
-        this.childNodes.splice(this.childNodes.indexOf(node), 1);
-        node.parentNode = null;
-        return node;
     }
     hasAttribute(name) {
         return name in this.attributes;
@@ -74,11 +60,6 @@ const createPage = () => {
         body,
         activeElement: body,
         under: image,
-        createElement(name) {
-            const element = new FakeElement(name);
-            element.ownerDocument = document;
-            return element;
-        },
         elementFromPoint() {
             return this.under;
         },
@@ -89,26 +70,20 @@ const createPage = () => {
     [html, body, row, poster, image, other].forEach((element) => {
         element.ownerDocument = document;
     });
-    const frames = [];
-    const runFrames = () => {
-        while (frames.length) frames.shift()();
-    };
-    const scale = { value: '' };
     const window = {
         document,
         MouseEvent: FakeMouseEvent,
-        getComputedStyle: () => ({ getPropertyValue: (name) => (name === '--interface-scale' ? scale.value : '') }),
         addEventListener(type, listener) {
             (windowListeners[type] = windowListeners[type] || []).push(listener);
         },
     };
     installPointerEvents(window);
-    const state = install(window, document, (callback) => frames.push(callback));
+    const state = install(window, document);
     const cursor = (visibility) => documentListeners.cursorStateChange({ type: 'cursorStateChange', detail: { visibility } });
     const mouse = (type, target, x = 100, y = 200) => (windowListeners[type] || []).forEach((listener) => {
         listener({ type, target, isTrusted: true, clientX: x, clientY: y, button: 0, buttons: 0, relatedTarget: null });
     });
-    return { window, document, html, body, row, poster, image, other, state, sink: state.sink, cursor, mouse, runFrames, frames, scale };
+    return { window, document, html, body, row, poster, image, other, state, cursor, mouse };
 };
 
 const types = (element) => element.dispatched.map((event) => event.type);
@@ -127,66 +102,14 @@ describe('Magic Remote: cursorStateChange', () => {
         expect(page.document.activeElement).toBe(page.poster);
     });
 
-    test('the sink goes under the last pointer position and scrolls two frames later', () => {
-        const page = createPage();
-        page.mouse('mousemove', page.image, 300, 120);
-        page.cursor(false);
-        expect(page.sink.parentNode).toBe(page.body);
-        expect([page.sink.style.left, page.sink.style.top]).toEqual(['298px', '118px']);
-        expect(page.sink.scrollTop).toBe(0);
-        page.frames.shift()();
-        expect(page.sink.scrollTop).toBe(0);
-        page.runFrames();
-        expect(page.sink.scrollTop).toBe(1);
-        // Hiding again scrolls the other way: any change of the offset makes Chromium hit-test again.
-        page.cursor(true);
-        page.cursor(false);
-        page.runFrames();
-        expect(page.sink.scrollTop).toBe(0);
-    });
-
-    test('the sink position is in CSS pixels: the interface zoom divides the pointer position', () => {
-        const page = createPage();
-        page.scale.value = ' 1.25';
-        page.mouse('mousemove', page.image, 500, 250);
-        page.cursor(false);
-        expect([page.sink.style.left, page.sink.style.top]).toEqual(['398px', '198px']);
-    });
-
-    test('the sink does not scroll if the pointer came back before the frames', () => {
-        const page = createPage();
-        page.mouse('mousemove', page.image);
-        page.cursor(false);
-        page.cursor(true);
-        page.runFrames();
-        expect(page.sink.parentNode).toBe(null);
-        expect(page.sink.scrollTop).toBe(0);
-    });
-
-    test('mouse events on the sink (the fake move) are ignored', () => {
-        const page = createPage();
-        page.mouse('mousemove', page.image);
-        page.cursor(false);
-        page.mouse('mouseover', page.sink);
-        page.mouse('mousemove', page.sink);
-        expect(page.state.visible).toBe(false);
-        page.cursor(true);
-        page.document.under = page.other;
-        page.cursor(false);
-        // The last pointer target is still the image, not the sink.
-        expect(types(page.image)).toContain('pointerout');
-    });
-
-    test('a real mouse move while hidden brings the pointer mode back', () => {
+    test('a mouse move while hidden brings the pointer mode back, as if the event was missed', () => {
         const page = createPage();
         page.mouse('mousemove', page.image, 100, 200);
         page.cursor(false);
-        page.mouse('mousemove', page.image, 100, 200);
-        expect(page.state.visible).toBe(false);
         page.image.dispatched.length = 0;
         page.mouse('mousemove', page.image, 140, 210);
         expect(page.state.visible).toBe(true);
-        expect(page.sink.parentNode).toBe(null);
+        expect(page.html.getAttribute(MODE_ATTRIBUTE)).toBe('visible');
         expect(types(page.image)).toEqual(['pointermove', 'pointerover']);
     });
 
@@ -217,7 +140,6 @@ describe('Magic Remote: cursorStateChange', () => {
         const page = createPage();
         page.cursor(false);
         expect(page.html.getAttribute(MODE_ATTRIBUTE)).toBe('hidden');
-        expect(page.sink.parentNode).toBe(null);
         expect(page.document.activeElement).toBe(page.body);
     });
 
@@ -230,17 +152,16 @@ describe('Magic Remote: cursorStateChange', () => {
         page.document.activeElement = page.other;
         page.cursor(false);
         expect(page.document.activeElement).toBe(page.other);
-        expect(page.frames).toHaveLength(1);
+        expect(types(page.image).filter((type) => type === 'pointerout')).toHaveLength(1);
     });
 
-    test('showing the pointer removes the sink and re-enters the element on the first move', () => {
+    test('showing the pointer re-enters the element on the first move', () => {
         const page = createPage();
         page.mouse('mousemove', page.image);
         page.cursor(false);
         page.cursor(true);
         expect(page.state.visible).toBe(true);
         expect(page.html.getAttribute(MODE_ATTRIBUTE)).toBe('visible');
-        expect(page.sink.parentNode).toBe(null);
         page.image.dispatched.length = 0;
         page.mouse('mousemove', page.image);
         // pointermove from the polyfill, then the re-entering pointerover; only once.
@@ -266,7 +187,7 @@ describe('Magic Remote: cursorStateChange', () => {
         page.mouse('mousemove', page.image);
         page.cursor(undefined);
         expect(page.state.visible).toBe(true);
-        expect(page.sink.parentNode).toBe(null);
+        expect(page.html.getAttribute(MODE_ATTRIBUTE)).toBe(undefined);
     });
 
     test('closestFocusable skips disabled elements and stops at the root', () => {

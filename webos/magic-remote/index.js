@@ -5,28 +5,23 @@
 // and only then the mouseout/mouseover. No mouse event comes while the pointer is hidden.
 //
 // When the pointer hides:
-//   - the hover highlight goes away. A pointerout leaving the page ends react-aria's useHover
-//     (.hovered on the posters) at once. Chromium 53 keeps :hover on the last element under the
-//     pointer and only moves it on a mouse move, real or "fake" (it sends one after a scroll), so a
-//     4x4 px transparent element (the sink) goes under the last pointer position and scrolls itself
-//     a frame later: Chromium hit-tests again, moves :hover to the sink and sends a trusted
-//     mouseout/mouseover. Only the hovered chain is restyled (switching the CSS rules off instead
-//     made Chromium restyle the whole page: 0.4-1.5 s per switch in the C8 profile). The spatial
-//     navigation counts a candidate as visible when any of three points hits it, so 4 px never
-//     hides one;
+//   - the hover highlight of the posters goes away: a pointerout leaving the page ends react-aria's
+//     useHover (.hovered). The CSS :hover rules are left alone: Chromium keeps :hover frozen on the
+//     last element while webOS hides the cursor (no fake mouse move, no re-hit-test), and every way
+//     to switch the rules off cost too much or changed the upstream cascade (F4.2 report: CSSOM
+//     restyles the page for 0.15-1.5 s per switch in the C8 profile; an attribute gate in the build
+//     raises their specificity over :focus/.active rules);
 //   - the focus goes to the focusable element under the last pointer position, so the arrow that
 //     hid the pointer moves on from the item the user was pointing at (the spatial navigation
 //     starts from document.activeElement).
-// When it shows, the sink goes away (Chromium puts :hover back on the element under the pointer,
-// without events) and the first mouse move enters that element again for react-aria.
+// When it shows, the first mouse move enters the element under the pointer again (Chromium sends no
+// mouseover when the pointer comes back over the same element).
 // <html data-webos-pointer="hidden|visible"> tells the current mode (diagnostics and tests).
 // Installed by webos/polyfills/index.js, after the Pointer Events polyfill.
 
 import { MOUSE_POINTER_ID } from '../polyfills/pointer-events';
 
 export const MODE_ATTRIBUTE = 'data-webos-pointer';
-
-const SINK_SIZE = 4;
 
 const isFocusable = (element) => element.tabIndex >= 0 && !element.disabled && !element.hasAttribute('disabled');
 
@@ -50,44 +45,22 @@ const pointerInit = (position, relatedTarget) => ({
     isPrimary: true,
 });
 
-// Positioned UI uses CSS pixels; pointer coordinates include the interface zoom (on <html>).
-const interfaceScale = (window, document) => {
-    const scale = parseFloat(window.getComputedStyle(document.documentElement).getPropertyValue('--interface-scale'));
-    return scale > 0 ? scale : 1;
-};
-
-export const createSink = (document) => {
-    const sink = document.createElement('div');
-    sink.setAttribute('aria-hidden', 'true');
-    sink.style.cssText = `position:fixed;width:${SINK_SIZE}px;height:${SINK_SIZE}px;overflow:hidden;opacity:0;z-index:2147483647`;
-    const content = document.createElement('div');
-    content.style.cssText = `height:${SINK_SIZE * 2}px`;
-    sink.appendChild(content);
-    return sink;
-};
-
-export const install = (window, document = window.document, requestFrame = window.requestAnimationFrame.bind(window)) => {
+export const install = (window, document = window.document) => {
     const root = document.documentElement;
-    const sink = createSink(document);
     let visible = true;
     let reenter = false;
     let last = null;
-
-    const removeSink = () => {
-        if (sink.parentNode) sink.parentNode.removeChild(sink);
-    };
 
     const show = () => {
         visible = true;
         reenter = true;
         root.setAttribute(MODE_ATTRIBUTE, 'visible');
-        removeSink();
     };
 
     const onMouseEvent = (event) => {
-        if (!event.isTrusted || event.target === sink) return;
-        // A real move while hidden (the fake one repeats the last position): the pointer is back.
-        if (!visible && event.type === 'mousemove' && last && (event.clientX !== last.x || event.clientY !== last.y)) show();
+        if (!event.isTrusted) return;
+        // A mouse move while hidden (none was seen in the emulator): the pointer is back.
+        if (!visible && event.type === 'mousemove') show();
         last = { x: event.clientX, y: event.clientY, target: event.target };
         if (!reenter) return;
         reenter = false;
@@ -110,14 +83,6 @@ export const install = (window, document = window.document, requestFrame = windo
         if (focusable && !focusable.contains(document.activeElement)) {
             focusable.focus();
         }
-        const scale = interfaceScale(window, document);
-        sink.style.left = `${last.x / scale - SINK_SIZE / 2}px`;
-        sink.style.top = `${last.y / scale - SINK_SIZE / 2}px`;
-        document.body.appendChild(sink);
-        // A scroll in the same task as the insertion moves nothing (measured): wait for the sink to be laid out.
-        requestFrame(() => requestFrame(() => {
-            if (!visible && sink.parentNode) sink.scrollTop = sink.scrollTop > 0 ? 0 : 1;
-        }));
     };
 
     document.addEventListener('cursorStateChange', (event) => {
@@ -133,6 +98,5 @@ export const install = (window, document = window.document, requestFrame = windo
         get visible() {
             return visible;
         },
-        sink,
     };
 };
