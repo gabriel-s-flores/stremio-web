@@ -97,6 +97,17 @@ Modelos: **O** = `claude-opus-5-5`, **S** = `claude-sonnet-5-5`; effort entre pa
   mantendo build reprodutível e o gate `check-wasm`.
 - **Evidências:** JSONs dos smokes, tabela, capturas.
 
+### F0.12 · Trava do pool de emuladores não pode ser herdada pelo QEMU
+- **Depende de:** —  · **Modelo:** S (high)
+- **Escopo:** `webos/tools/emu-run` e `webos/tools/emulator-qemu.sh`. Hoje o QEMU (lançado em segundo plano,
+  pai `systemd --user`) herda o FD do `flock` da reserva; se o `emu-run` morre (crash do host, reinício do T3,
+  kill do agente), o QEMU órfão segura `~/webos-tv-sdk/run/emu-N.lock` e a instância fica travada para sempre
+  (aconteceu com as 4 instâncias em 2026-10-10). Fechar o FD da trava antes de lançar o QEMU (e qualquer outro
+  processo em segundo plano), e ao adquirir uma trava detectar/limpar QEMU órfão daquela instância (pidfile).
+- **Aceite:** matar o `emu-run` com SIGKILL no meio de uma reserva libera a trava (ou a próxima reserva limpa o
+  órfão e segue); comportamento padrão e perfil c8 inalterados; teste automatizado do cenário.
+- **Evidências:** saída do teste de kill, `fuser` das travas antes/depois.
+
 ### G0 · Gate de viabilidade
 - **Depende de:** F0.5, F0.6, F0.7, F0.9
 - **Critérios:** core (WASM e wasm2js) inicializa no perfil C8 em menos de 10 s; a F0.7 tem
