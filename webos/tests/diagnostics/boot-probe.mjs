@@ -5,7 +5,7 @@
 //   coreReadyAt  window.core assigned (the F1.4 definition), ms on the page's performance.now()
 //   firstRowAt   first frame (rAF) with a Board catalog item that has a box inside the screen
 //   screenFullAt two Board rows with items on screen
-//   chunks       the .js files the page loaded by that time (the diagnostics chunk must not be there)
+//   chunks       ids of the webpack chunks the page had loaded by then (the diagnostics chunk must not be there)
 //
 //   node boot-probe.mjs --port <cdp> [--timeout s]
 const argv = process.argv.slice(2);
@@ -43,7 +43,7 @@ const HOOKS = `(function(){
 })()`;
 
 const STATE = `JSON.stringify({ hooks: window.__f36 || null,
-  chunks: performance.getEntriesByType('resource').map(function(e){ return e.name.split('/').pop(); }).filter(function(n){ return /\\.js(\\?|$)/.test(n); }),
+  chunks: Object.keys(window).filter(function(k){ return /^webpackChunk/.test(k); }).map(function(k){ return [].concat.apply([], window[k].map(function(c){ return c[0]; })); })[0] || null,
   heap: performance.memory ? { usedMB: Math.round(performance.memory.usedJSHeapSize / 1048576 * 10) / 10, totalMB: Math.round(performance.memory.totalJSHeapSize / 1048576 * 10) / 10 } : null,
   now: performance.now() })`;
 

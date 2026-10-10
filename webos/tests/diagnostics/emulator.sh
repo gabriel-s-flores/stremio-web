@@ -27,6 +27,10 @@ echo "board visible: ${board:-no answer}"
 [[ "$board" == yes ]]
 "${CDP[@]}" screenshot "$OUT/board.png" >/dev/null
 
+# The screen is a lazy chunk: before opening it, the page must not have loaded it.
+chunks_before="$("${CDP[@]}" eval 'JSON.stringify(Object.keys(window).filter(function(k){ return /^webpackChunk/.test(k); }).map(function(k){ return [].concat.apply([], window[k].map(function(c){ return c[0]; })); })[0] || null)')"
+echo "webpack chunks loaded at the Board: $chunks_before" | tee "$OUT/chunks.txt"
+
 # Open the screen from the page (the remote path is covered by remote.sh).
 "${CDP[@]}" eval '(location.hash = "#/webos-diagnostics", "ok")' >/dev/null
 report=''
@@ -38,6 +42,8 @@ done
 echo "report: ${report:-no answer}"
 [[ "$report" == ready ]]
 sleep 1
+chunks_after="$("${CDP[@]}" eval 'JSON.stringify(Object.keys(window).filter(function(k){ return /^webpackChunk/.test(k); }).map(function(k){ return [].concat.apply([], window[k].map(function(c){ return c[0]; })); })[0] || null)')"
+echo "webpack chunks loaded with the screen open: $chunks_after" | tee -a "$OUT/chunks.txt"
 "${CDP[@]}" eval 'JSON.stringify(window.__webos.diagnostics, null, 2)' > "$OUT/report.json"
 "${CDP[@]}" eval 'window.__webos.diagnosticsText' > "$OUT/report.txt"
 "${CDP[@]}" eval 'JSON.stringify({ hash: location.hash, memory: performance.memory ? { used: performance.memory.usedJSHeapSize, total: performance.memory.totalJSHeapSize } : null, sections: document.querySelectorAll("[class*=\"diagnostics-content\"] [class*=\"section\"]").length })' > "$OUT/page.json"

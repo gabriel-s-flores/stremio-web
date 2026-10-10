@@ -52,3 +52,6 @@ No emulador, dentro de uma reserva do pool:
   Player), com um item focado em cada uma e uma sonda (escala, áreas seguras, caixa e estilos do foco,
   tamanhos de fonte em px da tela, erros de JS): `emulator.sh` (dentro do `emu-run`), `desktop.sh`
   (Chrome headless sobre `build/`) e `compare.sh` (lado a lado). Base para a regressão visual (F2.7).
+- `webos/lib/diagnostics/`: tela de diagnóstico (`#/webos-diagnostics`; atalho vermelho-verde-amarelo-azul
+  em qualquer rota e item "Diagnostics" no menu de Settings): versão, core, tempos de boot, WebAssembly,
+  configs Luna, `canPlayType`, memória e relatório exportável. Chunk lazy, nada roda no boot; veja o README da pasta.
