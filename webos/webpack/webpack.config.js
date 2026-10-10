@@ -14,6 +14,7 @@ const steps = [
     require('./tlsproxy'),
     require('./polyfills'),
     require('./trim'),
+    require('./player'),
     require('./postcss'),
     require('./less-overrides'),
     require('./styles'),
