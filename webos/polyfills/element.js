@@ -90,16 +90,8 @@ const isShadowRoot = (node) => {
 // { composed: true }, shadow roots are crossed through their host.
 function getRootNode(options) {
     const composed = Boolean(options && options.composed);
-    let node = this;
-    for (;;) {
-        if (node.parentNode) {
-            node = node.parentNode;
-        } else if (composed && isShadowRoot(node)) {
-            node = node.host;
-        } else {
-            return node;
-        }
-    }
+    const up = this.parentNode || (composed && isShadowRoot(this) ? this.host : null);
+    return up ? getRootNode.call(up, options) : this;
 }
 
 const define = (prototype, name, value) => {
