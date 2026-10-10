@@ -76,7 +76,8 @@ const OVERRIDES = [
         banner: [
             '// webOS TV 4.x build only (resolved instead of Menu.tsx by webos/webpack/app.js, F6.1).',
             '// Same as Menu.tsx without the "Streaming" entry (the section is not rendered on webOS) and the',
-            '// streaming server version. webos/tests/no-server/no-server.test.js fails when the two drift apart.',
+            '// streaming server version, plus the "Diagnostics" entry (F3.6) that opens #/webos-diagnostics.',
+            '// webos/tests/no-server/no-server.test.js fails when the two drift apart.',
             '',
         ].join('\n'),
         edits: [
@@ -109,6 +110,65 @@ const OVERRIDES = [
             ["import React, { useMemo } from 'react';", "import React from 'react';"],
             ['    streamingServer: StreamingServer,\n', ''],
             ['({ selected, streamingServer, onSelect }: Props)', '({ selected, onSelect }: Props)'],
+            ["import { useTranslation } from 'react-i18next';\n", "import { useTranslation } from 'react-i18next';\nimport { useNavigate } from 'react-router';\n"],
+            // English only, like the screen it opens (a developer tool); a constant keeps it out of the i18n scan.
+            ["import styles from './Menu.less';\n", "import styles from './Menu.less';\n\nconst DIAGNOSTICS_LABEL = 'Diagnostics';\n"],
+            [
+                '    const platform = usePlatform();\n',
+                `    const platform = usePlatform();
+    const navigate = useNavigate();
+    const onDiagnosticsClick = React.useCallback(() => navigate('/webos-diagnostics'), [navigate]);
+`,
+            ],
+            [
+                `            <div className={styles['spacing']} />`,
+                `            <Button className={styles['button']} title={DIAGNOSTICS_LABEL} onClick={onDiagnosticsClick}>
+                {DIAGNOSTICS_LABEL}
+            </Button>
+
+            <div className={styles['spacing']} />`,
+            ],
+        ],
+    },
+    {
+        upstream: 'src/core/createTransport.ts',
+        override: 'src/core/createTransport.diagnostics.ts',
+        banner: [
+            '// webOS TV 4.x build only (F3.6): the transport that src/core/createTransport.webos.js (the localStorage',
+            '// mirror, F3.5) wraps instead of createTransport.ts. Same as createTransport.ts plus two boot marks for the',
+            '// diagnostics screen (core init start and core ready, just timestamps) and getCoreLoaderStatus: the status',
+            '// of the core loader that runs in the worker (webos/core/loader.js), read on demand. A separate file name,',
+            '// not createTransport.webos.ts, because the .webos.ts extension would win over the .webos.js of F3.5.',
+            '// webos/tests/no-server/no-server.test.js fails when it drifts from the upstream file.',
+            '',
+        ].join('\n'),
+        edits: [
+            [
+                "import Bridge from '@stremio/stremio-core-web/bridge';\n",
+                "import Bridge from '@stremio/stremio-core-web/bridge';\nimport { mark } from '../../webos/lib/diagnostics/registry';\n",
+            ],
+            [
+                'const createTransport = (): CoreTransport => {',
+                'const createTransport = (): CoreTransport & { getCoreLoaderStatus: () => Promise<object> } => {',
+            ],
+            [
+                "        return bridge.call(['init'], [args]);\n",
+                `        mark('coreInitStart');
+        return bridge.call(['init'], [args]).then(() => {
+            mark('coreReady');
+        });
+`,
+            ],
+            [
+                "    return {\n        init,",
+                `    const getCoreLoaderStatus = (): Promise<object> => {
+        return bridge.call(['getCoreLoaderStatus'], []);
+    };
+
+    return {
+        getCoreLoaderStatus,
+        init,`,
+            ],
         ],
     },
 ];

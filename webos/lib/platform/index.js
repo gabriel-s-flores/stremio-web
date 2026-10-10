@@ -175,6 +175,8 @@ module.exports = {
     SYSTEM_KEYS,
     isWebOS,
     getPlatformName,
+    callLuna,
+    defaultRequest,
     createCapabilitiesReader,
     readCapabilities: defaultReader.readCapabilities,
     getCapabilities: defaultReader.getCapabilities,

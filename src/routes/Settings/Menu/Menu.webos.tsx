@@ -1,14 +1,18 @@
 // webOS TV 4.x build only (resolved instead of Menu.tsx by webos/webpack/app.js, F6.1).
 // Same as Menu.tsx without the "Streaming" entry (the section is not rendered on webOS) and the
-// streaming server version. webos/tests/no-server/no-server.test.js fails when the two drift apart.
+// streaming server version, plus the "Diagnostics" entry (F3.6) that opens #/webos-diagnostics.
+// webos/tests/no-server/no-server.test.js fails when the two drift apart.
 
 import React from 'react';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import { usePlatform } from 'stremio/common';
 import { Button } from 'stremio/components';
 import { SECTIONS } from '../constants';
 import styles from './Menu.less';
+
+const DIAGNOSTICS_LABEL = 'Diagnostics';
 
 type Props = {
     selected: string,
@@ -19,6 +23,8 @@ const Menu = ({ selected, onSelect }: Props) => {
     const { t } = useTranslation();
     const { shell } = usePlatform();
     const platform = usePlatform();
+    const navigate = useNavigate();
+    const onDiagnosticsClick = React.useCallback(() => navigate('/webos-diagnostics'), [navigate]);
 
     return (
         <div className={styles['menu']}>
@@ -34,6 +40,10 @@ const Menu = ({ selected, onSelect }: Props) => {
             { !platform.isMobile && <Button className={classNames(styles['button'], { [styles['selected']]: selected === SECTIONS.SHORTCUTS })} title={t('SETTINGS_NAV_SHORTCUTS')} data-section={SECTIONS.SHORTCUTS} onClick={onSelect}>
                 { t('SETTINGS_NAV_SHORTCUTS') }
             </Button> }
+
+            <Button className={styles['button']} title={DIAGNOSTICS_LABEL} onClick={onDiagnosticsClick}>
+                {DIAGNOSTICS_LABEL}
+            </Button>
 
             <div className={styles['spacing']} />
             <div className={styles['version-info-label']} title={process.env.VERSION}>
