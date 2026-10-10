@@ -22,7 +22,7 @@ Leia antes da primeira iteração: `webos/docs/PLANO-PORT-WEBOS4.md` (premissas 
 | Ciclos de revisão por tarefa | no máximo 2 devolutivas; depois, `bloqueada` |
 | Retomadas por erro | no máximo 3 por tarefa; depois, `bloqueada` |
 
-O usuário **autorizou**, sem perguntar: criar e arquivar threads no projeto stremio-web; commit e push
+O usuário **autorizou**, sem perguntar: criar threads e marcar como *settled* (ou arquivar) as threads do projeto stremio-web; commit e push
 nas branches `webos` e `port/*` do fork; abrir PRs e fazer merge em `webos` após revisão aprovada.
 **Não** autorizou: tocar em `development`, force-push em `webos`, sync com o upstream, usar a TV real,
 servidor de streaming, torrents, contas Stremio (usar o app **sem conta**).
@@ -82,7 +82,8 @@ Para cada tarefa `em revisão` cujo turno do revisor terminou, leia `tarefas/<id
 - **APROVAR**: confira que a revisão rodou as checagens; faça o merge
   `gh pr merge <n> --repo gabriel-s-flores/stremio-web --squash --delete-branch --subject "<título do PR> (#<n>)"`,
   depois `git -C ~/webos-tv-sdk/repo-webos pull --ff-only`. Status `concluída`. Arquive as threads
-  da tarefa (`t3ctl archive`).
+  da tarefa (`t3ctl settle`). Thread concluída e sem mais nada a fazer fica **settled**, não arquivada
+  (pedido do Gabriel); uma thread arquivada não aceita settle, então desarquive antes (`t3ctl unarchive`).
 - **MUDANÇAS**: se ainda há ciclo (≤ 2), escreva `tarefas/<id>/devolutiva-c<N>.md` com os achados
   (copie da revisão, priorizados) e envie à thread implementadora (`t3ctl send <impl> --prompt-file …`).
   Status `corrigindo`. Quando o implementador avisar que corrigiu, mande o **mesmo revisor** revisar
