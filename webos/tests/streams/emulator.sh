@@ -45,7 +45,7 @@ sleep 2
 "${CDP[@]}" screenshot "$OUT/tela-board.png" || true
 
 # The streams of a Cinemeta movie: the test addon answers for any tt id.
-cdp_eval "window.__f62.track(60000); location.hash = '#/detail/movie/$MOVIE/$MOVIE'; true" > /dev/null
+cdp_eval "(function(){ window.__f62.track(60000); location.hash = '#/detail/movie/$MOVIE/$MOVIE'; return true; })()" > /dev/null
 log "navigated to the streams of $MOVIE"
 for _ in $(seq 1 100); do
     if [[ "$(cdp_eval "window.__f62.list().length")" -gt 0 ]]; then break; fi
