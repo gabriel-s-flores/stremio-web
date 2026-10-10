@@ -1,0 +1,64 @@
+{
+    "$comment": "Cenários da bateria de mídia. Cada um roda num emu-run próprio (um boot limpo por reprodução). 'file' é servido pelo media-server a partir da pasta de mídias (gen-media.sh); duração, resolução e faixas de áudio esperadas são derivadas do arquivo com ffprobe e podem ser sobrescritas em 'expect'. 'redirect' serve o arquivo por /redirect/<arquivo> (302, como um link de debrid). 'seconds' e 'seek' são os argumentos do play-test.sh: o seek acontece na metade do tempo. Em vez de 'file', 'url' aceita um link completo ({base} = servidor de mídia).",
+    "defaults": {
+        "redirect": true,
+        "seconds": 8,
+        "expect": {
+            "noError": true,
+            "events": [
+                "loadedmetadata",
+                "canplay",
+                "playing"
+            ],
+            "minTimeupdates": 3,
+            "redirect": true,
+            "rangeOffset": true
+        }
+    },
+    "scenarios": [
+        {
+            "id": "t1-mp4-h264-aac",
+            "title": "MP4 H.264 720p + AAC, seek",
+            "file": "t1_h264_aac.mp4",
+            "seconds": 10,
+            "seek": 12
+        },
+        {
+            "id": "t2-mkv-multiaudio",
+            "title": "MKV H.264 com 3 faixas de áudio (AAC en, AAC pt, AC3 5.1 en) e 2 legendas SRT, seek",
+            "file": "t2_multi.mkv",
+            "seconds": 10,
+            "seek": 12
+        },
+        {
+            "id": "t3-mp4-hevc10-eac3",
+            "title": "MP4 HEVC Main10 1080p + E-AC3 5.1 (decodificação em software no emulador)",
+            "file": "t3_hevc10_eac3.mp4",
+            "seek": 5
+        },
+        {
+            "id": "t4-mkv-h264-eac3",
+            "title": "MKV H.264 + E-AC3 5.1, seek",
+            "file": "t4_h264_eac3.mkv",
+            "seek": 5
+        },
+        {
+            "id": "t5-mkv-h264-ac3",
+            "title": "MKV H.264 + AC3 5.1, seek",
+            "file": "t5_h264_ac3.mkv",
+            "seek": 5
+        },
+        {
+            "id": "t6-mkv-h264-aac",
+            "title": "MKV H.264 + AAC, seek",
+            "file": "t6_h264_aac.mkv",
+            "seek": 5
+        },
+        {
+            "id": "t7-mp4-h264-ac3",
+            "title": "MP4 H.264 + AC3 estéreo, seek",
+            "file": "t7_h264_ac3.mp4",
+            "seek": 5
+        }
+    ]
+}
