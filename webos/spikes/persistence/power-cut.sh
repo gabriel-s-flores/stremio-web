@@ -3,13 +3,14 @@
 #
 #   webos/tools/emu-run -- webos/spikes/persistence/power-cut.sh <pasta-de-evidências> [casos…]
 #
-# Casos (padrão: w0 w3 w6 w12 o0 o3 o6 o12):
+# Casos (padrão: w0 w3 w6 w12 o0 o3 o6 o12; um caso pode se repetir para ter várias amostras):
 #   w<D>  apaga tudo (localStorage, banco do IndexedDB, kind do db8), grava de novo, espera D s, corta
 #   o<D>  igual, mas depois da gravação SOBRESCREVE o contador (1 → 2) nos três armazenamentos antes de esperar
 # Corte = `emulator-qemu.sh stop` (QMP quit: a VM some sem desligar o guest). Depois sobe, abre a sonda numa
 # sessão nova e confere o que sobrou: marcadores ("survived") e o contador esperado (1 em w, 2 em o).
 # O intervalo REAL entre a última gravação e o corte é medido (relógio do navegador, corrigido pelo desvio
-# em relação ao host) e vai no log: é ele, não o D, que vale.
+# em relação ao host) e vai no log: é ele, não o D, que vale. O localStorage do Chromium grava em lote com atraso,
+# então a escrita mais recente pode se perder se o corte vier em menos de ~1 s (IndexedDB e db8 não mostraram isso).
 # Os helpers repetem os do scenario.sh de propósito: cada script do spike roda sozinho.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -27,8 +28,10 @@ cdp() { node "$TOOLS/cdp.mjs" --port "$EMU_CDP_PORT" --target "$APP" "$@"; }
 IPK="$PKG/${APP}_1.0.0_all.ipk"
 wait_complete() { local i; for i in $(seq 1 80); do cdp eval 'window.__persist && window.__persist.complete' 2>/dev/null | grep -q true && return 0; sleep 0.3; done; return 1; }
 
+IDX=0
 for CASE in "${CASES[@]}"; do
-    KIND="${CASE:0:1}"; D="${CASE:1}"; ID="corte-$CASE"
+    IDX=$((IDX + 1))
+    KIND="${CASE:0:1}"; D="${CASE:1}"; ID="corte-$(printf %02d "$IDX")-$CASE"
     [[ "$KIND" == w || "$KIND" == o ]] || { log "caso inválido: $CASE"; exit 1; }
     log "=== $CASE: $([[ $KIND == w ]] && echo gravar || echo gravar+sobrescrever), esperar ${D}s, cortar ==="
     ares-launch -d "$EMU_DEVICE" -c "$APP" >/dev/null 2>&1 || true
@@ -68,6 +71,6 @@ for CASE in "${CASES[@]}"; do
         });
         console.log(out.join(" "));' "$EVID/$ID-depois.json" "$EXPECT")"
     log "após o corte ($CASE, contador esperado $EXPECT): $VERDICT"
-    echo "$CASE intervalo_ms=$INTERVAL_MS $VERDICT" >> "$EVID/resultado.txt"
+    echo "$IDX $CASE intervalo_ms=$INTERVAL_MS $VERDICT" >> "$EVID/resultado.txt"
 done
 log fim
