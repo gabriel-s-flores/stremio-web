@@ -74,6 +74,16 @@ describe('DOMRect polyfill', () => {
             expect([box.x, box.y]).toEqual([100, 50]);
         });
 
+        test('x and y can be written, as spatial-navigation-polyfill does in an iframe', () => {
+            'use strict';
+            install({ ClientRect });
+            const box = new ClientRect(100, 50, 250, 125);
+            box.x = 0;
+            box.y = 0;
+            expect([box.x, box.y, box.left, box.top]).toEqual([0, 0, 100, 50]);
+            expect(new ClientRect(7, 8, 1, 1).x).toBe(7);
+        });
+
         test('getInterfaceRect gets numbers, not NaN', () => {
             const target = { ClientRect };
             install(target);

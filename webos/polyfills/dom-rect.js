@@ -4,7 +4,7 @@
 // inside a React effect and the whole app unmounted.
 // That ClientRect also lacks x and y (they came with DOMRect), which getInterfaceRect, the Slider
 // and the Player seek bar read: every tooltip, popup and menu got NaN coordinates (off screen).
-// ClientRect gets x and y getters (left and top). Page only.
+// ClientRect gets x and y (left and top). Page only.
 
 const toNumber = (value) => (value === undefined ? 0 : Number(value));
 
@@ -103,19 +103,26 @@ const define = (global, name, value) => {
     });
 };
 
-const defineGetter = (prototype, name, get) => {
-    Object.defineProperty(prototype, name, { get, configurable: true, enumerable: true });
+// A getter for x/y on ClientRect; writing one (spatial-navigation-polyfill does, inside an iframe)
+// stores it on the rect itself, as a native writable x/y would, instead of throwing in strict mode.
+const defineAlias = (prototype, name, edge) => {
+    Object.defineProperty(prototype, name, {
+        get() {
+            return this[edge];
+        },
+        set(value) {
+            Object.defineProperty(this, name, { value, writable: true, configurable: true, enumerable: true });
+        },
+        configurable: true,
+        enumerable: true,
+    });
 };
 
 export const install = (global) => {
     const clientRect = global.ClientRect && global.ClientRect.prototype;
     if (clientRect && !('x' in clientRect)) {
-        defineGetter(clientRect, 'x', function() {
-            return this.left;
-        });
-        defineGetter(clientRect, 'y', function() {
-            return this.top;
-        });
+        defineAlias(clientRect, 'x', 'left');
+        defineAlias(clientRect, 'y', 'top');
     }
     if (typeof global.DOMRectReadOnly !== 'function') {
         define(global, 'DOMRectReadOnly', DOMRectReadOnly);
