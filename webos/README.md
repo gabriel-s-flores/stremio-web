@@ -37,4 +37,8 @@ No emulador, dentro de uma reserva do pool:
   `window.__stremioPersist.status()` (`inspect()`, `wipe()` para a tela de diagnóstico; `?resetMirror`
   ou `{"resetMirror": true}` nos parâmetros de lançamento apagam a cópia).
 - `webos/app/`: `appinfo.json` (a versão vem do `package.json`), ícones e o `index.html` do webOS.
+- `webos/tlsproxy/`: certificados Let's Encrypt, que o Chromium 53 recusa. O serviço JS do app
+  (`service/`, Node 0.12) vai no IPK ao lado do app e faz proxy HTTPS local com as raízes ISRG; a
+  página (imagens, `Image.webos.tsx`) e o worker do core o usam só para hosts Let's Encrypt, e nunca
+  para vídeo. Detalhes em `webos/tlsproxy/README.md`.
 - `webos/vendor/webOSTVjs-1.2.13/`: webOSTV.js da LG, sem alterações (origem e sha256 no README).
