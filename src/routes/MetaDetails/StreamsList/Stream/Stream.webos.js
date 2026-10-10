@@ -31,14 +31,16 @@ C8Labels.propTypes = {
     warnings: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-const isDescription = (element) => element.props.className === styles['description-container'];
+// After the play icon, the last element of the item's row: the labels wrap to a row of their own and
+// the upstream row (name, description, icon) stays as it is.
+const isPlayIcon = (element) => element.props.className === styles['icon'];
 
 const withC8 = (label, c8) => {
     const shown = c8.labels.length > 0 || c8.warnings.length > 0 ?
         React.createElement(C8Labels, { key: 'c8-labels', labels: c8.labels, warnings: c8.warnings })
         :
         null;
-    return insertAfter(React, label, isDescription, shown, {
+    return insertAfter(React, label, isPlayIcon, shown, {
         className: classnames(label.props.className, c8Styles[`tier-${c8.tier}`]),
         onFocus: chain(label.props.onFocus, c8.onFocus),
         'data-c8-tier': c8.tier,

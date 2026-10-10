@@ -16,7 +16,10 @@ const { setup } = require('./helpers.js');
 const OUT = path.resolve(process.argv[2] || '.');
 const read = (file) => JSON.parse(fs.readFileSync(path.join(OUT, file), 'utf8'));
 const idOfFile = (file) => (STREAMS.filter((entry) => fileNameOf(entry) === file)[0] || { id: `?${file}` }).id;
-const ids = (list) => list.map((item) => idOfFile(item.file));
+// Only the test addon items: the guest profile has other addons that may answer too (e.g. links to
+// streaming services, with no file name), which the list mixes in on the "all addons" view.
+const isTestItem = (item) => STREAMS.some((entry) => fileNameOf(entry) === item.file);
+const ids = (list) => list.filter(isTestItem).map((item) => idOfFile(item.file));
 
 const checks = [];
 const check = (name, ok, detail) => checks.push({ name, ok: !!ok, detail });
@@ -73,9 +76,14 @@ check('cada arquivo é lido por no máximo 3 pedidos Range', Object.keys(request
 check('depois dos probes, a ordem na tela é a da biblioteca com os mesmos probes',
     JSON.stringify(ids(afterProbes)) === JSON.stringify(ranker.rank(media.streams, {
         preferences,
-        probeOf: (stream) => (probedIds.indexOf(idOfStream(stream)) !== -1 && idOfStream(stream) !== 'web-unnamed-atmos' ? probes.get(stream.url) : null),
+        // The streams that had their probe at that moment (the walk with the remote reads more later).
+        probeOf: (stream) => (afterProbes.some((item) => isTestItem(item) && item.source === 'probe' && idOfFile(item.file) === idOfStream(stream)) ? probes.get(stream.url) : null),
     }).map((entry) => idOfStream(entry.stream))),
     { shown: ids(afterProbes) });
+const others = afterProbes.filter((item) => !isTestItem(item));
+check('itens de outros addons (sem sinais para as regras) ficam neutros: tier ok, nota 0, sem rótulos',
+    others.every((item) => item.tier === 'ok' && item.score === '0' && item.labels.length === 0),
+    others.map((item) => ({ file: item.file, name: item.name, tier: item.tier, score: item.score })));
 const byId = (list, id) => list.filter((item) => idOfFile(item.file) === id)[0];
 check('rótulos: DV no MP4, HDR10 nesta TV + Atmos, DV P5/TrueHD/DTS/AV1 avisados',
     byId(afterProbes, 'web-dv-p81-mp4').labels.join() === 'DV' &&
@@ -88,7 +96,7 @@ check('rótulos: DV no MP4, HDR10 nesta TV + Atmos, DV P5/TrueHD/DTS/AV1 avisado
 const focused = afterFocus.filter((item) => item.focused)[0];
 check('foco pelo controle: o item parado ganha o probe (Atmos) e a ordem não muda',
     focused && idOfFile(focused.file) === 'web-unnamed-atmos' && focused.labels.join() === 'Atmos' && focused.source === 'probe' &&
-    JSON.stringify(ids(afterFocus)) === JSON.stringify(ids(afterProbes)),
+    JSON.stringify(afterFocus.map((item) => item.file)) === JSON.stringify(afterProbes.map((item) => item.file)),
     { focused, before: ids(afterProbes), after: ids(afterFocus) });
 check('sem o foco/ordem congelada, o Atmos subiria o item (prova de que a ordem foi mantida)',
     probedOrder.indexOf('web-unnamed-atmos') < ids(afterFocus).indexOf('web-unnamed-atmos'),

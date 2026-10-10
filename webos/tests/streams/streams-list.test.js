@@ -29,7 +29,7 @@ jest.mock('../../lib/header-probe', () => {
 
 // webpack resolves ./Stream to Stream.webos.js in the webOS build; Jest to Stream.js.
 jest.mock('../../../src/routes/MetaDetails/StreamsList/Stream/index.js', () => jest.requireActual('../../../src/routes/MetaDetails/StreamsList/Stream/Stream.webos.js'));
-jest.mock('../../../src/routes/MetaDetails/StreamsList/Stream/styles', () => ({ 'description-container': 'description-container' }), { virtual: true });
+jest.mock('../../../src/routes/MetaDetails/StreamsList/Stream/styles', () => ({ 'description-container': 'description-container', icon: 'icon' }), { virtual: true });
 jest.mock('../../../src/routes/MetaDetails/StreamsList/Stream/c8-labels.less', () => ({
     'c8-labels': 'c8-labels', label: 'c8-label', warning: 'c8-warning', demote: 'demote', hide: 'hide', 'tier-hidden': 'tier-hidden',
 }));
@@ -167,6 +167,9 @@ describe('StreamsList on webOS', () => {
         expect(av1.className).toContain('tier-hidden');
         expect(av1.getAttribute('data-c8-tier')).toBe('hidden');
         expect(items()[0].getAttribute('data-c8-source')).toBe('name');
+        // The labels come after the play icon (a row of their own under the upstream row).
+        const children = Array.from(items()[0].children).map((child) => child.className);
+        expect(children).toEqual(['info-container', 'description-container', 'icon', 'c8-labels']);
         // The rest of the upstream render is kept.
         expect(container.querySelector('.install-button-container')).not.toBeNull();
         expect(probeUrl).not.toHaveBeenCalled();
