@@ -15,7 +15,10 @@
 export const SERVICE_URI = 'luna://io.github.gabrielsflores.stremio.tlsproxy';
 export const MODE_KEY = 'webos.tlsProxy.mode';
 export const HOSTS_KEY = 'webos.tlsProxy.hosts';
-export const SEED_HOSTS = ['images.metahub.space', 'debrid-link.com', 'debrid-link.fr'];
+// Known Let's Encrypt hosts: metahub posters, backgrounds and logos; metahub episode thumbnails
+// (episodes.metahub.space redirects to image.tmdb.org, which is Let's Encrypt); TMDB images used
+// directly by addons; the debrid-link API.
+export const SEED_HOSTS = ['images.metahub.space', 'episodes.metahub.space', 'image.tmdb.org', 'debrid-link.com', 'debrid-link.fr'];
 export const PROBE_URL = 'https://images.metahub.space/';
 export const ISSUER_HEADER = 'X-Proxy-Issuer-O';
 export const RETRY_DELAYS = [1000, 5000, 30000];

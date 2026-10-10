@@ -66,9 +66,12 @@ ws.onmessage = (event) => {
     }
     const p = msg.params || {};
     switch (msg.method) {
-        case 'Network.requestWillBeSent':
-            requests.set(p.requestId, { phase, url: p.request.url, method: p.request.method, type: p.type, start: p.timestamp });
+        case 'Network.requestWillBeSent': {
+            // A redirect keeps the requestId: `origin` is the first URL of the chain.
+            const previous = requests.get(p.requestId);
+            requests.set(p.requestId, { phase, url: p.request.url, origin: previous ? previous.origin : p.request.url, method: p.request.method, type: p.type, start: p.timestamp });
             break;
+        }
         case 'Network.responseReceived': {
             const r = requests.get(p.requestId);
             if (r) Object.assign(r, { status: p.response.status, mimeType: p.response.mimeType });
@@ -190,20 +193,33 @@ step('detail', await waitFor('detail', `(function(){var s=${IMAGES};var bg=[].sl
 await sleep(1500);
 await screenshot('4-detail.png');
 
-// 4. A Let's Encrypt addon: manifest and catalog fetched by the core worker.
+// 4. A Let's Encrypt addon (GitHub Pages): the core worker fetches its manifest and catalog. The
+// Discover of the addon lists the catalog before installing, with its own Install button, which
+// opens the addon details modal; its Install button dispatches InstallAddon with the manifest the
+// worker fetched. If the modal does not render, the same dispatch is made from the AddonDetails
+// state (the manifest still comes through the worker), and the step says so.
 phase = 'addon';
-await go(`#/addons?addon=${encodeURIComponent(ADDON)}`);
-// The install button of the addon details modal appears once the core fetched the manifest.
-const INSTALL = '[class*="addon-details-modal-container"] [class*="install-button"]';
-const modal = step('addon-modal', await waitFor('addon-modal', `(function(){var b=document.querySelector('${INSTALL}');return {ok:!!b, text:b&&b.textContent};})()`, 90));
-await sleep(1000);
-await screenshot('5-addon-details.png');
-if (modal.ok) await evaluate(`(function(){document.querySelector('${INSTALL}').click();return true;})()`);
-step('addon-installed', await waitFor('addon-installed', `window.core.getState('ctx').then(function(ctx){var a=(ctx.profile.addons||[]).filter(function(x){return x.transportUrl===${JSON.stringify(ADDON)};});return {ok:a.length===1, name:a[0]&&a[0].manifest.name, learned:window.__webosTlsProxy.status().learned};})`, 60));
 await go(`#/discover/${encodeURIComponent(ADDON)}/series/latest_anime_seasons`);
 step('addon-catalog', await waitFor('addon-catalog', `(function(){var n=document.querySelectorAll('[class*="meta-item-container"]').length;return {ok:n>0, items:n, hash:location.hash, learned:window.__webosTlsProxy.status().learned};})()`, 120));
 await sleep(3000);
-await screenshot('6-addon-catalog.png');
+await screenshot('5-addon-catalog.png');
+const MODAL_INSTALL = '[class*="addon-details-modal-container"] [class*="install-button"]';
+await evaluate(`(function(){var b=[].slice.call(document.querySelectorAll('[class*="install-button"]')).filter(function(e){return !e.closest('[class*="addon-details-modal-container"]');})[0];if(b)b.click();return !!b;})()`);
+const modal = step('addon-modal', await waitFor('addon-modal', `(function(){var b=document.querySelector('${MODAL_INSTALL}');return {ok:!!b, text:b&&b.textContent};})()`, 60));
+await sleep(1000);
+await screenshot('6-addon-details.png');
+if (modal.ok) {
+    await evaluate(`(function(){document.querySelector('${MODAL_INSTALL}').click();return true;})()`);
+} else {
+    step('addon-install-fallback', await evaluate(`window.core.getState('addon_details').then(function(s){var r=s&&s.remoteAddon;if(!r||r.content.type!=='Ready')return {ok:false,state:JSON.stringify(s).slice(0,300)};window.core.dispatch({action:'Ctx',args:{action:'InstallAddon',args:r.content.content}});return {ok:true,via:'core dispatch from addon_details'};})`));
+}
+step('addon-installed', await waitFor('addon-installed', `window.core.getState('ctx').then(function(ctx){var a=(ctx.profile.addons||[]).filter(function(x){return x.transportUrl===${JSON.stringify(ADDON)};});return {ok:a.length===1, name:a[0]&&a[0].manifest.name, via:${JSON.stringify(modal.ok ? 'modal' : 'core dispatch')}};})`, 60));
+await go('#/');
+step('addon-board', await waitFor('addon-board', `(function(){var rows=[].slice.call(document.querySelectorAll('[class*="board-row"]')).map(function(r){var t=r.querySelector('[class*="title-container"]');return {title:t?t.textContent.trim():'',items:r.querySelectorAll('[class*="meta-item-container"]').length};});var a=rows.filter(function(r){return /Anime Seasons/.test(r.title);});return {ok:a.length>0&&a[0].items>0, rows:a};})()`, 120));
+await sleep(2000);
+await evaluate(`(function(){var t=[].slice.call(document.querySelectorAll('[class*="board-row"]')).filter(function(r){var x=r.querySelector('[class*="title-container"]');return x&&/Anime Seasons/.test(x.textContent);})[0];if(t)t.scrollIntoView();return !!t;})()`);
+await sleep(2000);
+await screenshot('7-board-addon-row.png');
 step('addon-learned', { ok: (await evaluate(STATUS)).learned.indexOf(ADDON_HOST) !== -1, status: await evaluate(STATUS) });
 
 // 5. The service dies; the page notices through a failing image (or the worker through a
@@ -216,12 +232,12 @@ await sleep(1500);
 await go('#/detail/series/tt0903747');
 const recovered = step('recovery-images', await waitFor('recovery-images', `(function(){var s=${IMAGES};var st=window.__webosTlsProxy.status();s.status=st;s.ok=st.ready&&st.starts>${before.starts}&&s.loaded>0&&s.token!==${JSON.stringify(oldToken)};return s;})()`, 60));
 await sleep(1500);
-await screenshot('7-recovery-detail.png');
+await screenshot('8-recovery-detail.png');
 step('recovery-worker', await (async () => {
     await go(`#/discover/${encodeURIComponent(ADDON)}/movie/latest_anime_seasons`);
     return waitFor('recovery-worker', `(function(){var n=document.querySelectorAll('[class*="meta-item-container"]').length;return {ok:n>0, items:n, hash:location.hash};})()`, 90);
 })());
-await screenshot('8-recovery-addon-catalog.png');
+await screenshot('9-recovery-addon-catalog.png');
 result.recovery = { before, after: recovered.status, oldToken };
 
 // 6. Latency: 10 posters in sequence and 12 in parallel through the proxy (browser cache off; the
@@ -254,7 +270,7 @@ result.final = await evaluate(STATUS);
 const all = [...requests.values()];
 const hostOf = (url) => (/^https:\/\/([^/?#]+)/i.exec(url) || [])[1];
 const insecure = all.filter((r) => /ERR_INSECURE_RESPONSE|CERT/i.test(r.errorText || ''));
-const learning = insecure.filter((r) => result.final.learned.indexOf(hostOf(r.url)) !== -1);
+const learning = insecure.filter((r) => result.final.learned.indexOf(hostOf(r.origin)) !== -1);
 const detection = insecure.filter((r) => r.url === PROBE_URL);
 result.network = {
     requests: all.length,
@@ -263,7 +279,7 @@ result.network = {
     proxiedFailed: all.filter((r) => r.url.indexOf('http://127.0.0.1:') === 0 && r.errorText && !r.canceled).map((r) => ({ phase: r.phase, url: r.url.replace(/t=[0-9a-f]+/, 't=…').slice(0, 160), errorText: r.errorText })),
     insecure: insecure.map((r) => ({ phase: r.phase, method: r.method, url: r.url.slice(0, 160) })),
     insecureDetection: detection.length,
-    insecureLearning: learning.map((r) => ({ phase: r.phase, url: r.url.slice(0, 160) })),
+    insecureLearning: learning.map((r) => ({ phase: r.phase, url: r.url.slice(0, 160), origin: r.origin.slice(0, 160) })),
     insecureOutsideDetection: insecure.length - detection.length - learning.length,
     failedOther: all.filter((r) => r.errorText && !r.canceled && !/ERR_INSECURE_RESPONSE/.test(r.errorText) && r.url.indexOf('http://127.0.0.1:') !== 0).map((r) => ({ phase: r.phase, url: r.url.slice(0, 160), errorText: r.errorText })),
 };
@@ -274,8 +290,9 @@ const checks = {
     'Board com pôsteres pelo proxy após reload': result.steps.reload.ok,
     'Discover com pôsteres pelo proxy': result.steps.discover.ok,
     'Detalhe com fundo/logo do metahub pelo proxy': result.steps.detail.ok,
-    'Addon Let\'s Encrypt instalado pelo worker': result.steps['addon-installed'].ok,
-    'Catálogo do addon Let\'s Encrypt listado': result.steps['addon-catalog'].ok,
+    'Catálogo do addon Let\'s Encrypt listado pelo worker': result.steps['addon-catalog'].ok,
+    'Addon Let\'s Encrypt instalado (manifesto pelo worker)': result.steps['addon-installed'].ok,
+    'Linha do addon no Board': result.steps['addon-board'].ok,
     'Host do addon aprendido (emissor Let\'s Encrypt)': result.steps['addon-learned'].ok,
     'Serviço morto: imagens voltam sem recarregar': result.steps['recovery-images'].ok,
     'Serviço morto: worker volta sem recarregar': result.steps['recovery-worker'].ok,

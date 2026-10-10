@@ -43,7 +43,9 @@ e chama `ares-package <build-webos> webos/tlsproxy/service`.
      do worker que não alcança o proxy pede `restart` à página. Nos dois casos a página chama
      `start` de novo, recebe porta e token novos e as imagens são renderizadas com o endereço novo.
 3. **Imagens** (`Image.webos.tsx`). `proxify` reescreve as URLs `https` dos hosts conhecidos:
-   `images.metahub.space`, `debrid-link.com`, `debrid-link.fr` e os aprendidos. Outra imagem `https`
+   `images.metahub.space`, `episodes.metahub.space` (redireciona para o `image.tmdb.org`),
+   `image.tmdb.org`, `debrid-link.com`, `debrid-link.fr` e os aprendidos. Enquanto o serviço sobe (ou
+   volta), as imagens desses hosts esperam com o placeholder em vez de falhar. Outra imagem `https`
    que falhe é tentada uma vez pelo proxy antes do fallback do upstream; se carregar, um `HEAD` pelo
    proxy lê o emissor, e o host só é aprendido se for Let's Encrypt/ISRG.
 4. **Core** (`worker.js`). Passam direto tudo o que não é `https` (URLs relativas, `file:`, os
