@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>C8 Rules Smoke</title>
+<style>
+    body { margin: 0; padding: 30px 50px; background: #0c0b11; color: #e6e6f0; font: 15px/1.3 sans-serif; }
+    h1 { font-size: 28px; margin: 0 0 6px; }
+    #status { color: #9a9ab0; margin-bottom: 12px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { text-align: left; padding: 3px 8px; border-bottom: 1px solid #2a2a38; vertical-align: top; }
+    th { color: #9a9ab0; font-weight: normal; }
+    .ok { color: #7bd88f; }
+    .demoted { color: #ffcc66; }
+    .hidden { color: #ff6b6b; }
+</style>
+</head>
+<body>
+<h1>C8 rules · smoke (webOS TV 4.0, Chromium 53)</h1>
+<div id="status">aguardando runSmoke()</div>
+<table><thead><tr><th>caso</th><th>tier</th><th>nota</th><th>vídeo na TV</th><th>áudio inicial</th><th>rótulos</th><th>avisos</th></tr></thead><tbody id="rows"></tbody></table>
+<script src="c8-rules.bundle.js"></script>
+<script src="cases.js"></script>
+<script>
+// ES5 only: this file is not transpiled.
+(function () {
+    var rows = document.getElementById('rows');
+    var status = document.getElementById('status');
+    function cell(text, className) {
+        var td = document.createElement('td');
+        td.textContent = text;
+        if (className) td.className = className;
+        return td;
+    }
+    window.runSmoke = function () {
+        var started = Date.now();
+        var out = window.SMOKE_CASES.map(function (entry) {
+            var result = C8Rules.evaluate(entry);
+            var track = result.audio.initialTrack;
+            var tr = document.createElement('tr');
+            tr.appendChild(cell(entry.id));
+            tr.appendChild(cell(result.tier, result.tier));
+            tr.appendChild(cell(String(result.score)));
+            tr.appendChild(cell((result.video.codec || '-') + ' ' + (result.video.output || '-')));
+            tr.appendChild(cell(track ? track.codec + ' ' + (track.language || '?') : '-'));
+            tr.appendChild(cell(result.labels.map(function (label) { return label.text; }).join(', ')));
+            tr.appendChild(cell(result.warnings.map(function (warning) { return warning.code; }).join(', ')));
+            rows.appendChild(tr);
+            return { id: entry.id, result: result };
+        });
+        status.textContent = out.length + ' casos em ' + (Date.now() - started) + ' ms · ' + navigator.userAgent;
+        // Over 40 items: well above the size where the V8 5.3 sort stops being stable (10).
+        var sorted = C8Rules.sortStreams(out, function (entry) { return entry.result; }).map(function (entry) { return entry.id; });
+        return JSON.stringify({ userAgent: navigator.userAgent, ms: Date.now() - started, results: out, sorted: sorted });
+    };
+})();
+</script>
+</body>
+</html>
