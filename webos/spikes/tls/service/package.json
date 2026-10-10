@@ -1,0 +1,6 @@
+{
+    "name": "io.github.gabrielsflores.webostls.service",
+    "version": "1.0.0",
+    "description": "Proxy HTTPS local com as raízes ISRG (spike F0.7)",
+    "main": "service.js"
+}

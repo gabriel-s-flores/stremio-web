@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>TLS Spike (F0.7)</title>
+    <style>
+        body { margin: 0; padding: 40px 60px; background: #0c0b11; color: #e8e6f0; font: 22px/1.35 sans-serif; }
+        h1 { margin: 0 0 6px; font-size: 34px; }
+        h2 { margin: 26px 0 10px; font-size: 26px; color: #b8a8ff; }
+        .meta { color: #9a96a8; font-size: 20px; }
+        .row { display: -webkit-flex; display: flex; }
+        .tile { width: 220px; margin-right: 28px; }
+        .tile img { width: 220px; height: 330px; background: #22202c; display: block; object-fit: cover; }
+        .tile .label { margin-top: 6px; font-size: 19px; }
+        .ok { color: #7ee08a; }
+        .bad { color: #ff7a7a; }
+        .wait { color: #e8d27e; }
+        pre { margin: 0; font-size: 18px; white-space: pre-wrap; }
+        .box { background: #18161f; padding: 12px 16px; margin-bottom: 10px; }
+        .thumbs img { width: 60px; height: 90px; margin-right: 6px; background: #22202c; }
+    </style>
+</head>
+<body>
+    <h1>F0.7 · Let's Encrypt no Chromium 53</h1>
+    <div class="meta" id="env"></div>
+
+    <h2>1. Pôster de images.metahub.space (Let's Encrypt, cadeia YE2 → Root YE → X2 → X1)</h2>
+    <div class="row" id="posters"></div>
+
+    <h2>2. fetch a debrid-link.com (Let's Encrypt, cadeia YR2 → Root YR → X1)</h2>
+    <div id="fetches"></div>
+
+    <h2>3. Custo (lote de pôsteres pelo serviço)</h2>
+    <div class="box"><pre id="bench">aguardando…</pre></div>
+    <div class="row thumbs" id="thumbs"></div>
+
+    <script src="tls-test.js"></script>
+</body>
+</html>
