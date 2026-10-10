@@ -5,7 +5,11 @@
 // backdrop, a click outside), chosen so that one press closes exactly one thing:
 // - a synthetic Escape is only sent where the document listeners do not see it. On document, the
 //   Player's `exit` shortcut would also close every menu and leave the Player on the same press;
-// - popups and dropdowns close with a click outside, which no modal or Player handler reacts to.
+// - popups and dropdowns close with a click outside, which no modal or Player handler reacts to;
+// - every synthetic mouse press is a whole press (mousedown then mouseup on the same target, no
+//   click): components that track a press on window must see it end. The Player starts its "hold
+//   for 2x" on any left mousedown on window and only ends it on mouseup; a lone mousedown left the
+//   playback stuck at 2x.
 // Overlays are looked for in the visible route only: lower routes stay mounted but hidden
 // (src/router/Routes.tsx) and may still hold an open modal. Class names come from CSS modules
 // ([local]-[hash]), so they are matched by prefix. Catalog with the upstream line numbers:
@@ -66,6 +70,12 @@ const sendMouse = (win, target, type) => target.dispatchEvent(new win.MouseEvent
     button: 0,
 }));
 
+// The only way the bridge uses the mouse: a press that is always released.
+const sendPress = (win, target) => {
+    sendMouse(win, target, 'mousedown');
+    sendMouse(win, target, 'mouseup');
+};
+
 // Popup and NavMenu labels keep focus with tabIndex -1 only while the menu is open; when the menu
 // unmounts, the focus may fall on body and spatial navigation has nowhere to start from.
 const restoreFocus = (win, doc, trigger) => {
@@ -117,10 +127,10 @@ const OVERLAYS = [
         close: (win, doc, element) => element.querySelector(classPrefix('backdrop')).click(),
     },
     {
-        // src/components/ContextMenu: Escape on document; a left mousedown on its container closes it.
+        // src/components/ContextMenu: Escape on document; a left press on its container closes it.
         name: 'context-menu',
         find: (doc) => find(doc, child('body', classPrefix('context-menu-container'))),
-        close: (win, doc, element) => sendMouse(win, element, 'mousedown'),
+        close: (win, doc, element) => sendPress(win, element),
     },
     {
         // src/components/ActionMenu: React onKeyDown on the menu, which also gives the focus back.
@@ -138,8 +148,7 @@ const OVERLAYS = [
         find: (doc) => find(doc, POPUP_SELECTORS),
         close: (win, doc, element) => {
             const trigger = getPopupTrigger(element);
-            sendMouse(win, doc.body, 'mousedown');
-            sendMouse(win, doc.body, 'mouseup');
+            sendPress(win, doc.body);
             restoreFocus(win, doc, trigger);
         },
     },
@@ -164,7 +173,7 @@ const OVERLAYS = [
                 .some((layer) => !isLeaving(layer) && !hasClassToken(layer, /^next-video-popup-container-/));
             return open ? container : null;
         },
-        close: (win, doc, container) => sendMouse(win, container, 'mousedown'),
+        close: (win, doc, container) => sendPress(win, container),
     },
     {
         // Next video popup in the Player: its dismiss button (closeMenus does not close it).
