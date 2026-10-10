@@ -197,7 +197,7 @@ const parseVideoEntry = (data, entry) => {
     }
     if (video.dolbyVision === null && DOVI_SAMPLE_ENTRIES.indexOf(format) !== -1) {
         video.dolbyVision = { profile: null, profileName: null, level: null, compatibilityId: null, baseLayer: null,
-            rpuPresent: null, elPresent: null, blPresent: null, version: null };
+            rpuPresent: null, elPresent: null, blPresent: null, version: null, source: 'sample-entry' };
     }
     return { format, video };
 };
@@ -220,7 +220,13 @@ const parseAudioEntry = (data, entry) => {
     if (format === 'mlpa') sampleRate = u32(data, p + 24);
     const audio = { channels: channels || null, sampleRate: sampleRate || null, bitDepth: null, profile: null, atmos: null };
     let codecOverride = null;
+    // QuickTime sound entries keep the codec boxes (esds…) inside a 'wave' box.
+    const audioChildren = [];
     childBoxes(data, childStart, entry.end).forEach((child) => {
+        if (child.type === 'wave') audioChildren.push.apply(audioChildren, childBoxes(data, child.dataOffset, child.end));
+        else audioChildren.push(child);
+    });
+    audioChildren.forEach((child) => {
         const length = child.end - child.dataOffset;
         if (child.type === 'dec3') {
             const dec3 = codecs.parseDec3(data, child.dataOffset, length);
@@ -278,7 +284,8 @@ const parseStsd = (data, box, handlerType) => {
 // --- tracks --------------------------------------------------------------------------------
 
 // Audio whose Atmos flag or DTS flavour is only in the bitstream: the first sample is read.
-const needsFirstSample = (codec, audio) => codec === 'truehd' || (codec === 'dts' && audio.profile === null);
+const needsFirstSample = (codec, audio) => codec === 'truehd' || (codec === 'dts' && audio.profile === null) ||
+    (codec === 'eac3' && audio.atmos === null);
 
 const codecOf = (stsd) => (stsd.codecOverride ? stsd.codecOverride : (codecs.MP4_CODECS[stsd.format] || 'unknown'));
 
@@ -351,13 +358,18 @@ const parseTrak = (source, trak, options, warnings) => {
         } else if (type === 'subtitle') {
             track.subtitle = { text: codecs.BITMAP_SUBTITLES.indexOf(codec) === -1 };
         }
-        if (!found.chunkOffsets || !track.audio) return track;
-        return sniffFirstSample(source, found.chunkOffsets, track).catch((error) => {
+        if (!sniff || !track.audio || !needsFirstSample(track.codec, track.audio)) return track;
+        let failed = false;
+        // Fragmented files have empty chunk tables: their samples are in the moof/mdat pairs.
+        const attempt = found.chunkOffsets ? sniffFirstSample(source, found.chunkOffsets, track) : Promise.resolve();
+        return attempt.catch((error) => {
             if (!(error instanceof ProbeError)) throw error;
-            warnings.push('first sample of track ' + track.id + ' not read: ' + error.message);
+            failed = true;
+            warnings.push({ code: 'READ_LIMIT', track: track.id, message: 'first sample not read: ' + error.message });
         }).then(() => {
-            if ((track.codec === 'truehd' && track.audio.atmos === null) || (track.codec === 'dts' && track.audio.profile === null)) {
-                warnings.push('no frame found for track ' + track.id + ' (' + track.codec + ')');
+            const unresolved = track.codec === 'truehd' ? track.audio.atmos === null : needsFirstSample(track.codec, track.audio);
+            if (unresolved && !failed) {
+                warnings.push({ code: 'FRAME_NOT_FOUND', track: track.id, message: 'first sample not found or not recognised (' + track.codec + ')' });
             }
             return track;
         });

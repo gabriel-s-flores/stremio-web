@@ -40,6 +40,79 @@ const parseDoviConfig = (data, offset, length) => {
         elPresent,
         blPresent,
         version: versionMajor + '.' + versionMinor,
+        source: 'config',
+    };
+};
+
+// Header of a Dolby Vision RPU NAL unit (HEVC NAL type 62, with its 2-byte NAL header), enough to
+// tell the profile the way dovi_tool does (rpu_data_header.rs, get_dovi_profile).
+const parseDoviRpu = (nal) => {
+    try {
+        const rbsp = unescapeRbsp(nal, 2, nal.length - 2);
+        const reader = new BitReader(rbsp);
+        if (reader.bits(8) !== 25) return null;
+        const rpuType = reader.bits(6);
+        const rpuFormat = reader.bits(11);
+        if (rpuType !== 2) return null;
+        const vdrRpuProfile = reader.bits(4);
+        reader.skip(4);
+        if (reader.bit() === 0) return { vdrRpuProfile, profile: null };
+        reader.skip(1);
+        const coefficientDataType = reader.bits(2);
+        if (coefficientDataType === 0) reader.ue();
+        reader.skip(2);
+        const blFullRange = reader.bit() === 1;
+        let profile = null;
+        if (vdrRpuProfile === 0) {
+            profile = blFullRange ? 5 : null;
+        } else if (vdrRpuProfile === 1 && (rpuFormat & 0x700) === 0) {
+            reader.ue();
+            reader.ue();
+            const vdrBitDepthMinus8 = reader.ue();
+            reader.skip(1 + 3);
+            const elSpatialResampling = reader.bit() === 1;
+            const disableResidual = reader.bit() === 1;
+            if (elSpatialResampling && !disableResidual) {
+                profile = vdrBitDepthMinus8 === 4 ? 7 : 4;
+            } else {
+                profile = 8;
+            }
+        }
+        return { vdrRpuProfile, profile };
+    } catch (_e) {
+        return null;
+    }
+};
+
+// Dolby Vision description from an RPU when the container has no configuration record. Level and
+// compatibility id are not in the RPU; for profile 8 the base layer follows the video colour.
+const TRANSFER_BASE_LAYER = { pq: 'hdr10', hlg: 'hlg', bt709: 'sdr', bt601: 'sdr', 'bt2020-10': 'sdr', 'bt2020-12': 'sdr' };
+const BASE_LAYER_COMPATIBILITY = { hdr10: 1, sdr: 2, hlg: 4 };
+
+const doviFromRpu = (rpu, elPresent, colour) => {
+    const transferLayer = (colour && TRANSFER_BASE_LAYER[colour.transfer]) || 'unknown';
+    const profile = rpu.profile;
+    let baseLayer = transferLayer;
+    let compatibilityId = null;
+    if (profile === 5) {
+        baseLayer = 'none';
+        compatibilityId = 0;
+    } else if (profile === 8 && BASE_LAYER_COMPATIBILITY[transferLayer]) {
+        compatibilityId = BASE_LAYER_COMPATIBILITY[transferLayer];
+    }
+    let profileName = profile === null ? null : String(profile);
+    if (profile === 8 && compatibilityId !== null) profileName = '8.' + compatibilityId;
+    return {
+        profile,
+        profileName,
+        level: null,
+        compatibilityId,
+        baseLayer,
+        rpuPresent: true,
+        elPresent,
+        blPresent: true,
+        version: null,
+        source: 'rpu',
     };
 };
 
@@ -228,6 +301,7 @@ const parseHvcC = (data, offset, length) => {
     const chromaFormat = u8(data, offset + 16) & 3;
     const bitDepth = (u8(data, offset + 17) & 7) + 8;
     const result = {
+        nalLengthSize: (u8(data, offset + 21) & 3) + 1,
         profile: HEVC_PROFILES[profileIdc] || ('profile ' + profileIdc),
         level: levelIdc / 30,
         tier: tier ? 'High' : 'Main',
@@ -300,42 +374,50 @@ const parseDac3 = (data, offset, length) => {
     };
 };
 
+// EC3SpecificBox. `atmos` is true when flag_ec3_extension_type_a is set; otherwise null, because
+// muxers may omit or zero the extension of a JOC stream: the first frame decides.
 const parseDec3 = (data, offset, length) => {
     if (length < 5) return null;
-    const reader = new BitReader(data, offset, length);
-    reader.skip(13);
-    const numIndSub = reader.bits(3) + 1;
-    let channels = null;
-    let sampleRate = null;
-    for (let i = 0; i < numIndSub; i++) {
-        const fscod = reader.bits(2);
-        reader.skip(5 + 1 + 1 + 3);
-        const acmod = reader.bits(3);
-        const lfeon = reader.bit();
-        reader.skip(3);
-        const numDepSub = reader.bits(4);
-        let extra = 0;
-        if (numDepSub > 0) {
-            const chanLoc = reader.bits(9);
-            for (let bit = 0; bit < 9; bit++) {
-                if ((chanLoc >> (8 - bit)) & 1) extra += CHAN_LOC_CHANNELS[bit];
+    try {
+        const reader = new BitReader(data, offset, length);
+        reader.skip(13);
+        const numIndSub = reader.bits(3) + 1;
+        let channels = null;
+        let sampleRate = null;
+        for (let i = 0; i < numIndSub; i++) {
+            const fscod = reader.bits(2);
+            reader.skip(5 + 1 + 1 + 3);
+            const acmod = reader.bits(3);
+            const lfeon = reader.bit();
+            reader.skip(3);
+            const numDepSub = reader.bits(4);
+            let extra = 0;
+            if (numDepSub > 0) {
+                const chanLoc = reader.bits(9);
+                for (let bit = 0; bit < 9; bit++) {
+                    if ((chanLoc >> (8 - bit)) & 1) extra += CHAN_LOC_CHANNELS[bit];
+                }
+            } else {
+                reader.skip(1);
             }
-        } else {
-            reader.skip(1);
+            if (i === 0) {
+                channels = ACMOD_CHANNELS[acmod] + lfeon + extra;
+                sampleRate = AC3_SAMPLE_RATES[fscod] || null;
+            }
         }
-        if (i === 0) {
-            channels = ACMOD_CHANNELS[acmod] + lfeon + extra;
-            sampleRate = AC3_SAMPLE_RATES[fscod] || null;
+        let atmos = null;
+        let complexityIndex = null;
+        if (reader.remaining() >= 8) {
+            reader.skip(7);
+            if (reader.bit() === 1) {
+                atmos = true;
+                if (reader.remaining() >= 8) complexityIndex = reader.bits(8);
+            }
         }
+        return { channels, sampleRate, atmos, complexityIndex };
+    } catch (_e) {
+        return null;
     }
-    let atmos = false;
-    let complexityIndex = null;
-    if (reader.remaining() >= 8) {
-        reader.skip(7);
-        atmos = reader.bit() === 1;
-        if (atmos && reader.remaining() >= 8) complexityIndex = reader.bits(8);
-    }
-    return { channels, sampleRate, atmos, complexityIndex };
 };
 
 // Parses the bit stream information of the first E-AC-3 syncframe in `data` and reports the
@@ -484,7 +566,7 @@ const sniffDtsFrame = (data) => {
     const xll = indexOfSequence(data, DTS_XLL_SYNC);
     if (xll !== -1) {
         const x = indexOfSequence(data, DTS_XLL_X_SYNC, xll) !== -1 || indexOfSequence(data, DTS_XLL_X_IMAX_SYNC, xll) !== -1;
-        return { profile: x ? 'DTS:X' : 'DTS-HD MA', core };
+        return { profile: x ? 'DTS-HD MA + DTS:X' : 'DTS-HD MA', core };
     }
     if (indexOfSequence(data, DTS_LBR_SYNC) !== -1) return { profile: 'DTS Express', core };
     return { profile: 'DTS-HD', core };
@@ -682,8 +764,9 @@ const MP4_DTS_PROFILES = {
     dtsh: 'DTS-HD',
     dtsl: 'DTS-HD MA',
     dtse: 'DTS Express',
-    dtsx: 'DTS:X',
-    dtsy: 'DTS:X',
+    // dtsx/dtsy are DTS-UHD (DTS:X profile 2): a different bitstream with no DCA core.
+    dtsx: 'DTS-UHD',
+    dtsy: 'DTS-UHD',
 };
 
 const BITMAP_SUBTITLES = ['pgs', 'vobsub', 'dvbsub'];
@@ -691,6 +774,8 @@ const BITMAP_SUBTITLES = ['pgs', 'vobsub', 'dvbsub'];
 module.exports = {
     DV_COMPATIBILITY,
     parseDoviConfig,
+    parseDoviRpu,
+    doviFromRpu,
     colourInfo,
     parseHvcC,
     parseHevcSpsColour,

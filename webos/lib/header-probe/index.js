@@ -80,7 +80,11 @@ const probe = (readRange, options) => {
         if (isMkv(head)) return probeMkv(source, opts);
         if (isMp4(head)) return probeMp4(source, opts);
         throw new ProbeError('UNSUPPORTED', 'not an MKV/WebM or MP4 file');
-    }).then((result) => finalize(result, source));
+    }).then((result) => finalize(result, source)).catch((error) => {
+        // Contract: only ProbeError leaves probe(); a parser slip on corrupt data becomes INVALID.
+        if (error instanceof ProbeError) throw error;
+        throw new ProbeError('INVALID', 'corrupt or unexpected data: ' + ((error && error.message) || String(error)));
+    });
 };
 
 // Probes a URL with fetch() + Range. Extra options: fetch, headers, timeout (see fetch-reader.js).

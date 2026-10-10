@@ -85,6 +85,15 @@ const createFetchReadRange = (url, options) => {
             if (response.url && response.redirected !== false) currentUrl = response.url;
             if (response.status === 206) {
                 const start = parseRangeStart(response);
+                if (start !== null && start > offset) {
+                    throw new ProbeError('HTTP', 'partial response starts at ' + start + ', after the requested ' + offset);
+                }
+                // Content-Range may be hidden by CORS (not exposed): then only a body no longer than
+                // the requested range can be trusted to start at the requested offset.
+                const contentLength = parseInt(response.headers.get('Content-Length'), 10);
+                if (start === null && offset > 0 && isFinite(contentLength) && contentLength > length) {
+                    throw new ProbeError('HTTP', 'partial response without Content-Range is larger than the requested range');
+                }
                 const skip = start !== null && start < offset ? offset - start : 0;
                 return readBody(response, skip, length).then((data) => ({ data, size: parseTotal(response) }));
             }

@@ -313,6 +313,7 @@ const parseTrackEntry = (data, element) => {
         track.subtitle = { text: codecs.BITMAP_SUBTITLES.indexOf(codec) === -1 };
     }
     track.encoding = parseContentEncoding(data, map);
+    track.encoding.nalLengthSize = codec === 'hevc' && codecPrivate !== null && codecPrivate.length > 21 ? (codecPrivate[21] & 3) + 1 : 4;
     return track;
 };
 
@@ -369,12 +370,60 @@ const firstFrameOffset = (data, start, flags) => {
     return position;
 };
 
+// Tracks whose description needs the first frame: E-AC-3/TrueHD/DTS audio (Atmos, DTS flavour)
+// and 10-bit HEVC without a Dolby Vision BlockAdditionMapping (an RPU NAL unit there means DV).
+const sniffKind = (track) => {
+    if (track.type === 'audio' && SNIFF_CODECS.indexOf(track.codec) !== -1) return 'audio';
+    if (track.type === 'video' && track.codec === 'hevc' && track.video.dolbyVision === null && track.video.bitDepth !== 8) return 'dovi';
+    return null;
+};
+
+const doviUnknown = (track, reason) => ({
+    code: 'DV_UNKNOWN',
+    track: track.id,
+    message: 'HEVC without Dolby Vision BlockAdditionMapping; first frame not checked for an RPU (' + reason + ')',
+});
+
+// Walks the length-prefixed NAL units of the first video frame looking for the Dolby Vision RPU
+// (type 62) and enhancement layer (type 63). Resolves { rpu, el } or null if the frame is unreadable.
+const scanDoviNals = (source, start, end, lengthSize) => {
+    const found = { rpu: null, el: false };
+    let units = 0;
+    const step = (position) => {
+        if (position + lengthSize + 2 > end || units++ > 2000) return Promise.resolve(found);
+        return source.read(position, lengthSize + 2).then((head) => {
+            if (head.length < lengthSize + 2) return found;
+            const length = uint(head, 0, lengthSize);
+            const type = (head[lengthSize] >> 1) & 0x3f;
+            const next = position + lengthSize + length;
+            if (length < 2 || next > end) return found;
+            if (type === 63) found.el = true;
+            if (type === 62) {
+                return source.read(position + lengthSize, Math.min(length, 256)).then((nal) => {
+                    found.rpu = codecs.parseDoviRpu(nal);
+                    return found;
+                });
+            }
+            return step(next);
+        });
+    };
+    return step(start);
+};
+
 const sniffFrames = (source, clusterOffset, tracks, options, warnings) => {
     const pending = {};
     tracks.forEach((track) => {
-        if (track.type === 'audio' && SNIFF_CODECS.indexOf(track.codec) !== -1 && track.encoding.readable) {
-            pending[track.id] = track;
+        const kind = sniffKind(track);
+        if (kind === null) return;
+        if (!track.encoding.readable || (kind === 'dovi' && track.encoding.strippedHeader !== null)) {
+            warnings.push(kind === 'dovi' ? doviUnknown(track, 'compressed or encrypted frames') : {
+                code: 'FRAMES_UNREADABLE',
+                track: track.id,
+                message: 'frames are compressed or encrypted; ' + track.codec + ' details not read',
+            });
+            return;
         }
+        pending[track.id] = track;
     });
     let remaining = Object.keys(pending).length;
     if (remaining === 0) return Promise.resolve();
@@ -382,6 +431,19 @@ const sniffFrames = (source, clusterOffset, tracks, options, warnings) => {
     let clusters = 0;
     const maxBlocks = options.sniffMaxBlocks || 256;
     const maxClusters = options.sniffMaxClusters || 2;
+    const done = (track) => {
+        delete pending[track.id];
+        remaining--;
+    };
+
+    const inspectVideo = (track, payloadStart, blockEnd) => scanDoviNals(source, payloadStart, blockEnd, track.encoding.nalLengthSize)
+        .then((found) => {
+            if (found.rpu !== null) {
+                track.video.dolbyVision = codecs.doviFromRpu(found.rpu, found.el, track.video.colour);
+                track.video.dolbyVision.elPresent = found.el;
+            }
+            done(track);
+        });
 
     const inspectBlock = (blockOffset, blockEnd) => source.read(blockOffset, 12).then((head) => {
         const trackNumber = readVint(head, 0, false);
@@ -390,6 +452,10 @@ const sniffFrames = (source, clusterOffset, tracks, options, warnings) => {
         if (!track) return null;
         const flags = head[trackNumber.length + 2];
         const payloadStart = blockOffset + trackNumber.length + 3;
+        if (track.type === 'video') {
+            if (((flags >> 1) & 3) !== 0) return null;
+            return inspectVideo(track, payloadStart, blockEnd);
+        }
         return source.read(payloadStart, Math.min(codecs.SNIFF_BYTES[track.codec] + 1024, blockEnd - payloadStart)).then((payload) => {
             const frameOffset = firstFrameOffset(payload, 0, flags);
             if (frameOffset < 0) return null;
@@ -401,13 +467,20 @@ const sniffFrames = (source, clusterOffset, tracks, options, warnings) => {
                 joined.set(frame, stripped.length);
                 frame = joined;
             }
-            if (codecs.applyFrameSniff(track, frame)) {
-                delete pending[track.id];
-                remaining--;
-            }
+            if (codecs.applyFrameSniff(track, frame)) done(track);
             return null;
         });
     });
+
+    // The Block of a BlockGroup is not necessarily its first child (BlockDuration, ReferenceBlock…).
+    const inspectGroup = (offset, end) => {
+        if (offset >= end) return Promise.resolve();
+        return readElementHeader(source, offset).then((child) => {
+            if (child === null || child.end === null || child.end > end) return null;
+            if (child.id === ID.Block) return inspectBlock(child.dataOffset, child.end);
+            return inspectGroup(child.end, end);
+        });
+    };
 
     const walkCluster = (offset, end) => {
         if (remaining === 0 || blocks >= maxBlocks || (end !== null && offset >= end)) return Promise.resolve(end);
@@ -422,10 +495,7 @@ const sniffFrames = (source, clusterOffset, tracks, options, warnings) => {
             if (element.id === ID.SimpleBlock) {
                 step = inspectBlock(element.dataOffset, element.end);
             } else if (element.id === ID.BlockGroup) {
-                step = readElementHeader(source, element.dataOffset).then((block) => {
-                    if (block !== null && block.id === ID.Block && block.end !== null) return inspectBlock(block.dataOffset, block.end);
-                    return null;
-                });
+                step = inspectGroup(element.dataOffset, element.end);
             }
             return step.then(() => walkCluster(element.end, end));
         });
@@ -440,12 +510,19 @@ const sniffFrames = (source, clusterOffset, tracks, options, warnings) => {
         });
     };
 
+    let stopped = null;
     return walkClusters(clusterOffset).catch((error) => {
         if (!(error instanceof ProbeError)) throw error;
-        warnings.push('frame sniffing stopped: ' + error.message);
+        stopped = error.message;
+        warnings.push({ code: 'READ_LIMIT', track: null, message: 'frame inspection stopped: ' + error.message });
     }).then(() => {
         Object.keys(pending).forEach((id) => {
-            warnings.push('no frame found for track ' + id + ' (' + pending[id].codec + ')');
+            const track = pending[id];
+            warnings.push(track.type === 'video' ? doviUnknown(track, stopped || 'no frame found') : {
+                code: 'FRAME_NOT_FOUND',
+                track: track.id,
+                message: 'no frame found for track ' + id + ' (' + track.codec + ')',
+            });
         });
     });
 };
@@ -486,8 +563,8 @@ const probeMkv = (source, options) => {
         return Promise.resolve();
     };
 
-    const needSniff = () => options.sniffFrames !== false && state.tracks !== null &&
-        state.tracks.some((track) => track.type === 'audio' && SNIFF_CODECS.indexOf(track.codec) !== -1);
+    const sniffTargets = () => (state.tracks === null ? [] : state.tracks.filter((track) => sniffKind(track) !== null));
+    const needSniff = () => options.sniffFrames !== false && sniffTargets().length > 0;
 
     // Walks Segment children until the first Cluster (or until nothing else is needed).
     const walk = (offset, segmentEnd) => {
@@ -540,7 +617,14 @@ const probeMkv = (source, options) => {
         if (needSniff() && state.firstCluster !== null) {
             return sniffFrames(source, state.firstCluster, state.tracks, options, warnings);
         }
-        if (needSniff()) warnings.push('first Cluster not found; audio frames not inspected');
+        sniffTargets().forEach((track) => {
+            const reason = options.sniffFrames === false ? 'sniffFrames disabled' : 'first Cluster not found';
+            warnings.push(sniffKind(track) === 'dovi' ? doviUnknown(track, reason) : {
+                code: 'FRAME_NOT_FOUND',
+                track: track.id,
+                message: 'first frame not inspected (' + reason + ')',
+            });
+        });
         return null;
     }).then(() => {
         const tracks = state.tracks.map((track) => {

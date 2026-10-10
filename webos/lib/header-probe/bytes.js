@@ -22,11 +22,12 @@ const uint = (data, offset, length) => {
     return value;
 };
 
+// IEEE float of 4 or 8 bytes; NaN and infinities (corrupt files) become null.
 const float = (data, offset, length) => {
+    if (length !== 4 && length !== 8) return null;
     const view = new DataView(data.buffer, data.byteOffset + offset, length);
-    if (length === 4) return view.getFloat32(0);
-    if (length === 8) return view.getFloat64(0);
-    return null;
+    const value = length === 4 ? view.getFloat32(0) : view.getFloat64(0);
+    return isFinite(value) ? value : null;
 };
 
 const fourcc = (data, offset) => String.fromCharCode(data[offset], data[offset + 1], data[offset + 2], data[offset + 3]);
