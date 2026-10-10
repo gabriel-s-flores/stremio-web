@@ -23,18 +23,20 @@ Leia antes da primeira iteração: `webos/docs/PLANO-PORT-WEBOS4.md` (premissas 
 | Retomadas por erro | no máximo 3 por tarefa; depois, `bloqueada` |
 
 O usuário **autorizou**, sem perguntar: criar e arquivar threads no projeto stremio-web; commit e push
-nas branches `webos` e `webos/*` do fork; abrir PRs e fazer merge em `webos` após revisão aprovada.
+nas branches `webos` e `port/*` do fork; abrir PRs e fazer merge em `webos` após revisão aprovada.
 **Não** autorizou: tocar em `development`, force-push em `webos`, sync com o upstream, usar a TV real,
 servidor de streaming, torrents, contas Stremio (usar o app **sem conta**).
 
 ## Iteração
 
-### 0. Primeira iteração apenas
-1. `ListAgents` → anote o nome da sua sessão (ex.: `stremio-web-07`) em `PAINEL.md` ("Sessão do
-   orquestrador"). Os agentes usam esse nome para te avisar via `SendMessage`.
-2. `t3ctl version` (protocolo 1), `t3ctl projects` (id do projeto stremio-web → `PAINEL.md`),
-   `gh auth status`.
-3. `git -C ~/webos-tv-sdk/repo-webos pull --ff-only`.
+### 0. Toda iteração: publicar o nome da sessão
+`ListAgents` → grave o nome atual da sua sessão em `~/webos-tv-sdk/orquestrador/SESSAO` (só o nome,
+ex.: `stremio-web-07`) e no `PAINEL.md`. O nome **muda quando a sessão é retomada**; os agentes leem
+esse arquivo para te avisar via `SendMessage`. As mensagens são um atalho: a fonte da verdade é o
+estado das threads pela API (`t3ctl`).
+
+**Só na primeira iteração:** `t3ctl version` (protocolo 1), `t3ctl projects` (id do projeto
+stremio-web → `PAINEL.md`), `gh auth status` e `git -C ~/webos-tv-sdk/repo-webos pull --ff-only`.
 
 ### 1. Pausa
 Se existir `~/webos-tv-sdk/orquestrador/PAUSAR` ou o Gabriel pediu pausa na thread: registre no
@@ -59,7 +61,7 @@ Gabriel ("API do T3 mudou") e agende 3600 s.
 ### 4. Implementações em andamento
 Para cada tarefa com status `implementando` ou `corrigindo`:
 - **Turno concluído, relatório e PR existem** (`tarefas/<id>/relatorio.md` e PR aberto para `webos`
-  com a branch `webos/<id>`): faça a **conferência objetiva** — relatório preenchido em todas as
+  com a branch `port/<id>`): faça a **conferência objetiva** — relatório preenchido em todas as
   seções, evidências citadas existem no disco, PR vinculado à thread, rebase sobre `origin/webos`
   feito (sem conflitos), checagens que o relatório diz ter rodado batem com o pedido no brief.
   Faltou algo → devolva à própria thread (`t3ctl send`) dizendo exatamente o que falta (não conta
@@ -96,11 +98,11 @@ Para cada tarefa `em revisão` cujo turno do revisor terminou, leia `tarefas/<id
    - crie `tarefas/<id>/` e escreva `brief.md` a partir de `modelos/brief-implementador.md`,
      preenchendo os campos com o texto da tarefa no `BACKLOG.md` (escopo, aceite, evidências) e as
      suas notas (o que já foi decidido em tarefas anteriores que afete esta);
-   - `t3ctl spawn --project stremio-web --title "🔨 <ID> · <título curto>" --worktree --base webos --branch webos/<id-em-minúsculas> --model <modelo> --effort <effort> --prompt-file tarefas/<id>/brief.md`;
+   - `t3ctl spawn --project stremio-web --title "🔨 <ID> · <título curto>" --worktree --base webos --branch port/<id-em-minúsculas> --model <modelo> --effort <effort> --prompt-file tarefas/<id>/brief.md`;
    - anote o id da thread no `PAINEL.md`, status `implementando`.
 5. **Revisor**: escreva `tarefas/<id>/brief-revisor.md` a partir de `modelos/brief-revisor.md`
    (PR, head SHA, ciclo) e
-   `t3ctl spawn --project stremio-web --title "🔍 <ID> · revisão" --worktree --base webos/<id> --branch revisao/<id>-c<N> --model claude-opus-5-5 --effort high --prompt-file tarefas/<id>/brief-revisor.md`.
+   `t3ctl spawn --project stremio-web --title "🔍 <ID> · revisão" --worktree --base port/<id> --branch revisao/<id>-c<N> --model claude-opus-5-5 --effort high --prompt-file tarefas/<id>/brief-revisor.md`.
 
 ### 7. Gates
 Quando todas as tarefas de um gate (`G0`, `G7`) estiverem concluídas, avalie os critérios do
@@ -111,7 +113,7 @@ tarefas que dependem dele ficam `em espera`, notifique o Gabriel com o motivo.
 Compare `origin/webos` com o "último commit visto" do `PAINEL.md`. Se houver commits novos em
 `webos`, envie **uma** `PushNotification` por iteração com a lista curta
 (`2 commits novos em webos: a1b2c3d feat(webos)…; d4e5f6a fix(webos)…`, < 200 caracteres) e
-atualize o "último commit visto". Commits nas branches `webos/*` aparecem nas threads dos agentes;
+atualize o "último commit visto". Commits nas branches `port/*` aparecem nas threads dos agentes;
 cite a contagem na mesma notificação quando houver.
 
 ### 9. Registrar

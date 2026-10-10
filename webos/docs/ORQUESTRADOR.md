@@ -19,7 +19,7 @@
 
 | Recurso do T3 | Uso no orquestrador |
 |---|---|
-| **Threads com worktree e branch próprias**, turnos, interrupção, arquivamento | Cada tarefa ganha uma thread isolada na sua branch `webos/<tarefa>` |
+| **Threads com worktree e branch próprias**, turnos, interrupção, arquivamento | Cada tarefa ganha uma thread isolada na sua branch `port/<tarefa>` |
 | **PR vinculado à thread** (ferramenta `link_pull_request`); a thread é "assentada" quando o PR é mergeado | Status do PR ao lado de cada thread; threads concluídas saem da frente sozinhas |
 | **Painel de Agentes** por thread: subagentes, lotes e workflows com status ao vivo, última ferramenta, modelo, effort, tokens e o script do workflow | Ver os subagentes de cada agente |
 | **API de orquestração** (`POST /api/orchestration/dispatch`, `GET /api/orchestration/snapshot`, `GET /api/orchestration/threads/:id`), a mesma que a interface usa: `thread.turn.start` com `bootstrap.createThread` + `prepareWorktree` cria a thread, prepara a worktree e envia a tarefa | O orquestrador cria e acompanha threads como você faria pela interface |
@@ -53,7 +53,7 @@ T3 · projeto stremio-web (barra lateral)
 
   Não escreve código do app.
 - **Nível 2, Agentes de tarefa.** Threads do T3 criadas pelo orquestrador via API, como você as criaria na interface:
-  - **Implementador:** worktree nova a partir de `webos`, branch `webos/<tarefa>`.
+  - **Implementador:** worktree nova a partir de `webos`, branch `port/<tarefa>`.
   - **Revisor:** thread separada e independente, só leitura, sobre o commit do PR.
   - **Correções:** voltam para a mesma thread implementadora como uma nova mensagem do orquestrador, visível nela.
 - **Nível 3, Subagentes.** Ferramenta Agent dentro de cada thread (exploração, rodar o roteiro de testes no emulador, auto-revisão). Aparecem no painel de Agentes da thread que os criou.
@@ -107,7 +107,7 @@ T3 · projeto stremio-web (barra lateral)
 - **Parar tudo:** Stop na thread do orquestrador e **revogar o cliente "Orquestrador webOS4"** em *Connections*, o que corta o acesso à API na hora. Qualquer agente pode ser interrompido direto na própria thread.
 - **Acesso mínimo:** o pareamento leva só "View environment" e "Operate tasks", sem terminais e sem gestão de acesso. O token fica em arquivo `0600` fora do repositório e nunca aparece em logs.
 - **Git:**
-  - só as branches `webos` e `webos/*` no seu fork;
+  - só as branches `webos` e `port/*` no seu fork;
   - nunca `development`, nunca force-push em `webos`;
   - merge só com a revisão aprovada e as checagens passando;
   - nenhum sync com o upstream durante a execução, a menos que você peça.
@@ -140,7 +140,7 @@ O orquestrador registra no painel o modelo e o effort de cada tarefa, que podem 
 
 1. **Autorização AFK:** o orquestrador pode, sem perguntar:
    - criar e arquivar threads no projeto stremio-web;
-   - commitar e dar push nas branches `webos` e `webos/*` do seu fork;
+   - commitar e dar push nas branches `webos` e `port/*` do seu fork;
    - abrir PRs e fazer merge em `webos` depois da revisão aprovada.
 2. **Concorrência e modelos:** 2 agentes simultâneos e a tabela da seção 9. Ok ou prefere outro equilíbrio entre custo e velocidade?
 3. **Pareamento:** criar o link em *Connections* no momento da etapa O0.

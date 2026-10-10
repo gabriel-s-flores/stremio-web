@@ -1,7 +1,7 @@
 # Backlog do port webOS 4 (Fases 0–7)
 
 Definições das tarefas. O **status** de cada uma fica no `PAINEL.md` (fora do repo). A ordem é a do
-caminho crítico. Cada tarefa vale como um PR para `webos` a partir da branch `webos/<id-minúsculo>`.
+caminho crítico. Cada tarefa vale como um PR para `webos` a partir da branch `port/<id-minúsculo>`.
 
 **Definição de pronto comum** (está no brief de todo implementador): lint, testes e build desktop
 passam; a partir da F1.2, build webOS e checagem de sintaxe passam; critérios verificados no

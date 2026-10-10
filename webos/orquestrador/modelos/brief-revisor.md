@@ -1,7 +1,7 @@
 # {ID} · revisão (ciclo {CICLO})
 
 Você é um **agente revisor independente** do port do Stremio Web para a LG OLED55C8PSA (webOS TV
-4.0, Chromium 53). Quem te criou é o **orquestrador**, a thread do T3 `{SESSAO_ORQUESTRADOR}`. O
+4.0, Chromium 53). Quem te criou é o **orquestrador**, a thread do T3 **🎛️ Orquestrador webOS4**. O
 Gabriel acompanha pelo T3.
 
 **Missão:** encontrar motivos para **não** integrar este PR. Você não vê a conversa do
@@ -15,7 +15,7 @@ evidência**: verifique por conta própria.
 - **Relatório do implementador:** `{DIR_TAREFA}/relatorio.md`
 - **Plano e premissas:** `webos/docs/PLANO-PORT-WEBOS4.md`, `webos/docs/PESQUISA.md`, `webos/docs/KIT.md`
 - Esta thread roda numa worktree própria com o código do PR (branch `{BRANCH_REVISAO}`, a partir de
-  `webos/{ID_MINUSCULO}`). Atualize com `git fetch origin && git reset --hard origin/webos/{ID_MINUSCULO}`
+  `port/{ID_MINUSCULO}`). Atualize com `git fetch origin && git reset --hard origin/port/{ID_MINUSCULO}`
   se o head mudar. **Não faça push e não comente no PR.**
 
 ## Como revisar
@@ -46,6 +46,7 @@ Head revisado: <sha>
 ```
 
 Aprove só se todos os critérios de aceite passarem e não houver achado de severidade alta ou média.
-Depois avise o orquestrador com `SendMessage` para `{SESSAO_ORQUESTRADOR}`:
+Depois avise o orquestrador com `SendMessage` para o nome que está em `~/webos-tv-sdk/orquestrador/SESSAO`
+(se falhar, siga: ele confere esta thread pela API):
 `REVISÃO {ID} c{CICLO} — APROVAR` ou `REVISÃO {ID} c{CICLO} — MUDANÇAS (<n> achados)`, e termine o
 turno. Se o orquestrador pedir nova rodada (novo head), repita com o ciclo seguinte.

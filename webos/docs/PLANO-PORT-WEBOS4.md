@@ -250,7 +250,7 @@ Para cada stream, registrar: toca? selo DV ou Atmos da TV? cores certas? seek e 
 ## 8. Branches e upstream
 
 - `development` é espelho do upstream, sem mudanças do port.
-- `webos` (nova) concentra o port. Cada tarefa sai de `webos` em `webos/<tarefa>` e volta por PR.
+- `webos` (nova) concentra o port. Cada tarefa sai de `webos` em `port/<tarefa>` e volta por PR.
 - `development` entra em `webos` por merge a cada release do upstream. Conflitos e quebras são reportados antes de adaptar.
 - O build MVP do `stremio-core-web` acompanha a versão do core usada pelo `development`.
 
