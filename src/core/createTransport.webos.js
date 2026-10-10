@@ -49,7 +49,7 @@ const createWebosTransport = () => {
 
     const init = (args) => boot
         .then((result) => {
-            if (!/^(localStorage-ok|nothing-to-restore|restored|merged)$/.test(result.reason)) {
+            if (!/^(localStorage-ok|nothing-to-restore)$/.test(result.reason)) {
                 console.warn('[persist] boot:', JSON.stringify(result));
             }
             return transport.init(args);
