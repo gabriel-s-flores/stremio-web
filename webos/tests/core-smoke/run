@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# Roda o smoke do core vendorizado num emulador reservado pelo emu-run e salva as evidências:
+#   webos/tools/build-run -- npx webpack --config webos/tests/core-smoke/webpack.config.js
+#   webos/tools/emu-run -- webos/tests/core-smoke/run [pasta-de-saída]
+# Saída: core-smoke-<data>.json (resultado da página + memória do convidado + carga do host),
+# core-smoke-<data>-tela.png (QMP) e core-smoke-<data>-app.png (CDP).
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+TOOLS="$(cd "$HERE/../../tools" && pwd)"
+APP_ID="io.github.gabrielsflores.coresmoke"
+OUT_DIR="$(realpath -m "${1:-$HERE/build/results}")"
+STAMP="$(date +%Y%m%d-%H%M%S)"
+BASE="$OUT_DIR/core-smoke-$STAMP"
+: "${EMU_DEVICE:?rode dentro do webos/tools/emu-run}"
+[[ -f "$HERE/build/app/worker.js" ]] || { echo "erro: falta o build (webpack, veja o cabeçalho)" >&2; exit 1; }
+mkdir -p "$OUT_DIR"
+
+SSH=(ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o HostKeyAlgorithms=+ssh-rsa
+     -o PubkeyAcceptedAlgorithms=+ssh-rsa -o BatchMode=yes -i "$HOME/webos-tv-sdk/run/ares_webos_emul"
+     -p "$EMU_SSH_PORT" developer@127.0.0.1)
+CDP=(node "$TOOLS/cdp.mjs" --target "$APP_ID")
+# Memória do convidado: MemAvailable e o RSS dos processos web (WebAppMgr/renderers), a cada segundo.
+SAMPLER='while true; do
+  a=$(grep MemAvailable /proc/meminfo | tr -s " " | cut -d" " -f2); r=0; top=""
+  for s in /proc/[0-9]*/status; do
+    n=$(sed -n "s/^Name:\t//p" "$s" 2>/dev/null); case "$n" in WebAppMgr*|*chrom*|*render*|wam*) ;; *) continue;; esac
+    k=$(sed -n "s/^VmRSS:[^0-9]*\([0-9]*\).*/\1/p" "$s" 2>/dev/null); [ -n "$k" ] || continue
+    r=$((r + k)); top="$top $n:$k"
+  done
+  echo "$(date +%s) $a $r$top"; sleep 1
+done'
+
+echo "carga do host: $(uptime)"
+UPTIME_START="$(uptime)"
+PKG_DIR="$(mktemp -d)"
+trap 'rm -rf "$PKG_DIR"; [[ -n "${MON:-}" ]] && kill "$MON" 2>/dev/null || true' EXIT
+ares-package "$HERE/build/app" -o "$PKG_DIR" >/dev/null
+ares-install -d "$EMU_DEVICE" "$PKG_DIR"/*.ipk
+
+"${SSH[@]}" "$SAMPLER" > "$BASE-mem.log" 2>/dev/null &
+MON=$!
+sleep 3
+T_LAUNCH=$(date +%s%3N)
+ares-launch -d "$EMU_DEVICE" "$APP_ID"
+done=""
+for _ in $(seq 1 120); do
+    if "${CDP[@]}" eval 'window.__smoke && window.__smoke.done' 2>/dev/null | grep -q true; then done=1; break; fi
+    sleep 1
+done
+T_DONE=$(date +%s%3N)
+sleep 3
+kill "$MON" 2>/dev/null || true
+MON=""
+
+"${CDP[@]}" eval 'JSON.stringify(window.__smoke)' > "$BASE-page.json" || echo '{}' > "$BASE-page.json"
+"${CDP[@]}" screenshot "$BASE-app.png" >/dev/null || echo "aviso: captura CDP falhou" >&2
+"$TOOLS/emulator-qemu.sh" -i "$EMU_INSTANCE" screenshot "$BASE-tela.png" >/dev/null || echo "aviso: captura QMP falhou" >&2
+"${SSH[@]}" free > "$BASE-free.txt" 2>&1 || true
+
+python3 -I - "$BASE" "$UPTIME_START" "$(uptime)" "$T_LAUNCH" "$T_DONE" "${done:-0}" <<'EOF'
+import json, sys
+base, up_start, up_end, t_launch, t_done, done = sys.argv[1:]
+raw = open(base + '-page.json').read().strip()
+try:
+    page = json.loads(json.loads(raw)) if raw.startswith('"') else json.loads(raw)
+except ValueError:
+    page = {'raw': raw[:2000]}
+samples = []
+for line in open(base + '-mem.log'):
+    parts = line.split()
+    if len(parts) >= 3 and parts[1].isdigit():
+        samples.append({'t': int(parts[0]), 'memAvailableKb': int(parts[1]), 'webRssKb': int(parts[2]),
+                        'procs': parts[3:]})
+mem = {}
+if samples:
+    mem = {
+        'samples': len(samples),
+        'memAvailableBeforeLaunchKb': samples[0]['memAvailableKb'],
+        'memAvailableMinKb': min(s['memAvailableKb'] for s in samples),
+        'memAvailableEndKb': samples[-1]['memAvailableKb'],
+        'webRssBeforeLaunchKb': samples[0]['webRssKb'],
+        'webRssMaxKb': max(s['webRssKb'] for s in samples),
+        'webRssEndKb': samples[-1]['webRssKb'],
+        'procsAtMax': max(samples, key=lambda s: s['webRssKb'])['procs'],
+    }
+    mem['memAvailableDropKb'] = mem['memAvailableBeforeLaunchKb'] - mem['memAvailableMinKb']
+result = {
+    'page': page,
+    'host': {'uptimeStart': up_start, 'uptimeEnd': up_end,
+             'launchToDoneMs': int(t_done) - int(t_launch), 'completed': done == '1'},
+    'guestMemory': mem,
+}
+json.dump(result, open(base + '.json', 'w'), indent=2, ensure_ascii=False)
+p = page if isinstance(page, dict) else {}
+print('resultado: ok=%s init=%s ms discover=%s board=%s erros=%s' % (
+    p.get('ok'), p.get('timings', {}).get('initMs'), p.get('discover'), p.get('board'), p.get('errors')))
+print('memória: %s' % {k: v for k, v in mem.items() if k != 'procsAtMax'})
+print(base + '.json')
+EOF
