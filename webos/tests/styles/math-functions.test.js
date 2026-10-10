@@ -24,18 +24,35 @@ describe('webos/webpack/postcss-math-functions', () => {
             ['min(48rem, calc(100dvh - 4rem))', '48rem'],
             ['min(18rem, 70vw)', '18rem'],
             ['min(100% - 2rem, 20rem)', '20rem'],
-            ['max(0.5rem, 8px)', '0.5rem'],
+            ['max(0.5rem, 8px)', '8px'],
+            ['max(0.5rem, 7px)', '0.5rem'],
         ])('%s -> %s', (input, expected) => {
             expect(resolveValue(input)).toBe(expected);
         });
 
-        test('keeps the winner viewport-relative when it is one (1920x1080: 5.2vh is 56px, 3.8rem is 61px)', () => {
+        test('keeps the winner viewport-relative when it is one (1920x1080, rem 15px: 5.2vh is 56px, 3.8rem is 57px)', () => {
             expect(resolveValue('clamp(2rem, 5.2vh, 3.8rem)')).toBe('5.2vh');
             expect(resolveValue('max(0.8rem, min(2.2vh, 1.75rem))')).toBe('2.2vh');
         });
 
+        test('uses the 15px root font-size of a 1920px page', () => {
+            expect(resolveValue('max(6rem, min(20vh, 14rem))')).toBe('14rem');
+            expect(resolveValue('max(1.5rem, min(5vw, 6rem))')).toBe('6rem');
+        });
+
         test('ties go to the first argument', () => {
-            expect(resolveValue('max(16px, 1rem)')).toBe('16px');
+            expect(resolveValue('max(15px, 1rem)')).toBe('15px');
+        });
+
+        test('plain numbers are compared with each other, and absolute units as px', () => {
+            expect(resolveValue('max(2, 3)')).toBe('3');
+            expect(resolveValue('min(0.5, 0.8)')).toBe('0.5');
+            expect(resolveValue('max(1in, 90px)')).toBe('1in');
+        });
+
+        test('the function name is case insensitive', () => {
+            expect(resolveValue('MAX(1rem, 2rem)')).toBe('2rem');
+            expect(resolveValue('Clamp(1rem, 50vw, 2rem)')).toBe('2rem');
         });
     });
 
@@ -45,7 +62,7 @@ describe('webos/webpack/postcss-math-functions', () => {
             ['max(0.5rem, var(--safe-area-inset-top)) max(0.5rem, var(--safe-area-inset-left))', '0.5rem 0.5rem'],
             ['max(0rem, calc(1rem - var(--safe-area-inset-left)))', 'calc(1rem - var(--safe-area-inset-left))'],
             ['calc(100% - max(0.75rem, var(--safe-area-inset-top)))', 'calc(100% - 0.75rem)'],
-            ['0 clamp(1.5rem, 5vw, 6rem) max(2rem, var(--safe-area-inset-bottom))', '0 5vw 2rem'],
+            ['0 clamp(1.5rem, 5vw, 6rem) max(2rem, var(--safe-area-inset-bottom))', '0 6rem 2rem'],
             ['min(calc(env(safe-area-inset-bottom, 0rem) / var(--interface-scale)), max(1rem, calc(var(--viewport-height-diff) - var(--safe-area-inset-top))))', 'calc(0rem / var(--interface-scale))'],
         ])('%s -> %s', (input, expected) => {
             expect(resolveValue(input)).toBe(expected);
@@ -67,9 +84,28 @@ describe('webos/webpack/postcss-math-functions', () => {
             expect(resolveValue('clamp(50%, 2rem, 3rem)')).toBe('2rem');
         });
 
-        test('with nothing sized, the first argument without % is used', () => {
-            expect(resolveValue('max(100%, var(--x))')).toBe('var(--x)');
-            expect(resolveValue('min(50%, 20%)')).toBe('50%');
+    });
+
+    describe('fails instead of guessing', () => {
+        test.each([
+            ['max(100%, var(--x))', /no argument .* can be sized/],
+            ['min(50%, 20%)', /no argument .* can be sized/],
+            ['max(2em, 1rem)', /cannot size "2em"/],
+            ['max(1s, 2s)', /cannot size "1s"/],
+            ['min(1rem, attr(data-x))', /cannot size "attr\(data-x\)"/],
+            ['max(1rem, 2)', /mixes lengths and numbers/],
+            ['max(1rem, var(--unknown, 5rem))', null],
+        ])('%s', (input, message) => {
+            if (message === null) {
+                // A custom property is ignored next to a sized argument (its fallback is not used).
+                expect(resolveValue(input)).toBe('1rem');
+            } else {
+                expect(() => resolveValue(input)).toThrow(message);
+            }
+        });
+
+        test('the build error names the declaration', async () => {
+            await expect(run('.a{width:max(2em,1rem)}')).rejects.toThrow(/webos-math-functions: width: max\(2em,1rem\): cannot size "2em"/);
         });
     });
 
@@ -84,9 +120,9 @@ describe('webos/webpack/postcss-math-functions', () => {
         expect(resolveValue('calc(100% - 2rem)')).toBe('calc(100% - 2rem)');
     });
 
-    test('inside @media (max-width/max-height) the reference viewport is no larger than the query', async () => {
-        const css = '.t{font-size:clamp(1rem,10vw,3rem)}@media (max-width:200px){.t{font-size:clamp(1rem,10vw,3rem)}}@media (max-height:100px) and (orientation:landscape){.t{font-size:clamp(1rem,10vh,3rem)}}';
-        expect((await run(css)).css).toBe('.t{font-size:3rem}@media (max-width:200px){.t{font-size:10vw}}@media (max-height:100px) and (orientation:landscape){.t{font-size:1rem}}');
+    test('uses the TV reference inside @media (max-*) too: the interface scale makes small-screen queries match a TV', async () => {
+        const css = '@media (max-height:650px){.t{font-size:clamp(1.5rem,4.8vh,2.5rem)}}';
+        expect((await run(css)).css).toBe('@media (max-height:650px){.t{font-size:2.5rem}}');
     });
 
     test('rewrites the declarations, custom properties and nested rules of a stylesheet', async () => {

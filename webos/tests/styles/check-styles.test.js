@@ -61,6 +61,13 @@ describe('webos/scripts/check-styles', () => {
         expect(problems[0]).toContain('.b{font-size: clamp(1rem,2vw,2rem)}');
     });
 
+    test('finds the functions in any case and in a media-scoped html:root', () => {
+        const problems = stylesProblems(`${rule(GOOD)}.a{width:MIN(1px,2px);height:Max(1px,2px)}@media (min-width:1px){html:root{padding:max(1px,2px)}}`);
+        expect(problems).toHaveLength(1);
+        expect(problems[0]).toContain('3 declaration(s)');
+        expect(problems[0]).toContain('html:root{padding: max(1px,2px)}');
+    });
+
     test('does not take minmax(), custom property names, urls or media features for them', () => {
         const css = `${rule(GOOD)}.a{grid-template-columns:minmax(0,1fr) 2rem;--fgp-max-width:2rem;background:url(max(1).png)}@media (min-width:600px) and (max-width:900px){.b{width:var(--fgp-max-width,1px)}}`;
         expect(stylesProblems(css)).toEqual([]);

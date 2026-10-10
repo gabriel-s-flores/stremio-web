@@ -21,7 +21,7 @@ const postcss = require(require.resolve('postcss', {
 }));
 
 // A min()/max()/clamp() call (minmax() and names such as --fgp-max-width do not match).
-const MATH_CALL = /(?<![\w-])(min|max|clamp)\(/;
+const MATH_CALL = /(?<![\w-])(min|max|clamp)\(/i;
 const MAX_REPORTED = 10;
 
 const REQUIRED = {
@@ -55,8 +55,8 @@ const stylesProblems = (css) => {
     const problems = [];
     const rawMath = [];
     root.walkDecls((decl) => {
-        // The html:root rule has its own message below.
-        if (decl.parent.selectors && decl.parent.selectors.includes('html:root')) return;
+        // The top-level html:root rule has its own message below.
+        if (decl.parent.parent === root && decl.parent.selectors && decl.parent.selectors.includes('html:root')) return;
         const value = decl.value.replace(/url\([^)]*\)|"[^"]*"|'[^']*'/g, '');
         if (MATH_CALL.test(value)) rawMath.push(`${decl.parent.selector || decl.parent.name}{${decl.prop}: ${decl.value}}`);
     });
@@ -71,7 +71,7 @@ const stylesProblems = (css) => {
         }
     });
     Object.entries(declarations).forEach(([prop, value]) => {
-        if (/\b(max|min|clamp|env)\(/.test(value)) {
+        if (/\b(max|min|clamp|env)\(/i.test(value)) {
             problems.push(`html:root ${prop} uses ${value}, which Chromium 53 drops`);
         }
     });
