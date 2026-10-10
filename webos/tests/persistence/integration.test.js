@@ -11,8 +11,8 @@ describe('createTransport.webos', () => {
     test('wraps the upstream transport and waits for the mirror before init', () => {
         const source = read('createTransport.webos.js');
         expect(source).toContain("require('./createTransport.ts').default");
-        expect(source).toMatch(/const boot = mirror\.start\(\);/);
-        expect(source).toMatch(/boot\s*\.then\([\s\S]*transport\.init\(args\)/);
+        expect(source).toMatch(/^mirror\.start\(\);$/m);
+        expect(source).toMatch(/mirror\.ready\(\)\s*\.then\([\s\S]*transport\.init\(args\)/);
         expect(source).toMatch(/mirror\.initSucceeded\(\)/);
         expect(source).toMatch(/mirror\.initFailed\(\)/);
         expect(source).toContain('return { ...transport, init };');

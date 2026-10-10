@@ -4,8 +4,9 @@
 // core init: the core keeps everything in localStorage, which uninstalling the app (and, per LG,
 // even updating it) wipes, so a copy is kept in IndexedDB and put back before the core reads it.
 // - The mirror starts when this module loads (CoreProvider creates the transport at import time),
-//   before the first render; init waits for it, at most 3 s, and never fails because of it. When
-//   localStorage already has the core's state it resolves at once, without opening IndexedDB.
+//   before the first render; init waits for it, at most 3 s counted from init, and never fails
+//   because of it. When localStorage already has the core's state (or is linked to the copy) it
+//   resolves at once, without opening IndexedDB.
 // - After init succeeds the mirror confirms a restore and starts copying writes, in batches and
 //   only some seconds later, out of the boot path. If init fails right after a restore, the copy
 //   is dropped so the same bad state is not restored again.
@@ -35,7 +36,7 @@ const resetRequested = () => {
 };
 
 const mirror = createMirror({ appId: appId(), reset: resetRequested() });
-const boot = mirror.start();
+mirror.start();
 
 window.__stremioPersist = {
     status: mirror.getStatus,
@@ -47,7 +48,7 @@ window.__stremioPersist = {
 const createWebosTransport = () => {
     const transport = createTransport();
 
-    const init = (args) => boot
+    const init = (args) => mirror.ready()
         .then((result) => {
             if (!/^(localStorage-ok|nothing-to-restore)$/.test(result.reason)) {
                 // One string: the Chromium 53 console (Console.messageAdded) keeps only the first argument.

@@ -206,7 +206,8 @@ function openPage(disk, options = {}) {
     // O fluxo do createTransport.webos.js: start() -> init do core -> initSucceeded/initFailed.
     // core(ls) simula o init; lança para simular a falha.
     page.boot = async (core = defaultCore) => {
-        const result = await mirror.start();
+        mirror.start();
+        const result = await mirror.ready();
         page.result = result;
         try {
             await core(localStorage);

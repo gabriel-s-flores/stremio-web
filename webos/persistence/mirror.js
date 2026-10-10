@@ -9,16 +9,19 @@
 //
 // Uso (src/core/createTransport.webos.js):
 //   var mirror = createMirror({ appId: id });
-//   mirror.start()                  na carga do módulo; resolve { restored, reason, keys, ms }, NUNCA
-//                                   rejeita e nunca passa de timeoutMs (3 s), para o init sempre rodar
+//   mirror.start()                  na carga do módulo: começa o trabalho (abre o IndexedDB se precisar)
+//   mirror.ready()                  quando o init vai rodar; resolve { restored, reason, keys, ms, waitedMs },
+//                                   NUNCA rejeita, e o init nunca espera mais que timeoutMs (3 s)
 //     .then(transport.init)
 //     .then(mirror.initSucceeded,   confirma uma restauração e libera o espelho das escritas
 //           mirror.initFailed)      o init falhou logo depois de uma restauração: apaga a cópia
 //
 // Regras do start() (as do README da F0.8, com a correção do achado B6 da revisão c3):
-//   0. Caminho rápido: sem marcadores e com as chaves essenciais (schema_version e profile) no
-//      localStorage, ele é a verdade e o start() resolve na hora, SEM abrir o IndexedDB. É o boot
-//      comum, que assim não espera nada. A cópia é atualizada depois do init (snapshot adiado).
+//   0. Caminho rápido: sem marcadores e com as chaves essenciais (schema_version e profile) ou com a
+//      época de uma cópia, o localStorage é a verdade e o ready() resolve na hora, SEM abrir o
+//      IndexedDB. É o boot comum (um convidado que nunca mudou nada não tem profile, mas tem a época
+//      depois do primeiro lote), que assim não espera nada. A cópia é atualizada depois do init
+//      (snapshot adiado; se a época não bater com a da cópia, ele só mescla, como na regra 3).
 //   1. Marcador de "Limpar dados" (ou ?resetMirror): não restaura e apaga a cópia (clear-data, reset).
 //   2. Marcador de restauração pulada (ver abaixo): a cópia vale mais que o localStorage, que veio
 //      de uma sessão que começou sem ela; restaura a cópia por cima (restored-after-skip).
@@ -81,7 +84,11 @@ function createMirror(options) {
 
     var orig = proto ? { setItem: proto.setItem, removeItem: proto.removeItem, clear: proto.clear } : null;
     var dbPromise = null;
-    var started = null;
+    var work = null;              // o trabalho do boot, começado no start()
+    var settled = null;           // o resultado entregue ao init (ready())
+    var fastResult = null;
+    var giveUp = function (r) { return r; };
+    var t0 = 0;
     var epoch = null;
     var broken = false;          // IndexedDB com problema nesta sessão: espelho desligado
     var aborted = false;         // o timeout do start() já liberou o init
@@ -306,41 +313,61 @@ function createMirror(options) {
         });
     }
 
+    // Começa o trabalho já na carga do app (o IndexedDB abre enquanto a página monta), sem prazo.
     function start() {
-        if (started) return started;
-        var t0 = now();
+        if (work) return;
+        t0 = now();
         install();
         var keys = lsAppKeys();
         var noRestore = resetRequested || noRestoreMarked();
         var skipped = lsGet(SKIPPED_KEY) === '1';
-        var done = function (r) {
-            r.ms = Math.round(now() - t0);
-            status.result = r;
-            return r;
-        };
-        if (!noRestore && !skipped && hasEssential(keys)) {
-            started = Promise.resolve(done(result('localStorage-ok', { keys: keys.length, fast: true })));
-            return started;
+        // Caminho rápido: as chaves essenciais, ou a época de uma cópia (este localStorage já foi
+        // espelhado; a época é conferida no snapshot depois do init, que só mescla se ela não bater).
+        if (!noRestore && !skipped && (hasEssential(keys) || (keys.length > 0 && lsGet(EPOCH_KEY) !== null))) {
+            fastResult = result('localStorage-ok', { keys: keys.length, fast: true });
+            work = Promise.resolve({ ok: fastResult });
+            return;
         }
         // O core vai começar sem consultar a cópia: o próximo boot não pode confiar no que ele gravar.
-        var giveUp = function (r) {
+        giveUp = function (r) {
             aborted = true;
             broken = true;
             if (!noRestore) lsSet(SKIPPED_KEY, '1');
             return r;
         };
-        started = new Promise(function (resolve) {
-            var t = setTimeout(function () { resolve(giveUp(timedOut())); }, timeoutMs);
-            boot(noRestore, skipped, keys).then(function (r) {
-                clearTimeout(t);
+        work = boot(noRestore, skipped, keys).then(function (r) {
+            return { ok: r };
+        }, function (e) {
+            status.error = errorText(e);
+            return { error: result('idb-error', { error: status.error }) };
+        });
+    }
+    // O init do core pede o resultado: resolve { restored, reason, keys, ms, waitedMs }, NUNCA
+    // rejeita, e o init nunca espera mais que timeoutMs. O prazo conta a partir daqui, não da carga:
+    // na TV a página fica ocupada montando antes do init, e isso não pode virar um idb-timeout falso.
+    function ready() {
+        start();
+        if (settled) return settled;
+        var asked = now();
+        settled = new Promise(function (resolve) {
+            var finished = false;
+            var finish = function (r) {
+                if (finished) return;
+                finished = true;
                 resolve(r);
-            }, function (e) {
+            };
+            var t = setTimeout(function () { finish(giveUp(timedOut())); }, timeoutMs);
+            work.then(function (o) {
                 clearTimeout(t);
-                status.error = errorText(e);
-                resolve(giveUp(result('idb-error', { error: status.error })));
+                finish(o.error ? giveUp(o.error) : o.ok);
             });
-        }).then(done);
-        return started;
+        }).then(function (r) {
+            r.ms = Math.round(now() - t0);
+            r.waitedMs = Math.round(now() - asked);
+            status.result = r;
+            return r;
+        });
+        return settled;
     }
 
     // ---- espelho das escritas ----
@@ -481,6 +508,7 @@ function createMirror(options) {
 
     return {
         start: start,
+        ready: ready,
         initSucceeded: initSucceeded,
         initFailed: initFailed,
         flush: flush,

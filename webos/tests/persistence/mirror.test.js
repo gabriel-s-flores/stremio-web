@@ -50,9 +50,59 @@ describe('webos persistence mirror', () => {
         disk.reopen();
         const opensBefore = disk.idb.opens;
         const page = openPage(disk);
-        const r = await page.mirror.start();
+        const r = await page.mirror.ready();
         expect(r).toMatchObject({ restored: false, reason: 'localStorage-ok', fast: true, keys: 6 });
         expect(disk.idb.opens).toBe(opensBefore);
+    });
+
+    test('a guest that never changed anything (no profile) boots fast once its storage is linked to a copy', async () => {
+        const disk = createDisk();
+        const first = openPage(disk);
+        expect((await first.boot()).reason).toBe('nothing-to-restore');
+        await first.settle();
+        expect(first.localStorage.getItem(EPOCH_KEY)).not.toBeNull();
+        disk.reopen();
+        const opensBefore = disk.idb.opens;
+        const page = openPage(disk);
+        const r = await page.mirror.ready();
+        expect(r).toMatchObject({ reason: 'localStorage-ok', fast: true, keys: 1, waitedMs: 0 });
+        expect(disk.idb.opens).toBe(opensBefore);
+    });
+
+    test('the epoch key alone does not count: an otherwise empty localStorage is restored', async () => {
+        const disk = createDisk();
+        const page0 = await seed(disk);
+        const epoch = page0.localStorage.getItem(EPOCH_KEY);
+        disk.reinstall();
+        disk.local.set(EPOCH_KEY, epoch);
+        expect((await openPage(disk).boot()).reason).toBe('restored');
+    });
+
+    test('the timeout counts from ready(), not from start(): a busy page before init is no idb-timeout', async () => {
+        const disk = createDisk();
+        await seed(disk);
+        disk.reinstall();
+        disk.idb.openDelay = TIMINGS.timeoutMs + 40;
+        const page = openPage(disk);
+        page.mirror.start();
+        await tick(TIMINGS.timeoutMs * 2);          // a página montando, antes do init
+        const r = await page.mirror.ready();
+        expect(r).toMatchObject({ restored: true, reason: 'restored' });
+        expect(r.waitedMs).toBeLessThan(TIMINGS.timeoutMs);
+        expect(r.ms).toBeGreaterThanOrEqual(TIMINGS.timeoutMs * 2);
+    });
+
+    test('a hung IndexedDB makes init wait timeoutMs from ready(), whatever happened before', async () => {
+        const disk = createDisk();
+        disk.idb.mode = 'hang';
+        const page = openPage(disk);
+        page.mirror.start();
+        await tick(TIMINGS.timeoutMs * 2);
+        expect(page.mirror.getStatus().result).toBeNull();
+        const r = await page.mirror.ready();
+        expect(r.reason).toBe('idb-timeout');
+        expect(r.waitedMs).toBeGreaterThanOrEqual(TIMINGS.timeoutMs - 5);
+        expect(r.waitedMs).toBeLessThan(TIMINGS.timeoutMs + 100);
     });
 
     test('all localStorage keys are mirrored (webos.coreVariant included), our own keys are not', async () => {
@@ -126,7 +176,7 @@ describe('webos persistence mirror', () => {
         await seed(disk);
         disk.reinstall();
         const page = openPage(disk);
-        const r = await page.mirror.start();
+        const r = await page.mirror.ready();
         expect(r).toMatchObject({ restored: true, reason: 'restored', keys: 6 });
         expect(appKeys(page.ls())).toEqual(USER_STATE);
         expect(page.copy().meta.pendingRestore).toBe(true);
@@ -266,10 +316,10 @@ describe('webos persistence mirror', () => {
         await seed(disk);
         disk.reinstall();
         const page = openPage(disk);
-        expect((await page.mirror.start()).reason).toBe('restored');   // o app fecha antes do init terminar
+        expect((await page.mirror.ready()).reason).toBe('restored');   // o app fecha antes do init terminar
         disk.reopen();
         const reopened = openPage(disk);
-        expect((await reopened.mirror.start()).reason).toBe('localStorage-ok');
+        expect((await reopened.mirror.ready()).reason).toBe('localStorage-ok');
         expect(reopened.copy().meta.pendingRestore).toBe(true);
         disk.reinstall();                                               // perde o localStorage de novo
         const r = await openPage(disk).boot();
@@ -361,7 +411,7 @@ describe('webos persistence mirror', () => {
         await seed(disk);
         disk.reopen();
         const page = openPage(disk, { reset: true });
-        const r = await page.mirror.start();
+        const r = await page.mirror.ready();
         expect(r.reason).toBe('reset');
         expect(page.copy().kv).toEqual({});
         expect(appKeys(page.ls())).toEqual(USER_STATE);
