@@ -54,10 +54,11 @@ running() { host_pid >/dev/null; }
 # O QEMU roda em segundo plano e sobrevive ao chamador: ele não pode herdar a trava do pool
 # (emu-run, flock em run/emu-N.lock), senão um emu-run morto à força deixaria a instância presa.
 close_pool_locks() {
-    local fd
+    local fd run_real
+    run_real="$(realpath -m "$RUN")"   # readlink devolve o caminho resolvido
     for fd in /proc/self/fd/*; do
         case "$(readlink "$fd" 2>/dev/null)" in
-            "$RUN"/emu-*.lock) eval "exec ${fd##*/}>&-" ;;
+            "$run_real"/emu-*.lock) eval "exec ${fd##*/}>&-" ;;
         esac
     done
 }

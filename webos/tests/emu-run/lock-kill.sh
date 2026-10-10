@@ -98,6 +98,11 @@ lock_free || fail "lock still held after SIGKILL of emu-run (holders: $(holders 
 pass "lock released after SIGKILL"
 [[ -z "$others" ]] || fail "children inherited the lock FD: $others"
 pass "only emu-run held the lock"
+# The user command must die with emu-run: it would otherwise act on the next reservation's emulator.
+INNER="$(cat "$TMP/inner.pid")"
+for _ in $(seq 1 20); do kill -0 "$INNER" 2>/dev/null || break; sleep 0.25; done
+kill -0 "$INNER" 2>/dev/null && fail "user command $INNER survived the SIGKILL of emu-run"
+pass "user command died with emu-run"
 echo "fuser after kill:"; show_holders
 [[ "$(qemu_pid)" == "$QPID" ]] || fail "orphan QEMU should still be around for the cleanup check"
 pass "orphan QEMU $QPID survived (as in the incident)"

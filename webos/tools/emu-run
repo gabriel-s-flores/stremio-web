@@ -4,7 +4,8 @@
 # sem colisão, e a trava some sozinha se o processo morrer. Nenhum filho herda o FD da trava
 # (`{LOCKFD}>&-`): um QEMU em segundo plano que o herdasse a seguraria depois de um SIGKILL do emu-run.
 # Se o emu-run morrer à força, o QEMU fica órfão mas a trava é liberada; a próxima reserva da
-# instância o encerra (`emulator-qemu.sh stop`) antes do boot limpo.
+# instância o encerra (`emulator-qemu.sh stop`) antes do boot limpo. O comando do usuário morre junto
+# com o emu-run (setpriv --pdeathsig), para não agir no emulador da reserva seguinte.
 #
 #   emu-run [--instance N] [--keep-state] [--timeout MIN] [--profile c8] -- <comando...>
 #
@@ -73,4 +74,6 @@ fi
 eval "$(emu env)"
 echo "emu-run: instância $EMU_N pronta (ares $EMU_DEVICE, inspector $EMU_CDP_PORT)" >&2
 [[ -z "$profile" ]] || export EMU_PROFILE="$profile"
-timeout "$((timeout_min * 60))" "$@" {LOCKFD}>&-
+# --pdeathsig: o timeout fica num grupo de processos próprio e sobreviveria a um SIGKILL do emu-run,
+# agindo no emulador da reserva seguinte (de outro agente); com isso ele recebe TERM e repassa ao comando.
+setpriv --pdeathsig TERM timeout "$((timeout_min * 60))" "$@" {LOCKFD}>&-

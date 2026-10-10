@@ -85,6 +85,8 @@ webos/tools/emulator-qemu.sh -i N pid           # PID do QEMU da instância (sai
 
 - Se quem segura a trava é um `emu-run` vivo (e o `emu-run.log` do agente dele anda), a instância está em uso: espere ou use outra.
 - Se quem segura é só um `qemu-system-x86` (de um `emu-run` antigo que herdou o FD; os atuais não herdam), a instância não tem dono: `webos/tools/emulator-qemu.sh -i N stop` encerra o QEMU e libera a trava.
+- O comando do usuário morre junto com o `emu-run` (`setpriv --pdeathsig TERM`); se, mesmo assim, sobrar um `timeout` ou comando órfão de uma reserva antiga (`ps -eo pid,pgid,args | grep 'timeout'`), mate-o antes de reservar a instância.
+- `--keep-state` depois de um QEMU órfão morto à força pode deixar o overlay inconsistente: rode sem `--keep-state` (o padrão recria o overlay).
 - Nunca pare instâncias em uso por outros agentes.
 - Teste do cenário (sem emulador, ~20 s, usa a instância 9, fora do pool): `webos/tests/emu-run/lock-kill.sh`.
 
