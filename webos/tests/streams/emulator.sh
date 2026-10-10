@@ -25,6 +25,25 @@ REMOTE=(node "$ROOT/webos/tools/remote.mjs" --port "$EMU_REMOTE_PORT")
 cdp_eval() { "${CDP[@]}" eval "$1"; }
 log() { echo "[$(date +%T.%N | cut -c1-12)] $*" | tee -a "$OUT/actions.log"; }
 focused() { cdp_eval "JSON.stringify(window.__f62.list().map(function(x, i){ return x.focused ? i + ' ' + x.file : null; }).filter(Boolean))"; }
+# Index of the focused list item, or -1.
+focused_index() { cdp_eval "(function(){ var l = window.__f62.list(); for (var i = 0; i < l.length; i++) { if (l[i].focused) return i; } return -1; })()"; }
+# The page must be the one with the helpers (a reload would lose them).
+alive() { [[ "$(cdp_eval "!!window.__f62" 2>/dev/null)" == true ]] || { echo "error: the page reloaded (window.__f62 is gone)" >&2; exit 1; }; }
+# Into the list from the page, as a user would: DOWN on the remote until a list item has the focus
+# (the first keys may land on the page's buttons). Prints the item index.
+enter_list() {
+    local index=-1
+    for _ in 1 2 3 4 5 6; do
+        "${REMOTE[@]}" DOWN > /dev/null
+        for _ in 1 2 3 4; do
+            sleep 0.25
+            index="$(focused_index)"
+            [[ "$index" -ge 0 ]] && break 2
+        done
+        log "DOWN: active $(cdp_eval "(function(){ var a = document.activeElement; return a ? a.tagName + ' ' + String(a.className).slice(0, 40) : 'none'; })()")" >&2
+    done
+    echo "$index"
+}
 echo "$MODE" > "$OUT/modo.txt"
 log "mode $MODE, media latency ${DELAY_MS} ms"
 
@@ -66,6 +85,7 @@ sleep 2
 cdp_eval "(function(){ window.__f62.track(60000); location.hash = '#/detail/movie/$MOVIE/$MOVIE'; return true; })()" > /dev/null
 log "navigated to the streams of $MOVIE"
 for _ in $(seq 1 100); do
+    alive
     if [[ "$(cdp_eval "window.__f62.list().length")" -gt 0 ]]; then break; fi
     sleep 0.2
 done
@@ -76,14 +96,15 @@ if [[ "$MODE" == entrada ]]; then
     # Into the list right away, from the page (the focus is on the body): one DOWN on the remote.
     log "active before the key: $(cdp_eval "(function(){ var a = document.activeElement; return a ? a.tagName + ' ' + String(a.className).slice(0, 40) : 'none'; })()")"
     cdp_eval "JSON.stringify(window.__f62.list())" > "$OUT/lista-entrada-antes.json"
-    "${REMOTE[@]}" DOWN > /dev/null
-    log "DOWN sent; focused: $(focused)"
+    index="$(enter_list)"
+    log "entered the list at $index; focused: $(focused)"
     cdp_eval "JSON.stringify(window.__f62.list())" > "$OUT/lista-entrada.json"
     "${CDP[@]}" screenshot "$OUT/tela-2-entrada.png" || true
     # Still, while the probes land (1 s after the list settles, then 2 requests of 1.2 s each).
     : > "$OUT/amostras.jsonl"
     for i in $(seq 1 10); do
         sleep 1
+        alive
         echo "{\"t\":$i,\"list\":$(cdp_eval "JSON.stringify(window.__f62.list())")}" >> "$OUT/amostras.jsonl"
         log "t+${i}s focused: $(focused)"
     done
@@ -101,13 +122,14 @@ else
     # then DOWN to the unnamed 720p (Atmos only shows up with the probe).
     target="$(cdp_eval "(function(){ var l = window.__f62.list(); for (var i = 0; i < l.length; i++) { if (/720p\\.WEB-DL-GRP/.test(l[i].file)) return i; } return -1; })()")"
     log "active before the keys: $(cdp_eval "(function(){ var a = document.activeElement; return a ? a.tagName : 'none'; })()"); target index: $target"
-    "${REMOTE[@]}" DOWN > /dev/null
+    index="$(enter_list)"
     entered="$(focused)"
     echo "$entered" > "$OUT/entrada.json"
-    log "entered the list: $entered"
-    for _ in $(seq 1 "$target"); do
+    log "entered the list at $index: $entered"
+    while [[ "$index" -ge 0 && "$index" -lt "$target" ]]; do
         "${REMOTE[@]}" DOWN > /dev/null
         sleep 0.25
+        index="$(focused_index)"
     done
     log "focused: $(cdp_eval "JSON.stringify(window.__f62.list().filter(function(i){ return i.focused; }))")"
     "${CDP[@]}" screenshot "$OUT/tela-3-foco-antes.png" || true
