@@ -1,0 +1,3 @@
+# Amostras da FATE: licença sem texto de redistribuição (ver CATALOGO.md). Ficam só localmente.
+# Para recriar: fetch/fetch-all.sh /tmp/headers && cp -r /tmp/headers/ffmpeg-fate .
+ffmpeg-fate/
