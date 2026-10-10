@@ -27,7 +27,6 @@
         display: flex;
         flex-direction: row;
         align-items: stretch;
-        gap: 1.75rem;
 
         // minmax(0, 1fr)
         > :first-child {
@@ -35,9 +34,11 @@
             min-width: 0;
         }
 
-        // clamp(18rem, 25vw, 24rem)
+        // clamp(18rem, 25vw, 24rem); the 1.75rem gap is a margin: with a gap flex-gap-polyfill takes
+        // it from the children of the schedule (its title moved ~7px).
         > :nth-child(2) {
             flex: none;
+            margin-left: 1.75rem;
             width: 25vw;
             min-width: 18rem;
             max-width: 24rem;

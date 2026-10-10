@@ -4,18 +4,39 @@
 
 @import (multiple) './Playback.less';
 
+// No gap here: the row is a child of .stream-options, which has one, and flex-gap-polyfill does not
+// handle a container with a gap inside another (the row got the negative margin of its own gap, the
+// 1rem of .stream-container upstream, instead of the one of its parent: the rows touched each
+// other and the list moved left under the scrollbar). So the spacing of this subtree is by margins:
+// none from the polyfill on the list, the rows and their children (two levels), 0.5rem between the rows and
+// 0.35rem between the name and the description (the grid gap).
 .streams-panel {
+    .stream-options {
+        margin: 0;
+    }
+
     .stream-option {
         position: relative;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-start;
-        gap: 0.35rem 0.75rem;
+        margin: 0;
         padding-right: 4.25rem;
+
+        + .stream-option {
+            margin-top: 0.5rem;
+        }
+
+        // The children and the children of the name (its own gap) are polyfilled too.
+        > *,
+        > * > * {
+            margin: 0;
+        }
 
         .stream-info,
         .stream-description {
             flex: 1 1 100%;
+        }
+
+        .stream-description {
+            margin-top: 0.35rem;
         }
 
         .stream-icon {
@@ -23,5 +44,30 @@
             top: 1rem;
             right: 1rem;
         }
+    }
+}
+
+// Upstream `contain: size` keeps the panel out of the height of the row (the schedule sets it, the
+// sources scroll). Chromium 53 ignores it, and three sources made the guide taller and pushed the
+// whole page up. So the content is absolute, as in the Calendar cell: the panel has no content
+// height, align-items: stretch gives it the one of the row, and the list scrolls inside it.
+.streams-panel {
+    position: relative;
+
+    > .title {
+        position: absolute;
+        top: 0;
+        left: 1.75rem;
+        right: 0;
+        margin: 0;
+    }
+
+    > .stream-options {
+        position: absolute;
+        // title: min-height 2.5rem + margin-bottom 0.6rem
+        top: 3.1rem;
+        right: 0;
+        bottom: 0;
+        left: 1.75rem;
     }
 }

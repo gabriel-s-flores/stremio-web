@@ -46,6 +46,8 @@
             var element = byClass(name)[0];
             out[name] = element ? box(element) : null;
         });
+        var scheduleTitle = byClass('title', byClass('schedule')[0] || document)[0];
+        out.scheduleTitle = scheduleTitle ? box(scheduleTitle) : null;
         out.programs = byClass('program').slice(0, 3).map(function (row) { return children(row); });
         out.streamOptions = byClass('stream-option').map(function (row) {
             return { box: box(row), children: children(row) };

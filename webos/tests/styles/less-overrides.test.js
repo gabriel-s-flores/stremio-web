@@ -2,7 +2,8 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { findOverride } = require('../../webpack/less-overrides');
+const lessOverrides = require('../../webpack/less-overrides');
+const { findOverride } = lessOverrides;
 const app = require('../../webpack/app');
 
 const ROOT = path.resolve(__dirname, '..', '..', '..');
@@ -71,5 +72,30 @@ describe('webos/webpack/app resolve.extensions', () => {
         expect(extensions.indexOf('.tsx')).toBeGreaterThan(extensions.indexOf('.webos.js'));
         expect(extensions.indexOf('.webos.less')).toBeGreaterThan(extensions.indexOf('.js'));
         expect(extensions.indexOf('.webos.less')).toBeLessThan(extensions.indexOf('.less'));
+    });
+});
+
+describe('the webpack step', () => {
+    const step = () => lessOverrides({ plugins: [] }).plugins.find((plugin) => plugin.constructor.name === 'NormalModuleReplacementPlugin');
+
+    test('adds a NormalModuleReplacementPlugin that swaps ./Scale.less for Scale.webos.less', () => {
+        const plugin = step();
+        expect(plugin).toBeDefined();
+        expect(plugin.resourceRegExp.test('./Scale.less')).toBe(true);
+        const resource = { request: './Scale.less', context: path.join(ROOT, 'src', 'components', 'Scale') };
+        plugin.newResource(resource);
+        expect(resource.request).toBe(path.join(ROOT, 'src', 'components', 'Scale', 'Scale.webos.less'));
+    });
+
+    test('leaves a .less without an override as it is', () => {
+        const resource = { request: './Scale.less', context: path.join(ROOT, 'src', 'components', 'Button') };
+        step().newResource(resource);
+        expect(resource.request).toBe('./Scale.less');
+    });
+
+    // The suite of the base config is not loaded (it starts the thread-loader pool): the file is read.
+    test('is registered in the webOS webpack config, before the styles step', () => {
+        const source = fs.readFileSync(path.join(ROOT, 'webos', 'webpack', 'webpack.config.js'), 'utf8');
+        expect(source).toMatch(/steps = \[[^\]]*require\('\.\/less-overrides'\)[^\]]*\]/);
     });
 });

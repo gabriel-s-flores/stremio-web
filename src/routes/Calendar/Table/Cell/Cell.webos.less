@@ -8,8 +8,9 @@
 
 @import (multiple) './Cell.less';
 
-@heading-height: 2rem;
-@today-heading-height: 2.1rem;
+// The heading and the 0.5rem gap of the cell above the posters.
+@heading-height: 2.5rem;
+@today-heading-height: 2.6rem;
 @poster-width: 40%;
 @poster-width-4-rows: 50%;
 @poster-width-6-rows: 32%;
@@ -24,10 +25,13 @@
         margin-right: 0;
     }
 
+    // margin: 0 on the absolute children: the gap of the cell (flex-gap-polyfill) would still
+    // give them margins and move them ~7px.
     .heading {
         position: absolute;
         top: 0;
         left: 0;
+        margin: 0;
     }
 
     .items {
@@ -36,6 +40,7 @@
         right: 0;
         bottom: 0;
         left: 0;
+        margin: 0;
         box-sizing: border-box;
     }
 
@@ -47,6 +52,7 @@
         position: absolute;
         right: 0;
         bottom: 0;
+        margin: 0;
     }
 
     // aspect-ratio: 2 / 3 on an item as tall as the cell. Chromium 53 has no aspect-ratio and sizes
