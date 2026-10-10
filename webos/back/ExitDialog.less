@@ -1,0 +1,58 @@
+// Quit confirmation (webos/back/ExitDialog.js). Flexbox margins instead of gap: Chromium 53.
+
+.exit-dialog {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.6);
+
+    .container {
+        min-width: 32rem;
+        padding: 3rem;
+        border-radius: var(--border-radius);
+        background-color: var(--modal-background-color);
+        box-shadow: var(--outer-glow);
+        text-align: center;
+
+        .title {
+            margin-bottom: 2.5rem;
+            font-size: 2rem;
+            font-weight: 500;
+            color: var(--primary-foreground-color);
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+
+            .button {
+                min-width: 11rem;
+                height: 3.5rem;
+                margin: 0 1rem;
+                padding: 0 2rem;
+                border: 2px solid transparent;
+                border-radius: 3.5rem;
+                outline: none;
+                background-color: var(--overlay-color);
+                font-size: 1.25rem;
+                font-weight: 600;
+                color: var(--primary-foreground-color);
+                cursor: pointer;
+
+                &.confirm {
+                    background-color: var(--primary-accent-color);
+                }
+
+                &:focus {
+                    border-color: var(--primary-foreground-color);
+                }
+            }
+        }
+    }
+}
