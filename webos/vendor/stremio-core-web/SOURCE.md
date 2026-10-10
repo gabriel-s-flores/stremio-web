@@ -8,7 +8,7 @@ Gerado por `webos/core/build`. Não edite à mão: rode o script de novo.
 - **wasm-bindgen:** wasm-bindgen 0.2.121, `--target web --no-typescript`
 - **Binaryen:** wasm-opt version 133 (version_133), `wasm-opt -O --signext-lowering`
 - **Babel:** @babel/core 7.24.3, @babel/cli 7.24.1, @babel/preset-env 7.24.3, @babel/plugin-transform-runtime 7.24.3, babel-plugin-bundled-import-meta 0.3.2, com o `.babelrc` do upstream (como `scripts/build.sh`)
-- **Glue:** em `getStringFromWasm0`, `TextDecoder.decode` recebe `slice()` (cópia) em vez de `subarray()` (view da memória wasm). No Chromium 53 do webOS, uma view do `memory.buffer` entregue ao Blink seguida de `memory.grow` derruba o renderer
+- **Glue:** em `getStringFromWasm0`, `TextDecoder.decode` recebe `slice()` (cópia) em vez de `subarray()` (view da memória wasm). No Chromium 53 do webOS, certos usos de uma view do `memory.buffer` seguidos de `memory.grow` derrubam o processo do app (`TextDecoder.decode(view)`, `crypto.getRandomValues(view)`, `new Uint8Array(view)` depois de escrever na view). O resto da glue só usa padrões validados no emulador (escrita indexada na view inteira, `subarray().set()`, `DataView`); qualquer outro uso de view da memória precisa de repro no emulador antes
 - **Diferenças para o pacote npm:** só o `stremio_core_web_bg.wasm` (MVP), a glue `stremio_core_web.js` gerada para ele (com a correção acima) e a versão `0.65.0-mvp` no `package.json`. O `bridge.js` e o `worker.js` saem da mesma fonte e do mesmo Babel. `README.md` e `rust-toolchain.toml` do pacote npm não são copiados.
 
 ## Checksums (sha256)
