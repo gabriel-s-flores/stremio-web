@@ -17,6 +17,7 @@
 // expected route, history.state.idx and the number of popstate events (WebAppMgr must not go back
 // on its own: disableBackHistoryAPI).
 import { execFileSync, spawn } from 'node:child_process';
+import net from 'node:net';
 import zlib from 'node:zlib';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -398,11 +399,30 @@ const videoState = () => evaluate(`
     return video ? { time: Math.round(video.currentTime * 10) / 10, rate: video.playbackRate, paused: video.paused, readyState: video.readyState } : null;
 `);
 
+// A port nobody is using right now (other tasks run media servers on the same host).
+const freePort = () => new Promise((resolve, reject) => {
+    const probe = net.createServer();
+    probe.once('error', reject);
+    probe.listen(0, '127.0.0.1', () => {
+        const { port } = probe.address();
+        probe.close(() => resolve(port));
+    });
+});
+
 const playerScenario = async () => {
-    const port = 8120 + Number(process.env.EMU_INSTANCE || 0);
-    const server = spawn('node', ['webos/tools/media-server.mjs', path.dirname(MEDIA_FILE), String(port)], { cwd: REPO, stdio: 'ignore' });
+    const port = await freePort();
+    const log = fs.openSync(path.join(OUT, 'media-server.log'), 'w');
+    const server = spawn('node', ['webos/tools/media-server.mjs', path.dirname(MEDIA_FILE), String(port)], { cwd: REPO, stdio: ['ignore', log, log] });
     try {
-        await sleep(1000);
+        let serving = false;
+        for (let i = 0; i < 20 && !serving; i++) {
+            await sleep(500);
+            serving = await fetch(`http://127.0.0.1:${port}/${path.basename(MEDIA_FILE)}`, { method: 'HEAD' }).then((response) => response.ok, () => false);
+        }
+        record('P00-media-server', { ok: serving, note: `port ${port}, ${path.basename(MEDIA_FILE)}` });
+        if (!serving) {
+            return;
+        }
         // The Player route takes the stream as deflated JSON in base64 (src/routes/Player). A
         // router entry is pushed the way a link would, so Back has an entry to go back to.
         const stream = zlib.deflateSync(Buffer.from(JSON.stringify({ url: `http://10.0.2.2:${port}/${path.basename(MEDIA_FILE)}`, name: '', description: '' })), { level: 0 }).toString('base64');
@@ -415,7 +435,15 @@ const playerScenario = async () => {
             return true;
         `);
         const playingMs = await waitFor('var video = document.querySelector("video"); return !!video && video.readyState >= 3 && video.currentTime > 1;', 90000, 1000);
-        record('P01-player-playing', { ok: playingMs !== null, data: videoState(), state: state(), screenshot: screenshot('P01-player') });
+        record('P01-player-playing', {
+            ok: playingMs !== null,
+            data: evaluate(`
+                var video = document.querySelector('video');
+                return video ? { src: video.currentSrc, time: video.currentTime, readyState: video.readyState, networkState: video.networkState, error: video.error && video.error.code } : null;
+            `),
+            state: state(),
+            screenshot: screenshot('P01-player'),
+        });
         if (playingMs === null) {
             return;
         }
