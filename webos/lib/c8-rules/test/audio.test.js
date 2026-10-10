@@ -1,4 +1,4 @@
-/* global describe, it, expect */
+/* global describe, it, expect, beforeAll */
 // Initial audio track: compatible first, then the user's languages, then the file's own
 // language, main over commentary, codec preference, default flag. Real multi-track headers.
 
@@ -6,6 +6,15 @@ const { evaluate } = require('../index');
 const { probeFixture, probeHeader, editTracks } = require('./helpers');
 
 const MULTI = 'mkv-multitrack-ac3-eac3joc-dtshdma-truehd-pgs.mkv';
+let kitMulti = null;
+beforeAll(async () => {
+    kitMulti = await probeFixture('kit-multi-mkv');
+});
+// kit-multi-mkv with the AC-3 5.1 eng track renamed (commentary flag off).
+const editTracksSync = (name) => editTracks(kitMulti, (track) => {
+    if (track.id === 4) Object.assign(track, { name, commentary: false });
+});
+
 const initial = (probe, audioLanguages) => evaluate({ probe, preferences: { audioLanguages } }).audio.initialTrack;
 
 describe('initial audio track', () => {
@@ -40,6 +49,13 @@ describe('initial audio track', () => {
             if (track.id === 4) track.commentary = true;
         });
         expect(initial(probe, ['eng'])).toMatchObject({ id: 2, codec: 'aac' });
+    });
+
+    it('a commentary is also recognised by the track name (MP4 has no commentary flag)', async () => {
+        ['Director Commentary', 'Comentário do diretor', 'Commentaire audio'].forEach((name) => {
+            const probe = editTracksSync(name);
+            expect(initial(probe, ['eng'])).toMatchObject({ id: 2, codec: 'aac' });
+        });
     });
 
     it('FLAC above 2 channels counts as unsupported (derived: AC-3 5.1 track as FLAC)', async () => {

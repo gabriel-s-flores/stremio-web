@@ -173,11 +173,15 @@ describe('Linha 4 · Dolby Vision em MKV P5 (❌ cores erradas: detecta por prob
         expect(result.tier).toBe('demoted');
     });
 
-    it('name only: "DV P5" in an MKV', () => {
+    it('name only: "DV P5" in an MKV is demoted, and the probe is recommended (it can clear a PQ base layer)', () => {
         const result = rate(null, { name: 'Addon 4k', title: 'Show.S01E01.2160p.WEB-DL.DV.P5.HEVC.DDP5.1.mkv' });
         expect(result.video.output).toBe('wrong-colors');
-        expect(result.warnings.find((warning) => warning.code === 'DV_WRONG_COLORS')).toMatchObject({ source: 'name' });
+        expect(result.warnings.find((warning) => warning.code === 'DV_WRONG_COLORS')).toMatchObject({ source: 'name', score: -200 });
         expect(result.tier).toBe('demoted');
+        expect(result.needsProbe).toBe(true);
+        expect(rate(null, 'Movie.2160p.DV.HDR10.HEVC.mkv').needsProbe).toBe(true);
+        // in MP4 the name already gives the final answer (DV active)
+        expect(rate(null, { name: 'Addon', behaviorHints: { filename: 'Movie.2160p.DV.P5.mp4' } }).needsProbe).toBe(false);
     });
 
     it('name only: "DV" without profile nor HDR10 in MKV or unknown container may be P5', () => {
@@ -236,6 +240,39 @@ describe('Linha 4 · Dolby Vision em MKV P5 (❌ cores erradas: detecta por prob
         expect(labelsOf(rate(probe, 'Movie 2160p DV HDR10'))).toEqual(['hdr10-on-tv']);
     });
 
+    it('the probe wins over "DV P5" when it read the first frame and the colour is PQ (derived: P8.1 MKV without DV)', async () => {
+        const probe = withoutDolbyVision(await probeFixture('dv-p81-nobam-mkv'));
+        expect(probe.warnings).toEqual([]);
+        expect(probe.summary.hdr).toBe('hdr10');
+        const result = rate(probe, 'Movie 2160p DV P5');
+        expect(result.video).toMatchObject({ format: 'hdr10', output: 'hdr10', dolbyVision: null });
+        expect(labelsOf(result)).toEqual(['hdr10']);
+        expect(result.warnings).toEqual([]);
+        expect(result.tier).toBe('ok');
+    });
+
+    it('"DV P5" decides when the colour is unknown (hdr: null) or SDR on a 10-bit video', async () => {
+        const unknown = await probeFixture('kit-hevc10-mkv');
+        expect(unknown.summary.hdr).toBeNull();
+        expect(rate(unknown, 'Movie 2160p DV P5').tier).toBe('demoted');
+        // derived: the same real header with BT.709 colour (a P5 often carries it in the VUI)
+        const sdr = editTracks(unknown, (track) => {
+            if (track.video) {
+                track.video.colour = { primaries: 'bt709', transfer: 'bt709', matrix: 'bt709', fullRange: false };
+                track.video.hdr = 'sdr';
+            }
+        });
+        sdr.summary.hdr = 'sdr';
+        const p5 = rate(sdr, 'Movie 2160p DV P5');
+        expect(p5.video.output).toBe('wrong-colors');
+        expect(p5.tier).toBe('demoted');
+        // an 8-bit HEVC cannot be P5: the probe wins
+        const eightBit = editTracks(sdr, (track) => {
+            if (track.video) track.video.bitDepth = 8;
+        });
+        expect(rate(eightBit, 'Movie 2160p DV P5').video.dolbyVision).toBeNull();
+    });
+
     it('the probe wins over the name when it read the DV configuration', async () => {
         const result = rate(await probeFixture('dv-p81-mkvmerge-mkv'), 'Movie DV P5');
         expect(result.video.dolbyVision).toMatchObject({ profile: '8.1', source: 'probe' });
@@ -272,6 +309,20 @@ describe('Linha 5 · DD+ Atmos, E-AC-3 JOC (✅ Atmos virtual: prefere essa faix
         });
         const result = rate(probe, null, { audioLanguages: ['por'] });
         expect(result.audio.initialTrack).toMatchObject({ id: 3, codec: 'eac3', atmos: true });
+        expect(labelsOf(result)).toEqual(['atmos']);
+    });
+
+    it('DD+ Atmos beats a plain E-AC-3 of the same language, even default and with more channels (derived)', async () => {
+        const probe = editTracks(await probeHeader('mkv-multitrack-ac3-eac3joc-dtshdma-truehd-pgs.mkv'), (track) => {
+            if (track.id === 2) {
+                Object.assign(track, { codec: 'eac3', language: 'por', default: true });
+                Object.assign(track.audio, { channels: 8, profile: null, atmos: false });
+            }
+            if (track.id === 3) track.default = false;
+        });
+        const result = rate(probe, null, { audioLanguages: ['por'] });
+        expect(result.audio.initialTrack).toMatchObject({ id: 3, profile: 'E-AC-3 JOC', atmosOnTv: true });
+        expect(result.audio.tracks[1]).toMatchObject({ id: 2, codec: 'eac3', atmos: false });
         expect(labelsOf(result)).toEqual(['atmos']);
     });
 
@@ -379,6 +430,21 @@ describe('Linha 7 · TrueHD com ou sem Atmos (❌ mudo: escolhe outra faixa; sem
         expect(withAc3.tier).toBe('ok');
     });
 
+    it('TrueHD main track + AC-3 commentary: no alternative for the film → warning, demoted, no language bonus (derived)', async () => {
+        const probe = await probeHeader('mkv-multitrack-ac3-eac3joc-dtshdma-truehd-pgs.mkv');
+        probe.tracks = probe.tracks.filter((track) => track.id !== 3 && track.id !== 4);
+        probe.tracks.forEach((track) => {
+            if (track.id === 2) track.commentary = true;
+            if (track.id === 5) track.language = 'eng';
+        });
+        const result = rate(probe, null, { audioLanguages: ['eng'] });
+        expect(result.audio.initialTrack).toMatchObject({ id: 2, codec: 'ac3', secondary: true });
+        expect(result.warnings.find((warning) => warning.code === 'AUDIO_ONLY_SECONDARY')).toMatchObject({ severity: 'demote', track: 2 });
+        expect(warningsOf(result)).not.toContain('AUDIO_TRACK_SKIPPED');
+        expect(result.tier).toBe('demoted');
+        expect(result.score).toBe(-200);
+    });
+
     it('a TrueHD-only stream sorts below one with a compatible track', async () => {
         const mute = rate(await probeFixture('truehd-atmos-mp4'));
         const ok = rate(await probeFixture('eac3-mp4'));
@@ -392,6 +458,18 @@ describe('Linha 8 · DTS e DTS-HD (❓ fontes contraditórias: prefere outra fai
         expect(result.audio.initialTrack).toMatchObject({ id: 2, codec: 'eac3', language: 'por' });
         expect(result.warnings.find((warning) => warning.code === 'AUDIO_TRACK_SKIPPED')).toMatchObject({ track: 3 });
         expect(result.audio.tracks.filter((track) => track.codec === 'dts').map((track) => track.status)).toEqual(['unconfirmed', 'unconfirmed']);
+    });
+
+    it('DTS-HD MA main track beats an AC-3 commentary (derived: multitrack, AC-3 as commentary, no E-AC-3)', async () => {
+        const probe = await probeHeader('mkv-multitrack-ac3-eac3joc-dtshdma-truehd-pgs.mkv');
+        probe.tracks = probe.tracks.filter((track) => track.id !== 3);
+        probe.tracks.forEach((track) => {
+            if (track.id === 2) track.commentary = true;
+        });
+        const result = rate(probe, null, { audioLanguages: ['eng'] });
+        expect(result.audio.initialTrack).toMatchObject({ id: 4, codec: 'dts', status: 'unconfirmed' });
+        expect(warningsOf(result)).toContain('AUDIO_UNCONFIRMED');
+        expect(warningsOf(result)).not.toContain('AUDIO_ONLY_SECONDARY');
     });
 
     it('multitrack MKV: eng AC-3 chosen over eng DTS-HD MA', async () => {

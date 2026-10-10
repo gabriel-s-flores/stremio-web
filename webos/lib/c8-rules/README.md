@@ -79,7 +79,7 @@ O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os doi
     warnings: [{ code, severity: 'info' | 'demote' | 'hide', score, source, track, message }],
     score: 25,
     tier: 'ok' | 'demoted' | 'hidden',
-    needsProbe: false,                         // só nome, com uma dúvida que o probe resolveria
+    needsProbe: false,                         // só nome, com uma dúvida que o probe resolveria (áudio *_POSSIBLE, DV fora do MP4)
 }
 ```
 
@@ -114,6 +114,7 @@ O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os doi
 | `AUDIO_UNCONFIRMED` | demote | −40 | Probe: a única opção é DTS (D8: a confirmar) |
 | `AUDIO_UNCONFIRMED_POSSIBLE` | demote | −20 | Nome: o melhor codec citado é DTS |
 | `AUDIO_UNKNOWN` | demote | −40 | Probe: a única opção é um codec de suporte desconhecido (Opus, Vorbis) |
+| `AUDIO_ONLY_SECONDARY` | demote | −200 | Probe: a faixa principal não toca, e só sobra um comentário ou audiodescrição |
 | `AUDIO_TRACK_SKIPPED` | info | 0 | A faixa que um player comum escolheria (idioma preferido ou faixa padrão) não toca ou é DTS, e o motor escolheu outra |
 | `SUBTITLES_HIDDEN` | info | 0 | Há legendas bitmap (PGS, VobSub, DVB), que ficam ocultas |
 | `PROBE_IGNORED` | info | 0 | Saída do probe em outra versão de formato |
@@ -129,30 +130,39 @@ O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os doi
 - MKV e WebM são sempre `base-layer`. Num contêiner desconhecido (só nome, sem extensão), vale o de `unknownContainer` (`mkv`), por ser o caso mais conservador.
 - Pelo nome, sem perfil citado: em MP4, onde P5 e P8.1 são ativos, conta como DV ativo. No resto, se o nome ou a cor PQ/HLG do probe indicar a camada base, ela é usada; senão, "pode ser P5".
 
-**Probe ambíguo (some os sinais do nome).** No MP4, a configuração DV fica na sample entry, e o probe decide sozinho. No MKV HEVC, o probe pode deixar o DV passar: com `DV_UNKNOWN` (1º quadro não lido) ou com uma NAL malformada lida como "sem RPU" (sem aviso). Por isso, quando o probe não achou DV num MKV com HEVC (ou sem vídeo identificado), o DV citado no nome entra na conta:
+**Probe ambíguo: o nome só decide quando o probe não tem evidência.** No MP4, a configuração DV fica na sample entry, e o probe decide sozinho. No MKV HEVC, o probe pode deixar o DV passar: com `DV_UNKNOWN` (1º quadro não lido) ou com uma NAL malformada lida como "sem RPU" (sem aviso). Por isso, quando o probe não achou DV num MKV com HEVC (ou sem vídeo identificado), o DV citado no nome só entra na conta se o probe for **ambíguo**:
+
+- há `DV_UNKNOWN`; ou
+- a cor do vídeo é desconhecida (`hdr: null`); ou
+- a cor é SDR num vídeo que não se sabe ser de 8 bits. A P5 costuma trazer VUI BT.709, e um HEVC de 8 bits não pode ser P5.
+
+Se o probe leu o 1º quadro e a cor é PQ ou HLG, existe uma camada base HDR10/HLG de verdade, que não é P5. Nesse caso o probe vence, e o resultado é HDR10/HLG sem DV e sem rebaixamento, diga o nome o que disser.
 
 | Probe (MKV HEVC sem DV) | Nome | Resultado |
 |---|---|---|
-| qualquer | `DV P5` | `wrong-colors`, `DV_WRONG_COLORS` (fonte: nome) |
-| cor PQ ou HLG | `DV` | camada base HDR10/HLG: "HDR10 nesta TV" |
-| `hdr: null` ou SDR | `DV` | `DV_WRONG_COLORS_POSSIBLE` (pode ser P5) |
-| qualquer | `DV HDR10`, `DV P7`, `DV P8.1` | "HDR10 nesta TV" |
+| quadro lido, cor PQ ou HLG | qualquer (inclusive `DV P5`) | o probe vale: HDR10/HLG, sem rebaixar |
+| quadro lido, SDR de 8 bits | qualquer | o probe vale: SDR, sem DV |
+| ambíguo | `DV P5` | `wrong-colors`, `DV_WRONG_COLORS` (fonte: nome) |
+| ambíguo | `DV HDR10`, `DV P7`, `DV P8.1` | "HDR10 nesta TV" |
+| `DV_UNKNOWN` com cor PQ/HLG | `DV` | camada base HDR10/HLG: "HDR10 nesta TV" |
+| `hdr: null`, ou SDR que não é de 8 bits | `DV` | `DV_WRONG_COLORS_POSSIBLE` (pode ser P5) |
 | `DV_UNKNOWN` | nada sobre DV | `DV_UNVERIFIED` (info; o stream não é rebaixado) |
 | DV lido (configuração ou RPU) | qualquer | o probe vale; o nome é ignorado |
 
-Só a cor PQ/HLG do probe conta como evidência de camada base. Streams P5 costumam trazer cor não especificada ou BT.709.
+**Sem probe**, um `DV P5` explícito num MKV (ou contêiner desconhecido) rebaixa com −200 (`DV_WRONG_COLORS`). Como o probe pode inocentar o stream (cor PQ lida), `needsProbe` fica `true` para qualquer DV decidido só pelo nome fora do MP4.
 
 **Áudio (D8).** As faixas são ordenadas por estas chaves, nesta ordem:
 
-1. O status do codec: `ok` antes de `unconfirmed` (DTS) antes de `unknown`. `unsupported` (TrueHD, AC-4, DTS Express, DTS-UHD, FLAC com mais de 2 canais) nunca é escolhida.
-2. O idioma: a posição em `audioLanguages`; sem correspondência, vale o idioma da faixa padrão do arquivo.
-3. Faixa principal antes de comentário ou audiodescrição.
-4. A preferência de codec do perfil: `eac3-atmos` (DD+ Atmos), `eac3`, `ac3`, `aac`…
-5. A flag `default`, os canais e a ordem no arquivo.
+1. Tocável: `unsupported` (TrueHD, AC-4, DTS Express, DTS-UHD, FLAC com mais de 2 canais) nunca é escolhida.
+2. Faixa principal antes de comentário ou audiodescrição. Isso vem do flag do MKV (`commentary`, `visualImpaired`) ou do nome da faixa (`comment`, `comentário`, `commentaire`, `kommentar`, `audio description`), porque o MP4 não tem o flag. Um DTS principal ganha de um comentário AC-3.
+3. O status do codec: `ok` antes de `unconfirmed` (DTS) antes de `unknown`.
+4. O idioma: a posição em `audioLanguages`; sem correspondência, vale o idioma da faixa padrão do arquivo.
+5. A preferência de codec do perfil: `eac3-atmos` (DD+ Atmos), `eac3`, `ac3`, `aac`…
+6. A flag `default`, os canais e a ordem no arquivo.
 
-O status vem primeiro porque D8 manda preterir o DTS até a Fase 8, mesmo no idioma preferido. Quando o probe não leu o 1º quadro (`atmos: null`), um `Atmos` no nome junto de DD+ marca como Atmos uma única faixa E-AC-3: a padrão, ou senão a primeira (`atmosSource: 'name'`). Uma dublagem raramente é Atmos.
+O status vem antes do idioma porque D8 manda preterir o DTS até a Fase 8, mesmo no idioma preferido. Pode acontecer de a única faixa tocável ser um comentário, enquanto a principal não toca (TrueHD principal + comentário AC-3). Isso não é alternativa (linha 7 da tabela): o comentário fica como faixa inicial, mas sai o aviso `AUDIO_ONLY_SECONDARY`, que rebaixa, e o bônus de idioma não conta. Quando o probe não leu o 1º quadro (`atmos: null`), um `Atmos` no nome junto de DD+ marca como Atmos uma única faixa E-AC-3: a padrão, ou senão a primeira (`atmosSource: 'name'`). Uma dublagem raramente é Atmos.
 
-Sem probe, o status de áudio sai dos codecs citados no nome. Como um remux costuma ter uma faixa compatível que o nome não cita, o rebaixamento é menor (`*_POSSIBLE`), e `needsProbe` fica `true`.
+Sem probe, o status de áudio sai dos codecs citados no nome. Como um remux costuma ter uma faixa compatível que o nome não cita, o rebaixamento do áudio é menor (`*_POSSIBLE`), e `needsProbe` fica `true`.
 
 ## Perfil (`perfil-c8.json`)
 

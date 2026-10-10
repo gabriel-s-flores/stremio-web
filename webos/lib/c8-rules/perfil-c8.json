@@ -94,6 +94,7 @@
         "DV_BASE_LAYER_UNKNOWN": { "severity": "info", "score": -10 },
         "AUDIO_UNSUPPORTED": { "severity": "demote", "score": -200 },
         "AUDIO_UNSUPPORTED_POSSIBLE": { "severity": "demote", "score": -60 },
+        "AUDIO_ONLY_SECONDARY": { "severity": "demote", "score": -200 },
         "AUDIO_UNCONFIRMED": { "severity": "demote", "score": -40 },
         "AUDIO_UNCONFIRMED_POSSIBLE": { "severity": "demote", "score": -20 },
         "AUDIO_UNKNOWN": { "severity": "demote", "score": -40 },

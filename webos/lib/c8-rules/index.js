@@ -28,6 +28,9 @@ const STATUS_TEXT = {
     unknown: 'tem suporte desconhecido na C8',
 };
 
+// Commentary/description tracks by name (the MP4 has no commentary flag).
+const SECONDARY_NAME = /comment|coment[aá]rio|commentaire|kommentar|audio ?descri/i;
+
 const codecName = (codec) => CODEC_NAMES[codec] || String(codec).toUpperCase();
 
 const describeTrack = (track) => (track.profile || codecName(track.codec)) + ' (' + (track.language || 'sem idioma') + ')';
@@ -86,8 +89,21 @@ const dvFromName = (name, probeHdr, source) => {
     return { profile, baseLayer, dualTrack: false, source };
 };
 
+// In MKV HEVC without DV found, the probe is ambiguous when the first frame was not read
+// (DV_UNKNOWN) or the colour says nothing against P5: unknown, or SDR on a video that is not
+// known to be 8-bit (P5 often carries BT.709 VUI). PQ/HLG colour read with the frame is a real
+// HDR10/HLG base layer, so then the probe wins over the name.
+const probeIsAmbiguous = (probe) => {
+    if (hasProbeWarning(probe, 'DV_UNKNOWN')) return true;
+    const track = mainVideoTrack(probe);
+    const hdr = track !== null ? track.video.hdr : probe.summary.hdr;
+    if (hdr === null) return true;
+    return hdr === 'sdr' && (track === null || track.video.bitDepth !== 8);
+};
+
 // The probe is authoritative for MP4 (the DV configuration is in the sample entry). In MKV it
-// can miss DV (frame not read, or a malformed NAL read as "no RPU"), so the name adds to it.
+// can miss DV (frame not read, or a malformed NAL read as "no RPU"), so the name decides when
+// the probe is ambiguous (see probeIsAmbiguous).
 const resolveDolbyVision = (probe, name) => {
     if (probe === null) {
         // DV only exists on HEVC here (P9 AVC and P10 AV1 are outside the C8 cases).
@@ -100,6 +116,7 @@ const resolveDolbyVision = (probe, name) => {
     }
     const codec = probe.summary.videoCodec;
     if (probe.container === 'mp4' || (codec !== 'hevc' && codec !== null) || !name.dolbyVision) return null;
+    if (!probeIsAmbiguous(probe)) return null;
     return dvFromName(name, probe.summary.hdr, 'name');
 };
 
@@ -253,23 +270,31 @@ const evaluateProbeAudio = (profile, probe, name, languages, report) => {
             status: audioStatus(profile, track.codec, track.audio.profile, track.audio.channels),
             preferredLanguage: preferred !== -1,
             languageRank,
-            secondary: track.commentary === true || track.visualImpaired === true,
+            secondary: track.commentary === true || track.visualImpaired === true || SECONDARY_NAME.test(track.name || ''),
         };
     });
     tracks.forEach((track) => {
         track.preference = preferenceIndex(profile, track);
     });
-    // Playable first (DTS waits for phase 8, D8), then language, main over commentary, codec
-    // preference (DD+ Atmos first), the file's default flag, channels, file order.
-    tracks.sort(byKeys((track) => [AUDIO_TIERS[track.status], track.languageRank, track.secondary ? 1 : 0, track.preference,
-        track.default ? 0 : 1, -(track.channels || 0), track.index]));
+    // Playable first; among them the main track over commentary (a "to be confirmed" DTS film
+    // track beats an AC-3 commentary), then the codec status (DTS waits for phase 8, D8), the
+    // language, the codec preference (DD+ Atmos first), the default flag, channels, file order.
+    tracks.sort(byKeys((track) => [track.status === 'unsupported' ? 1 : 0, track.secondary ? 1 : 0, AUDIO_TIERS[track.status],
+        track.languageRank, track.preference, track.default ? 0 : 1, -(track.channels || 0), track.index]));
     const chosen = tracks.filter((track) => track.status !== 'unsupported')[0] || null;
+    // Only a commentary plays, while the film track does not: that is no alternative (row 7).
+    const onlySecondary = chosen !== null && chosen.secondary && tracks.some((track) => !track.secondary);
     // What a player without these rules would pick: the language match or the file's default.
     const natural = tracks.slice().sort(byKeys((track) => [track.languageRank, track.secondary ? 1 : 0, track.default ? 0 : 1, track.index]))[0] || null;
     if (tracks.length > 0 && chosen === null) {
         report.warn('AUDIO_UNSUPPORTED', 'probe', 'Nenhuma faixa de áudio toca na C8 (' + tracks.map(describeTrack).join(', ') + '): o vídeo ficaria mudo.');
-    } else if (chosen !== null) {
-        if (natural !== null && natural !== chosen && natural.status !== 'ok') {
+    } else if (onlySecondary) {
+        const main = tracks.filter((track) => !track.secondary);
+        report.warn('AUDIO_ONLY_SECONDARY', 'probe', 'A faixa principal (' + main.map(describeTrack).join(', ') + ') não toca na C8; só sobra ' +
+            describeTrack(chosen) + ', que é comentário ou audiodescrição.', chosen.id);
+    }
+    if (chosen !== null) {
+        if (!onlySecondary && natural !== null && natural !== chosen && natural.status !== 'ok') {
             report.warn('AUDIO_TRACK_SKIPPED', 'probe', 'A faixa ' + describeTrack(natural) + ' ' + STATUS_TEXT[natural.status] + '; escolhida ' + describeTrack(chosen) + '.', natural.id);
         }
         if (chosen.status === 'unconfirmed') {
@@ -285,7 +310,7 @@ const evaluateProbeAudio = (profile, probe, name, languages, report) => {
         initialTrack: chosen,
         tracks,
         atmos: chosen !== null ? chosen.atmosOnTv : false,
-        preferredLanguage: chosen !== null && chosen.preferredLanguage,
+        preferredLanguage: chosen !== null && chosen.preferredLanguage && !onlySecondary,
     };
 };
 
@@ -359,8 +384,10 @@ const evaluate = (input) => {
     let tier = 'ok';
     if (report.warnings.some((warning) => warning.severity === 'demote')) tier = 'demoted';
     if (report.warnings.some((warning) => warning.severity === 'hide')) tier = 'hidden';
+    // Only the name, with a doubt the probe settles: audio by name, or DV in MKV/unknown container
+    // (the probe can clear an explicit "DV P5" by reading a PQ base layer).
     const needsProbe = probe === null && (report.warnings.some((warning) => /_POSSIBLE$/.test(warning.code)) ||
-        (video.format === 'dolby-vision' && container === null));
+        (video.format === 'dolby-vision' && container !== 'mp4'));
 
     return {
         version: VERSION,

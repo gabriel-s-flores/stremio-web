@@ -119,6 +119,28 @@ describe('evaluate input handling', () => {
         expect(compare(a, b)).toBe(0);
     });
 
+    it('sortStreams keeps the addon order even with an unstable Array#sort (injected)', () => {
+        const streams = [];
+        for (let i = 0; i < 12; i++) streams.push({ id: i, rules: evaluate({ stream: i % 2 ? 'S 2160p DV P5 HEVC mkv' : 'S 1080p x264 AAC' }) });
+        const original = Array.prototype.sort;
+        // Stable sort of the reversed array: equal items come out in reverse order.
+        Array.prototype.sort = function (comparator) {
+            const sorted = original.call(this.slice().reverse(), comparator);
+            for (let i = 0; i < sorted.length; i++) this[i] = sorted[i];
+            return this;
+        };
+        let ids;
+        let plain;
+        try {
+            ids = sortStreams(streams, (stream) => stream.rules).map((stream) => stream.id);
+            plain = streams.slice().sort((a, b) => compare(a.rules, b.rules)).map((stream) => stream.id);
+        } finally {
+            Array.prototype.sort = original;
+        }
+        expect(ids).toEqual([0, 2, 4, 6, 8, 10, 1, 3, 5, 7, 9, 11]);
+        expect(plain).not.toEqual(ids);
+    });
+
     it('sortStreams keeps the addon order among equals, also above 10 items (V8 5.3 sort is unstable)', () => {
         const streams = [];
         for (let i = 0; i < 30; i++) {
