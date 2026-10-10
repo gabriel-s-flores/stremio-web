@@ -14,6 +14,7 @@
         "lint": "eslint src --max-warnings 287",
         "scan-translations": "pnpx jest ./tests/i18nScan.test.js",
         "webos:build": "webpack --config webos/webpack/webpack.config.js --mode production",
+        "webos:check-syntax": "webos/scripts/check-syntax.sh",
         "webos:package": "pnpm webos:build && webos/scripts/ares.sh package",
         "webos:install": "webos/scripts/ares.sh install",
         "webos:launch": "webos/scripts/ares.sh launch"
@@ -32,6 +33,7 @@
         "bowser": "2.14.1",
         "buffer": "6.0.3",
         "classnames": "2.5.1",
+        "core-js": "3.50.0",
         "eventemitter3": "5.0.4",
         "fast-equals": "^6.0.0",
         "filter-invalid-dom-props": "3.0.1",
@@ -79,6 +81,7 @@
         "css-loader": "6.11.0",
         "cssnano": "7.1.9",
         "cssnano-preset-advanced": "7.0.16",
+        "es-check": "9.8.1",
         "eslint": "^9.39.4",
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^7.1.1",
