@@ -126,11 +126,17 @@ sample menu-switched
 "${CDP[@]}" screenshot "$OUT/tela-menu-audio-trocado.png" || true
 "${EMU[@]}" screenshot "$OUT/tela-vm-menu-audio-trocado.png" || true
 
-# Embedded subtitles: listed (by language) in the subtitles menu once the video plays (showing them is F5.5).
+# Embedded subtitles: listed (by language) in the subtitles menu once the video plays; the Player's
+# own choice (subtitles language of the settings) is dropped by the decorator until F5.5.
 echo "open subtitles menu: $(click_control "$SUBTITLES_ICON")" | tee -a "$OUT/actions.log"
 sleep 1
 cdp_eval "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[class*=\"subtitles-menu-container\"] [class*=\"language-option\"]'), function(b) { return { lang: b.getAttribute('data-lang'), title: b.getAttribute('title'), selected: /(^| )selected( |$)/.test(b.className) }; }))" > "$OUT/subtitles-menu.json" || true
 "${CDP[@]}" screenshot "$OUT/tela-menu-legendas.png" || true
+# Choosing an embedded subtitle by hand: listed only until F5.5, so nothing reaches Luna.
+echo "choose embedded subtitles eng: $(cdp_eval "(function(){ var b = document.querySelector('[class*=\"subtitles-menu-container\"] [data-lang=\"eng\"]'); if (b) b.click(); return !!b; })()")" | tee -a "$OUT/actions.log"
+sleep 2
+cdp_eval "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[class*=\"subtitles-menu-container\"] [class*=\"language-option\"]'), function(b) { return { lang: b.getAttribute('data-lang'), title: b.getAttribute('title'), selected: /(^| )selected( |$)/.test(b.className) }; }))" > "$OUT/subtitles-menu-after-choice.json" || true
+"${CDP[@]}" screenshot "$OUT/tela-menu-legendas-depois-da-escolha.png" || true
 
 cdp_eval "JSON.stringify({ luna: window.__f51.luna, errors: window.__f51.errors })" > "$OUT/luna.json"
 cdp_eval "JSON.stringify(window.__f51.console)" > "$OUT/console.json"

@@ -91,6 +91,13 @@ check('the app never subscribes to com.webos.media', mediaSubscribe.length === 0
 // the Player, F5.5); the audio switch is done on the element only.
 check('the audio switch did not use Luna selectTrack', !luna.luna.some((c) => c.method === 'selectTrack' && (c.parameters || {}).type === 'audio'),
     luna.luna.map((c) => c.uri + '/' + c.method + (c.method === 'selectTrack' ? ' ' + JSON.stringify(c.parameters) : '')));
+// Embedded subtitles are listed only (F5.5 shows them): neither the Player's automatic choice nor
+// the manual one in the menu may turn them on through Luna, and the menu stays coherent (OFF).
+const subtitleLuna = luna.luna.filter((c) => c.method === 'setSubtitleEnable' || (c.method === 'selectTrack' && (c.parameters || {}).type === 'text'));
+check('embedded subtitles are not turned on in the pipeline (no setSubtitleEnable, no selectTrack of text)', subtitleLuna.length === 0, subtitleLuna);
+check('the subtitles menu stays on OFF (nothing shown, nothing selected)', subtitlesMenu.length > 0 && subtitlesMenu.filter((entry) => entry.selected).map((entry) => entry.title).join() === 'OFF', subtitlesMenu);
+check('the embedded subtitle choices were dropped by the decorator (console)', consoleLog.some((entry) => /embedded subtitles EMBEDDED_\d+ listed only/.test(entry.text)),
+    consoleLog.filter((entry) => /embedded subtitles/.test(entry.text)).map((entry) => entry.text));
 check('no page errors', luna.errors.length === 0, luna.errors);
 
 const ok = checks.every((c) => c.ok);

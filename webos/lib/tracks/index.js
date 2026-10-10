@@ -2,6 +2,7 @@
 // the header probe (F5.2) and the video element's audioTracks, and the initial audio track picked
 // by the C8 rules (F5.3). Pure functions; the video decorator and the hook call them. See README.md.
 
+const langs = require('langs');
 const { evaluate, normalizeLanguage } = require('../c8-rules');
 
 // The prefix the Player and stremio-video use for tracks inside the file.
@@ -15,6 +16,29 @@ const CODEC_TEXT = {
 const CHANNELS_TEXT = { 1: '1.0', 2: '2.0', 3: '2.1', 6: '5.1', 7: '6.1', 8: '7.1' };
 // Profiles that say more than the codec (the DTS variant, TrueHD Atmos).
 const PROFILE_CODECS = ['dts', 'truehd'];
+
+let languageIndex = null;
+
+// A language code as the app stores it (src/common/languages.ts: the `langs` entry whose ISO 639-1,
+// 639-2, 639-2/B, 639-2/T or 639-3 code matches, and its '2' code), so "pt", "por" and "pt-BR" all
+// give "por" and "bn" gives "ben". Codes `langs` does not know go through the c8-rules
+// normalization. null for missing or undefined ("und").
+const languageCode = (code) => {
+    if (typeof code !== 'string' || code.trim().length === 0) return null;
+    if (languageIndex === null) {
+        languageIndex = {};
+        // Like languages.find: the first language in the list that has the code wins.
+        langs.all().forEach((language) => {
+            [language['1'], language['2'], language['2B'], language['2T'], language['3'], language.ietf].forEach((key) => {
+                if (key && !Object.prototype.hasOwnProperty.call(languageIndex, key)) languageIndex[key] = language['2'];
+            });
+        });
+    }
+    const value = code.trim();
+    const lower = value.toLowerCase();
+    const known = languageIndex[value] || languageIndex[lower] || languageIndex[lower.split(/[-_]/)[0]];
+    return known || normalizeLanguage(value);
+};
 
 const trackId = (index) => TRACK_ID_PREFIX + index;
 
@@ -147,15 +171,15 @@ const buildSubtitleTracks = ({ probe }) => {
 // preferred language that has one); without it, the first preferred language found, keeping the
 // selected track when it already matches. null: leave the pipeline's choice.
 const chooseAudioTrack = ({ tracks, probe, stream, languages, selectedId }) => {
-    const preferred = (languages || []).map(normalizeLanguage).filter((code) => code !== null);
+    const preferred = (languages || []).map(languageCode).filter((code) => code !== null);
     if (probe && tracks.some((track) => track.probeId !== null)) {
         const initial = evaluate({ probe, stream, preferences: { audioLanguages: preferred } }).audio.initialTrack;
         return initial ? tracks.filter((track) => track.probeId === initial.id)[0] || null : null;
     }
     const selected = tracks.filter((track) => track.id === selectedId)[0] || null;
     for (let i = 0; i < preferred.length; i++) {
-        if (selected && normalizeLanguage(selected.lang) === preferred[i]) return selected;
-        const match = tracks.filter((track) => normalizeLanguage(track.lang) === preferred[i])[0];
+        if (selected && languageCode(selected.lang) === preferred[i]) return selected;
+        const match = tracks.filter((track) => languageCode(track.lang) === preferred[i])[0];
         if (match) return match;
     }
     return null;
@@ -163,6 +187,7 @@ const chooseAudioTrack = ({ tracks, probe, stream, languages, selectedId }) => {
 
 module.exports = {
     TRACK_ID_PREFIX,
+    languageCode,
     trackId,
     trackIndex,
     readElementTracks,

@@ -6,6 +6,7 @@
 const { evaluate } = require('../../c8-rules');
 const { probeFixture, probeHeader } = require('../../c8-rules/test/helpers');
 const {
+    languageCode,
     trackId,
     trackIndex,
     readElementTracks,
@@ -38,6 +39,18 @@ const audioMenu = (probe, elementTracks, selectedIndex) => buildAudioTracks({
     selectedIndex: selectedIndex === undefined ? 0 : selectedIndex,
 });
 const summary = (tracks) => tracks.map((track) => [track.id, track.lang, track.label, track.mode]);
+
+describe('languageCode (the code the app stores, src/common/languages.ts)', () => {
+    it('ISO 639-1, 639-2/B, 639-2/T and BCP 47 give the langs "2" code', () => {
+        expect(['pt', 'por', 'PT', 'en', 'eng', 'fre', 'fra', 'ger', 'bn'].map(languageCode)).toEqual(['por', 'por', 'por', 'eng', 'eng', 'fra', 'fra', 'deu', 'ben']);
+        expect(languageCode('pt-BR')).toBe('pob');
+    });
+
+    it('undefined or missing: null; unknown codes as the c8-rules normalize them', () => {
+        expect([null, undefined, '', ' ', 'und'].map(languageCode)).toEqual([null, null, null, null, null]);
+        expect(languageCode('ZZZ')).toBe('zzz');
+    });
+});
 
 describe('track ids', () => {
     it('EMBEDDED_<n> both ways', () => {

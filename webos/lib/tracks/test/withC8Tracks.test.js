@@ -79,11 +79,12 @@ const setup = (options) => {
     const opts = options || {};
     const Inner = createInnerVideo();
     const probe = deferred();
-    const probeCache = { get: jest.fn(() => probe.promise), peek: jest.fn(() => null) };
+    const probeCache = { get: jest.fn(() => probe.promise), peek: jest.fn(() => null), cancel: jest.fn() };
+    const log = { info: jest.fn(), warn: jest.fn() };
     const trackList = createTrackList(opts.languages || [], opts.enabled === undefined ? null : opts.enabled);
     const element = createElement(trackList);
     const containerElement = { querySelector: () => element };
-    const Video = withC8Tracks(Inner, { probeCache });
+    const Video = withC8Tracks(Inner, { probeCache, log });
     const video = new Video({ containerElement });
     const events = [];
     ['propValue', 'propChanged', 'audioTrackLoaded', 'ended', 'error'].forEach((name) => {
@@ -96,7 +97,7 @@ const setup = (options) => {
     const load = () => video.dispatch({ type: 'command', commandName: 'load', commandArgs: { stream: { url: URL } } });
     const play = () => element.fire('playing');
     const enabled = () => Array.from({ length: trackList.length }, (_, i) => trackList[i].enabled);
-    return { Inner, inner: Inner.instance, probe, probeCache, trackList, element, video, events, last, load, play, enabled };
+    return { Inner, inner: Inner.instance, log, probe, probeCache, trackList, element, video, events, last, load, play, enabled };
 };
 
 describe('withC8Tracks', () => {
@@ -291,5 +292,54 @@ describe('withC8Tracks', () => {
         expect(t.element.handlers.loadedmetadata).toEqual([]);
         expect(t.element.handlers.playing).toEqual([]);
         expect(() => t.video.dispatch({ type: 'command', commandName: 'unload' })).toThrow('Video is destroyed');
+    });
+
+    it('choosing an embedded subtitle does not reach WebOsVideo (listed only until F5.5); null and add-on subtitles do', async () => {
+        t.load();
+        t.play();
+        t.probe.resolve(kit);
+        await flush();
+        const subtitleSetProps = () => t.inner.actions.filter((action) => action.type === 'setProp' && action.propName === 'selectedSubtitlesTrackId').map((action) => action.propValue);
+        t.video.dispatch({ type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: 'EMBEDDED_0' });
+        expect(subtitleSetProps()).toEqual([]);
+        t.video.dispatch({ type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: null });
+        t.video.dispatch({ type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: 'https://addon/sub.srt' });
+        expect(subtitleSetProps()).toEqual([null, 'https://addon/sub.srt']);
+        // other props still go through
+        t.video.dispatch({ type: 'setProp', propName: 'subtitlesSize', propValue: 100 });
+        expect(t.inner.actions.filter((action) => action.propName === 'subtitlesSize').length).toBe(1);
+    });
+
+    it('a probe still running is cancelled on unload, on destroy and on the next load; not once done', async () => {
+        t.load();
+        t.video.dispatch({ type: 'command', commandName: 'unload' });
+        expect(t.probeCache.cancel.mock.calls).toEqual([[URL]]);
+        t.load();
+        t.load();
+        expect(t.probeCache.cancel.mock.calls.length).toBe(2);
+        t.video.dispatch({ type: 'command', commandName: 'destroy' });
+        expect(t.probeCache.cancel.mock.calls.length).toBe(3);
+
+        const u = setup({ languages: ['en'], enabled: 0 });
+        u.load();
+        u.probe.resolve(kit);
+        await flush();
+        u.video.dispatch({ type: 'command', commandName: 'destroy' });
+        expect(u.probeCache.cancel).not.toHaveBeenCalled();
+    });
+
+    it('warns once when a switch is still pending after playing (the element lists no such track)', () => {
+        t = setup({ languages: [] });
+        t.probeCache.peek.mockReturnValue(kit);
+        t.load();
+        t.video.dispatch({ type: 'setProp', propName: 'selectedAudioTrackId', propValue: 'EMBEDDED_1' });
+        expect(t.log.warn).not.toHaveBeenCalled();
+        t.play();
+        t.trackList.fire('change');
+        expect(t.log.warn.mock.calls).toEqual([['[webos] tracks: audio EMBEDDED_1 still pending after playing: video.audioTracks lists 0 track(s)']]);
+        t.trackList.set(['en', 'pt', 'en'], 0);
+        t.trackList.fire('addtrack');
+        expect(t.enabled()).toEqual([false, true, false]);
+        expect(t.log.warn).toHaveBeenCalledTimes(1);
     });
 });

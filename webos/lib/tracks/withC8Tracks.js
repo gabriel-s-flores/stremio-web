@@ -2,9 +2,13 @@
 // header probe and the <video>'s audioTracks instead of the streaming server's /tracks (there is no
 // server, P3), and the audio switch enables the chosen track and disables the others on the
 // element. Everything else goes to WebOsVideo unchanged. Wired in by webos/webpack/player.js.
-// The probe starts right after WebOsVideo's load and does not hold it. Nothing touches the pipeline
-// before the video plays: an audio switch asked earlier waits for the first `playing`, and the
-// embedded subtitles are listed only then (choosing one makes WebOsVideo call Luna).
+// The probe starts right after WebOsVideo's load and does not hold it, and is cancelled when the
+// stream goes away. Nothing touches the pipeline before the video plays: an audio switch asked
+// earlier waits for the first `playing`, and the embedded subtitles are listed only then.
+// Embedded subtitles are listed only, until F5.5: selecting one (the Player does it on its own for
+// the subtitles language of the settings) is dropped here, so WebOsVideo does not turn them on
+// through Luna while the menu says OFF. null and the add-on subtitles pass through.
+// TODO(F5.5): remove the EMBEDDED_ subtitle interception when the embedded subtitles are shown.
 
 const {
     trackId,
@@ -17,6 +21,7 @@ const {
 const { evaluate } = require('../c8-rules');
 
 const OWN_PROPS = ['audioTracks', 'selectedAudioTrackId', 'subtitlesTracks'];
+const EMBEDDED_PREFIX = 'EMBEDDED_';
 const ELEMENT_TRACK_EVENTS = ['addtrack', 'removetrack', 'change'];
 
 // Enables audioTracks[index] and then disables the others (in that order, so the pipeline never
@@ -32,7 +37,7 @@ const enableOnly = (videoElement, index) => {
     return true;
 };
 
-// deps.probeCache: { get(url) -> Promise, peek(url) -> result | null }, deps.log (optional): console-like.
+// deps.probeCache: { get(url) -> Promise, peek(url) -> result | null, cancel(url) }, deps.log (optional): console-like.
 const withC8Tracks = (Video, deps) => {
     const probeCache = deps.probeCache;
     const log = deps.log || null;
@@ -54,6 +59,7 @@ const withC8Tracks = (Video, deps) => {
         let started = false;
         // A switch asked before the video played or before the element listed its tracks.
         let pendingIndex = null;
+        let pendingWarned = false;
 
         const emit = function(eventName) {
             const args = Array.prototype.slice.call(arguments, 1);
@@ -89,6 +95,12 @@ const withC8Tracks = (Video, deps) => {
                 values.subtitlesTracks = started ? buildSubtitleTracks({ probe, rules }) : [];
             }
             OWN_PROPS.forEach(publish);
+            // Playing, and the element still has no such track (no video.audioTracks on this TV?).
+            if (started && pendingIndex !== null && !pendingWarned && log) {
+                pendingWarned = true;
+                log.warn('[webos] tracks: audio ' + trackId(pendingIndex) + ' still pending after playing: video.audioTracks lists ' +
+                    readElementTracks(videoElement).length + ' track(s)');
+            }
         };
 
         const onElementTracks = () => {
@@ -141,12 +153,14 @@ const withC8Tracks = (Video, deps) => {
         };
 
         const reset = () => {
+            if (stream !== null && probe === null && typeof probeCache.cancel === 'function') probeCache.cancel(stream.url);
             loadId++;
             stream = null;
             probe = null;
             rules = null;
             started = false;
             pendingIndex = null;
+            pendingWarned = false;
         };
 
         video.on('propValue', (propName, propValue) => {
@@ -186,7 +200,13 @@ const withC8Tracks = (Video, deps) => {
                 selectAudioTrack(action.propValue);
                 return;
             }
+            if (action && action.type === 'setProp' && action.propName === 'selectedSubtitlesTrackId' &&
+                typeof action.propValue === 'string' && action.propValue.indexOf(EMBEDDED_PREFIX) === 0) {
+                if (log) log.info('[webos] tracks: embedded subtitles ' + action.propValue + ' listed only (F5.5), not turned on');
+                return;
+            }
             if (action && action.type === 'command' && action.commandName === 'destroy') {
+                reset();
                 destroyed = true;
                 if (elementTrackList && typeof elementTrackList.removeEventListener === 'function') {
                     ELEMENT_TRACK_EVENTS.forEach((eventName) => elementTrackList.removeEventListener(eventName, onElementTracks));

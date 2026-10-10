@@ -3,17 +3,17 @@
 // plays, in the first preferred language that has one. The upstream hook takes the first track in
 // the preferred language, which on the C8 can be a TrueHD or DTS one. Unchanged: the track saved
 // for the stream wins, a choice made in the menu locks the selection until the stream changes, and
-// it is saved as the stream state and as the audio preference.
+// it is saved as the stream state and as the audio preference, with the language code the upstream
+// saves (languageCode = the `langs` '2' code of src/common/languages.ts).
 
 const { useCallback, useEffect, useRef } = require('react');
-const { chooseAudioTrack } = require('../../../webos/lib/tracks');
+const { chooseAudioTrack, languageCode } = require('../../../webos/lib/tracks');
 const { probeCache } = require('../../../webos/lib/tracks/probe-cache');
-const { normalizeLanguage } = require('../../../webos/lib/c8-rules');
 
 const findPreferredTrack = (tracks, selectedId, savedTrack, preference, globalLanguage, stream) => {
-    const preferredLanguage = normalizeLanguage(preference?.language) ?? normalizeLanguage(savedTrack?.language);
+    const preferredLanguage = languageCode(preference?.language) ?? languageCode(savedTrack?.language);
     const saved = tracks.find((track) => track.id === savedTrack?.id);
-    if (saved && (!preferredLanguage || normalizeLanguage(saved.lang) === preferredLanguage)) {
+    if (saved && (!preferredLanguage || languageCode(saved.lang) === preferredLanguage)) {
         return saved;
     }
 
@@ -40,7 +40,7 @@ const useAudio = ({ player, video, settings, streamStateChanged, audioPreference
             return;
         }
 
-        const language = normalizeLanguage(track.lang);
+        const language = languageCode(track.lang);
         trackSelectionLocked.current = true;
         appliedTrack.current = id;
         currentVideo.setAudioTrack(id);

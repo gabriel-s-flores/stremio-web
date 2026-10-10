@@ -119,4 +119,20 @@ describe('useAudio.webos', () => {
         render({ ...props, video: { ...props.video, state: { ...props.video.state, stream: null } } });
         expect(props.video.setAudioTrack).not.toHaveBeenCalled();
     });
+
+    it('saves the language code the upstream saves (langs "2": "bn" from video.audioTracks -> "ben")', () => {
+        const tracks = buildAudioTracks({ probe: null, rules: null, elementTracks: [{ language: 'en', label: '', enabled: true }, { language: 'bn', label: '', enabled: false }], selectedIndex: 0 });
+        const props = makeProps({ withProbe: false, tracks });
+        render(props);
+        act(() => latest('EMBEDDED_1'));
+        expect(props.streamStateChanged).toHaveBeenCalledWith({ audioTrack: { id: 'EMBEDDED_1', language: 'ben' } });
+        expect(props.audioPreferenceChanged).toHaveBeenCalledWith({ language: 'ben' });
+    });
+
+    it('a saved preference in another code form matches the track ("ben" preference, "bn" track)', () => {
+        const tracks = buildAudioTracks({ probe: null, rules: null, elementTracks: [{ language: 'en', label: '', enabled: true }, { language: 'bn', label: '', enabled: false }], selectedIndex: 0 });
+        const props = makeProps({ withProbe: false, tracks, audioLanguage: 'eng', audioPreference: { language: 'ben' } });
+        render(props);
+        expect(props.video.setAudioTrack.mock.calls).toEqual([['EMBEDDED_1']]);
+    });
 });
