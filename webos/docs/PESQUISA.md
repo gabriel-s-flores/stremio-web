@@ -162,6 +162,7 @@ Emulador oficial 4.0 em QEMU/KVM, mídia sintética gerada com ffmpeg e servida 
 | Legendas SRT embutidas | **não** aparecem em `textTracks` (precisam do Luna) |
 | Redirect 302 (como os links de debrid) | seguido, inclusive nas requisições Range do seek |
 | Seek | `currentTime = 15` gera `Range: bytes=4347303-`, depois `seeked` |
+| Seek vai para o **keyframe anterior** | o pipeline posiciona no keyframe anterior ao tempo pedido. Num clipe de 10 s com um só keyframe (GOP de 250 quadros), o seek para 5 s volta ao início e o `seeked` dispara normalmente: só a checagem do progresso (`currentTime`) mostra. Com keyframe a cada 1 s o seek cai no lugar (F0.10, `webos/tools/media-suite`). Na TV: Fase 8 |
 | Link HTTPS com Let's Encrypt no **pipeline de mídia** | toca (o pipeline tem outro repositório de CAs) |
 
 **Problemas encontrados:**

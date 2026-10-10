@@ -20,7 +20,7 @@ O emulador é a **imagem oficial da LG do webOS TV 4.0**, rodando em QEMU/KVM ne
 
 1. **Core em WebAssembly.**
    - O core atual (0.65.0) recompilado como WASM MVP **compila em 2,0 s no emulador**. O pacote publicado no npm não serve: falha com `invalid local type`.
-   - Como a TV só será vista no fim, o app traz também o core em **wasm2js** e troca sozinho se o WebAssembly não existir. Os dois caminhos são testados no emulador.
+   - Como a TV só será vista no fim, o app traz também o core em **wasm2js**, que é o **preferido no webOS 4** (no perfil C8 inicializa em ~9 s, contra ~20 s do WASM); o WASM fica selecionável por configuração (D2). Os dois caminhos são testados no emulador.
 2. **Player nativo.** `<video src>` com o link do debrid vai direto para o pipeline da TV, que preserva 4K, HDR10, Dolby Vision (em MP4) e Dolby Atmos (DD+). Nada de hls.js nem MSE.
    - O pipeline do emulador já reproduziu H.264 e HEVC 10-bit, com AAC, AC3 5.1 e E-AC3 5.1, em MP4 e MKV.
    - Também funcionaram redirect 302, seek por Range e a lista de faixas de áudio com idioma.
@@ -36,7 +36,7 @@ O emulador é a **imagem oficial da LG do webOS TV 4.0**, rodando em QEMU/KVM ne
 | # | Decisão | Por quê |
 |---|---|---|
 | D1 | App **empacotado (IPK)** com a UI do stremio-web, gerado por um build `WEBOS=1` numa branch nova `webos` | Funciona offline e sem depender de web.stremio.com; roda de `file://` com CORS relaxado (medido) |
-| D2 | Core **WASM MVP** (receita A) com **fallback automático para wasm2js**, testado no emulador forçando o fallback | O WebAssembly da TV só será confirmado na Fase 8; o app não pode depender disso |
+| D2 | Core em **wasm2js preferido no webOS 4**; o **WASM MVP** (receita A) vai no mesmo pacote e é escolhido por configuração (`localStorage['webos.coreVariant'] = 'wasm'`, para a tela de diagnóstico e a Fase 8). O fallback é automático nos dois sentidos (sem WebAssembly ou com falha do wasm2js) | O WebAssembly da TV só será confirmado na Fase 8, e o app não pode depender dele. No perfil C8 do emulador o wasm2js inicializa em ~9 s e o WASM em ~20 s (compilação síncrona do V8 5.8), com pico de memória menor no wasm2js (gate G0, aprovado com essa condição) |
 | D3 | Player **`WebOsVideo`** (`<video src>` + Luna), com três ajustes vindos do emulador. **(a)** O app não assina `com.webos.media/subscribe`, porque no emulador isso congela o `currentTime`. **(b)** As faixas vêm de `video.audioTracks` e do probe de cabeçalho (D5). **(c)** Liberar o pipeline entre streams é um problema conhecido do emulador (tarefa 5.6) | Comportamentos medidos no emulador |
 | D4 | **Sem servidor de streaming**: no build webOS, ocultar streams de torrent (infoHash) e os avisos e telas de servidor | P3 |
 | D5 | **Probe de cabeçalho no cliente** (Range nos primeiros MB do link do debrid) para ler contêiner, codecs, idiomas, legendas e perfil Dolby Vision | Substitui o `/tracks` do servidor; permite escolher a faixa de áudio certa e evitar o DV P5 em MKV |
@@ -68,7 +68,7 @@ O emulador é a **imagem oficial da LG do webOS TV 4.0**, rodando em QEMU/KVM ne
 IPK (app web empacotado, roda de file://)
 ├── appinfo.json           disableBackHistoryAPI, resolution 1920x1080, handlesRelaunch
 ├── index.html + main.js   React 18 do stremio-web transpilado para Chromium 53 (Babel + core-js + PostCSS)
-├── worker.js              core: core.wasm (MVP); se faltar WebAssembly, core.wasm2js.js
+├── worker.js              core: core.wasm2js.js (preferido); core.wasm (MVP) por configuração ou se o wasm2js falhar
 ├── webOSTV.js 1.2.13      Luna, deviceInfo, platformBack
 └── perfil-c8.json         regras de capacidades (D6), ajustáveis na Fase 8
 
@@ -113,7 +113,7 @@ Cada tarefa vira uma branch e um PR para `webos`. **Todos os critérios de aceit
 | 0.4 Mídia no emulador: o que o pipeline reproduz | ✅ | PESQUISA, seção 7 |
 | 0.5 **Core MVP** | 🟡 compila em 2,0 s | Script reprodutível com gate de opcodes pós-MVP e `i64` na fronteira JS; **inicializa** no emulador (`core ready`, `get_state('ctx')`, catálogos do Board) com tempo e memória medidos |
 | 0.6 **Fallback wasm2js** | ⏳ | O core em wasm2js (com o patch da glue) inicializa no emulador com `WebAssembly` escondido; troca automática testada |
-| 0.7 **Certificados Let's Encrypt** | ⏳ | Escolher e testar no emulador uma solução para os pôsteres (`images.metahub.space`) e para addons ou debrids com Let's Encrypt. Candidatas: proxy local num serviço JS (Node 0.12 com a CA ISRG embutida), proxy de imagens com certificado compatível, ou HTTP onde o host permitir |
+| 0.7 **Certificados Let's Encrypt** | ✅ | **Solução:** serviço JS do app (Node 0.12) com as raízes ISRG embutidas, fazendo proxy HTTPS em `127.0.0.1` (com token, só HTTPS, sem mídia); pôsteres do `images.metahub.space` e `fetch` a host Let's Encrypt funcionam no emulador (`webos/spikes/tls/`). Integração no app: Fase 3 (item 7) |
 | 0.8 Persistência | ⏳ | Sonda v1 grava localStorage e IndexedDB, sonda v2 instalada por cima lê: o login sobrevive a atualizações? |
 | 0.9 Perfil C8 no emulador | ⏳ | `emulator-qemu.sh` com CPU limitada (cgroup ou cota) e 1 GB; baseline de boot e navegação da sonda registrado |
 | 0.10 Harness de testes de mídia | ⏳ | Biblioteca de mídias sintéticas (ffmpeg) e servidor de teste (`media-server.mjs`); um cenário por boot, em lote, com relatório |
