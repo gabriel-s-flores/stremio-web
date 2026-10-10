@@ -1,4 +1,4 @@
-const { ResizeObserver } = require('@juggle/resize-observer');
+const ResizeObserver = require('resize-observer-polyfill');
 const { install } = require('../../polyfills/resize-observer');
 
 describe('ResizeObserver polyfill', () => {
