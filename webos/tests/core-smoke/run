@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+# Roda o smoke do core vendorizado num emulador reservado pelo emu-run e salva as evidências:
+#   webos/tools/build-run -- npx webpack --config webos/tests/core-smoke/webpack.config.js
+#   webos/tools/emu-run -- webos/tests/core-smoke/run [--baseline] [--app DIR] [pasta-de-saída]
+# --baseline: a mesma página com um worker vazio (sem o core), medida pelo mesmo amostrador.
+# --app: pasta do app a empacotar (padrão: build/app), por exemplo uma variante de diagnóstico.
+# POST_SECS (padrão 120): segundos de amostragem de memória depois do fim do smoke; "steady" é a
+# média dos últimos 30 s, "peak" o pior momento desde o lançamento.
+# Saída: <prefixo>.json (página + memória do convidado + carga do host), <prefixo>-mem.log,
+# <prefixo>-tela.png (QMP) e <prefixo>-app.png (CDP). Sai com 1 se o smoke falhar (app caiu,
+# timeout, ok=false ou Board incompleto).
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+TOOLS="$(cd "$HERE/../../tools" && pwd)"
+APP_ID="io.github.gabrielsflores.coresmoke"
+APP_DIR="$HERE/build/app"
+MODE=core
+POST_SECS="${POST_SECS:-120}"
+OUT_DIR=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --baseline) MODE=baseline; shift ;;
+        --app) APP_DIR="$(realpath "$2")"; shift 2 ;;
+        -*) echo "uso: run [--baseline] [--app DIR] [pasta-de-saída]" >&2; exit 2 ;;
+        *) OUT_DIR="$1"; shift ;;
+    esac
+done
+OUT_DIR="$(realpath -m "${OUT_DIR:-$HERE/build/results}")"
+BASE="$OUT_DIR/core-smoke-$MODE-$(date +%Y%m%d-%H%M%S)"
+: "${EMU_DEVICE:?rode dentro do webos/tools/emu-run}"
+[[ -f "$APP_DIR/worker.js" ]] || { echo "erro: falta o build em $APP_DIR (webpack, veja o cabeçalho)" >&2; exit 2; }
+mkdir -p "$OUT_DIR"
+
+SSH=(ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o HostKeyAlgorithms=+ssh-rsa
+     -o PubkeyAcceptedAlgorithms=+ssh-rsa -o BatchMode=yes -i "$HOME/webos-tv-sdk/run/ares_webos_emul"
+     -p "$EMU_SSH_PORT" developer@127.0.0.1)
+CDP=(node "$TOOLS/cdp.mjs" --target "$APP_ID")
+guest_now() { "${SSH[@]}" 'date +%s'; }
+# Memória do convidado a cada segundo: "<epoch> <MemAvailable kB> <nome>:<pid>:<VmRSS kB>..." para
+# os processos web (WebAppMgr e afins).
+SAMPLER='while true; do
+  a=$(grep MemAvailable /proc/meminfo | tr -s " " | cut -d" " -f2); top=""
+  for s in /proc/[0-9]*/status; do
+    n=$(sed -n "s/^Name:\t//p" "$s" 2>/dev/null); case "$n" in WebAppMgr*|*chrom*|*render*|wam*) ;; *) continue;; esac
+    k=$(sed -n "s/^VmRSS:[^0-9]*\([0-9]*\).*/\1/p" "$s" 2>/dev/null); [ -n "$k" ] || continue
+    p=${s#/proc/}; top="$top $n:${p%/status}:$k"
+  done
+  echo "$(date +%s) $a$top"; sleep 1
+done'
+
+UPTIME_START="$(uptime)"
+echo "modo: $MODE · carga do host: $UPTIME_START"
+PKG_DIR="$(mktemp -d)"
+trap 'rm -rf "$PKG_DIR"; [[ -n "${MON:-}" ]] && kill "$MON" 2>/dev/null || true' EXIT
+ares-package "$APP_DIR" -o "$PKG_DIR" >/dev/null
+ares-install -d "$EMU_DEVICE" "$PKG_DIR"/*.ipk
+
+"${SSH[@]}" "$SAMPLER" > "$BASE-mem.log" 2>/dev/null &
+MON=$!
+sleep 5
+G_LAUNCH="$(guest_now)"
+T_LAUNCH=$(date +%s%3N)
+if [[ "$MODE" == baseline ]]; then
+    ares-launch -d "$EMU_DEVICE" "$APP_ID" -p '{"mode":"baseline"}'
+else
+    ares-launch -d "$EMU_DEVICE" "$APP_ID"
+fi
+done=0
+for _ in $(seq 1 120); do
+    if "${CDP[@]}" eval 'window.__smoke && window.__smoke.done' 2>/dev/null | grep -q true; then done=1; break; fi
+    sleep 1
+done
+T_DONE=$(date +%s%3N)
+G_DONE="$(guest_now)"
+"${CDP[@]}" eval 'JSON.stringify(window.__smoke)' > "$BASE-page.json" 2>/dev/null || echo '{}' > "$BASE-page.json"
+"${CDP[@]}" screenshot "$BASE-app.png" >/dev/null 2>&1 || echo "aviso: captura CDP falhou" >&2
+"$TOOLS/emulator-qemu.sh" -i "$EMU_INSTANCE" screenshot "$BASE-tela.png" >/dev/null || echo "aviso: captura QMP falhou" >&2
+
+# Depois do fim o app ainda libera memória (~40–45 s no core); a janela estável fica no fim.
+[[ "$done" == 1 ]] || POST_SECS=15
+echo "amostrando a memória por mais $POST_SECS s"
+sleep "$POST_SECS"
+G_END="$(guest_now)"
+kill "$MON" 2>/dev/null || true
+MON=""
+"${SSH[@]}" free > "$BASE-free.txt" 2>&1 || true
+
+python3 -I - "$BASE" "$MODE" "$UPTIME_START" "$(uptime)" "$T_LAUNCH" "$T_DONE" "$done" \
+    "$G_LAUNCH" "$G_DONE" "$G_END" <<'EOF'
+import json, sys
+base, mode, up_start, up_end, t_launch, t_done, done, g_launch, g_done, g_end = sys.argv[1:]
+g_launch, g_done, g_end = int(g_launch), int(g_done), int(g_end)
+raw = open(base + '-page.json').read().strip()
+try:
+    page = json.loads(json.loads(raw)) if raw.startswith('"') else json.loads(raw)
+except ValueError:
+    page = {'raw': raw[:2000]}
+page = page if isinstance(page, dict) else {}
+
+samples = []
+for line in open(base + '-mem.log'):
+    parts = line.split()
+    if len(parts) < 2 or not parts[0].isdigit() or not parts[1].isdigit():
+        continue
+    procs = {}
+    for item in parts[2:]:
+        name, pid, rss = item.rsplit(':', 2)
+        procs[pid] = (name, int(rss))
+    samples.append({'t': int(parts[0]), 'avail': int(parts[1]), 'procs': procs})
+
+def mb(kb):
+    return round(kb / 1024, 1)
+
+def mean(xs):
+    return sum(xs) / len(xs) if xs else None
+
+before = [s for s in samples if s['t'] < g_launch]
+after = [s for s in samples if s['t'] >= g_launch]
+steady = [s for s in samples if s['t'] > g_end - 30] if done == '1' else []
+mem = {'samples': len(samples), 'beforeSamples': len(before), 'steadySamples': len(steady),
+       'steadyWindowSecsAfterDone': [g_end - 30 - g_done, g_end - g_done]}
+if before and after:
+    avail0 = mean([s['avail'] for s in before])
+    mem['memAvailableBeforeMB'] = mb(avail0)
+    mem['peak'] = {'memAvailableDropMB': mb(avail0 - min(s['avail'] for s in after))}
+    if steady:
+        mem['steady'] = {'memAvailableDropMB': mb(avail0 - mean([s['avail'] for s in steady]))}
+    procs = {}
+    for pid in sorted({pid for s in samples for pid in s['procs']}, key=int):
+        name = next(s['procs'][pid][0] for s in samples if pid in s['procs'])
+        b = [s['procs'][pid][1] for s in before if pid in s['procs']]
+        a = [s['procs'][pid][1] for s in after if pid in s['procs']]
+        st = [s['procs'][pid][1] for s in steady if pid in s['procs']]
+        procs[pid] = {'name': name, 'new': not b, 'beforeMB': mb(mean(b)) if b else None,
+                      'peakMB': mb(max(a)) if a else None, 'steadyMB': mb(mean(st)) if st else None}
+    mem['processes'] = procs
+    new = [p for p in procs.values() if p['new'] and p['peakMB']]
+    app = max(new, key=lambda p: p['peakMB']) if new else None
+    if app:
+        mem['peak']['appProcessMB'] = app['peakMB']
+        if 'steady' in mem:
+            mem['steady']['appProcessMB'] = app['steadyMB']
+    for key, field in (('peak', 'peakMB'), ('steady', 'steadyMB')):
+        if key in mem:
+            mem[key]['otherWebAppMgrDeltaMB'] = round(sum(
+                (p[field] or 0) - p['beforeMB'] for p in procs.values() if not p['new'] and p['beforeMB']), 1)
+
+failures = []
+if done != '1':
+    failures.append('a página não terminou (app caiu ou timeout)')
+if page.get('ok') is not True:
+    failures.append('ok=%s' % page.get('ok'))
+if page.get('errors'):
+    failures.append('erros na página: %s' % json.dumps(page['errors'])[:300])
+if mode == 'core':
+    board = page.get('board') or {}
+    if not board.get('catalogs') or board.get('ready') != board.get('catalogs'):
+        failures.append('Board incompleto: %s' % board)
+
+result = {
+    'mode': mode,
+    'passed': not failures,
+    'failures': failures,
+    'page': page,
+    'host': {'uptimeStart': up_start, 'uptimeEnd': up_end,
+             'launchToDoneMs': int(t_done) - int(t_launch), 'completed': done == '1'},
+    'guestMemory': mem,
+}
+json.dump(result, open(base + '.json', 'w'), indent=2, ensure_ascii=False)
+print('resultado: %s · init=%s ms · discover=%s · board=%s' % (
+    'PASSOU' if not failures else 'FALHOU: ' + '; '.join(failures),
+    page.get('timings', {}).get('initMs'), page.get('discover'), page.get('board')))
+print('memória: pico %s · estável %s' % (mem.get('peak'), mem.get('steady')))
+print(base + '.json')
+sys.exit(0 if not failures else 1)
+EOF

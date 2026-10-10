@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# Gera o @stremio/stremio-core-web 0.65.0 como WebAssembly MVP (receita A) para o webOS TV 4.x
+# (Chromium 53 / V8 5.8 só aceita o MVP; o wasm do npm usa externref, multivalue e bulk memory).
+#
+#   webos/core/build [--out DIR] [--work DIR] [--jobs N]
+#
+# Receita A: Rust 1.77.2 com gloo-utils 0.2 (recipe-a.patch), cargo build wasm32-unknown-unknown,
+# wasm-bindgen CLI 0.2.121 --target web, wasm-opt -O --signext-lowering, uma correção de uma linha
+# na glue (abaixo) e a glue, o bridge e o worker transpilados com o Babel do próprio pacote (mesmas
+# versões e .babelrc do build oficial).
+# Saída padrão: webos/vendor/stremio-core-web/ (mesmos nomes do pacote npm) + SOURCE.md.
+# Termina com o gate webos/core/check-wasm.
+#
+# Só depende do kit em ~/webos-tv-sdk: o clone em src/stremio-core (tag stremio-core-web-v0.65.0,
+# lido com git archive, sem alterar o clone), o toolchain Rust 1.77.2 (rustup), wasm-bindgen e
+# Binaryen em tools/. Crates e pacotes npm vêm dos lockfiles do upstream (cache local ou registro).
+# Use via build-run: webos/tools/build-run -- webos/core/build
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+REPO="$(cd "$HERE/../.." && pwd)"
+SDK="${WEBOS_SDK:-$HOME/webos-tv-sdk}"
+CLONE="$SDK/src/stremio-core"
+TAG="stremio-core-web-v0.65.0"
+TAG_COMMIT="fa22c9ca8b8574fe7a72460023d05beff2b74026"
+VERSION="0.65.0-mvp"
+TOOLCHAIN="1.77.2"
+BINDGEN="$SDK/tools/bin/wasm-bindgen-0.2.121"
+WASM_OPT="$SDK/tools/binaryen-version_133/bin/wasm-opt"
+PATCH="$HERE/recipe-a.patch"
+OUT="$REPO/webos/vendor/stremio-core-web"
+WORK="$SDK/run/core-build"
+JOBS=4
+FILES=(bridge.js worker.js stremio_core_web.js stremio_core_web_bg.wasm package.json)
+# bridge.js e worker.js não dependem do wasm: têm de sair iguais aos do npm 0.65.0.
+NPM_SHA256="51c490dcde610baad20f6bf0c2cfc87e6b886830c2c6f80080ce4a7a796199d1  bridge.js
+455af735f709befb35ea2b66ae70059551413d39fab5154b8de94823c288ddcc  worker.js"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --out) OUT="$2"; shift 2 ;;
+        --work) WORK="$2"; shift 2 ;;
+        --jobs) JOBS="$2"; shift 2 ;;
+        *) echo "uso: build [--out DIR] [--work DIR] [--jobs N]" >&2; exit 1 ;;
+    esac
+done
+
+step() { echo "==> [$(date +%T)] $*"; }
+T0=$SECONDS
+
+step "conferindo ferramentas"
+rustup run "$TOOLCHAIN" rustc -V
+rustup +"$TOOLCHAIN" target list --installed | grep -qx wasm32-unknown-unknown \
+    || { echo "erro: falta o alvo wasm32-unknown-unknown no Rust $TOOLCHAIN" >&2; exit 1; }
+"$BINDGEN" --version
+"$WASM_OPT" --version
+node --version
+COMMIT="$(git -C "$CLONE" rev-parse "$TAG^{commit}")"
+echo "upstream: $TAG ($COMMIT)"
+[[ "$COMMIT" == "$TAG_COMMIT" ]] \
+    || { echo "erro: a tag $TAG aponta para $COMMIT no clone (esperado $TAG_COMMIT)" >&2; exit 1; }
+
+step "autoteste do gate"
+"$HERE/check-wasm-selftest" > /dev/null || { "$HERE/check-wasm-selftest" >&2; exit 1; }
+echo "check-wasm-selftest: ok"
+
+step "extraindo $TAG em $WORK/src"
+SRC="$WORK/src"
+rm -rf "$SRC" "$WORK/target"
+mkdir -p "$SRC"
+git -C "$CLONE" archive "$TAG" | tar -x -C "$SRC"
+patch -d "$SRC" -p1 --forward --quiet < "$PATCH"
+
+step "cargo build (Rust $TOOLCHAIN, wasm32-unknown-unknown, release)"
+# Caminhos absolutos entram nas mensagens de panic; o remap deixa o binário igual em qualquer
+# pasta de trabalho ou máquina.
+CARGO_DIR="${CARGO_HOME:-$HOME/.cargo}"
+(
+    cd "$SRC/stremio-core-web"
+    unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS CARGO_BUILD_RUSTFLAGS
+    export RUSTUP_TOOLCHAIN="$TOOLCHAIN" CARGO_TARGET_DIR="$WORK/target" \
+        RUSTFLAGS="--remap-path-prefix=$SRC=/stremio-core --remap-path-prefix=$CARGO_DIR=/cargo"
+    cargo build --release --locked --target wasm32-unknown-unknown --jobs "$JOBS"
+)
+
+step "wasm-bindgen --target web"
+"$BINDGEN" --target web --no-typescript --out-dir "$SRC/stremio-core-web/wasm_build" \
+    "$WORK/target/wasm32-unknown-unknown/release/stremio_core_web.wasm"
+
+step "glue: TextDecoder recebe cópia da memória wasm"
+# No Chromium 53 do webOS, certos usos de uma view do memory.buffer seguidos de memory.grow derrubam
+# o processo do app (medido no emulador): TextDecoder.decode(view), crypto.getRandomValues(view) e
+# até new Uint8Array(view) depois de escrever na view. O core caía no primeiro grow, em
+# get_state('ctx'), pelo TextDecoder da glue; com slice() ele recebe uma cópia. O resto da glue só
+# usa padrões validados no emulador (escrita indexada na view inteira, subarray().set(), DataView).
+# Qualquer outro uso de view da memória precisa de repro no emulador antes.
+node -e '
+    const fs = require("fs");
+    const file = process.argv[1];
+    const from = "cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len))";
+    const src = fs.readFileSync(file, "utf8");
+    const count = src.split(from).length - 1;
+    if (count !== 1) {
+        console.error("erro: trecho da glue encontrado " + count + " vezes (esperado 1): " + from);
+        process.exit(1);
+    }
+    fs.writeFileSync(file, src.replace(from, from.replace(".subarray(", ".slice(")));
+' "$SRC/stremio-core-web/wasm_build/stremio_core_web.js"
+
+step "wasm-opt -O --signext-lowering"
+"$WASM_OPT" -O --signext-lowering "$SRC/stremio-core-web/wasm_build/stremio_core_web_bg.wasm" \
+    -o "$SRC/stremio-core-web/stremio_core_web_bg.wasm"
+
+step "Babel (devDependencies e .babelrc do upstream)"
+(
+    cd "$SRC/stremio-core-web"
+    # O preset-env não tem targets: sem browserslist do ambiente ele gera ES5, como o build oficial.
+    unset BROWSERSLIST BROWSERSLIST_ENV BROWSERSLIST_CONFIG BROWSERSLIST_STATS
+    npm ci --ignore-scripts --no-audit --no-fund --prefer-offline --loglevel=error
+    BABEL=./node_modules/.bin/babel
+    "$BABEL" wasm_build/stremio_core_web.js --config-file ./.babelrc --out-file stremio_core_web.js
+    "$BABEL" src/bridge.js --config-file ./.babelrc --out-file bridge.js
+    "$BABEL" src/worker.js --config-file ./.babelrc --out-file worker.js
+    echo "$NPM_SHA256" | sha256sum --quiet -c - \
+        || { echo "erro: bridge.js/worker.js diferentes dos do npm 0.65.0 (Babel ou ambiente)" >&2; exit 1; }
+    node -e '
+        const fs = require("fs");
+        const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+        pkg.version = process.argv[1];
+        fs.writeFileSync("package.mvp.json", JSON.stringify(pkg, null, 4) + "\n");
+    ' "$VERSION"
+)
+
+step "copiando para $OUT"
+mkdir -p "$OUT"
+for f in "${FILES[@]}"; do rm -f "$OUT/$f"; done
+cp "$SRC/stremio-core-web/"{bridge.js,worker.js,stremio_core_web.js,stremio_core_web_bg.wasm} "$OUT/"
+cp "$SRC/stremio-core-web/package.mvp.json" "$OUT/package.json"
+
+step "SOURCE.md"
+BABEL_VERSIONS="$(cd "$SRC/stremio-core-web" && node -p '
+    ["@babel/core", "@babel/cli", "@babel/preset-env", "@babel/plugin-transform-runtime",
+     "babel-plugin-bundled-import-meta"]
+        .map((n) => n + " " + require("./node_modules/" + n + "/package.json").version).join(", ")')"
+{
+    cat <<EOF
+# @stremio/stremio-core-web $VERSION (WebAssembly MVP)
+
+Gerado por \`webos/core/build\`. Não edite à mão: rode o script de novo.
+
+- **Upstream:** https://github.com/Stremio/stremio-core, tag \`$TAG\` (commit \`$COMMIT\`), pasta \`stremio-core-web\`
+- **Patch:** \`webos/core/recipe-a.patch\` (sha256 \`$(sha256sum "$PATCH" | cut -d' ' -f1)\`): \`gloo-utils\` 0.3 → 0.2, a única dependência do lockfile que exige Rust acima de 1.77
+- **Rust:** $(rustup run "$TOOLCHAIN" rustc -V), \`cargo build --release --locked --target wasm32-unknown-unknown\` com \`--remap-path-prefix\` da pasta de trabalho e do \`CARGO_HOME\`
+- **wasm-bindgen:** $("$BINDGEN" --version), \`--target web --no-typescript\`
+- **Binaryen:** $("$WASM_OPT" --version), \`wasm-opt -O --signext-lowering\`
+- **Babel:** $BABEL_VERSIONS, com o \`.babelrc\` do upstream (como \`scripts/build.sh\`)
+- **Glue:** em \`getStringFromWasm0\`, \`TextDecoder.decode\` recebe \`slice()\` (cópia) em vez de \`subarray()\` (view da memória wasm). No Chromium 53 do webOS, certos usos de uma view do \`memory.buffer\` seguidos de \`memory.grow\` derrubam o processo do app (\`TextDecoder.decode(view)\`, \`crypto.getRandomValues(view)\`, \`new Uint8Array(view)\` depois de escrever na view). O resto da glue só usa padrões validados no emulador (escrita indexada na view inteira, \`subarray().set()\`, \`DataView\`); qualquer outro uso de view da memória precisa de repro no emulador antes
+- **Diferenças para o pacote npm:** só o \`stremio_core_web_bg.wasm\` (MVP), a glue \`stremio_core_web.js\` gerada para ele (com a correção acima) e a versão \`$VERSION\` no \`package.json\`. O \`bridge.js\` e o \`worker.js\` saem da mesma fonte e do mesmo Babel. \`README.md\` e \`rust-toolchain.toml\` do pacote npm não são copiados.
+
+## Checksums (sha256)
+
+| Arquivo | Bytes | sha256 |
+|---|---|---|
+EOF
+    for f in "${FILES[@]}"; do
+        echo "| \`$f\` | $(stat -c %s "$OUT/$f") | \`$(sha256sum "$OUT/$f" | cut -d' ' -f1)\` |"
+    done
+} > "$OUT/SOURCE.md"
+
+step "gate: check-wasm"
+"$HERE/check-wasm" "$OUT/stremio_core_web_bg.wasm"
+
+step "pronto em $((SECONDS - T0)) s"
+(cd "$OUT" && sha256sum "${FILES[@]}")
