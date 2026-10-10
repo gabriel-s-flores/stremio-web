@@ -172,7 +172,8 @@ const main = async () => {
 
     // 2. HOME, then OK on the launcher: the highlighted tile is another full-screen app, which covers
     // this one for real (visibilitychange, document.hidden). The system takes the focus and the
-    // scroll while the app is behind; the relaunch must bring everything back.
+    // scroll while the app is behind (the emulator does not do that by itself: the step takes them away
+    // over CDP, which proves the restore, not that the system drops the focus); the relaunch must bring everything back.
     remote('OK');
     await sleep(3500);
     const covered = state();
@@ -206,6 +207,15 @@ const main = async () => {
     await sleep(2500);
     const outside = state();
     record('deep-link-outside-app', { ok: outside.hash === '#/settings', note: outside.hash, state: outside, relaunch: lastOf(lifecycleLog(), 'relaunch') });
+    // The query string never reaches the route: ?streamingServerUrl= would save and activate a streaming server.
+    relaunch({ contentTarget: '/discover?streamingServerUrl=http%3A%2F%2F127.0.0.1%3A12345%2F' });
+    await sleep(3000);
+    const query = state();
+    record('deep-link-query-dropped', { ok: query.hash === '#/discover', note: query.hash, state: query, relaunch: lastOf(lifecycleLog(), 'relaunch') });
+    relaunch({ contentTarget: '/addons?addon=https%3A%2F%2Fevil.example%2Fmanifest.json' });
+    await sleep(3000);
+    const addon = state();
+    record('deep-link-addon-query-dropped', { ok: addon.hash === '#/addons', note: addon.hash, state: addon, relaunch: lastOf(lifecycleLog(), 'relaunch') });
     relaunch({ contentTarget: 'stremio:///detail/movie/tt0111161' });
     await sleep(3500);
     const detail = state();

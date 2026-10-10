@@ -25,9 +25,11 @@ so it exists only in the `WEBOS=1` build. Nothing runs at boot except adding fou
 | `blur` / `focus` (HOME bar) | Snapshot on `blur`; on `focus`, put the focus back if the system took it. The player is **not** paused: a TV keeps playing under the launcher bar. |
 | Cold start | If `PalmSystem.launchParams` carries a deep link, open it. |
 
-**Play guard** (`media.js`): while armed (in the background and 5 s after coming back), a `play`
-that no key or click caused is paused again; the first key/click hands play back to the user. This
-is what keeps the player paused after the system's own resume. The Player UI follows by the
+**Play guard** (`media.js`): armed with the media elements that existed when the app went away,
+in the background and for 5 s after coming back. A `play` of one of those that no key or click
+caused is paused again, once per element (the system's resume is one `play`); elements created
+later (the next episode) are never touched, and the first key/click disarms the guard. This is
+what keeps the player paused after the system's own resume. The Player UI follows by the
 elements' `pause` event (stremio-video listens to it), without a call into React.
 
 The App already refreshes addons, user, library and notifications on `window` `focus`; the
@@ -37,7 +39,10 @@ lifecycle only makes sure the window has the focus when the app comes back.
 
 Deep link keys: `contentTarget` (the one LG uses for content launches), `deepLink`, `deeplink`,
 `route`. Values: `stremio:///detail/movie/tt0111161`, `#/discover`, `/library/movie`.
-Only these screens are accepted: board, discover, library, calendar, continuewatching, search,
+The query string and fragment are **dropped**, except `search` (max 200 characters) on the search
+route: `?streamingServerUrl=` saves and activates a streaming server and `/addons?addon=<url>`
+opens an addon by URL, and a launch must not do either (P3, no confirmation). `.`/`..` segments
+(also percent-encoded) and `//` are rejected. Only these screens are accepted: board, discover, library, calendar, continuewatching, search,
 metadetails (`/detail/...`), addons, settings. Anything else (external URL, `/player/...`, `/intro`,
 `..`, `//host`) is ignored.
 

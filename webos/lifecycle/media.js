@@ -27,20 +27,26 @@ const pauseMedia = (doc) => {
 // Media that starts by itself around a trip to the background. Measured on the emulator: when the
 // page is hidden the system pauses the playing <video> on its own (before visibilitychange runs),
 // and resumes it ~0.2 s after the app comes back, with no JS involved. A load that was still
-// buffering would do the same. Neither is what the user asked for, so while the guard is armed a
-// `play` that no key or click caused is paused again (`play` does not bubble: it is caught in the
-// capture phase of the document). The first key or click disarms it: from then on, play is the
-// user's.
+// buffering would do the same. Neither is what the user asked for.
+//
+// The guard is armed with the media elements that existed when the app went away (listMedia) and
+// pauses a `play` of those that no key or click caused, once per element: the system's resume is
+// one `play`, and an element the app creates later (the next episode) is never touched. `play`
+// does not bubble: it is caught in the capture phase of the document. The first key or click
+// disarms the guard: from then on, play is the user's.
 const INPUT_EVENTS = ['keydown', 'mousedown', 'click', 'touchstart'];
+
+const listMedia = (doc) => Array.prototype.slice.call(doc.querySelectorAll(MEDIA_SELECTOR));
 
 const createPlayGuard = (win) => {
     const doc = win.document;
-    let armed = false;
+    let pending = null;
     let timer = null;
 
     const onPlay = (event) => {
         const element = event.target;
-        if (armed && element && typeof element.pause === 'function' && /^(video|audio)$/i.test(element.tagName || '')) {
+        if (pending !== null && pending.has(element)) {
+            pending.delete(element);
             element.pause();
         }
     };
@@ -50,18 +56,18 @@ const createPlayGuard = (win) => {
             win.clearTimeout(timer);
             timer = null;
         }
-        if (!armed) {
+        if (pending === null) {
             return;
         }
-        armed = false;
+        pending = null;
         doc.removeEventListener('play', onPlay, true);
         INPUT_EVENTS.forEach((type) => doc.removeEventListener(type, disarm, true));
     };
 
     // durationMs 0: until disarm() (the app is in the background and nobody can press anything).
-    const arm = (durationMs = 0) => {
+    const arm = (elements, durationMs = 0) => {
         disarm();
-        armed = true;
+        pending = new Set(elements);
         doc.addEventListener('play', onPlay, true);
         INPUT_EVENTS.forEach((type) => doc.addEventListener(type, disarm, true));
         if (durationMs > 0) {
@@ -69,10 +75,11 @@ const createPlayGuard = (win) => {
         }
     };
 
-    return { arm, disarm, isArmed: () => armed };
+    return { arm, disarm, isArmed: () => pending !== null };
 };
 
 module.exports = {
     pauseMedia,
+    listMedia,
     createPlayGuard,
 };

@@ -12,8 +12,9 @@
 // What the app does with it:
 // - hidden: pause the player (and any media); take a snapshot of focus and scroll. The system pauses
 //   a playing <video> by itself when the page is hidden and resumes it when the app is back: a
-//   guard (media.js) pauses that `play` again, in the background and for RESUME_GUARD_MS after
-//   coming back, unless a key or click came first. Nothing resumes the media: that is the user's.
+//   guard (media.js) pauses that `play` again (once per element that existed when the app went
+//   away), in the background and for RESUME_GUARD_MS after coming back, unless a key or click came
+//   first. Nothing resumes the media: that is the user's.
 // - visible / relaunch / window focus: put the focus and scroll back if the system took them;
 //   window.focus() so the App's own `focus` refresh (addons, user, library, notifications) runs
 //   when the window had none.
@@ -22,7 +23,7 @@
 // - Recent events are kept in window.__webosLifecycle for the emulator tests (bounded).
 
 const { resolveDeepLink } = require('./launchParams');
-const { pauseMedia, createPlayGuard } = require('./media');
+const { pauseMedia, listMedia, createPlayGuard } = require('./media');
 const { capture, restore, describeElement } = require('./snapshot');
 
 const MAX_LOG_ENTRIES = 50;
@@ -34,6 +35,7 @@ const createLifecycle = ({ window: win, onDeepLink, now = Date.now }) => {
     const log = [];
     let snapshot = null;
     let background = false;
+    let guarded = [];
     const playGuard = createPlayGuard(win);
     let started = false;
 
@@ -84,9 +86,15 @@ const createLifecycle = ({ window: win, onDeepLink, now = Date.now }) => {
             return;
         }
         background = true;
+        // The `blur` just before (HOME, then a tile) may have seen the focus that is already gone.
+        const previous = snapshot;
         const taken = takeSnapshot();
+        if (taken.focus === null && previous !== null && previous.focus !== null && previous.hash === taken.hash) {
+            snapshot = previous;
+        }
         const paused = pauseMedia(doc).length;
-        playGuard.arm();
+        guarded = listMedia(doc);
+        playGuard.arm(guarded);
         record('background', { reason, paused, focus: describeElement(taken.focus), hash: taken.hash });
     };
 
@@ -95,7 +103,7 @@ const createLifecycle = ({ window: win, onDeepLink, now = Date.now }) => {
             return;
         }
         background = false;
-        playGuard.arm(RESUME_GUARD_MS);
+        playGuard.arm(guarded, RESUME_GUARD_MS);
         if (typeof win.focus === 'function' && typeof doc.hasFocus === 'function' && !doc.hasFocus()) {
             win.focus();
         }
@@ -183,6 +191,7 @@ const createLifecycle = ({ window: win, onDeepLink, now = Date.now }) => {
         win.removeEventListener('blur', onBlur);
         win.removeEventListener('focus', onFocus);
         playGuard.disarm();
+        guarded = [];
         background = false;
         snapshot = null;
     };

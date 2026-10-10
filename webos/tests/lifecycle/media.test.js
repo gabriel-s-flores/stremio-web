@@ -1,4 +1,4 @@
-const { pauseMedia, createPlayGuard } = require('../../lifecycle/media');
+const { pauseMedia, listMedia, createPlayGuard } = require('../../lifecycle/media');
 const { createWindow } = require('./helpers');
 
 describe('pauseMedia', () => {
@@ -40,12 +40,17 @@ describe('pauseMedia', () => {
 });
 
 describe('createPlayGuard', () => {
-    test('while armed, a play nobody asked for is paused again', () => {
+    const setup = () => {
         const win = createWindow();
         const video = win.document.create('video');
         const guard = createPlayGuard(win);
+        return { win, video, guard };
+    };
 
-        guard.arm();
+    test('while armed, a play of the guarded elements nobody asked for is paused again', () => {
+        const { win, video, guard } = setup();
+
+        guard.arm(listMedia(win.document));
         video.play();
         expect(video.paused).toBe(true);
 
@@ -55,16 +60,31 @@ describe('createPlayGuard', () => {
         expect(win.document.listenerCount('play')).toBe(0);
     });
 
-    test('a timed guard expires', () => {
-        const win = createWindow();
-        const video = win.document.create('video');
-        const guard = createPlayGuard(win);
+    test('once per element: the system resumes once, a later play is the app\'s', () => {
+        const { win, video, guard } = setup();
+        guard.arm(listMedia(win.document), 5000);
 
-        guard.arm(5000);
-        win.advance(4999);
-        expect(guard.isArmed()).toBe(true);
         video.play();
         expect(video.paused).toBe(true);
+        video.play();
+        expect(video.paused).toBe(false);
+    });
+
+    test('an element created after the guard was armed is never touched', () => {
+        const { win, guard } = setup();
+        guard.arm(listMedia(win.document), 5000);
+        const next = win.document.create('video');
+
+        next.play();
+        expect(next.paused).toBe(false);
+    });
+
+    test('a timed guard expires', () => {
+        const { win, video, guard } = setup();
+
+        guard.arm([video], 5000);
+        win.advance(4999);
+        expect(guard.isArmed()).toBe(true);
 
         win.advance(1);
         expect(guard.isArmed()).toBe(false);
@@ -74,11 +94,9 @@ describe('createPlayGuard', () => {
     });
 
     test.each(['keydown', 'mousedown', 'click', 'touchstart'])('the first %s hands play back to the user', (type) => {
-        const win = createWindow();
-        const video = win.document.create('video');
-        const guard = createPlayGuard(win);
+        const { win, video, guard } = setup();
 
-        guard.arm(5000);
+        guard.arm([video], 5000);
         win.document.dispatch(type);
         expect(guard.isArmed()).toBe(false);
         video.play();
@@ -87,21 +105,20 @@ describe('createPlayGuard', () => {
     });
 
     test('arming again starts over, without stacking listeners', () => {
-        const win = createWindow();
-        const guard = createPlayGuard(win);
-        guard.arm();
-        guard.arm(5000);
-        guard.arm(5000);
+        const { win, video, guard } = setup();
+        guard.arm([video]);
+        guard.arm([video], 5000);
+        guard.arm([video], 5000);
         expect(win.document.listenerCount('play')).toBe(1);
         expect(win.document.listenerCount('keydown')).toBe(1);
         expect(win.pendingTimers()).toBe(1);
     });
 
     test('ignores play events of other elements', () => {
-        const win = createWindow();
+        const { win, guard } = setup();
         const other = win.document.create('div');
         other.pause = jest.fn();
-        createPlayGuard(win).arm();
+        guard.arm(listMedia(win.document));
         win.document.listeners.play.forEach(({ listener }) => listener({ type: 'play', target: other }));
         expect(other.pause).not.toHaveBeenCalled();
     });

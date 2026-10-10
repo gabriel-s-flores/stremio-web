@@ -25,6 +25,11 @@ describe('toRoutePath', () => {
         ['/addons', '/addons'],
         ['/settings', '/settings'],
         ['/search?search=matrix', '/search?search=matrix'],
+        ['/search?search=a%20b', '/search?search=a%20b'],
+        ['/search?search=matrix&streamingServerUrl=http%3A%2F%2F127.0.0.1%3A12345%2F', '/search?search=matrix'],
+        ['/search?query=matrix', '/search'],
+        ['/search?search=', '/search'],
+        ['/discover/http%3A%2F%2Fa.example%2Fmanifest.json/movie/top', '/discover/http%3A%2F%2Fa.example%2Fmanifest.json/movie/top'],
         ['/', '/'],
     ])('%s -> %s', (target, expected) => {
         expect(toRoutePath(target)).toBe(expected);
@@ -38,7 +43,12 @@ describe('toRoutePath', () => {
         '/intro',
         '/unknown',
         '/discover/../settings',
+        '/detail/../player/x',
+        '/detail/%2e%2E/player/x',
+        '/detail/movie/%2e/x',
+        '/detail//movie/tt1',
         '//evil.example.com/discover',
+        '/discover#fragment',
         '/discover\\evil',
         '/detail/movie',
         '',
@@ -48,6 +58,30 @@ describe('toRoutePath', () => {
         undefined,
     ])('%p is not an in-app target', (target) => {
         expect(toRoutePath(target)).toBeNull();
+    });
+});
+
+describe('query string', () => {
+    // Screens read settings from the query: ?streamingServerUrl= saves and activates a streaming
+    // server (SearchParamsHandler), /addons?addon= opens an addon by URL. A launch must not do either.
+    test.each([
+        ['/discover?streamingServerUrl=http%3A%2F%2F127.0.0.1%3A12345%2F', '/discover'],
+        ['/addons?addon=https%3A%2F%2Fevil.example%2Fmanifest.json', '/addons'],
+        ['/addons?addon=https://evil.example/manifest.json', '/addons'],
+        ['/settings?streamingServerUrl=http://10.0.0.1:11470', '/settings'],
+        ['/detail/movie/tt0111161?x=http://a', '/detail/movie/tt0111161'],
+        ['stremio:///library?streamingServerUrl=http%3A%2F%2F127.0.0.1%3A1', '/library'],
+    ])('%s -> %s', (target, expected) => {
+        expect(toRoutePath(target)).toBe(expected);
+        expect(resolveDeepLink({ contentTarget: target })).toBe(expected);
+    });
+
+    test('the search text is the only thing the query keeps, once', () => {
+        expect(toRoutePath('/search?streamingServerUrl=x&search=a&search=b')).toBe('/search?search=a');
+    });
+
+    test('a very long search is dropped', () => {
+        expect(toRoutePath(`/search?search=${'a'.repeat(201)}`)).toBe('/search');
     });
 });
 

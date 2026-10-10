@@ -67,6 +67,17 @@ describe('visibilitychange', () => {
         expect(t.video.paused).toBe(false);
     });
 
+    test('only the resume is paused again: a video the app creates later plays', () => {
+        const t = setup();
+        t.lifecycle.start();
+        hide(t);
+        show(t);
+
+        const next = t.doc.create('video');
+        next.play();
+        expect(next.paused).toBe(false);
+    });
+
     test('the resume guard expires: playback the user started later is left alone', () => {
         const t = setup();
         t.lifecycle.start();
@@ -125,6 +136,22 @@ describe('visibilitychange', () => {
         t.lifecycle.start();
         expect(t.video.paused).toBe(true);
         expect(t.last()).toMatchObject({ type: 'background', reason: 'start' });
+    });
+});
+
+describe('snapshot', () => {
+    test('the focus seen at blur survives a background snapshot taken after the system dropped it', () => {
+        const t = setup();
+        t.lifecycle.start();
+        t.card.focus();
+
+        t.win.dispatch('blur');
+        t.doc.activeElement = t.doc.body;
+        hide(t);
+        show(t);
+
+        expect(t.doc.activeElement).toBe(t.card);
+        expect(t.last().restored.focus).toBe('restored');
     });
 });
 
