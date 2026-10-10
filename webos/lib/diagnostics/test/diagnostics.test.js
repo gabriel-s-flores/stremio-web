@@ -314,3 +314,52 @@ describe('registry', () => {
         expect(registry.getSections().map((section) => section.title)).toEqual(['A2']);
     });
 });
+
+describe('remote shortcut', () => {
+    const { COLOR_KEYS, SEQUENCE, createSequenceMatcher, installDiagnosticsShortcut } = require('../shortcut');
+
+    it('matches the four colour keys in order within the gap', () => {
+        const match = createSequenceMatcher(SEQUENCE, 2500);
+        expect(SEQUENCE).toEqual([403, 404, 405, 406]);
+        expect([403, 404, 405].map((key, index) => match(key, index * 500))).toEqual([false, false, false]);
+        expect(match(406, 1500)).toBe(true);
+        // starts over after a match
+        expect(match(406, 1600)).toBe(false);
+    });
+
+    it('restarts on a wrong key or a long pause, and a repeated first key counts as the first', () => {
+        const match = createSequenceMatcher(SEQUENCE, 2500);
+        [403, 404].forEach((key, index) => match(key, index * 100));
+        expect(match(13, 300)).toBe(false); // OK key in the middle
+        expect(match(405, 400)).toBe(false);
+        expect(match(406, 500)).toBe(false);
+        // red, red, green, yellow, blue
+        [403, 403, 404, 405].forEach((key, index) => match(key, 1000 + index * 100));
+        expect(match(406, 1500)).toBe(true);
+        // pause longer than the gap between yellow and blue
+        [403, 404, 405].forEach((key, index) => match(key, 10000 + index * 100));
+        expect(match(406, 10200 + 2600)).toBe(false);
+    });
+
+    it('listens on the window and opens the screen; stops listening when asked', () => {
+        const listeners = {};
+        const win = {
+            addEventListener: (type, fn, capture) => { listeners[type] = { fn, capture }; },
+            removeEventListener: (type) => { delete listeners[type]; },
+            location: { hash: '#/' },
+        };
+        const stop = installDiagnosticsShortcut(win);
+        expect(listeners.keydown.capture).toBe(true);
+        Object.values(COLOR_KEYS).forEach((keyCode) => listeners.keydown.fn({ keyCode }));
+        expect(win.location.hash).toBe('#/webos-diagnostics');
+        win.location.hash = '#/';
+        Object.values(COLOR_KEYS).forEach((keyCode) => listeners.keydown.fn({ keyCode, repeat: true }));
+        expect(win.location.hash).toBe('#/');
+        stop();
+        expect(listeners.keydown).toBeUndefined();
+    });
+
+    it('does nothing without a window', () => {
+        expect(installDiagnosticsShortcut(null, {})).toBeInstanceOf(Function);
+    });
+});

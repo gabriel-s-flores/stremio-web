@@ -1,0 +1,161 @@
+// webOS TV 4.x build only (F3.6): the diagnostics screen, opened at #/webos-diagnostics and from
+// Settings. Everything it collects is read when the screen opens (and on Refresh), never at boot.
+// The data comes from webos/lib/diagnostics; see the README there.
+
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Button, HorizontalNavBar } from 'stremio/components';
+import corePackage from '@stremio/stremio-core-web/package.json';
+import { collectDiagnostics, formatReport, getRequestedVariant, setRequestedVariant } from '../../../webos/lib/diagnostics';
+import styles from './WebosDiagnostics.less';
+
+type Row = [string, string];
+type Section = { id: string, title: string, rows: Row[] };
+type Report = { generatedAt: string, sections: Section[] };
+
+const REPORT_STORAGE_KEY = 'webos.diagnostics.report';
+
+// A developer tool for the Phase 8 session: English only, outside the translated UI (and the
+// i18n scan, which looks for literal JSX text).
+const LABELS = {
+    title: 'Diagnostics',
+    refresh: 'Refresh',
+    copy: 'Copy report',
+    save: 'Save report',
+    collecting: 'Collecting…',
+    report: 'Report (selectable text)',
+};
+
+const WebosDiagnostics = () => {
+    const [report, setReport] = useState<Report | null>(null);
+    const [reportText, setReportText] = useState('');
+    const [notice, setNotice] = useState('');
+    const [requested, setRequested] = useState<string | null>(() => getRequestedVariant(window.localStorage));
+    const firstButtonRef = useRef<HTMLDivElement>(null);
+    const textRef = useRef<HTMLPreElement>(null);
+    const mounted = useRef(true);
+
+    const collect = useCallback(() => {
+        setNotice('');
+        collectDiagnostics({
+            app: {
+                version: process.env.VERSION,
+                commit: process.env.COMMIT_HASH,
+                coreVersion: corePackage.version,
+            },
+        }).then((nextReport: Report) => {
+            if (!mounted.current) return;
+            const text = formatReport(nextReport);
+            // For CDP probes and the Phase 8 session over the inspector.
+            const webos = (window as unknown as { __webos?: Record<string, unknown> }).__webos;
+            if (webos) {
+                webos.diagnostics = nextReport;
+                webos.diagnosticsText = text;
+            }
+            setReport(nextReport);
+            setReportText(text);
+        });
+    }, []);
+
+    useEffect(() => {
+        mounted.current = true;
+        collect();
+        firstButtonRef.current?.focus();
+        return () => {
+            mounted.current = false;
+        };
+    }, [collect]);
+
+    const onSwitchVariant = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+        const variant = event.currentTarget.dataset.variant;
+        setRequestedVariant(window.localStorage, variant === 'default' ? null : variant!);
+        setRequested(getRequestedVariant(window.localStorage));
+        // The loader reads the key when the worker starts: a new page load restarts the core.
+        window.location.reload();
+    }, []);
+
+    const onCopy = useCallback(() => {
+        const block = textRef.current;
+        const selection = window.getSelection();
+        if (!block || !selection) return;
+        // Select the block (a Magic Remote can also drag over it) and copy the selection.
+        const range = document.createRange();
+        range.selectNodeContents(block);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        let copied = false;
+        try {
+            copied = document.execCommand('copy');
+        } catch {
+            copied = false;
+        }
+        setNotice(copied ? 'Copied to the clipboard.' : 'Text selected, but there is no clipboard here: read the block below or use Save.');
+    }, []);
+
+    const onSave = useCallback(() => {
+        try {
+            window.localStorage.setItem(REPORT_STORAGE_KEY, reportText);
+            // eslint-disable-next-line no-console
+            console.info('[webos-diagnostics]\n' + reportText);
+            setNotice('Saved to localStorage "' + REPORT_STORAGE_KEY + '" and logged to the console.');
+        } catch (error) {
+            setNotice('Could not save: ' + String((error as Error).message || error));
+        }
+    }, [reportText]);
+
+    const variantButton = (variant: string, label: string) => (
+        <Button
+            className={styles['action']}
+            title={label}
+            data-variant={variant}
+            onClick={onSwitchVariant}
+        >
+            {label}{(variant === 'default' ? requested === null : requested === variant) ? ' (current)' : ''}
+        </Button>
+    );
+
+    return (
+        <div className={styles['diagnostics-container']}>
+            <HorizontalNavBar
+                className={styles['nav-bar']}
+                title={LABELS.title}
+                backButton={true}
+                navMenu={true}
+            />
+            <div className={styles['diagnostics-content']}>
+                <div className={styles['actions']}>
+                    <Button ref={firstButtonRef} className={styles['action']} title={LABELS.refresh} onClick={collect}>{LABELS.refresh}</Button>
+                    <Button className={styles['action']} title={LABELS.copy} onClick={onCopy}>{LABELS.copy}</Button>
+                    <Button className={styles['action']} title={LABELS.save} onClick={onSave}>{LABELS.save}</Button>
+                    {variantButton('wasm2js', 'Core: wasm2js + restart')}
+                    {variantButton('wasm', 'Core: WebAssembly + restart')}
+                    {variantButton('default', 'Core: default + restart')}
+                </div>
+                {notice ? <div className={styles['notice']}>{notice}</div> : null}
+                {
+                    report === null ?
+                        <div className={styles['notice']}>{LABELS.collecting}</div>
+                        :
+                        report.sections.map((section) => (
+                            <div key={section.id} className={styles['section']} tabIndex={0}>
+                                <h3 className={styles['section-title']}>{section.title}</h3>
+                                {
+                                    section.rows.map(([label, value], index) => (
+                                        <div key={index} className={styles['row']}>
+                                            <div className={styles['row-label']}>{label}</div>
+                                            <div className={styles['row-value']}>{value}</div>
+                                        </div>
+                                    ))
+                                }
+                            </div>
+                        ))
+                }
+                <div className={styles['section']} tabIndex={0}>
+                    <h3 className={styles['section-title']}>{LABELS.report}</h3>
+                    <pre ref={textRef} className={styles['report']}>{reportText}</pre>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default WebosDiagnostics;
