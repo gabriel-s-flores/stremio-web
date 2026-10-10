@@ -1,0 +1,25 @@
+{
+    "id": "kit-hevc10-mkv",
+    "source": "kit:kit-hevc10.mkv",
+    "size": 1329702,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 32768
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 32768
+        },
+        {
+            "offset": 47313,
+            "length": 32768
+        },
+        {
+            "offset": 86521,
+            "length": 32768
+        }
+    ],
+    "bytes": 98304,
+    "sha256": "bba55564eecb320278b2fb951582530039f114819fd18c6d36bde2c8e08d13be"
+}

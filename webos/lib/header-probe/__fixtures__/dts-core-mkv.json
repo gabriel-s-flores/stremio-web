@@ -1,0 +1,17 @@
+{
+    "id": "dts-core-mkv",
+    "source": "https://raw.githubusercontent.com/androidx/media/8c6678b657ede1e7883fc164ef73ed483c7796c3/libraries/test_data/src/test/assets/media/mkv/sample_with_dts.mkv",
+    "size": 45877,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 32768
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 32768
+        }
+    ],
+    "bytes": 32768,
+    "sha256": "845035295f02fb6466babc1c9109db769988119ae1ec0234b51537eab827e7e3"
+}

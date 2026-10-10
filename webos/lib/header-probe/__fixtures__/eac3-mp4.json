@@ -1,0 +1,17 @@
+{
+    "id": "eac3-mp4",
+    "source": "https://raw.githubusercontent.com/androidx/media/8c6678b657ede1e7883fc164ef73ed483c7796c3/libraries/test_data/src/test/assets/media/mp4/sample_eac3.mp4",
+    "size": 216898,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 4096
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 4096
+        }
+    ],
+    "bytes": 4096,
+    "sha256": "402f909775e6b4c23b1e7f6a31cdf0aedb5786132451249edec0d9d86f803d80"
+}

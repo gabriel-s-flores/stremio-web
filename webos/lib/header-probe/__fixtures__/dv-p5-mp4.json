@@ -1,0 +1,21 @@
+{
+    "id": "dv-p5-mp4",
+    "source": "https://repo.jellyfin.org/test-videos/HDR/Dolby%20Vision/Test%20Jellyfin%201080p%20DV%20P5.mp4",
+    "size": 50039227,
+    "options": {
+        "sniffFrames": true,
+        "blockSize": 65536
+    },
+    "pieces": [
+        {
+            "offset": 0,
+            "length": 65536
+        },
+        {
+            "offset": 50015935,
+            "length": 23292
+        }
+    ],
+    "bytes": 88828,
+    "sha256": "8b3d22a989816be40cb3992bce45da7c0e7bb1c1e02d1d4dfb687e0c514b62bd"
+}
