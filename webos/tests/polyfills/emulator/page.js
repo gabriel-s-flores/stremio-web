@@ -171,11 +171,13 @@ check('DOMRect from a bounding box, scaled like getInterfaceRect', function () {
     var box = document.createElement('div');
     box.style.cssText = 'position:absolute;left:100px;top:50px;width:250px;height:125px';
     document.body.appendChild(box);
+    // The same read as getInterfaceRect: x and y, which Chromium 53's ClientRect only has through the polyfill.
     var b = box.getBoundingClientRect();
+    var x = b.x, y = b.y, width = b.width, height = b.height;
     document.body.removeChild(box);
-    var rect = new DOMRect(b.left / 1.25, b.top / 1.25, b.width / 1.25, b.height / 1.25);
-    var detail = JSON.stringify(rect.toJSON());
-    assert(rect instanceof DOMRectReadOnly && rect.right === 280 && rect.bottom === 140, detail);
+    var rect = new DOMRect(x / 1.25, y / 1.25, width / 1.25, height / 1.25);
+    var detail = (b.constructor && b.constructor.name) + ' ' + JSON.stringify(rect.toJSON());
+    assert(rect instanceof DOMRectReadOnly && rect.left === 80 && rect.top === 40 && rect.right === 280 && rect.bottom === 140, detail);
     return detail;
 });
 

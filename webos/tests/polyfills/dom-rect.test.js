@@ -59,6 +59,39 @@ describe('DOMRect polyfill', () => {
         expect(DOMRectReadOnly.fromRect({ width: 3 }).toJSON()).toMatchObject({ x: 0, width: 3, right: 3 });
     });
 
+    describe('ClientRect x and y', () => {
+        // Chromium 53's getBoundingClientRect() result: edges and size, no x/y.
+        class ClientRect {
+            constructor(left, top, width, height) {
+                Object.assign(this, { left, top, width, height, right: left + width, bottom: top + height });
+            }
+        }
+
+        test('adds x and y as left and top', () => {
+            const target = { ClientRect };
+            install(target);
+            const box = new ClientRect(100, 50, 250, 125);
+            expect([box.x, box.y]).toEqual([100, 50]);
+        });
+
+        test('getInterfaceRect gets numbers, not NaN', () => {
+            const target = { ClientRect };
+            install(target);
+            const scale = 1.25;
+            const { x, y, width, height } = new ClientRect(100, 50, 250, 125);
+            const rect = new target.DOMRect(x / scale, y / scale, width / scale, height / scale);
+            expect(rect.toJSON()).toEqual({ x: 80, y: 40, width: 200, height: 100, top: 40, right: 280, bottom: 140, left: 80 });
+        });
+
+        test('keeps a ClientRect that already has x and y, and works without ClientRect', () => {
+            class Native {}
+            Object.defineProperty(Native.prototype, 'x', { get: () => 'native', configurable: true });
+            install({ ClientRect: Native });
+            expect(new Native().x).toBe('native');
+            expect(() => install({})).not.toThrow();
+        });
+    });
+
     test('is installed by the page polyfills, so new DOMRect() in getInterfaceRect works', () => {
         const index = fs.readFileSync(path.join(__dirname, '..', '..', 'polyfills', 'index.js'), 'utf8');
         expect(index).toContain("from './dom-rect'");

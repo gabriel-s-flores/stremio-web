@@ -1,7 +1,10 @@
 // DOMRect and DOMRectReadOnly for Chromium 53 (webOS TV 4.x; native since 61), which only has
 // ClientRect from getBoundingClientRect(). src/common/interfaceScale.ts builds a DOMRect for tooltips,
 // popups, menus and dropdowns: without it, hovering a button with a tooltip threw a ReferenceError
-// inside a React effect and the whole app unmounted. Page only.
+// inside a React effect and the whole app unmounted.
+// That ClientRect also lacks x and y (they came with DOMRect), which getInterfaceRect, the Slider
+// and the Player seek bar read: every tooltip, popup and menu got NaN coordinates (off screen).
+// ClientRect gets x and y getters (left and top). Page only.
 
 const toNumber = (value) => (value === undefined ? 0 : Number(value));
 
@@ -100,7 +103,20 @@ const define = (global, name, value) => {
     });
 };
 
+const defineGetter = (prototype, name, get) => {
+    Object.defineProperty(prototype, name, { get, configurable: true, enumerable: true });
+};
+
 export const install = (global) => {
+    const clientRect = global.ClientRect && global.ClientRect.prototype;
+    if (clientRect && !('x' in clientRect)) {
+        defineGetter(clientRect, 'x', function() {
+            return this.left;
+        });
+        defineGetter(clientRect, 'y', function() {
+            return this.top;
+        });
+    }
     if (typeof global.DOMRectReadOnly !== 'function') {
         define(global, 'DOMRectReadOnly', DOMRectReadOnly);
     }
