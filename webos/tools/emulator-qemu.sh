@@ -6,6 +6,7 @@
 #                                 [--profile c8] [--cpu-quota PCT]
 #   emulator-qemu.sh [-i N] wait [segundos]          espera o SSH responder
 #   emulator-qemu.sh [-i N] status | stop | reset    reset recria o overlay (estado de fábrica)
+#   emulator-qemu.sh [-i N] pid                      PID do QEMU da instância no host (sai com 1 se parada)
 #   emulator-qemu.sh [-i N] screenshot <arquivo.png>
 #   emulator-qemu.sh [-i N] key <qcode>...           teclado do PC (ex.: ret esc left)
 #   emulator-qemu.sh [-i N] env                      variáveis da instância (para "eval")
@@ -50,6 +51,17 @@ host_pid() {
     return 1
 }
 running() { host_pid >/dev/null; }
+# O QEMU roda em segundo plano e sobrevive ao chamador: ele não pode herdar a trava do pool
+# (emu-run, flock em run/emu-N.lock), senão um emu-run morto à força deixaria a instância presa.
+close_pool_locks() {
+    local fd run_real
+    run_real="$(realpath -m "$RUN")"   # readlink devolve o caminho resolvido
+    for fd in /proc/self/fd/*; do
+        case "$(readlink "$fd" 2>/dev/null)" in
+            "$run_real"/emu-*.lock) eval "exec ${fd##*/}>&-" ;;
+        esac
+    done
+}
 qmp() { WEBOS_QMP="$QMP" python3 -I "$HERE/qmp.py" "$@"; }
 ensure_overlay() {
     [[ -f "$OVERLAY" ]] && return
@@ -96,6 +108,7 @@ case "$cmd" in
             *) die "--sound deve ser off ou pa" ;;
         esac
         mkdir -p "$RUN"
+        close_pool_locks
         ensure_overlay
         rm -f "$QMP" "$PIDFILE"
         if [[ "$mode" == gui ]]; then display=(-display gtk,zoom-to-fit=on); else display=(-display none -vnc "127.0.0.1:$VNC_DISPLAY"); fi
@@ -125,6 +138,9 @@ case "$cmd" in
         fi
         echo "instância $N iniciada ($mode, ${mem} MB, ${smp} vCPU${profile:+, perfil $profile}${quota:+, cota ${quota}% de CPU}) — ares: $DEVICE, inspector: $CDP_PORT"
         ;;
+    pid)
+        host_pid
+        ;;
     wait)
         limit="${1:-180}"
         # O Web Inspector só responde com um app web aberto; o SSH basta para o ares.
@@ -143,7 +159,11 @@ case "$cmd" in
         if ! running; then echo "instância $N já parada"; exit 0; fi
         timeout 5 env WEBOS_QMP="$QMP" python3 -I "$HERE/qmp.py" quit >/dev/null 2>&1 || true
         for _ in 1 2 3 4 5; do running || break; sleep 1; done
-        if running; then kill "$(host_pid)"; fi
+        if running; then
+            kill "$(host_pid)"
+            for _ in 1 2 3 4 5; do running || break; sleep 1; done
+            if running; then kill -9 "$(host_pid)"; fi
+        fi
         rm -f "$PIDFILE"
         echo "instância $N parada"
         ;;
@@ -160,6 +180,6 @@ case "$cmd" in
         qmp key "$@" >/dev/null
         ;;
     *)
-        sed -n '2,15p' "$0"; exit 1
+        sed -n '2,16p' "$0"; exit 1
         ;;
 esac
