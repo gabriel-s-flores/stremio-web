@@ -18,3 +18,13 @@ html:root {
     --safe-area-inset-bottom: 0rem;
     --safe-area-inset-left: 0rem;
 }
+
+// The MetaPreview logo is capped by `max-width: min(30rem, 100%)`. Chromium 53 drops min(), so
+// webos/webpack/postcss-math-functions.js keeps the 100% (a 360px Discover column must not be
+// overflowed by the 30rem cap). On the MetaDetails page the column is as wide as its content, 100% caps
+// nothing, and a wide logo grew to the column: the 30rem cap comes back there. The hashed CSS-modules
+// class names are matched by prefix; the extra attribute and element selectors outrank the
+// `.meta-preview-container .meta-info-container .logo` rule of src/components/MetaPreview/styles.less.
+[class*='metadetails-container'] [class*='meta-preview-container'] [class*='meta-info-container'] img[class*='logo'] {
+    max-width: 30rem;
+}

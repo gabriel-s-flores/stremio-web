@@ -15,7 +15,7 @@ const compileAppLess = async () => {
     return css;
 };
 
-const rule = (body) => `html{width:calc(max(1px,2px));height:calc(max(1px,2px))}html:root{${body}}`;
+const rule = (body) => `html{width:calc(1px + 2px);height:calc(1px + 2px)}html:root{${body}}`;
 const GOOD = Object.entries(REQUIRED).map(([prop, value]) => `${prop}:${value}`).join(';');
 
 describe('webos/styles/app.less', () => {
@@ -50,6 +50,27 @@ describe('webos/scripts/check-styles', () => {
         const withMax = rule(`${GOOD};min-height:max(100vh,1px)`);
         expect(stylesProblems(withMax)).toEqual(['html:root min-height uses max(100vh,1px), which Chromium 53 drops']);
         expect(stylesProblems(rule(`${GOOD};padding-top:env(safe-area-inset-top)`))).toHaveLength(1);
+    });
+
+    test('rejects min(), max() and clamp() left anywhere in the CSS', () => {
+        const raw = `${rule(GOOD)}.a{max-width:min(30rem,100%)}@media (min-width:600px){.b{font-size:clamp(1rem,2vw,2rem);padding:max(1rem,0px)}}`;
+        const problems = stylesProblems(raw);
+        expect(problems).toHaveLength(1);
+        expect(problems[0]).toContain('3 declaration(s) still use min()/max()/clamp()');
+        expect(problems[0]).toContain('.a{max-width: min(30rem,100%)}');
+        expect(problems[0]).toContain('.b{font-size: clamp(1rem,2vw,2rem)}');
+    });
+
+    test('finds the functions in any case and in a media-scoped html:root', () => {
+        const problems = stylesProblems(`${rule(GOOD)}.a{width:MIN(1px,2px);height:Max(1px,2px)}@media (min-width:1px){html:root{padding:max(1px,2px)}}`);
+        expect(problems).toHaveLength(1);
+        expect(problems[0]).toContain('3 declaration(s)');
+        expect(problems[0]).toContain('html:root{padding: max(1px,2px)}');
+    });
+
+    test('does not take minmax(), custom property names, urls or media features for them', () => {
+        const css = `${rule(GOOD)}.a{grid-template-columns:minmax(0,1fr) 2rem;--fgp-max-width:2rem;background:url(max(1).png)}@media (min-width:600px) and (max-width:900px){.b{width:var(--fgp-max-width,1px)}}`;
+        expect(stylesProblems(css)).toEqual([]);
     });
 
     test('rejects the pointer-events of flex-gap-polyfill left as they were', () => {

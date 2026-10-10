@@ -10,6 +10,9 @@
 //   postcss-fgp-pointer-events  turns the pointer-events flex-gap-polyfill adds into switches that
 //                        the Button component sets, so buttons with a gap take clicks on their
 //                        whole box and disabled ones none (./postcss-fgp-pointer-events.js).
+//   postcss-math-functions  min()/max()/clamp() replaced by the argument that wins on a 1920x1080 TV,
+//                        Chromium 53 drops a declaration that has one (./postcss-math-functions.js, F2.4);
+//                        first, so the other plugins never see the raw functions.
 //   postcss-fallbacks    sticky, backdrop-filter, aspect-ratio, env() and dvh/svh/lvh rewritten into what
 //                        Chromium 53 handles (F2.5), before the others see the CSS (./postcss-fallbacks.js).
 // cssnano's own autoprefixer gets the same target, so it does not strip the prefixes back.
@@ -41,6 +44,8 @@ const PRESET_ENV = ['postcss-preset-env', {
 
 const APPLY_FGP = [path.join(__dirname, 'postcss-apply-fgp.js'), {}];
 
+const MATH_FUNCTIONS = [path.join(__dirname, 'postcss-math-functions.js'), {}];
+
 const FLEX_GAP = ['flex-gap-polyfill', { only: true }];
 
 // Buttons that are polyfilled flex containers take clicks again (F1.6): see the plugin.
@@ -56,7 +61,7 @@ module.exports = (config) => {
     const [, presetOptions] = cssnanoOptions.preset;
     presetOptions.autoprefixer = { ...presetOptions.autoprefixer, overrideBrowserslist: BROWSERS };
 
-    plugins.unshift(FALLBACKS, PRESET_ENV, APPLY_FGP, FLEX_GAP, FGP_POINTER_EVENTS);
+    plugins.unshift(MATH_FUNCTIONS, FALLBACKS, PRESET_ENV, APPLY_FGP, FLEX_GAP, FGP_POINTER_EVENTS);
 
     return config;
 };

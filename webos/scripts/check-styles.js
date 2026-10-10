@@ -6,7 +6,9 @@
 // Chromium 53 lacks. Without it html, body and #app are 0px tall and the screen shows only the
 // background color. It also checks that the pointer-events flex-gap-polyfill adds were turned into
 // the switches the Button root sets (webos/webpack/postcss-fgp-pointer-events.js); left as they are,
-// buttons with a gap do not take clicks on their background. Exits with 1 and lists the problems.
+// buttons with a gap do not take clicks on their background. No min()/max()/clamp() may be left
+// anywhere in main.css: Chromium 53 drops the whole declaration (webos/webpack/postcss-math-functions.js
+// resolves them). Exits with 1 and lists the problems.
 
 const fs = require('fs');
 const path = require('path');
@@ -17,6 +19,10 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const postcss = require(require.resolve('postcss', {
     paths: [path.dirname(require.resolve('postcss-loader', { paths: [ROOT] }))]
 }));
+
+// A min()/max()/clamp() call (minmax() and names such as --fgp-max-width do not match).
+const MATH_CALL = /(?<![\w-])(min|max|clamp)\(/i;
+const MAX_REPORTED = 10;
 
 const REQUIRED = {
     'width': 'var(--dynamic-viewport-width)',
@@ -47,13 +53,25 @@ const stylesProblems = (css) => {
         });
     });
     const problems = [];
+    const rawMath = [];
+    root.walkDecls((decl) => {
+        // The top-level html:root rule has its own message below.
+        if (decl.parent.parent === root && decl.parent.selectors && decl.parent.selectors.includes('html:root')) return;
+        const value = decl.value.replace(/url\([^)]*\)|"[^"]*"|'[^']*'/g, '');
+        if (MATH_CALL.test(value)) rawMath.push(`${decl.parent.selector || decl.parent.name}{${decl.prop}: ${decl.value}}`);
+    });
+    if (rawMath.length > 0) {
+        const shown = rawMath.slice(0, MAX_REPORTED).join('; ');
+        const more = rawMath.length > MAX_REPORTED ? ` (and ${rawMath.length - MAX_REPORTED} more)` : '';
+        problems.push(`${rawMath.length} declaration(s) still use min()/max()/clamp(), which Chromium 53 drops: ${shown}${more}`);
+    }
     Object.entries(REQUIRED).forEach(([prop, value]) => {
         if (declarations[prop] !== value) {
             problems.push(`html:root needs ${prop}: ${value} (found ${declarations[prop] === undefined ? 'nothing' : declarations[prop]})`);
         }
     });
     Object.entries(declarations).forEach(([prop, value]) => {
-        if (/\b(max|min|clamp|env)\(/.test(value)) {
+        if (/\b(max|min|clamp|env)\(/i.test(value)) {
             problems.push(`html:root ${prop} uses ${value}, which Chromium 53 drops`);
         }
     });
@@ -87,7 +105,7 @@ if (require.main === module) {
         problems.forEach((problem) => console.error(`check-styles: ${problem}`));
         process.exit(1);
     }
-    console.log('check-styles: ok (html:root sizes the layout without max()/env(); flex-gap-polyfill pointer-events switched by the Button root)');
+    console.log('check-styles: ok (html:root sizes the layout without max()/env(); no min()/max()/clamp() left; flex-gap-polyfill pointer-events switched by the Button root)');
 }
 
 module.exports = { REQUIRED, stylesProblems, checkBuild };
