@@ -1,70 +1,46 @@
-// Entrada do worker do smoke: instrumenta fetch e WebAssembly.instantiate e carrega o worker
-// vendorizado sem alterações (o mesmo que o app usa). ES5: roda no Chromium 53 sem Babel.
-var stats = { fetches: [], instantiate: null };
-var wasmMemory = null;
+// Entrada do worker do smoke: carrega o worker vendorizado sem alterações (o mesmo que o app usa),
+// com o require do .wasm trocado pelo carregador de webos/core (alias no webpack.config.js), que
+// escolhe WASM ou wasm2js. ES5: roda no Chromium 53 sem Babel.
+// Cenários, pelo fragmento da URL do worker (a página escolhe pelo parâmetro de lançamento):
+//   (nenhum)               WebAssembly do Chromium 53 → espera a variante wasm;
+//   #webassembly=hidden    apaga o WebAssembly do worker antes de qualquer código do core → wasm2js;
+//   #wasm=npm              o carregador lê o .wasm do npm (pós-MVP), que o V8 5.8 recusa no
+//                          compile → wasm2js por falha de compilação.
+var params = {};
+self.location.hash.replace(/^#/, '').split('&').forEach(function (pair) {
+    var kv = pair.split('=');
+    if (kv[0]) params[kv[0]] = kv[1] || '';
+});
+var hidden = params.webassembly === 'hidden';
+if (hidden) {
+    try {
+        delete self.WebAssembly;
+    } catch (_e) {
+        // não configurável: cai na atribuição abaixo
+    }
+    if (typeof WebAssembly !== 'undefined') self.WebAssembly = undefined;
+}
+
 // Marcos enviados à página na hora (o Bridge ignora mensagens sem request/response): se o worker
 // travar ou o app cair, a página guarda até onde ele chegou.
 function mark(name) {
     self.postMessage({ smokeMark: { name: name, t: performance.now() } });
 }
-mark('worker-start');
+mark('worker-start' + (hidden ? ' (WebAssembly escondido: ' + typeof WebAssembly + ')' : ''));
 
-var nativeFetch = self.fetch;
-function xhrResponse(url) {
-    return new Promise(function (resolve, reject) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', url);
-        xhr.responseType = 'arraybuffer';
-        xhr.onload = function () {
-            resolve(new Response(xhr.response, { status: 200, headers: { 'Content-Type': 'application/wasm' } }));
-        };
-        xhr.onerror = function () { reject(new TypeError('XHR falhou: ' + url)); };
-        xhr.send();
-    });
-}
-self.fetch = function (input, init) {
-    var url = String(input && input.url || input);
-    var entry = { url: url, start: performance.now() };
-    stats.fetches.push(entry);
-    mark('fetch ' + url);
-    return nativeFetch.call(self, input, init).then(function (res) {
-        entry.via = 'fetch';
-        entry.status = res.status;
-        entry.ms = performance.now() - entry.start;
-        mark('fetch-ok ' + res.status);
-        return res;
-    }, function (err) {
-        entry.fetchError = String(err);
-        // fetch() não aceita file:// no Chromium 53; o pacote do app roda de file://.
-        if (!/^file:/.test(new URL(url, self.location.href).href)) throw err;
-        mark('fetch-error ' + err);
-        return xhrResponse(url).then(function (res) {
-            entry.via = 'xhr';
-            entry.ms = performance.now() - entry.start;
-            mark('xhr-ok');
-            return res;
-        });
-    });
+var loader = require('../../core/loader.js');
+loader.defaults.onStep = function (name, detail) {
+    mark('loader ' + name + (detail ? ' ' + detail : ''));
 };
-
-var nativeInstantiate = WebAssembly.instantiate;
-WebAssembly.instantiate = function (source) {
-    var start = performance.now();
-    var info = stats.instantiate = { bytes: source && source.byteLength, start: start };
-    mark('instantiate-start ' + info.bytes);
-    return nativeInstantiate.apply(WebAssembly, arguments).then(function (result) {
-        info.ms = performance.now() - start;
-        mark('instantiate-ok');
-        wasmMemory = (result.instance || result).exports.memory;
-        return result;
-    });
-};
+if (params.wasm === 'npm') loader.defaults.wasmUrl = 'npm_stremio_core_web_bg.wasm';
 
 self.smokeStats = function () {
-    stats.instantiateStreaming = typeof WebAssembly.instantiateStreaming === 'function';
-    stats.wasmMemoryBytes = wasmMemory ? wasmMemory.buffer.byteLength : null;
-    stats.workerNow = performance.now();
-    return stats;
+    return {
+        params: params,
+        hasWebAssembly: typeof WebAssembly === 'object' && WebAssembly !== null,
+        loader: loader.getStatus(),
+        workerNow: performance.now()
+    };
 };
 
 require('../../vendor/stremio-core-web/worker.js');
