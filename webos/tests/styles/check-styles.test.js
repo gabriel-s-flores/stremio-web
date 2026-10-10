@@ -52,6 +52,16 @@ describe('webos/scripts/check-styles', () => {
         expect(stylesProblems(rule(`${GOOD};padding-top:env(safe-area-inset-top)`))).toHaveLength(1);
     });
 
+    test('rejects the pointer-events of flex-gap-polyfill left as they were', () => {
+        const raw = `${rule(GOOD)}.a{--has-fgp: ;pointer-events:var(--has-fgp) none}.a>*{pointer-events:var(--parent-has-fgp) auto}.b{pointer-events:none}`;
+        expect(stylesProblems(raw)).toEqual([
+            '2 pointer-events from flex-gap-polyfill left as they were (buttons with a gap would not take clicks)',
+            'no --fgp-pointer-events: auto (the Button root must turn the flex-gap-polyfill pointer-events on)',
+        ]);
+        const switched = `${rule(GOOD)}.a{--has-fgp: ;pointer-events:var(--has-fgp) var(--fgp-pointer-events, none)}.button-container-x{--fgp-pointer-events:auto}`;
+        expect(stylesProblems(switched)).toEqual([]);
+    });
+
     test('checks the one main.css of a build folder', () => {
         const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'check-styles-'));
         try {

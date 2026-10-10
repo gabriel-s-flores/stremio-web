@@ -4,7 +4,9 @@
 // The main.css of the build must carry the html:root rule of webos/styles/app.less: html sized by
 // --dynamic-viewport-* and the --safe-area-inset-* set to zero, without max() or env(), which
 // Chromium 53 lacks. Without it html, body and #app are 0px tall and the screen shows only the
-// background color. Exits with 1 and lists the problems otherwise.
+// background color. It also checks that the pointer-events flex-gap-polyfill adds were turned into
+// the switches the Button root sets (webos/webpack/postcss-fgp-pointer-events.js); left as they are,
+// buttons with a gap do not take clicks on their background. Exits with 1 and lists the problems.
 
 const fs = require('fs');
 const path = require('path');
@@ -25,10 +27,18 @@ const REQUIRED = {
     '--safe-area-inset-left': '0rem',
 };
 
-// Problems with the root rule in a CSS text ([] if it is there).
+// Problems with the root rule in a CSS text ([] if it is there), and pointer-events left by
+// flex-gap-polyfill (webos/webpack/postcss-fgp-pointer-events.js drops them).
 const stylesProblems = (css) => {
     const declarations = {};
-    postcss.parse(css).walkRules((rule) => {
+    const root = postcss.parse(css);
+    let fgpPointerEvents = 0;
+    let buttonSwitch = false;
+    root.walkDecls((decl) => {
+        if (decl.prop === 'pointer-events' && /^var\(--(parent-)?has-fgp\)\s+(none|auto)$/.test(decl.value.trim())) fgpPointerEvents++;
+        if (decl.prop === '--fgp-pointer-events' && decl.value.trim() === 'auto') buttonSwitch = true;
+    });
+    root.walkRules((rule) => {
         if (rule.parent.type !== 'root' || !rule.selectors.includes('html:root')) {
             return;
         }
@@ -47,6 +57,12 @@ const stylesProblems = (css) => {
             problems.push(`html:root ${prop} uses ${value}, which Chromium 53 drops`);
         }
     });
+    if (fgpPointerEvents > 0) {
+        problems.push(`${fgpPointerEvents} pointer-events from flex-gap-polyfill left as they were (buttons with a gap would not take clicks)`);
+    }
+    if (/has-fgp/.test(css) && !buttonSwitch) {
+        problems.push('no --fgp-pointer-events: auto (the Button root must turn the flex-gap-polyfill pointer-events on)');
+    }
     return problems;
 };
 
@@ -71,7 +87,7 @@ if (require.main === module) {
         problems.forEach((problem) => console.error(`check-styles: ${problem}`));
         process.exit(1);
     }
-    console.log('check-styles: ok (html:root sizes the layout without max()/env())');
+    console.log('check-styles: ok (html:root sizes the layout without max()/env(); flex-gap-polyfill pointer-events switched by the Button root)');
 }
 
 module.exports = { REQUIRED, stylesProblems, checkBuild };
