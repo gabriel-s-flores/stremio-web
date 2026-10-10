@@ -50,12 +50,16 @@ app (file://, Chromium 53)                               serviço io.github.gabr
   - Assim o serviço confia nas raízes padrão **e** nas ISRG. No emulador o `/status` confirmou `strategy: merged-root-store`, Node v0.12.2 e OpenSSL 1.0.2k.
   - Se esse caminho interno não existir, o código cai para `ca` só com ISRG (vale apenas para hosts LE).
 - **Vida do serviço:** a assinatura Luna de `/start` aberta pelo app mantém o serviço de pé (também tenta `activityManager`). Subida a frio: **~0,4–0,6 s** do `luna start` até a porta pronta.
-- **Proteções** (revisadas no ciclo 1; bateria em `security-test.mjs`, 25/25 contra o serviço no emulador):
+- **Proteções** (revisadas nos ciclos 1 e 2; bateria em `security-test.mjs`, 36/36 contra o serviço no emulador, com os casos de redirecionamento rodando também no `fetch` do Chromium 53):
   - **Acesso:**
     - escuta só em `127.0.0.1`;
     - token aleatório por processo, exigido em `/proxy` **e** em `/status`. Outro app não obtém o token: a Luna recusa `start` de outro id;
     - `Host` diferente de `127.0.0.1:<porta>` ou `localhost:<porta>` dá 403 (contra DNS rebinding).
-  - **Credenciais em redirect:** redirecionamentos `https` são seguidos dentro do serviço (só GET/HEAD), mas `Authorization` **só vai ao host pedido pelo app**. Num salto para outro host ou porta, ele é removido antes de seguir, como faz o navegador. No mesmo host é mantido.
+  - **Credenciais em redirect:** `Authorization` **só vai ao host pedido pelo app**, nos dois caminhos.
+    - **Salto seguido pelo serviço** (GET/HEAD, até 5 saltos `https`): num salto para outro host ou porta, o `Authorization` é removido antes de seguir, como faz o navegador. No mesmo host é mantido.
+    - **Salto não seguido** (método com corpo, como POST/307, ou cadeia acima de 5 saltos): o serviço só devolve `Location` (reescrito para o proxy) quando o destino é o **mesmo host `https`**. Para outro host, ou fora de `https`, responde **502** `{"error":"cross-host redirect not followed: …"}`, sem `Location`.
+      - Motivo: um `Location` apontando para o proxy é o mesmo origin para o navegador. O Chromium 53 o segue reenviando o `Authorization`, e o serviço receberia esse pedido como se viesse do app. Reproduzido no ciclo 2 com o serviço anterior: o postman-echo recebia o segredo.
+    - Esse é o único ponto em que o serviço emite `Location`: a lista de cabeçalhos repassados do upstream não inclui `location`, `content-location` nem `refresh`.
   - **Mídia (P3):**
     - `Range` recusado com 403;
     - `Content-Type` `video/*`, `audio/*`, HLS e DASH recusado;
@@ -76,6 +80,8 @@ app (file://, Chromium 53)                               serviço io.github.gabr
 | 1 | Pôster de `images.metahub.space` numa `<img>` pela solução | ✅ Nas duas passadas: direto `ERR_INSECURE_RESPONSE`; via serviço **200, 500x750**. Estabilidade 20/20 no combo que falhava. Capturas `run1-app.png`, `run2-app.png` |
 | 2 | `fetch` a host Let's Encrypt pela solução | ✅ `debrid-link.com/api/v2/downloader/domains`: direto `TypeError: Failed to fetch` (`ERR_INSECURE_RESPONSE` no CDP); via serviço **HTTP 200, `success=true`, 151 domínios** |
 | 3 | Documento com decisão, riscos, custo e plano para a F3.7 | Este arquivo |
+
+Reconfirmados no ciclo 2 (`evidencias/ciclo2/run/`): os mesmos números, com `security-test.mjs` em 36/36, incluindo os casos de redirecionamento no Chromium 53.
 
 Reconfirmados no ciclo 1, com o serviço corrigido (`evidencias/ciclo1/`):
 - os critérios 1 e 2 nas duas passadas, com estabilidade 20/20;
@@ -115,7 +121,8 @@ Reconfirmados no ciclo 1, com o serviço corrigido (`evidencias/ciclo1/`):
 | Raízes Let's Encrypt novas (Gen Z…) ou fim das assinaturas cruzadas | Baixa (anos) | Médio | `gen-ca.sh` regenera `ca.js`; as raízes YE/YR já embutidas cobrem as cadeias curtas sem cruzamento |
 | Cifras e protocolo: hosts que exijam só TLS 1.3 (o OpenSSL 1.0.2 vai até TLS 1.2) | Baixa | Médio | Hoje todos os hosts medidos aceitam TLS 1.2 GCM; o `/status` registra erros por código para diagnóstico |
 | Segurança: proxy local acessível a outros apps ou páginas da TV | Baixa | Médio | Só em `127.0.0.1`, token por processo em `/proxy` e `/status` (a Luna nega o `start` a outro app), checagem de `Host`, só https, sem mídia, limites de tamanho |
-| Token de debrid ou addon vazar para outro host via redirecionamento | Baixa (corrigido no ciclo 1) | Médio | `Authorization` removido em salto cross-host; caso de regressão no `security-test.mjs` e no aceite da F3.7 |
+| Token de debrid ou addon vazar para outro host via redirecionamento | Baixa (corrigido nos ciclos 1 e 2) | Médio | `Authorization` removido nos saltos cross-host que o serviço segue; redirecionamento cross-host não seguido vira 502, sem `Location`. Casos de regressão no `security-test.mjs`, no Node e no Chromium 53, e no aceite da F3.7 |
+| Timeout de ociosidade no meio do corpo (Node 0.12 pode emitir `end` após o `abort()`, e uma imagem truncada sairia como 200) | Baixa | Baixo | Apontado na revisão c2; existia antes. Na F3.7, marcar `timedOut`/`aborted` no upstream e destruir a resposta em vez de concluí-la |
 | Falha intermitente do `<img>` com repasse fragmentado (causa não isolada no Chromium) | Baixa (corrigida) | Médio | Imagens sempre juntadas no serviço; em JSON grande, juntar também se aparecer sintoma; o cliente tenta de novo uma vez |
 | Vídeo do debrid passar pelo serviço (violaria a P3 e o pipeline nativo) | Baixa | Alto | O cliente nunca passa URLs de stream ao proxy (seção 7) **e** o serviço recusa `Range`, `video/*`, `audio/*`, HLS, DASH, assinaturas de contêiner de mídia, binário genérico acima de 2 MB e qualquer corpo acima de 16 MB |
 | Proxy de terceiros (b) indisponível ou bloqueado | — | Médio | Só alternativa documentada; não entra no build |
@@ -132,13 +139,18 @@ Pré-requisitos: build `WEBOS=1` e empacotamento IPK da Fase 1, e webOSTV.js (F3
    - remover o modo `_stream=1` (só existia para o A/B);
    - porta fixa 47443 com fallback para a próxima livre, devolvida no `start`.
 5. **Segurança: obrigações que já estão no spike e não podem regredir.** O `security-test.mjs` vai para o repositório junto com o serviço e roda no aceite da F3.7:
-   - `Authorization` (e qualquer cabeçalho de credencial que venha a ser repassado) nunca segue um redirecionamento para outro host ou porta;
+   - `Authorization` (e qualquer cabeçalho de credencial que venha a ser repassado) nunca chega a outro host ou porta por redirecionamento:
+     - nos saltos que o serviço segue, é removido;
+     - nos que ele não segue, um destino cross-host vira 502, e o serviço nunca devolve um `Location` próprio que aponte para outro host (o navegador o seguiria no mesmo origin, reenviando a credencial);
    - token em `/proxy` e `/status`; diagnóstico detalhado (log, pid) só pela Luna;
    - checagem de `Host`;
    - recusa de mídia por `Content-Type` **e** por assinatura, com limite menor para binário genérico;
    - aborto do upstream quando o cliente desiste; `HEAD`/`204`/`304` sem corpo juntado;
    - `tlsErrors` por código.
-6. Endurecimento a decidir na F3.7: restringir os métodos a `GET`, `HEAD` e `POST`, se nenhum addon usado precisar de outro. Hoje o proxy aceita qualquer método para qualquer host `https`, inclusive IPs da rede local, o que é aceitável porque só o próprio app tem o token.
+6. Endurecimento a decidir na F3.7:
+   - ampliar as assinaturas de mídia: segmentos fMP4 sem `ftyp` (`styp`/`moof`/`sidx` no offset 4), AAC ADTS e MP3 sem ID3 (sincronismo `0xFFF`), e considerar inspecionar também respostas `text/*`/JSON;
+   - destruir a resposta (em vez de concluí-la) quando o upstream for abortado por timeout no meio do corpo;
+   - restringir os métodos a `GET`, `HEAD` e `POST`, se nenhum addon usado precisar de outro. Hoje o proxy aceita qualquer método para qualquer host `https`, inclusive IPs da rede local, o que é aceitável porque só o próprio app tem o token.
 
 **7.2 Cliente na página: `src/webos/tlsProxy.js`** (no desktop, `tlsProxy.desktop.js` com `proxify = url => url`)
 1. `start()`:
@@ -193,7 +205,12 @@ Pré-requisitos: build `WEBOS=1` e empacotamento IPK da Fase 1, e webOSTV.js (F3
 5. Tela de diagnóstico (F3.6) mostrando modo, porta, `/status` e hosts aprendidos.
 6. Memória do serviço somada à do app na medição da Fase 7.
 7. Testes Jest para `proxify`, aprendizado de hosts e o wrapper do worker: passagem do mesmo origin, do `.wasm` e de `127.0.0.1`, e cópia do `Request`.
-8. **`security-test.mjs` 100% contra o serviço no emulador**, incluindo o caso de regressão "`Authorization` não chega ao segundo host num redirecionamento cross-host" (e continua chegando no mesmo host).
+8. **`security-test.mjs` 100% contra o serviço no emulador, com `--cdp-port`** (casos de redirecionamento também no `fetch` do Chromium 53), incluindo as regressões de credencial:
+   - GET cross-host seguido pelo serviço;
+   - POST 307 cross-host;
+   - cadeia acima de 5 saltos terminando em outro host;
+   - cadeia em que o serviço devolve um `Location` do mesmo host;
+   - controles no mesmo host, onde a credencial continua chegando.
 
 **7.7 Alternativa (b), só documentada**
 - Se o serviço JS falhar na TV real (Fase 8), as imagens podem passar por `https://wsrv.nl/?url=<host/caminho>` (cadeia GTS/GlobalSign, aceita pelo Chromium 53, ~30–40 ms por pôster no emulador), atrás de uma configuração explícita.
@@ -215,5 +232,5 @@ O `run.sh` termina com código ≠ 0 se algum caso do `security-test.mjs` falhar
 | `service/ca.js`, `certs/*.pem`, `gen-ca.sh` | Raízes ISRG X1, X2, Root YE, Root YR (SHA-256 nos comentários) |
 | `app/` | App de teste (Chromium 53): direto × serviço × wsrv, custo, estabilidade, `__tlsSoak(n)` |
 | `cdp-net.mjs` | Log de rede via CDP (`Network.*`), com `--go` para capturar a 1ª passada a frio |
-| `security-test.mjs` | Bateria de segurança (25 casos): credenciais em redirect, token, `Host`, mídia por tipo e por assinatura, limites, `HEAD`, aborto, validação TLS (badssl) |
+| `security-test.mjs` | Bateria de segurança (30 casos no Node e mais 6 no Chromium 53 com `--cdp-port`): credenciais em redirect seguido e não seguido, token, `Host`, mídia por tipo e por assinatura, limites, `HEAD`, aborto, validação TLS (badssl) |
 | `run.sh` | Instala, roda as passadas, a carga e a bateria de segurança (túnel SSH até a porta do serviço), captura telas, memória (`/proc` por SSH) e o log do serviço (Luna `status`), e grava tudo em OUT |
