@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-// Bateria de segurança do serviço da F0.7 (regressões das revisões c1 e c2). Fala HTTP com o
-// serviço direto ou por um túnel SSH até 127.0.0.1:47443 do emulador; o cabeçalho Host é sempre o
-// do serviço, para a checagem anti-rebinding aceitar o túnel. Com --cdp-port, os casos de
-// redirecionamento rodam também dentro do app de teste (Chromium 53), com fetch seguindo os
-// redirecionamentos de verdade. Sai com código 1 se algum caso falhar.
+// Bateria de segurança do serviço tlsproxy contra hosts públicos (regressões das revisões c1, c2 e
+// c3 da F0.7 e o endurecimento da F3.7). Fala HTTP com o serviço direto ou por um túnel SSH até
+// 127.0.0.1:<porta> do emulador; o cabeçalho Host é sempre o do serviço (--port), para a checagem
+// anti-rebinding aceitar o túnel. Com --cdp-port, os casos de redirecionamento rodam também dentro
+// do app (Chromium 53), com fetch seguindo os redirecionamentos de verdade. Sai com código 1 se
+// algum caso falhar. Os mesmos casos, com upstreams locais, estão em webos/tests/tlsproxy/.
 //
-//   node security-test.mjs --base http://127.0.0.1:47543 --token <token> [--cdp-port N] [--out security.json]
+//   node security-test.mjs --base http://127.0.0.1:47543 --port 47443 --token <token> [--cdp-port N] [--out security.json]
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -13,11 +14,12 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const argv = process.argv.slice(2);
-const opts = { base: 'http://127.0.0.1:47443', host: '127.0.0.1:47443', token: '', out: '', 'cdp-port': '', target: 'webostls' };
+const opts = { base: 'http://127.0.0.1:47443', port: '47443', token: '', out: '', 'cdp-port': '', target: 'io.github.gabrielsflores.stremio' };
 for (let i = 0; i < argv.length; i++) opts[argv[i].replace(/^--/, '')] = argv[++i];
 if (!opts.token) throw new Error('falta --token');
+opts.host = `127.0.0.1:${opts.port}`;
 const base = new URL(opts.base);
-const SECRET = 'F07-SECRET-' + Math.random().toString(36).slice(2, 10);
+const SECRET = 'F37-SECRET-' + Math.random().toString(36).slice(2, 10);
 
 function request(path, { method = 'GET', headers = {}, host = opts.host, abortAfterMs, body } = {}) {
     return new Promise((resolve) => {
@@ -66,6 +68,13 @@ await check('Authorization segue redirect no mesmo host (httpbin → httpbin)', 
     const r = await proxy('https://httpbin.org/redirect-to?url=' + encodeURIComponent('https://httpbin.org/headers'), auth);
     return [r.status === 200 && r.body.includes(SECRET), `http=${r.status} segredo presente: ${r.body.includes(SECRET)}`];
 });
+// Revisão c3: numa cadeia A → B → A, a credencial removida no salto para B não volta no salto de
+// volta para A (o caminho é escolhido por B).
+await check('Authorization não volta numa cadeia A → B → A (httpbin → postman-echo → httpbin)', async () => {
+    const back = 'https://httpbin.org/anything/escolhido-por-B';
+    const r = await proxy('https://httpbin.org/redirect-to?url=' + encodeURIComponent('https://postman-echo.com/redirect-to?url=' + encodeURIComponent(back)), auth);
+    return [r.status === 200 && r.body.includes('escolhido-por-B') && !r.body.includes(SECRET), `http=${r.status} A recebeu o segredo de volta: ${r.body.includes(SECRET)}`];
+});
 await check('Authorization chega ao host pedido, sem redirect (postman-echo)', async () => {
     const r = await proxy('https://postman-echo.com/headers', auth);
     return [r.status === 200 && r.body.includes(SECRET), `http=${r.status}`];
@@ -74,7 +83,7 @@ await check('Authorization chega ao host pedido, sem redirect (postman-echo)', a
 // 1b. Redirecionamentos que o serviço NÃO segue (método com corpo, cadeia acima de 5 saltos) e
 // devolve ao cliente (revisão c2). O cliente segue como o navegador: um Location que aponte para o
 // próprio proxy é o mesmo origin, então método (307/308), corpo e Authorization vão junto.
-const PROXY_ORIGINS = ['http://127.0.0.1:47443', 'http://localhost:47443'];
+const PROXY_ORIGINS = [`http://127.0.0.1:${opts.port}`, `http://localhost:${opts.port}`];
 async function followLikeBrowser(target, { method = 'GET', headers = {}, body } = {}) {
     let path = `/proxy?t=${opts.token}&url=${encodeURIComponent(target)}`;
     const hops = [];
@@ -117,11 +126,11 @@ for (const [name, target, o, leak, expect] of REDIRECT_CASES) {
 // 1c. Os mesmos casos (e o do c1) no Chromium 53 do emulador, com o fetch do navegador seguindo
 // os redirecionamentos. Só com --cdp-port (app de teste aberto).
 if (opts['cdp-port']) {
-    const cdp = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../tools/cdp.mjs');
+    const cdp = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../tools/cdp.mjs');
     const browserFetch = (target, o) => {
         // Expressão ES5 para o Chromium 53; o fetch segue redirecionamentos (redirect: 'follow').
         const init = { method: o.method || 'GET', headers: o.headers, body: o.body };
-        const expr = `(function(){var u='http://127.0.0.1:47443/proxy?t=${opts.token}&url='+encodeURIComponent(${JSON.stringify(target)});` +
+        const expr = `(function(){var u='http://127.0.0.1:${opts.port}/proxy?t=${opts.token}&url='+encodeURIComponent(${JSON.stringify(target)});` +
             `return fetch(u,${JSON.stringify(init)}).then(function(r){return r.text().then(function(t){return JSON.stringify({status:r.status,redirected:r.url!==u,` +
             `finalUrl:r.url.replace(/t=[0-9a-f]+/,'t=…').slice(0,160),leaked:t.indexOf(${JSON.stringify(SECRET)})>=0,body:t.slice(0,160)});});},` +
             `function(e){return JSON.stringify({status:0,error:String(e)});});})()`;
@@ -130,6 +139,7 @@ if (opts['cdp-port']) {
     };
     const BROWSER_CASES = REDIRECT_CASES.concat([
         ['GET com redirect para outro host seguido pelo serviço (caso do c1)', 'https://httpbin.org/redirect-to?url=' + encodeURIComponent('https://postman-echo.com/headers'), auth, false, 200],
+        ['GET A → B → A: a credencial não volta a A (caso do c3)', 'https://httpbin.org/redirect-to?url=' + encodeURIComponent('https://postman-echo.com/redirect-to?url=' + encodeURIComponent('https://httpbin.org/anything/escolhido-por-B')), auth, false, 200],
     ]);
     for (const [name, target, o, leak, expect] of BROWSER_CASES) {
         await check(`Chromium 53 (fetch no app): ${name}`, async () => {
@@ -150,12 +160,12 @@ await check('/status com token → 200, sem recent nem pid', async () => {
     return [r.status === 200 && !('recent' in j) && !('pid' in j) && !('log' in j), `http=${r.status} chaves=${Object.keys(j).join(',')}`];
 });
 await check('Host arbitrário (rebinding) → 403 em /status e /proxy', async () => {
-    const a = await request(`/status?t=${opts.token}`, { host: 'evil.example:47443' });
-    const b = await proxy('https://images.metahub.space/poster/medium/tt0111161/img', { host: 'evil.example:47443' });
+    const a = await request(`/status?t=${opts.token}`, { host: `evil.example:${opts.port}` });
+    const b = await proxy('https://images.metahub.space/poster/medium/tt0111161/img', { host: `evil.example:${opts.port}` });
     return [a.status === 403 && b.status === 403, `status=${a.status} proxy=${b.status}`];
 });
 await check('localhost:<porta> aceito', async () => {
-    const r = await request(`/status?t=${opts.token}`, { host: 'localhost:47443' });
+    const r = await request(`/status?t=${opts.token}`, { host: `localhost:${opts.port}` });
     return [r.status === 200, `http=${r.status}`];
 });
 await check('/proxy sem token → 403', async () => {
@@ -165,6 +175,11 @@ await check('/proxy sem token → 403', async () => {
 await check('alvo http:// → 400', async () => {
     const r = await proxy('http://images.metahub.space/poster/medium/tt0111161/img');
     return [r.status === 400, `http=${r.status}`];
+});
+await check('métodos fora de GET/HEAD/POST → 405 (PUT, DELETE, PATCH)', async () => {
+    const codes = [];
+    for (const method of ['PUT', 'DELETE', 'PATCH']) codes.push((await proxy('https://httpbin.org/anything', { method, ...auth })).status);
+    return [codes.every((c) => c === 405), `http=${codes.join(',')}`];
 });
 await check('Range → 403', async () => {
     const r = await proxy('https://images.metahub.space/poster/medium/tt0111161/img', { headers: { Range: 'bytes=0-100' } });
@@ -181,6 +196,10 @@ const sniffCases = [
     ['MPEG-TS (0x47 a cada 188) como text/html', ts, true],
     ['#EXTM3U como text/html', Buffer.from('#EXTM3U\n#EXT-X-VERSION:3\n#EXTINF:10,\nseg0.ts\n'), true],
     ['DASH <MPD> como text/html', Buffer.from('<MPD type="static" minBufferTime="PT2S"></MPD> '), true],
+    ['segmento fMP4 sem ftyp (styp) como text/html', pad(Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from('stypmsdh')]), 64), true],
+    ['fragmento fMP4 (moof) como text/html', pad(Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from('moof')]), 64), true],
+    // AAC ADTS, MP3 sem ID3 e o controle JPEG começam com 0xFF, que o httpbin não serve (só UTF-8):
+    // ficam no Jest, com upstream local (webos/tests/tlsproxy/proxy.test.js).
     ['controle: ftyp avif (imagem) passa', pad(Buffer.concat([Buffer.from([0, 0, 0, 0x1c]), Buffer.from('ftypavif')]), 64), false],
     ['controle: texto comum passa', Buffer.from('{"ok":true,"text":"nada de midia aqui"}'), false],
 ];
@@ -227,6 +246,13 @@ await check('tlsErrors indexado só por err.code', async () => {
 await check('pôster metahub (LE) → 200 image/jpeg', async () => {
     const r = await proxy('https://images.metahub.space/poster/medium/tt0111161/img');
     return [r.status === 200 && /^image\//.test(r.headers['content-type'] || '') && r.body.length > 1000, `http=${r.status} ${r.headers['content-type']} ${r.body.length} bytes`];
+});
+await check('emissor do upstream exposto: metahub → Let\'s Encrypt, api.strem.io → outro', async () => {
+    const le = await proxy('https://images.metahub.space/poster/medium/tt0111161/img', { method: 'HEAD' });
+    const gts = await proxy('https://api.strem.io/', { method: 'HEAD' });
+    const a = le.headers['x-proxy-issuer-o'];
+    const b = gts.headers['x-proxy-issuer-o'];
+    return [/Let's Encrypt/.test(a || '') && !!b && !/Let's Encrypt/.test(b), `metahub=${a} api.strem.io=${b}`];
 });
 await check('debrid-link API (LE) → 200 JSON', async () => {
     const r = await proxy('https://debrid-link.com/api/v2/downloader/domains');
