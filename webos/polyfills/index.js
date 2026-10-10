@@ -6,6 +6,7 @@ import './abort-controller';
 import { install as installPluralRules } from './plural-rules';
 import { install as installResizeObserver } from './resize-observer';
 import { install as installElement } from './element';
+import './focus';
 
 installQueueMicrotask(self);
 installPluralRules(self);
