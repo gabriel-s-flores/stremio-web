@@ -59,3 +59,13 @@ html:root body [class*='meta-item-link'][data-focus-visible-added] [class*='post
 [class*='metadetails-container'] [class*='meta-preview-container'] [class*='meta-info-container'] img[class*='logo'] {
     max-width: 30rem;
 }
+
+// The vertical nav bar hides its last tab, Settings, on pages up to 640px tall
+// (src/components/NavBar/VerticalNavBar/styles.less). The TV scale (F2.6) makes the page 617px tall,
+// and the bar still has room for the six tabs there: Settings comes back. Not in the phone layout
+// (640px wide or less) the largest interface scale settings reach, where the bar is a bottom row.
+@media only screen and (min-width: 641px) and (max-height: 640px) {
+    html:root body [class*='vertical-nav-bar-container'] [class*='nav-tab-button']:last-child {
+        display: flex;
+    }
+}
