@@ -1,7 +1,7 @@
 // In-page helpers for webos/tests/streams/emulator.sh (F6.2). Evaluated through cdp.mjs in the
 // packaged app (and in the desktop build for the comparison); ES5 only (Chromium 53). Everything
 // lands on window.__f62.
-/* eslint-disable no-console */
+/* eslint-disable no-console, @stylistic/semi -- an expression for cdp.mjs eval, which wraps it */
 
 (function() {
     if (window.__f62) return 'already installed';
@@ -31,7 +31,7 @@
     state.install = function(manifestUrl) {
         state.installed = null;
         return fetch(manifestUrl).then(function(response) { return response.json(); }).then(function(manifest) {
-            window.core.transport.dispatch({
+            window.core.dispatch({
                 action: 'Ctx',
                 args: { action: 'InstallAddon', args: { transportUrl: manifestUrl, manifest: manifest, flags: { official: false, protected: false } } },
             });
@@ -42,7 +42,7 @@
 
     // Audio languages of the profile (the rules give +20 to a stream whose initial track has one).
     state.readSettings = function() {
-        return window.core.transport.getState('ctx').then(function(ctx) {
+        return window.core.getState('ctx').then(function(ctx) {
             var settings = ctx.profile.settings;
             state.settings = { audioLanguage: settings.audioLanguage, secondaryAudioLanguage: settings.secondaryAudioLanguage };
             return JSON.stringify(state.settings);
@@ -92,4 +92,4 @@
         return started;
     };
     return 'installed';
-})();
+})()

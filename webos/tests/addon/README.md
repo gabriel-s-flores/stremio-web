@@ -34,10 +34,10 @@ node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] 
 - Quando fica pronto, imprime (e grava em `--info`) `{ manifestUrl, mediaUrl, port, mediaPort, dir }`.
 - O `media-server.mjs` sobe como processo filho e é encerrado junto, com SIGINT ou SIGTERM.
 
-Para instalar no app em modo convidado (sem conta), por CDP, como faz a tela de Addons:
+Para instalar no app em modo convidado (sem conta), por CDP, como faz a tela de Addons (`window.core` é o transport do core):
 
 ```js
-fetch(manifestUrl).then((r) => r.json()).then((manifest) => window.core.transport.dispatch({
+fetch(manifestUrl).then((r) => r.json()).then((manifest) => window.core.dispatch({
     action: 'Ctx',
     args: { action: 'InstallAddon', args: { transportUrl: manifestUrl, manifest, flags: { official: false, protected: false } } },
 }));

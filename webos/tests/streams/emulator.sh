@@ -31,7 +31,7 @@ pnpm webos:launch
 ready=''
 for _ in $(seq 1 90); do
     sleep 2
-    if cdp_eval "!!(window.core && window.core.transport)" 2>/dev/null | grep -q true; then ready=1; break; fi
+    if cdp_eval "!!(window.core && window.core.dispatch)" 2>/dev/null | grep -q true; then ready=1; break; fi
 done
 [[ -n "$ready" ]] || { echo "error: the core did not start" >&2; exit 1; }
 cdp_eval "$(cat "$ROOT/webos/tests/streams/page.js")"
