@@ -49,6 +49,12 @@ const labelErrors = labelled.map((s) => Math.abs(parseLabel(s.seekBarLabels[0]) 
 check('seek bar labels show the current time and the duration', labelled.length > 0 &&
     labelErrors.every((e) => e <= 1.5) && parseLabel(last(labelled).seekBarLabels[1]) === Math.floor(expectedDuration),
 { labels: labelled.map((s) => s.seekBarLabels), errors: labelErrors });
+// Remaining time mode (toggled while paused): "HH:MM:SS-" = duration - currentTime, not Infinity/NaN.
+const remaining = videos('remaining');
+const remainingLabel = remaining.length ? remaining[0].seekBarLabels[1] : null;
+const remainingExpected = remaining.length ? remaining[0].video.duration - remaining[0].video.currentTime : null;
+check('remaining time label shows duration - currentTime', typeof remainingLabel === 'string' && /^\d+(:\d+)+-$/.test(remainingLabel) &&
+    Math.abs(parseLabel(remainingLabel.slice(0, -1)) - remainingExpected) <= 1.5, { label: remainingLabel, expected: remainingExpected });
 check('no speed button and no speed menu', !speed.speedIconRendered && !speed.speedMenuRendered, speed);
 const mediaSubscribe = luna.luna.filter((c) => /com\.webos\.media/.test(c.uri) && (c.method === 'subscribe' || c.subscribe));
 check('the app never subscribes to com.webos.media', mediaSubscribe.length === 0, mediaSubscribe);

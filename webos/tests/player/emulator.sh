@@ -91,6 +91,16 @@ echo "pause: $(click_play_pause)" | tee -a "$OUT/actions.log"
 for _ in $(seq 1 3); do sleep 1; sample paused; done
 show_controls
 "${CDP[@]}" screenshot "$OUT/tela-paused.png" || true
+# The duration label is a button that switches to the remaining time (divided by playbackSpeed).
+toggle_remaining() {
+    cdp_eval "(function(){ var l = document.querySelectorAll('[class*=\"seek-bar-container\"] [class^=\"label-\"]')[1]; if (l) l.parentElement.click(); return l ? l.textContent : null; })()"
+}
+echo "remaining on: $(toggle_remaining)" | tee -a "$OUT/actions.log"
+sleep 1
+sample remaining
+show_controls
+"${CDP[@]}" screenshot "$OUT/tela-tempo-restante.png" || true
+echo "remaining off: $(toggle_remaining)" | tee -a "$OUT/actions.log"
 echo "play: $(click_play_pause)" | tee -a "$OUT/actions.log"
 for _ in $(seq 1 4); do sleep 1; sample resumed; done
 

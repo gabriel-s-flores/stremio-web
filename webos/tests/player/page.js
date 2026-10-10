@@ -34,7 +34,8 @@
                 t: Date.now(),
                 uri: String(uri),
                 method: params && params.method,
-                subscribe: !!(params && params.parameters && params.parameters.subscribe),
+                // webOSTV.js takes `subscribe` next to `method`; some services also read it from the parameters.
+                subscribe: !!(params && (params.subscribe || (params.parameters && params.parameters.subscribe))),
                 parameters: params && params.parameters,
             });
             return request(uri, params);
