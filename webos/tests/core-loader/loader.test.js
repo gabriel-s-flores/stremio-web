@@ -2,6 +2,8 @@
 // importScripts simulados. A integração com o core real fica em core.test.js.
 
 const WASM_BYTES = new Uint8Array([0, 97, 115, 109]).buffer;
+// O caminho com WASM preferido (o app prefere o wasm2js; veja os testes de preferência abaixo).
+const WASM_FIRST = { prefer: 'wasm' };
 
 function fakeXhr(responses) {
     return class XMLHttpRequest {
@@ -56,7 +58,7 @@ describe('core loader', () => {
         delete global.WebAssembly;
         global.XMLHttpRequest = jest.fn();
         const loader = load();
-        const source = await loader.loadCore();
+        const source = await loader.loadCore(WASM_FIRST);
         expect(global.XMLHttpRequest).not.toHaveBeenCalled();
         expect(global.importScripts).not.toHaveBeenCalled();
 
@@ -81,7 +83,7 @@ describe('core loader', () => {
             instantiate: jest.fn(() => Promise.resolve(instance))
         };
         const loader = load();
-        const result = await (await loader.loadCore()).webosInstantiate(imports);
+        const result = await (await loader.loadCore(WASM_FIRST)).webosInstantiate(imports);
         expect(global.WebAssembly.compile).toHaveBeenCalledWith(WASM_BYTES);
         expect(global.WebAssembly.instantiate).toHaveBeenCalledWith(module, imports);
         expect(result).toEqual({ instance, module });
@@ -97,7 +99,7 @@ describe('core loader', () => {
             instantiate: jest.fn()
         };
         const loader = load();
-        const result = await (await loader.loadCore()).webosInstantiate(imports);
+        const result = await (await loader.loadCore(WASM_FIRST)).webosInstantiate(imports);
         expect(global.WebAssembly.instantiate).not.toHaveBeenCalled();
         expect(result.instance.exports).toBe(wasm2jsExports);
         expect(loader.getStatus()).toMatchObject({ variant: 'wasm2js', reason: 'compile-failed', error: 'invalid local type' });
@@ -109,7 +111,7 @@ describe('core loader', () => {
             instantiate: () => Promise.reject(new Error('out of memory'))
         };
         const loader = load();
-        const result = await (await loader.loadCore()).webosInstantiate(imports);
+        const result = await (await loader.loadCore(WASM_FIRST)).webosInstantiate(imports);
         expect(factory).toHaveBeenCalledWith(imports);
         expect(result.instance.exports).toBe(wasm2jsExports);
         expect(loader.getStatus()).toMatchObject({ ok: true, variant: 'wasm2js', reason: 'instantiate-failed', error: 'out of memory' });
@@ -122,7 +124,7 @@ describe('core loader', () => {
             instantiate: jest.fn(() => Promise.reject(new Error('link error')))
         };
         const loader = load();
-        const source = await loader.loadCore();
+        const source = await loader.loadCore(WASM_FIRST);
         await source.webosInstantiate(imports);
         // A promessa de loadCore() fica no cache do webpack: o objeto não pode mais chegar ao Module.
         await expect(source.webosInstantiate(imports)).rejects.toThrow('já foi chamado');
@@ -133,7 +135,7 @@ describe('core loader', () => {
         delete global.WebAssembly;
         global.importScripts = jest.fn(() => { throw new Error('net::ERR_FILE_NOT_FOUND'); });
         const loader = load();
-        const source = await loader.loadCore();
+        const source = await loader.loadCore(WASM_FIRST);
         await expect(source.webosInstantiate(imports)).rejects.toThrow('ERR_FILE_NOT_FOUND');
         expect(loader.getStatus()).toMatchObject({
             ok: false, stage: 'wasm2js-load', variant: 'wasm2js', reason: 'no-webassembly', error: 'net::ERR_FILE_NOT_FOUND'
@@ -144,14 +146,14 @@ describe('core loader', () => {
         global.WebAssembly = { compile: () => Promise.resolve({}), instantiate: () => Promise.reject(new Error('link error')) };
         factory.mockImplementation(() => { throw new Error('abort'); });
         const loader = load();
-        await expect((await loader.loadCore()).webosInstantiate(imports)).rejects.toThrow('abort');
+        await expect((await loader.loadCore(WASM_FIRST)).webosInstantiate(imports)).rejects.toThrow('abort');
         expect(loader.getStatus()).toMatchObject({ ok: false, stage: 'wasm2js-instantiate', reason: 'instantiate-failed', error: 'abort' });
     });
 
     test('rejects when the .wasm cannot be read instead of hiding a packaging error', async () => {
         global.WebAssembly = { compile: jest.fn(), instantiate: jest.fn() };
         const loader = load();
-        await expect(loader.loadCore({ wasmUrl: 'missing.wasm' })).rejects.toThrow('missing.wasm');
+        await expect(loader.loadCore({ prefer: 'wasm', wasmUrl: 'missing.wasm' })).rejects.toThrow('missing.wasm');
         expect(loader.getStatus()).toMatchObject({ ok: false, stage: 'wasm-read', variant: null, error: expect.stringContaining('missing.wasm') });
         expect(global.WebAssembly.compile).not.toHaveBeenCalled();
         expect(global.importScripts).not.toHaveBeenCalled();
@@ -163,8 +165,110 @@ describe('core loader', () => {
         const loader = load();
         loader.defaults.onStep = (name) => steps.push(name);
         loader.defaults.wasm2jsUrl = 'core/w2js.js';
-        await (await loader.loadCore({ wasm2jsUrl: 'other/w2js.js' })).webosInstantiate(imports);
+        await (await loader.loadCore({ prefer: 'wasm', wasm2jsUrl: 'other/w2js.js' })).webosInstantiate(imports);
         expect(global.importScripts).toHaveBeenCalledWith('file:///media/developer/apps/app/other/w2js.js');
         expect(steps).toEqual(['start', 'fallback', 'wasm2js-load', 'wasm2js-instantiate', 'wasm2js-ok']);
+    });
+
+    describe('preferred variant', () => {
+        function nativeWasm() {
+            const instance = { exports: { memory: { buffer: new ArrayBuffer(65536) } } };
+            global.WebAssembly = {
+                compile: jest.fn(() => Promise.resolve({})),
+                instantiate: jest.fn(() => Promise.resolve(instance))
+            };
+            return instance;
+        }
+
+        test('prefers wasm2js by default, without reading the .wasm', async () => {
+            nativeWasm();
+            global.XMLHttpRequest = jest.fn();
+            const loader = load();
+            const result = await (await loader.loadCore()).webosInstantiate(imports);
+            expect(result.instance.exports).toBe(wasm2jsExports);
+            expect(global.XMLHttpRequest).not.toHaveBeenCalled();
+            expect(global.WebAssembly.compile).not.toHaveBeenCalled();
+            expect(loader.getStatus()).toMatchObject({
+                ok: true, stage: 'ready', variant: 'wasm2js', reason: 'preferred', error: null,
+                hasWebAssembly: true, prefer: 'wasm2js', preferSource: 'default', preferConfig: null
+            });
+        });
+
+        test('uses wasm2js as preferred when WebAssembly is missing', async () => {
+            delete global.WebAssembly;
+            const loader = load();
+            await (await loader.loadCore()).webosInstantiate(imports);
+            expect(loader.getStatus()).toMatchObject({ ok: true, variant: 'wasm2js', reason: 'preferred', hasWebAssembly: false });
+        });
+
+        test.each([
+            ['cannot be loaded', () => { global.importScripts = jest.fn(() => { throw new Error('net::ERR_FILE_NOT_FOUND'); }); }, 'net::ERR_FILE_NOT_FOUND'],
+            ['factory throws', () => { factory.mockImplementation(() => { throw new Error('abort'); }); }, 'abort']
+        ])('falls back to WebAssembly when wasm2js %s', async (_name, breakWasm2js, error) => {
+            const instance = nativeWasm();
+            breakWasm2js();
+            const loader = load();
+            const result = await (await loader.loadCore()).webosInstantiate(imports);
+            expect(global.WebAssembly.compile).toHaveBeenCalledWith(WASM_BYTES);
+            expect(global.WebAssembly.instantiate).toHaveBeenCalledWith({}, imports);
+            expect(result.instance).toBe(instance);
+            expect(scope.stremio_core_web_wasm2js).toBeUndefined();
+            expect(loader.getStatus()).toMatchObject({
+                ok: true, stage: 'ready', variant: 'wasm', reason: 'wasm2js-failed', error, prefer: 'wasm2js', memoryBytes: 65536
+            });
+        });
+
+        test('fails when wasm2js fails without WebAssembly', async () => {
+            delete global.WebAssembly;
+            factory.mockImplementation(() => { throw new Error('abort'); });
+            const loader = load();
+            await expect((await loader.loadCore()).webosInstantiate(imports)).rejects.toThrow('abort');
+            expect(loader.getStatus()).toMatchObject({ ok: false, stage: 'wasm2js-instantiate', variant: 'wasm2js', reason: 'preferred', error: 'abort' });
+        });
+
+        test('fails when wasm2js fails and so does the WebAssembly compile', async () => {
+            global.WebAssembly = { compile: () => Promise.reject(new Error('invalid local type')), instantiate: jest.fn() };
+            factory.mockImplementation(() => { throw new Error('abort'); });
+            const loader = load();
+            await expect((await loader.loadCore()).webosInstantiate(imports)).rejects.toThrow('invalid local type');
+            expect(loader.getStatus()).toMatchObject({ ok: false, stage: 'wasm-compile', variant: 'wasm', reason: 'wasm2js-failed', error: 'invalid local type' });
+        });
+
+        test('rejects an unknown preference', async () => {
+            const loader = load();
+            await expect(loader.loadCore({ prefer: 'asm' })).rejects.toThrow('prefer inválido');
+        });
+
+        test('reads the preference from the page localStorage through the worker', async () => {
+            const instance = nativeWasm();
+            scope.local_storage_get_item = jest.fn(() => Promise.resolve('wasm'));
+            const loader = load();
+            const result = await (await loader.loadConfigured()).webosInstantiate(imports);
+            expect(scope.local_storage_get_item).toHaveBeenCalledWith('webos.coreVariant');
+            expect(loader.PREFER_KEY).toBe('webos.coreVariant');
+            expect(result.instance).toBe(instance);
+            expect(loader.getStatus()).toMatchObject({
+                variant: 'wasm', reason: 'webassembly', prefer: 'wasm', preferSource: 'config', preferConfig: 'wasm'
+            });
+        });
+
+        test.each([
+            ['an unknown value', () => Promise.resolve('asm'), 'asm'],
+            ['no value', () => Promise.resolve(null), null],
+            ['a failed read', () => Promise.reject(new Error('SecurityError')), null]
+        ])('keeps the default with %s in the configuration', async (_name, get, preferConfig) => {
+            nativeWasm();
+            scope.local_storage_get_item = get;
+            const loader = load();
+            await (await loader.loadConfigured()).webosInstantiate(imports);
+            expect(loader.getStatus()).toMatchObject({ variant: 'wasm2js', reason: 'preferred', prefer: 'wasm2js', preferSource: 'default', preferConfig });
+        });
+
+        test('keeps the default outside the worker init (no local_storage_get_item)', async () => {
+            nativeWasm();
+            const loader = load();
+            await (await loader.loadConfigured()).webosInstantiate(imports);
+            expect(loader.getStatus()).toMatchObject({ variant: 'wasm2js', prefer: 'wasm2js', preferSource: 'default' });
+        });
     });
 });

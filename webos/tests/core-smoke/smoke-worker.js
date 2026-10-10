@@ -39,6 +39,9 @@ if (params.instantiate === 'fail') {
 }
 
 var loader = require('../../core/loader.js');
+// Os cenários do smoke testam o caminho com WASM preferido e as quedas para o wasm2js; o app
+// prefere o wasm2js (loader.defaults).
+loader.defaults.prefer = 'wasm';
 loader.defaults.onStep = function (name, detail) {
     mark('loader ' + name + (detail ? ' ' + detail : ''));
 };
