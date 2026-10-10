@@ -55,7 +55,10 @@ webos/core/check-wasm arquivo.wasm                  # gate sozinho (--json para 
 7. `wasm2js -O` (Binaryen 133) sobre esse mesmo wasm. A saída é um módulo ES que se instancia ao
    carregar; o build a reembala como script clássico que só define a fábrica `asmFunc(imports)` no
    global `stremio_core_web_wasm2js` (ou `module.exports` no Node). É ES5 e não passa pelo Babel.
-   O `-O` sai menor que o `-O2` (32,7 MB contra 34,3 MB; 3,7 MB contra 3,8 MB com gzip).
+   O `-O` sai menor que o `-O2` (32,7 MB contra 34,3 MB; 3,7 MB contra 3,8 MB com gzip). No
+   emulador, o wasm2js inicializa em tempo parecido com o do WASM (~7 s, metade no parse do
+   `importScripts`) e usa memória parecida no estável e menor no pico: o V8 5.8 compila o wasm
+   inteiro com o TurboFan, e o JS é compilado sob demanda (tabela no relatório da F0.6).
 8. Babel com as `devDependencies` e o `.babelrc` do upstream (`npm ci` do lockfile do pacote), como
    o `scripts/build.sh` oficial. O `bridge.js` e o `worker.js` saem idênticos aos do npm.
 
