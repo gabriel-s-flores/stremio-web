@@ -5,10 +5,20 @@
 const fs = require('fs');
 const path = require('path');
 
-const SRC = path.resolve(__dirname, '..', '..', '..', 'src');
+const ROOT = path.resolve(__dirname, '..', '..', '..');
+const SRC = path.join(ROOT, 'src');
 const read = (file) => fs.readFileSync(path.join(SRC, file), 'utf8');
 
 describe('upstream paths used by webos/back', () => {
+    // The bridge matches CSS module classes by their `<local>-` prefix (overlays.js classPrefix).
+    test('CSS module class names keep the local name as a prefix, in the webOS build too', () => {
+        const identNames = fs.readFileSync(path.join(ROOT, 'webpack.config.js'), 'utf8').match(/localIdentName:\s*'[^']*'/g);
+        expect(identNames).toEqual(["localIdentName: '[local]-[hash:base64:5]'"]);
+        fs.readdirSync(path.join(ROOT, 'webos', 'webpack')).forEach((file) => {
+            expect(fs.readFileSync(path.join(ROOT, 'webos', 'webpack', file), 'utf8')).not.toMatch(/localIdentName|getLocalIdent/);
+        });
+    });
+
     test('the webOS App wraps the upstream App inside the router', () => {
         expect(read('index.js')).toMatch(/<HashRouter>[\s\S]*<App \/>[\s\S]*<\/HashRouter>/);
         expect(read('App/index.webos.js')).toMatch(/<App \/>\s*<BackNavigation \/>/);

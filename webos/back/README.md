@@ -40,14 +40,22 @@ está em portal no `body`. Ordem (o primeiro encontrado é o fechado):
 |---|---|---|
 | `StreamingServerUrlModal` | Escape em `window` | O listener dele é em `window` |
 | `ShortcutsModal`, `GamepadModal` | clique no backdrop | Escape em `document` também dispararia o atalho `exit` |
-| `ContextMenu` | `mousedown` no container | idem |
+| `ContextMenu` | pressão no container (`mousedown` + `mouseup`) | idem |
 | `ActionMenu` | Escape no item focado do menu | O handler é o `onKeyDown` do React no menu |
 | `Popup` (NavMenu, menus de vídeo/stream, `Multiselect`), dropdown do histórico da busca, `MultiselectMenu` sem portal | "clique fora": `mousedown` + `mouseup` no `body`, e o foco volta para o rótulo | Só popups e dropdowns reagem; o `MultiselectMenu` sem portal não tem Escape |
 | `ModalDialog`, `BottomSheet` (no `.modals-container` da rota) | Escape em `window` | Eles conferem se são o de cima; o loader do login não fecha e segura o Back |
-| Menus e gaveta do Player | `mousedown` no container do Player | O Escape do Player (`exit`) fecha os menus **e** sai do Player no mesmo toque |
+| Menus e gaveta do Player | pressão no container do Player (`mousedown` + `mouseup`) | O Escape do Player (`exit`) fecha os menus **e** sai do Player no mesmo toque |
 | Popup de próximo vídeo | clique em "dispensar" | O `closeMenus` do Player não fecha esse popup |
 
-O `webos/tests/back/upstream.test.js` falha se algum desses caminhos mudar no upstream.
+Toda pressão de mouse da ponte é **completa** (`mousedown` e `mouseup` no mesmo alvo, sem `click`,
+helper `sendPress`). Um `mousedown` sozinho deixava componentes "pressionados": o Player começa o
+"segurar para 2x" em qualquer `mousedown` esquerdo em `window` e só o encerra no `mouseup`, então
+fechar o menu de contexto do Player com Back deixava a reprodução presa em 2x (ciclo 1 da revisão).
+
+O `webos/tests/back/upstream.test.js` falha se algum desses caminhos mudar no upstream, inclusive o
+formato das classes (`localIdentName`). O `overlays.test.js` (jsdom) confere o que a ponte faz:
+qual overlay fecha, a ordem, o filtro da rota visível e do `-exit`, o alvo de cada evento
+(`window` × `document` × elemento) e que nenhuma pressão fica aberta.
 
 ### Camada de rota (`routes.js`, `BackNavigation.js`)
 
@@ -112,9 +120,23 @@ diagnóstico (F3.6).
 
 ## Testes
 
-- `pnpm test webos/tests/back`: despachante, regras de rota, teclado/saída e o contrato com o upstream.
-- Emulador (depois de `pnpm webos:package`):
-  `webos/tools/emu-run --timeout 15 -- node webos/tests/back/emulator/run.mjs <pasta>`. Usa teclas
-  reais (`remote.mjs`) e confere, a cada Back, um único despacho, a rota, o `history.state.idx`, os
-  eventos `popstate` e capturas de tela; no fim sai pelo diálogo (direita + OK) e confere que o app
-  fechou.
+- `pnpm test webos/tests/back`:
+  - `dispatcher.test.js`: prioridade, LIFO, consumo, `keyup`/repeat;
+  - `capture.test.js` (jsdom): o 461 é tomado na captura de `window`, antes de qualquer listener da
+    página, inclusive os de `window` registrados antes;
+  - `routes.test.js` e `routeHandler.test.js`: regras de rota e o guarda contra navegação dupla
+    (`createRouteBackHandler`, que o `BackNavigation` registra);
+  - `overlays.test.js` (jsdom): a ponte;
+  - `platform.test.js`: teclado e saída;
+  - `upstream.test.js`: o contrato com o upstream.
+
+  Os testes em jsdom usam `jest-environment-jsdom` (dependência de dev, fora do bundle), escolhido por
+  arquivo com `@jest-environment jsdom`.
+- Emulador (depois de `pnpm webos:package`), um cenário por `emu-run`:
+  `webos/tools/emu-run --timeout 15 -- node webos/tests/back/emulator/run.mjs <pasta em $HOME> [navigation|player]`.
+  Usa teclas reais (`remote.mjs`) e confere, a cada Back, um único despacho, a rota, o
+  `history.state.idx`, os eventos `popstate` e capturas de tela.
+  - `navigation`: Board, diálogo, dropdown, popup, MetaDetails, modal, teclado do sistema; no fim sai
+    pelo diálogo (direita + OK) e confere que o app fechou.
+  - `player`: um vídeo servido pelo `media-server.mjs`, os menus de velocidade e de contexto fechados
+    com Back, conferindo que a reprodução segue a 1x, e o Back que sai do Player.
