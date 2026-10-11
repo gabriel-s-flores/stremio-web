@@ -1,14 +1,168 @@
-# Modais e menus com o controle (F4.3)
+# Navegação pelo controle remoto
 
-Arquivos desta tarefa (o resto de `webos/lib/navigation/` é de outras tarefas):
+Tudo o que move o foco com o controle no build webOS (`WEBOS=1`; o desktop nunca carrega esta pasta).
+As setas continuam no `spatial-navigation-polyfill` do upstream: cada parte só toma as teclas que sabe
+resolver melhor e devolve o resto (`null`) ao polyfill. Escrita em paralelo pelas F4.1a (Board, Discover,
+Busca), F4.1b (Library, Calendar, Addons, Settings, barra lateral), F4.1c (Detalhes) e F4.3 (modais e
+menus); a F4.4 juntou o que era comum num núcleo (`core/`) e deixou as telas como descrições finas.
+
+## Mapa
 
 | Arquivo | O que faz |
 |---|---|
+| `core/dom.js` | Elemento focável (tab index, habilitado, renderizado com área), primeiro focável, campo de texto, nomes de classe dos CSS modules (`<local>-<hash>`) |
+| `core/routes.js` | Rota visível (as de baixo ficam montadas com `display: none`), foco perdido, barras de navegação, modal aberto |
+| `core/scroll.js` | Rolar uma lista até o elemento com margem, convertendo os pixels de tela (zoom 1,75 da F2.6) nos pixels CSS do `scrollTop` |
+| `core/memory.js` | O que vale lembrar (nem barras nem modais), lugar na árvore (`pathOf`), localizador por link/rótulo/posição, memória por chave (LRU) |
+| `core/input.js` | **O hub**: um `keydown` e um `focusin` de captura para todas as partes, em ordem de prioridade, e o modo de entrada (tecla × ponteiro) |
+| `core/screenFocus.js` | **O motor de foco de uma tela**: foco inicial com espera e fallback, restauração ao voltar, recuperação, memória, setas da tela |
+| `core/lists.js` | Listas roláveis (Library, Calendar, Addons, Settings): busca em todos os itens, rolagem com margem, saída lateral |
+| `withScreenNavigation.js` | O lado React do motor: embrulha o componente da rota no `index.webos.*` de cada tela |
+| `board.js`, `search.js`, `discover.js` | Descrições do Board e da Busca (faixas de linhas) e do Discover (grade) |
+| `screens.js` | Descrições de Library, Calendar, Addons e Settings (sobre `core/lists.js`) |
+| `metadetails.js` | Detalhes (coluna, episódios, streams), ligado por `src/routes/MetaDetails/MetaDetails.webos.js` |
 | `modals.js` | Foco dos overlays: entra, fica preso, volta ao fechar |
-| `contextMenu.js` | Gatilhos de controle para os menus de contexto (tecla amarela e segurar o botão do ponteiro) |
-| `ModalsNavigation.js` | Componente que instala os dois no app (`src/App/index.webos.js`, ao lado do `BackNavigation`) |
+| `contextMenu.js` | Menus de contexto pelo controle (tecla amarela, segurar o ponteiro) |
+| `sideBar.js` | RIGHT da barra lateral de volta ao item de onde se saiu, em qualquer tela |
+| `RemoteNavigation.js` | Componente montado uma vez (`src/App/index.webos.js`, ao lado do `BackNavigation`): instala modais, menus de contexto, barra lateral e o realinhamento do zoom |
 
-## Foco dos overlays (`modals.js`)
+## O núcleo
+
+### Um hub de entrada (`core/input.js`)
+
+Um só ouvinte de `keydown` (captura, na `window`) e um só de `focusin` (captura, no `document`) para tudo,
+instalados com o primeiro manipulador e removidos com o último (nada no boot). A captura na `window`
+roda antes do polyfill (que ouve a `window` em bolha): quem move o foco chama `preventDefault()` e o
+polyfill pula a tecla. O dispatcher do Back (`webos/back`) se registra antes, na importação, e não deixa
+o Back chegar aqui.
+
+Os manipuladores de tecla rodam por prioridade e, empatados, na ordem em que entraram. Um manipulador
+que devolve `true` para os seguintes (e chama `stopImmediatePropagation()` quando a tecla não pode chegar
+a mais nada, polyfill incluído):
+
+| Prioridade | Quem |
+|---|---|
+| `overlay` (10) | `modals.js`: com um overlay aberto, as setas ficam nele; tecla com o foco atrás só traz o foco para dentro (e para tudo) |
+| `colorKeys` (20) | `contextMenu.js`: a tecla amarela |
+| `global` (30) | `sideBar.js`: RIGHT da barra lateral |
+| `screen` (40) | o motor de cada tela montada (seta com o foco perdido) e `metadetails.js` |
+
+Os ouvintes que restam fora do hub não são de captura de tecla/foco: o `keydown` das telas no próprio
+contêiner (as setas que a tela conhece, ver abaixo), o `keydown` em bolha de Detalhes (depois do
+polyfill), o `navnotarget` de Detalhes e o gesto de segurar o ponteiro do `contextMenu.js`.
+
+**Modo de entrada.** Tecla, ponteiro (um `mousedown`/`mousemove` confiável) ou o cursor do Magic
+Remote (`cursorStateChange`). `pointerInUse()`: o atributo `data-webos-pointer="visible"` da F4.2 ou,
+antes do primeiro `cursorStateChange`, a última entrada ter sido o ponteiro. Com o ponteiro em uso nada
+rola listas nem tira o foco do lugar.
+
+### O motor de foco de uma tela (`core/screenFocus.js`)
+
+Um por tela montada, no `.route-content` da rota (`withScreenNavigation.js` cria e destrói). Vale só
+enquanto a rota é a visível e nenhum modal está aberto sobre ela.
+
+- **Foco inicial**: a tela montada sem foco recebe o primeiro item assim que ele aparece (o Board espera
+  os catálogos do core, ~30 s no perfil c8). Depois de `fallbackDelay` vai um fallback (os filtros acima
+  da lista), que cede lugar ao item quando ele chega, se o usuário não assumiu (uma tecla qualquer, o foco
+  movido). A espera acompanha as mutações da tela e para no `timeout`. Um fallback que só aparece depois da
+  montagem também entra (o Discover reaberto pela barra ficava com o foco no `body` mais de 3 s).
+- **Restauração**: as telas ficam montadas sob as que se abriram a partir delas (`src/router/Routes.tsx`).
+  Quando outra rota cobre a tela, o motor tira um retrato do foco (`leave`); quando o Back a traz de volta,
+  o elemento volta a ter o foco, ou o que está no mesmo lugar da árvore se ele foi re-renderizado
+  (`restore`), mesmo que a tela tenha focado outra coisa sozinha (o campo da Busca).
+- **Recuperação**: o elemento focado sumiu (linha trocada, lista recarregada, filtro aplicado) ou uma seta
+  chegou sem foco: o foco volta à tela, não ao `body` (de onde o polyfill recomeça do canto). Pelo
+  `focusout`, por uma mutação que levou o elemento lembrado junto (o Chromium 53 pode largar o foco de um
+  elemento removido sem evento) e por uma troca de localização na mesma tela (filtro, ordenação).
+- **Memória**: o último elemento focado da tela, **sem as barras de navegação e sem os modais**
+  (`isMemorable`). Sair pela barra lateral e voltar cai no conteúdo; a barra de cima tem o campo da Busca,
+  que abre o teclado do sistema.
+- **Setas**: a tela toma as que conhece (`navigate`) no próprio contêiner, em bolha (depois dos
+  manipuladores do elemento focado) ou em captura (`capture: true`: antes deles, para os dropdowns
+  abertos e o range do zoom de Settings, que para a propagação das setas).
+
+A descrição de uma tela (todas as chaves menos `initial` são opcionais):
+
+| Chave | O que é |
+|---|---|
+| `initial(container, { recovering })` | o elemento do foco inicial, ou `null` enquanto não há; `recovering` quando é para um foco perdido depois (a Busca evita o campo) |
+| `fallback(container)`, `fallbackDelay`, `timeout` | o elemento enquanto o inicial não vem, quanto esperar por ele antes do fallback e no total |
+| `path` | `false` quando o mesmo lugar da árvore pode guardar outra coisa (uma lista trocada por outra) |
+| `navigate(target, dir, container, memory, event)` | um elemento para focar, `true` para engolir a seta ou `null` para o polyfill; `memory.last` e `memory.content` (o último dentro das listas) |
+| `capture` | `navigate` na fase de captura do contêiner |
+| `isContent(element, container)` | o elemento está nas listas da tela (`memory.content`) |
+| `align(element, container)` / `realign` | rolar as listas até o elemento focado, a cada foco / depois de um resize (o zoom de Settings) |
+| `onMutation(container)` | o conteúdo da tela mudou |
+
+Diagnóstico: `window.__webosNavigation` (`status.last`: o último foco que um motor pôs; `hub`;
+`screen()`: o motor da rota visível). `window.__webosNavigationF41b` é o mesmo objeto (o roteiro da F4.1b
+espera por ele).
+
+### Custo
+
+Nada roda no boot: os ouvintes entram com o primeiro manipulador (o motor do Board, que monta com o app)
+e o `RemoteNavigation` só instala. Por tela montada, um `MutationObserver` no conteúdo (lista de filhos)
+cuja checagem, fora da espera do foco inicial, é `contains()` do elemento lembrado. A busca do motor só
+acontece durante a espera do foco inicial (como antes, na F4.1a). O hub não guarda nada além das listas
+de manipuladores.
+
+## As telas
+
+### Board e Busca (`board.js`, `search.js`)
+
+A lista é um rolador vertical de linhas; no build webOS cada linha mostra os 10 itens numa faixa
+horizontal que rola (`webos/styles/strips.less`).
+
+- LEFT/RIGHT andam na faixa; LEFT no primeiro item fica com o polyfill (a barra lateral), RIGHT no último fica.
+- UP/DOWN vão à linha mais próxima com itens, na mesma coluna da tela. Linhas de mensagem (erro de addon)
+  são puladas. Uma linha ainda carregando aparece por 8 px (o `useVisibleCatalogs` só a carrega se ela
+  aparece) e o foco espera. Com o zoom 1,75 uma linha focada pode ser mais alta que a lista: espiar a
+  seguinte tira o título da linha focada de vista, então, quando a linha espiada termina de carregar (itens
+  ou erro), a linha focada é alinhada de novo, com o título.
+- A linha focada vai ao topo da lista, com o título; a faixa rola só o bastante para mostrar o item.
+- UP da primeira linha vai à barra de cima (busca, perfil), pela busca do polyfill restrita aos botões
+  dela: a barra lateral, focável desde a F4.1b, fica mais perto do primeiro pôster e tomava esse UP.
+- DOWN da barra de cima volta ao conteúdo: o item de onde se veio, ou o primeiro da primeira linha na tela.
+- Busca: UP da primeira linha vai ao campo (o `tabIndex` dele é -1 no upstream; o polyfill ia ao botão ao
+  lado). DOWN do campo vai aos resultados; com o menu de histórico aberto, entra no menu, e DOWN no último
+  item segue aos resultados fechando o menu. A recuperação nunca escolhe o campo (focar abre o teclado do
+  sistema): com o campo vazio, a lupa; **com uma consulta, o botão ao lado é o X que limpa a busca**, então
+  o foco espera o primeiro resultado da consulta.
+
+### Discover (`discover.js`)
+
+Grade que quebra linha num rolador vertical, filtros acima, painel de prévia à direita. LEFT/RIGHT numa
+linha da grade (nas pontas, o polyfill); UP/DOWN na mesma coluna; UP da primeira linha ao filtro acima;
+DOWN na última rola até o fim (carrega a próxima página) e o foco espera; DOWN dos filtros ou da barra de
+cima volta à grade. Foco inicial no primeiro item; enquanto o catálogo não vem, o primeiro filtro.
+
+### Library, Calendar, Addons e Settings (`screens.js`, `core/lists.js`)
+
+Foco inicial no primeiro item (pôster, addon, dia do calendário, entrada selecionada do menu de Settings;
+"Log in" do placeholder de convidado em Library e Calendar), esperando 1,5 s pela lista antes dos filtros.
+Nas listas, UP/DOWN procuram entre todos os itens (não só os visíveis) e rolam com margem de 15 %; sem item
+na direção, a lista rola 60 % da altura; DOWN no fim fica, UP no topo sai pelo polyfill. LEFT/RIGHT na
+fileira visível; sem nada, o elemento visível mais próximo fora da lista (em Settings, a entrada
+selecionada do menu), nunca a barra de cima; RIGHT do menu de Settings volta à linha de onde se saiu. Um
+dropdown aberto é uma lista própria para UP/DOWN. Depois de mudar o zoom da interface, o item focado volta
+para dentro da lista.
+
+### Detalhes (`metadetails.js`)
+
+Seções (barra, coluna de informações, lista de episódios ou streams) como contêineres da navegação
+espacial; o `navnotarget` decide a passagem entre elas. Foco inicial no episódio selecionado ou, numa
+lista de streams, no painel da lista (um stream focado congela a ordem do ranking da C8, F6.2). Do painel,
+DOWN/RIGHT/OK entram no primeiro stream, LEFT vai à coluna e UP ao cabeçalho da lista (o filtro de addons
+e o voltar dos streams de um episódio); **com um addon só não há cabeçalho e o foco fica** (antes ia ao
+"Install addons" do fim da lista). Voltar à página restaura o último foco dela (memória por caminho, entre
+montagens), esperando enquanto a seção ainda é placeholder (até 15 s); **o placeholder que segura é o da
+coluna (`MetaPreview.Placeholder`)**, não o nome no lugar do logo de um título sem logo. A restauração
+tardia nunca acontece com o ponteiro em uso nem depois que o foco se moveu. O resto (rolagem com margem,
+resumo alcançável, toggles com OK) está no cabeçalho do arquivo.
+
+### Overlays e menus (`modals.js`, `contextMenu.js`)
+
+#### Foco dos overlays (`modals.js`)
 
 Os overlays do upstream não combinam entre si: `ModalDialog` e `Popup` usam `react-focus-lock`, mas só
 levam o foco para dentro se alguém pedir (`autoFocus`); o `ContextMenu`, os menus do Player e a gaveta
@@ -43,12 +197,12 @@ embaixo dele; ao fechar, o overlay de baixo reassume. O popup de "próximo víde
 busca (o foco fica no campo enquanto se digita) não prendem o foco.
 
 Custo: um `MutationObserver` no `body` (só lista de filhos, sem atributos) que agenda uma checagem
-16 ms depois da rajada, mais ouvintes de `focusin`/`keydown`/`mousedown`/`mousemove`. Uma checagem são
+16 ms depois da rajada. Teclas, foco e modo de entrada vêm do hub (`core/input.js`). Uma checagem são
 algumas chamadas de `querySelector`. Nada no boot.
 
 Diagnóstico: `window.__webosModalFocus` (`current`, `lastInput`, `history`).
 
-## Menus de contexto (`contextMenu.js`)
+#### Menus de contexto (`contextMenu.js`)
 
 Os menus do upstream abrem com botão direito: o menu do episódio e o do stream (`mouseup` com
 `button 2`), o `ContextMenu` do Player e o das variantes de legenda (evento `contextmenu`). Nenhum dos
@@ -72,22 +226,34 @@ dois controles tem botão direito e o long press do upstream ignora ponteiros do
   Não dispara se o aperto começou num `slider-container`, se o ponteiro está sobre um quando o tempo
   acaba, nem com um arrasto ativo (`active-slider-within` no `<html>`).
 
+### Barra lateral (`sideBar.js`)
+
+Os botões da barra são focáveis no build webOS (`NavTabButton.webos.js`): LEFT da primeira coluna chega a
+ela pelo polyfill. RIGHT volta ao item da tela de onde se saiu (a memória do motor da rota visível); sem
+memória, ao conteúdo pela busca do polyfill restrita a ele (nunca à barra de cima). O botão do perfil
+também é focável (`NavMenu.webos.js`); o menu dele é um overlay de `modals.js` (o foco entra no primeiro item).
+
 ## Testes
 
-- `pnpm test webos/tests/navigation` — `modals.test.js` (jsdom: entrar, preso, voltar, ponteiro, setas),
-  `contextMenu.test.js`, `overlayRoots.test.js` (o catálogo de overlays).
-- Emulador, um cenário por `emu-run`, depois de `pnpm webos:package`:
-  `webos/tools/emu-run --timeout 15 -- node webos/tests/modals/emulator/run.mjs <pasta em $HOME> [menus|player|pointer]`.
-  `menus`: popup do perfil, dropdown do Discover, modal de adicionar addon, dropdown do Settings e menu
-  do episódio (amarelo): o foco entra, dez setas o mantêm dentro, o Back fecha e o foco volta.
-  `player`: menu de contexto (amarelo) e menu de áudio no Player, com a reprodução a 1x.
-  `pointer`: long press do Magic Remote por `Input.dispatchMouseEvent`. O `player` também segura o
-  ponteiro 0,9 s no seek bar e arrasta (o seek tem que chegar a ~40 %).
+- `pnpm test webos/tests/navigation`: `core.test.js` (o núcleo), `f4.1a.test.js` (Board, Discover, Busca e
+  o motor), `screens.test.js` (Library, Calendar, Addons, Settings e a barra lateral), `metadetails.test.js`,
+  `withScreenNavigation.test.js`, `remoteNavigation.test.js`, `modals.test.js`, `contextMenu.test.js`,
+  `overlayRoots.test.js`, `f4.1b-overrides.test.js`, `f4.1b-color-input.test.js`. O jsdom não tem layout:
+  cada arquivo simula as caixas (`getClientRects`/`getBoundingClientRect`).
+- Emulador, um cenário por `emu-run`, depois de `pnpm webos:package` (os roteiros-contrato da F4.4):
+  - `node webos/tests/navigation/emulator/f4.1a.mjs <saída> board|discover|search`;
+  - `node webos/tests/navigation/f4.1b/run.mjs <saída> guest|library`;
+  - `node webos/tests/navigation/metadetails/emulator.mjs <saída> walk|player` e `restore` (com `--profile c8`);
+  - `node webos/tests/modals/emulator/run.mjs <saída> menus|player|pointer`;
+  - `node webos/tests/back/emulator/run.mjs <saída> navigation|screens` (o Back, F3.2/F3.2b);
+  - `webos/tests/screens/visual.sh check <saída>` (regressão visual da F2.7).
 
 ## Pendências
 
-- Os menus do Player (áudio, legendas, opções) ainda não abrem só com o controle: a barra de controles
-  do Player não é alcançável pelas setas (tarefa de teclas de mídia/cores do Player). Aqui eles abrem
-  pelo atalho de teclado do upstream; quando abrirem, o foco já entra e prende.
-- O long press do OK (segurar a tecla) não foi implementado; só a TV real diria se o auto-repeat do
-  Enter chega ao app.
+- Os menus do Player (áudio, legendas, opções) só abrem pelo atalho de teclado do upstream: a barra de
+  controles do Player é da F5.7. Quando abrirem pelo controle, o foco já entra e prende.
+- O long press do OK (segurar a tecla) não foi implementado; só a TV real diria se o auto-repeat do Enter
+  chega ao app.
+- Detalhes continua com o próprio motor (`metadetails.js`): seções, painel de streams e restauração entre
+  montagens são da página; o genérico (focáveis, rolagem, localizadores, memória, teclas, modo de entrada)
+  vem do núcleo.
