@@ -27,10 +27,16 @@ const CHANGES = [
         'const setInterfaceScale = (scale: number) => {\n',
     ],
     ['    // webOS: rects in screen pixels.\n    setRectScale(scale);\n', ''],
+    // The TV steps of the interface zoom setting (F4.1b).
+    [
+        '    // webOS: only the TV steps.\n    INTERFACE_SCALES.includes(value) && TV_INTERFACE_SCALES.includes(value) ? value : 100\n',
+        '    INTERFACE_SCALES.includes(value) ? value : 100\n',
+    ],
+    ['\n// webOS: the TV steps of the setting.\nexport { TV_INTERFACE_SCALES };', ''],
 ];
 
 describe('src/common/interfaceScale.webos.ts', () => {
-    test('differs from interfaceScale.ts only in the same-origin check, the TV scale and the screen rects', () => {
+    test('differs from interfaceScale.ts only in the same-origin check, the TV scale, the screen rects and the TV zoom steps', () => {
         const upstream = read('interfaceScale.ts');
         const webos = read('interfaceScale.webos.ts');
         expect(upstream).toContain(UPSTREAM_CHECK);
@@ -76,6 +82,15 @@ const fakeEngine = (zoomedRects) => {
         return new DOMRect(10 * factor, 20 * factor, width * factor, 50 * factor);
     };
 };
+
+describe('normalizeInterfaceScale on webOS', () => {
+    test('keeps the TV steps of the setting and brings any other value back to 100%', () => {
+        const { normalizeInterfaceScale, TV_INTERFACE_SCALES } = load();
+        expect(TV_INTERFACE_SCALES).toEqual([100, 125]);
+        TV_INTERFACE_SCALES.forEach((value) => expect(normalizeInterfaceScale(value)).toBe(value));
+        [75, 150, 175, 110, undefined].forEach((value) => expect(normalizeInterfaceScale(value)).toBe(100));
+    });
+});
 
 describe('setInterfaceScale on webOS', () => {
     const native = Element.prototype.getBoundingClientRect;
