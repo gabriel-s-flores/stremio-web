@@ -53,8 +53,15 @@ polyfill), o `navnotarget` de Detalhes e o gesto de segurar o ponteiro do `conte
 
 **Modo de entrada.** Tecla, ponteiro (um `mousedown`/`mousemove` confiável) ou o cursor do Magic
 Remote (`cursorStateChange`). `pointerInUse()`: o atributo `data-webos-pointer="visible"` da F4.2 ou,
-antes do primeiro `cursorStateChange`, a última entrada ter sido o ponteiro. Com o ponteiro em uso nada
-rola listas nem tira o foco do lugar.
+antes do primeiro `cursorStateChange`, a última tecla ou clique ter sido do ponteiro. **Um `mousemove`
+sozinho não conta:** o Chromium manda `mousemove` confiáveis quando o layout se mexe sob um cursor parado,
+e as telas pulariam alinhamento e recuperação sem ninguém tocar no ponteiro. Os overlays (`isKeyInput`)
+continuam contando o movimento, como na F4.3. Detalhes mantém o rastreio de entrada próprio da F4.1c (o
+mesmo critério, sem o movimento): com o modo ponteiro do hub, o renderer guardava ~15 MB a mais depois da
+2ª abertura de Detalhes no perfil c8 (revisão c1 da F4.4; a bissecção está no relatório). Com o ponteiro em uso nada
+rola listas nem tira o foco do lugar (a exceção é o realinhamento depois de mudar o zoom da interface,
+como a F4.1b fazia). `cursorStateChange` com `visibility: false` volta ao modo tecla, também para os
+modais (antes eles só voltavam com uma tecla).
 
 ### O motor de foco de uma tela (`core/screenFocus.js`)
 
@@ -63,8 +70,9 @@ enquanto a rota é a visível e nenhum modal está aberto sobre ela.
 
 - **Foco inicial**: a tela montada sem foco recebe o primeiro item assim que ele aparece (o Board espera
   os catálogos do core, ~30 s no perfil c8). Depois de `fallbackDelay` vai um fallback (os filtros acima
-  da lista), que cede lugar ao item quando ele chega, se o usuário não assumiu (uma tecla qualquer, o foco
-  movido). A espera acompanha as mutações da tela e para no `timeout`. Um fallback que só aparece depois da
+  da lista), que cede lugar ao item quando ele chega, se o usuário não assumiu (uma seta ou OK, o foco
+  movido; as pseudo-teclas 1536/1537 que o webOS manda quando o cursor do Magic Remote aparece ou some não
+  contam). A espera acompanha as mutações da tela e para no `timeout`. Um fallback que só aparece depois da
   montagem também entra (o Discover reaberto pela barra ficava com o foco no `body` mais de 3 s).
 - **Restauração**: as telas ficam montadas sob as que se abriram a partir delas (`src/router/Routes.tsx`).
   Quando outra rota cobre a tela, o motor tira um retrato do foco (`leave`); quando o Back a traz de volta,
@@ -74,9 +82,11 @@ enquanto a rota é a visível e nenhum modal está aberto sobre ela.
   chegou sem foco: o foco volta à tela, não ao `body` (de onde o polyfill recomeça do canto). Pelo
   `focusout`, por uma mutação que levou o elemento lembrado junto (o Chromium 53 pode largar o foco de um
   elemento removido sem evento) e por uma troca de localização na mesma tela (filtro, ordenação).
-- **Memória**: o último elemento focado da tela, **sem as barras de navegação e sem os modais**
-  (`isMemorable`). Sair pela barra lateral e voltar cai no conteúdo; a barra de cima tem o campo da Busca,
-  que abre o teclado do sistema.
+- **Memória**: o último elemento focado da tela, **sem a barra lateral e sem os modais** (`isMemorable`):
+  sair pela barra lateral e voltar cai no conteúdo. A barra de cima só nas telas com `rememberTopBar`
+  (Board, Discover, Busca: o Back da Busca volta ao botão de busca, como na F4.1a); as de lista voltam ao
+  conteúdo (F4.1b). `memory.lastContent` é o mesmo sem barra nenhuma: é para onde o RIGHT da barra lateral
+  volta (nunca à barra de cima, onde o botão ao lado do campo da Busca é o X que limpa a consulta).
 - **Setas**: a tela toma as que conhece (`navigate`) no próprio contêiner, em bolha (depois dos
   manipuladores do elemento focado) ou em captura (`capture: true`: antes deles, para os dropdowns
   abertos e o range do zoom de Settings, que para a propagação das setas).
@@ -88,10 +98,11 @@ A descrição de uma tela (todas as chaves menos `initial` são opcionais):
 | `initial(container, { recovering })` | o elemento do foco inicial, ou `null` enquanto não há; `recovering` quando é para um foco perdido depois (a Busca evita o campo) |
 | `fallback(container)`, `fallbackDelay`, `timeout` | o elemento enquanto o inicial não vem, quanto esperar por ele antes do fallback e no total |
 | `path` | `false` quando o mesmo lugar da árvore pode guardar outra coisa (uma lista trocada por outra) |
-| `navigate(target, dir, container, memory, event)` | um elemento para focar, `true` para engolir a seta ou `null` para o polyfill; `memory.last` e `memory.content` (o último dentro das listas) |
+| `navigate(target, dir, container, memory, event)` | um elemento para focar, `true` para engolir a seta ou `null` para o polyfill; `memory.last`, `memory.lastContent` (sem barras) e `memory.content` (o último dentro das listas) |
+| `rememberTopBar` | a memória do Back guarda também a barra de cima |
 | `capture` | `navigate` na fase de captura do contêiner |
 | `isContent(element, container)` | o elemento está nas listas da tela (`memory.content`) |
-| `align(element, container)` / `realign` | rolar as listas até o elemento focado, a cada foco / depois de um resize (o zoom de Settings) |
+| `align(element, container)` / `realign` | rolar as listas até o elemento focado, a cada foco (não com o ponteiro em uso) / depois de um resize (o zoom de Settings, também pelo ponteiro) |
 | `onMutation(container)` | o conteúdo da tela mudou |
 
 Diagnóstico: `window.__webosNavigation` (`status.last`: o último foco que um motor pôs; `hub`;
@@ -103,8 +114,9 @@ espera por ele).
 Nada roda no boot: os ouvintes entram com o primeiro manipulador (o motor do Board, que monta com o app)
 e o `RemoteNavigation` só instala. Por tela montada, um `MutationObserver` no conteúdo (lista de filhos)
 cuja checagem, fora da espera do foco inicial, é `contains()` do elemento lembrado. A busca do motor só
-acontece durante a espera do foco inicial (como antes, na F4.1a). O hub não guarda nada além das listas
-de manipuladores.
+acontece durante a espera do foco inicial (como antes, na F4.1a). O `onMutation` do Board e da Busca sai
+na hora sem espiada pendente (as mutações chegam em rajadas enquanto os catálogos carregam). O hub não
+guarda nada além das listas de manipuladores.
 
 ## As telas
 
@@ -156,8 +168,11 @@ DOWN/RIGHT/OK entram no primeiro stream, LEFT vai à coluna e UP ao cabeçalho d
 e o voltar dos streams de um episódio); **com um addon só não há cabeçalho e o foco fica** (antes ia ao
 "Install addons" do fim da lista). Voltar à página restaura o último foco dela (memória por caminho, entre
 montagens), esperando enquanto a seção ainda é placeholder (até 15 s); **o placeholder que segura é o da
-coluna (`MetaPreview.Placeholder`)**, não o nome no lugar do logo de um título sem logo. A restauração
-tardia nunca acontece com o ponteiro em uso nem depois que o foco se moveu. O resto (rolagem com margem,
+coluna (`MetaPreview.Placeholder`)**, não o nome no lugar do logo de um título sem logo. **Ao sair do
+Player**, o nó dele fica no lugar por 1,5 s (`holdVideosInPlace`, F5.6) e cobre a página, sem mutação
+nela quando sai: enquanto a página não tem caixa, a restauração tenta de novo a cada 250 ms, dentro da
+mesma guarda, e o foco volta ao stream tocado. A restauração tardia nunca acontece com o ponteiro em uso
+nem depois que o foco se moveu. O resto (rolagem com margem,
 resumo alcançável, toggles com OK) está no cabeçalho do arquivo.
 
 ### Overlays e menus (`modals.js`, `contextMenu.js`)
@@ -229,8 +244,8 @@ dois controles tem botão direito e o long press do upstream ignora ponteiros do
 ### Barra lateral (`sideBar.js`)
 
 Os botões da barra são focáveis no build webOS (`NavTabButton.webos.js`): LEFT da primeira coluna chega a
-ela pelo polyfill. RIGHT volta ao item da tela de onde se saiu (a memória do motor da rota visível); sem
-memória, ao conteúdo pela busca do polyfill restrita a ele (nunca à barra de cima). O botão do perfil
+ela pelo polyfill. RIGHT volta ao item do conteúdo de onde se saiu (`memory.lastContent` do motor da rota
+visível, nunca a barra de cima); sem memória, ao conteúdo pela busca do polyfill restrita a ele; sem nada focável no conteúdo (a Busca vazia), o foco fica na barra. O botão do perfil
 também é focável (`NavMenu.webos.js`); o menu dele é um overlay de `modals.js` (o foco entra no primeiro item).
 
 ## Testes
