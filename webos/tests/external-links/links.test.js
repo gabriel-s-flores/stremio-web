@@ -17,6 +17,19 @@ describe('classify', () => {
         ['stremio:///detail/movie/tt1', 'blocked'],
         ['mailto:someone@example.com', 'blocked'],
         ['intent://x#Intent;end', 'blocked'],
+        ['http://127.0.0.1:47443/proxy?t=SECRET&url=https%3A%2F%2Fexample.com%2Fsub.srt', 'blocked'],
+        ['http://127.0.0.1:47444/anything', 'blocked'],
+        ['http://127.1.2.3/', 'blocked'],
+        ['http://localhost:8080/x', 'blocked'],
+        ['http://app.localhost/x', 'blocked'],
+        ['http://0.0.0.0:1/', 'blocked'],
+        ['http://[::1]:47443/proxy?t=SECRET', 'blocked'],
+        ['https://www.stremio.com/warning#http%3A%2F%2F127.0.0.1%3A47443%2Fproxy%3Ft%3DSECRET%26url%3Dx', 'blocked'],
+        ['https://www.stremio.com/warning#http%3A%2F%2Flocalhost%2Fx', 'blocked'],
+        ['https://www.stremio.com/warning#https%3A%2F%2Fexample.com%2Fconfigure', 'web'],
+        ['https://www.stremio.com/warning#%E0%A4%A', 'web'],
+        ['http://192.168.1.20:7000/configure', 'web'],
+        ['https://127.example.com/x', 'web'],
         ['#/settings', 'local'],
         ['file:///media/developer/x.html', 'local'],
         ['blob:file:///1234', 'local'],
@@ -113,6 +126,23 @@ describe('install', () => {
             expect(store.getState().url).toBeNull();
         });
 
+        test('links to the TV itself (the tlsproxy URL with its token) are disabled, never shown, stored or logged', () => {
+            const secret = 'http://127.0.0.1:47443/proxy?t=SECRET-TOKEN&url=https%3A%2F%2Fexample.com%2Fsub.srt';
+            const logs = ['log', 'info', 'warn', 'error', 'debug'].map((method) => jest.spyOn(console, method).mockImplementation(() => {}));
+            const states = [];
+            store.subscribe((state) => states.push(state));
+            expect(window.open(secret, '_blank')).toBeNull();
+            // Through Platform.openExternal: the stremio.com warning page around it.
+            expect(window.open(`https://www.stremio.com/warning#${encodeURIComponent(secret)}`, '_blank')).toBeNull();
+            expect(originalOpen).not.toHaveBeenCalled();
+            expect(store.getState().url).toBeNull();
+            expect(states).toEqual([]);
+            logs.forEach((spy) => {
+                expect(spy).not.toHaveBeenCalled();
+                spy.mockRestore();
+            });
+        });
+
         test('uninstall puts the original back', () => {
             uninstall();
             expect(window.open).toBe(originalOpen);
@@ -170,6 +200,20 @@ describe('install', () => {
             anchor.addEventListener('click', (event) => event.preventDefault());
             click(anchor);
             expect(store.getState().url).toBeNull();
+        });
+
+        test('a click on a link to the TV itself is cancelled, with no dialog and no trace of the URL', () => {
+            const logs = ['log', 'info', 'warn', 'error', 'debug'].map((method) => jest.spyOn(console, method).mockImplementation(() => {}));
+            const anchor = link({ href: 'http://127.0.0.1:47443/proxy?t=SECRET-TOKEN&url=x', target: '_blank' });
+            expect(click(anchor)).toBe(false);
+            const behindWarning = link({ href: `https://www.stremio.com/warning#${encodeURIComponent('http://127.0.0.1:47443/proxy?t=SECRET-TOKEN')}`, target: '_blank' });
+            expect(click(behindWarning)).toBe(false);
+            expect(store.getState().url).toBeNull();
+            expect(document.body.textContent).not.toContain('SECRET-TOKEN');
+            logs.forEach((spy) => {
+                expect(spy).not.toHaveBeenCalled();
+                spy.mockRestore();
+            });
         });
 
         test('uninstall stops catching clicks', () => {

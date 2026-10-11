@@ -198,6 +198,8 @@ const click = (name, expression) => {
 const keyboardScenario = async () => {
     // The system only opens the keyboard for focus() after the app got a key from the remote.
     // Measured, not asserted: the focus the search route takes by itself does not open it yet.
+    // The Board has links (placeholders) before the nav bar exists: wait for the bar itself.
+    await waitFor('return !!document.querySelector("[class*=search-bar-container]") && !!document.querySelector("a[href=\\"#/addons\\"]");', 60000, 500);
     click('01-open-search', 'document.querySelector("[class*=search-bar-container]")');
     await waitFor('return location.hash.indexOf("#/search") === 0;', 30000);
     await sleep(2500);
@@ -293,6 +295,9 @@ const keyboardScenario = async () => {
     }
 };
 
+// The QR code is drawn once its lazy chunk (import('./qr')) has loaded.
+const waitQr = () => waitFor('return !!document.querySelector("[aria-labelledby=webos-external-link-title] svg");', 15000, 250);
+
 const FOCUS_LINK = (href) => `
     var link = document.querySelector('a[href="${href}"]');
     if (!link) return 'not found';
@@ -301,6 +306,7 @@ const FOCUS_LINK = (href) => `
 `;
 
 const linksScenario = async () => {
+    await waitFor('return !!document.querySelector("[class*=menu-button-container]") && !!document.querySelector("a[href=\\"#/settings\\"]");', 60000, 500);
     remote('INFO');
     await sleep(500);
     // The profile menu holds Help, Terms and Privacy as target=_blank links.
@@ -313,6 +319,7 @@ const linksScenario = async () => {
     const before = state();
     remote('OK');
     await sleep(1500);
+    await waitQr();
     const opened = state();
     check('03-ok-on-link-shows-qr-dialog-and-does-not-navigate', {
         'dialog open': !!opened.linkDialog,
@@ -369,6 +376,7 @@ const linksScenario = async () => {
     const settingsBefore = state();
     remote('OK');
     await sleep(1200);
+    await waitQr();
     const settingsOpen = state();
     check('10-settings-link-shows-qr-dialog', { 'dialog open': !!settingsOpen.linkDialog && settingsOpen.linkDialog.url === 'https://www.stremio.com/privacy', 'still on Settings': settingsOpen.hash === settingsBefore.hash }, { data: settingsOpen, screenshot: screenshot('10-settings-qr') });
     remote('BACK');
@@ -389,6 +397,7 @@ const linksScenario = async () => {
     const urlBefore = evaluate('return location.href;');
     evaluate('window.__opened = window.open("https://www.stremio.com/warning#" + encodeURIComponent("https://example.com/configure?x=1&y=2"), "_blank"); return true;');
     await sleep(1000);
+    await waitQr();
     const viaOpen = state();
     check('13-window-open-shows-the-qr-code', {
         'dialog open with the link': !!viaOpen.linkDialog && viaOpen.linkDialog.url === 'https://www.stremio.com/warning#https%3A%2F%2Fexample.com%2Fconfigure%3Fx%3D1%26y%3D2',
@@ -397,6 +406,19 @@ const linksScenario = async () => {
     }, { data: viaOpen, screenshot: screenshot('13-window-open') });
     remote('BACK');
     await sleep(1000);
+    // The tlsproxy URL (F3.7) carries its token and means nothing to a phone: disabled, never shown.
+    const proxyOpen = evaluate(`
+        var opened = window.open('http://127.0.0.1:47443/proxy?t=SECRET-TOKEN&url=' + encodeURIComponent('https://example.com/sub.srt'), '_blank');
+        var viaWarning = window.open('https://www.stremio.com/warning#' + encodeURIComponent('http://127.0.0.1:47443/proxy?t=SECRET-TOKEN'), '_blank');
+        return { opened: opened, viaWarning: viaWarning };
+    `);
+    await sleep(800);
+    const afterProxy = state();
+    check('13b-proxy-url-is-disabled-not-a-qr-code', {
+        'window.open returned null': proxyOpen.opened === null && proxyOpen.viaWarning === null,
+        'no dialog': !afterProxy.linkDialog,
+        'the token is nowhere on the page': evaluate('return document.body.innerText.indexOf("SECRET-TOKEN") === -1 && document.body.innerHTML.indexOf("SECRET-TOKEN") === -1;') === true,
+    }, { data: afterProxy });
     const magnet = evaluate(`
         var a = document.createElement('a');
         a.href = 'magnet:?xt=urn:btih:abc';

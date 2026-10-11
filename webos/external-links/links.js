@@ -8,7 +8,9 @@
 //
 // A web link (http/https) goes to the store, which the dialog shows as a QR code to scan with the
 // phone. Any other external scheme (`magnet:`, `stremio:`, `mailto:`…) has nothing to open on the TV
-// and is disabled: the click is cancelled and nothing happens. Links inside the app (`#/…`, `file:`)
+// and is disabled: the click is cancelled and nothing happens. So are links to the TV itself
+// (127.0.0.1, localhost…, such as the tlsproxy URL with its token), also behind the stremio.com/warning
+// page: a QR code of them would not open on the phone, and the URL is never shown, stored or logged. Links inside the app (`#/…`, `file:`)
 // and local blobs and data URLs are left alone.
 //
 // Nothing here runs at boot but two listeners; the QR code is only built when a link is opened.
@@ -17,8 +19,22 @@
 const LOCAL_PROTOCOLS = ['file:', 'blob:', 'data:', 'about:', 'javascript:'];
 const WEB_PROTOCOLS = ['http:', 'https:'];
 
+// Loopback addresses: the TV itself. The tlsproxy of the app (F3.7, http://127.0.0.1:<port>/proxy?t=<token>…)
+// and anything else listening there mean nothing to a phone, and the proxy URL carries its token.
+const isLoopbackHost = (hostname) => (
+    /^127\.\d+\.\d+\.\d+$/.test(hostname) ||
+    hostname === '0.0.0.0' ||
+    hostname === 'localhost' ||
+    /\.localhost$/.test(hostname) ||
+    hostname === '[::1]' ||
+    hostname === '[::]'
+);
+
+// The upstream Platform.openExternal sends hosts outside its list through stremio.com/warning#<url>.
+const WARNING_PATH = '/warning';
+
 // 'web' (show it as a QR code), 'blocked' (disable it) or 'local' (not external: let it be).
-const classify = (url, win) => {
+const classify = (url, win, depth = 0) => {
     let parsed;
     try {
         parsed = new URL(String(url), win.location.href);
@@ -29,9 +45,28 @@ const classify = (url, win) => {
         return 'local';
     }
     if (WEB_PROTOCOLS.indexOf(parsed.protocol) !== -1) {
-        // The packaged app runs from file://: any web URL leaves it. Served from the web (the
-        // desktop build, tests), a URL of the same origin is the app's own.
-        return parsed.origin === win.location.origin ? 'local' : 'web';
+        // Served from the web (the desktop build, tests), a URL of the page's own origin is the app's own.
+        if (parsed.origin === win.location.origin) {
+            return 'local';
+        }
+        if (isLoopbackHost(parsed.hostname)) {
+            return 'blocked';
+        }
+        // The link behind the warning page counts too: it is what the phone ends up opening.
+        if (depth === 0 && parsed.pathname === WARNING_PATH && parsed.hash.length > 1) {
+            let inner = null;
+            try {
+                // Absolute only: a relative text after the # is not a link.
+                inner = new URL(decodeURIComponent(parsed.hash.slice(1))).href;
+            } catch (error) {
+                inner = null;
+            }
+            if (inner !== null && classify(inner, win, depth + 1) === 'blocked') {
+                return 'blocked';
+            }
+        }
+        // The packaged app runs from file://: any web URL leaves it.
+        return 'web';
     }
     return 'blocked';
 };
