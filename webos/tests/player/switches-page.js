@@ -6,7 +6,8 @@
 (function() {
     if (window.__f56) return 'already installed';
     var t0 = Date.now();
-    var state = { videos: [], events: [], console: [], errors: [] };
+    var state = { videos: [], events: [], console: [], errors: [], luna: [], marks: [] };
+    state.mark = function(name) { state.marks.push({ t: Date.now() - t0, name: name }); };
     window.__f56 = state;
 
     var EVENTS = ['loadstart', 'loadedmetadata', 'playing', 'pause', 'ended', 'emptied', 'abort', 'error'];
@@ -51,6 +52,19 @@
     window.addEventListener('error', function(event) {
         state.errors.push({ t: Date.now() - t0, message: String(event.message), source: String(event.filename) + ':' + event.lineno });
     });
+
+    // The Luna calls of WebOsVideo to com.webos.media (subtitles, tracks), with the mediaId they target.
+    var service = window.webOS && window.webOS.service;
+    if (service && typeof service.request === 'function') {
+        var request = service.request.bind(service);
+        service.request = function(uri, params) {
+            if (/com\.webos\.media/.test(String(uri))) {
+                var parameters = params && params.parameters;
+                state.luna.push({ t: Date.now() - t0, method: params && params.method, mediaId: parameters ? parameters.mediaId : null, index: parameters ? parameters.index : null });
+            }
+            return request(uri, params);
+        };
+    }
 
     state.sample = function() {
         var video = document.querySelector('video');

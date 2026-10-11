@@ -7,7 +7,9 @@
 # failure. Run inside a pool reservation, after `pnpm webos:package`:
 #   webos/tools/emu-run --timeout 20 -- webos/tests/player/switches.sh <output-dir> [on|off]
 # off: the same build with the guard turned off (localStorage webos.pipelineGuard = "off"), for the
-# A/B. The files of $MEDIA_DIR (default ~/webos-tv-sdk/media-tests/suite: gen-media.sh) are looped
+# A/B. The F5.5 review case is load 3: a subtitle chosen right before leaving the Player must reach
+# that stream's pipeline (Luna selectTrack with its mediaId, before its release), not the next one.
+# The files of $MEDIA_DIR (default ~/webos-tv-sdk/media-tests/suite: gen-media.sh) are looped
 # to 60 s or more (stream copy, cached in $SWITCH_MEDIA_DIR): a clip that ends makes the Player go
 # back on its own, in the middle of the test. Served through /redirect/<file> (302, like a debrid
 # link), a different file per load so the server log tells the pipelines of each load apart.
@@ -16,7 +18,10 @@ ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 OUT="${1:?usage: switches.sh <output-dir> [on|off]}"
 GUARD="${2:-on}"
 MEDIA_DIR="${MEDIA_DIR:-$HOME/webos-tv-sdk/media-tests/suite}"
-FILES=(t1_h264_aac.mp4 t6_h264_aac.mkv t7_h264_ac3.mp4 t5_h264_ac3.mkv t4_h264_eac3.mkv t2_multi.mkv)
+FILES=(t1_h264_aac.mp4 t6_h264_aac.mkv t7_h264_ac3.mp4 t2_multi.mkv t4_h264_eac3.mkv t5_h264_ac3.mkv)
+# Load 3 (t2_multi.mkv, embedded subtitles): Portuguese is chosen in the subtitles menu and the Player
+# is left at once, so WebOsVideo's Luna selectTrack (500 ms after the choice) runs during the switch.
+SUBTITLES_AT=3
 # Load 0 opens the Player; then odd loads switch inside it and even loads leave it and open it again.
 WAIT_PLAY_S="${WAIT_PLAY_S:-60}"
 mkdir -p "$OUT"
@@ -26,6 +31,25 @@ EMU=("$ROOT/webos/tools/emulator-qemu.sh" -i "$EMU_INSTANCE")
 SSH=(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o HostKeyAlgorithms=+ssh-rsa
     -o PubkeyAcceptedAlgorithms=+ssh-rsa -i "$HOME/webos-tv-sdk/run/ares_webos_emul" -p "$EMU_SSH_PORT" developer@127.0.0.1)
 cdp_eval() { "${CDP[@]}" eval "$1"; }
+SUBTITLES_ICON="$(node -e "
+const s = require('fs').readFileSync(require.resolve('@stremio/stremio-icons/react', { paths: ['$ROOT'] }), 'utf8');
+const m = / subtitles: \{ viewBox: \"[^\"]*\", paths: \[\{ d: \"([^\"]+)\"/.exec(s);
+console.log(m ? m[1] : '');
+")"
+[[ -n "$SUBTITLES_ICON" ]] || { echo "error: subtitles icon not found" >&2; exit 1; }
+# Opens the subtitles menu, chooses $1 and leaves the Player 100 ms later (the menu as in the F5.5 test).
+choose_subtitles_and_leave() {
+    cdp_eval "(function(){ var c = document.querySelector('[class*=\"player-container\"]'); if (c) c.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 960, clientY: 900 })); return true; })()" > /dev/null
+    sleep 1
+    cdp_eval "(function(){
+        var path = Array.prototype.filter.call(document.querySelectorAll('[class*=\"control-bar-container\"] svg path'), function(p) { return p.getAttribute('d') === '$SUBTITLES_ICON'; })[0];
+        var button = path ? path.closest('[class*=\"control-bar-button\"]') : null;
+        if (button) button.click();
+        return !!button;
+    })()" > /dev/null
+    sleep 1
+    cdp_eval "(function(){ var b = document.querySelector('[class*=\"subtitles-menu-container\"] [data-lang=\"$1\"]'); if (b) { window.__f56.mark('subtitles chosen'); b.click(); } setTimeout(function(){ window.__f56.mark('left the Player'); location.hash = '#/'; }, 100); return !!b; })()"
+}
 log() { echo "$(date +%T) $*" | tee -a "$OUT/steps.log" >&2; }
 
 SWITCH_MEDIA_DIR="${SWITCH_MEDIA_DIR:-$HOME/webos-tv-sdk/media-tests/switches}"
@@ -84,8 +108,13 @@ for i in "${!FILES[@]}"; do
         way=switch
     else
         way=reopen
-        cdp_eval "(function(){ location.hash = '#/'; return true; })()" > /dev/null
-        log "load $i: left the Player"
+        if (( i == SUBTITLES_AT + 1 )); then
+            log "load $i: subtitles por chosen in the menu, then left the Player: $(choose_subtitles_and_leave por)"
+            echo "$SUBTITLES_AT" > "$OUT/subtitles-load.txt"
+        else
+            cdp_eval "(function(){ location.hash = '#/'; return true; })()" > /dev/null
+            log "load $i: left the Player"
+        fi
         sleep 3
     fi
     log "load $i: $way -> $file"
@@ -120,6 +149,6 @@ for i in "${!FILES[@]}"; do
     "${CDP[@]}" screenshot "$OUT/tela-load-$i.png" > /dev/null 2>&1 || true
 done
 "${EMU[@]}" screenshot "$OUT/tela-vm-final.png" > /dev/null 2>&1 || true
-cdp_eval "JSON.stringify({ videos: window.__f56.videos, events: window.__f56.events, console: window.__f56.console, errors: window.__f56.errors })" > "$OUT/page.json"
+cdp_eval "JSON.stringify({ videos: window.__f56.videos, events: window.__f56.events, console: window.__f56.console, errors: window.__f56.errors, luna: window.__f56.luna, marks: window.__f56.marks })" > "$OUT/page.json"
 
 node "$ROOT/webos/tests/player/switches-evaluate.mjs" "$OUT" "$GUARD" | tee "$OUT/resultado.json"
