@@ -47,6 +47,10 @@ const SLOW = PROFILE === 'c8' ? 2 : 1;
 // GUARD=off: the same run with the pipeline guard of F5.6 turned off (localStorage
 // webos.pipelineGuard = "off", read at load), for the A/B of the picture of the second media.
 const GUARD = process.env.GUARD === 'off' ? 'off' : 'on';
+// KEYS="key=value,...": other localStorage keys set the same way, for the A/B of one part of the guard
+// (F5.6b: webos.pipelineGuard.quietRelease=off, .holdInPlace=off, .displayNudge=off; as switches.sh).
+const KEYS = Object.assign(GUARD === 'off' ? { 'webos.pipelineGuard': 'off' } : {},
+    Object.fromEntries((process.env.KEYS || '').split(',').filter(Boolean).map((pair) => pair.split('='))));
 if (!EMU_CDP_PORT || !EMU_REMOTE_PORT || !EMU_DEVICE) {
     console.error('run inside webos/tools/emu-run');
     process.exit(2);
@@ -287,12 +291,12 @@ const boot = async () => {
     const board = await waitFor('!!window.core && document.querySelectorAll("[class*=meta-item-container]").length > 0', 180 * SLOW);
     const ms = since() - launched;
     check('the Board shows Cinemeta catalogs (guest, no account)', board, { msFromLaunch: ms }, 'boot');
-    if (GUARD === 'off') {
+    if (Object.keys(KEYS).length > 0) {
         // Read once when the app starts: set, then reload (as webos/tests/player/switches.sh).
-        evaluate('(function(){ localStorage.setItem("webos.pipelineGuard", "off"); location.reload(); return true; })()');
+        evaluate(`(function(){ var keys = ${JSON.stringify(KEYS)}; Object.keys(keys).forEach(function(k){ localStorage.setItem(k, keys[k]); }); location.reload(); return true; })()`);
         await sleep(5000);
         await waitFor('!!window.core && document.querySelectorAll("[class*=meta-item-container]").length > 0', 180 * SLOW);
-        log(`pipeline guard: ${evaluate('localStorage.getItem("webos.pipelineGuard")')}`);
+        log(`pipeline guard keys: ${evaluate(`JSON.stringify(${JSON.stringify(Object.keys(KEYS))}.map(function(k){ return k + '=' + localStorage.getItem(k); }))`)}`);
     }
     ensureHelpers();
     // Setup through CDP, as the Addons screen does with the URL (no account): recorded here.
@@ -430,6 +434,7 @@ const pictureOf = async (name) => {
     if (!a || !b || a.length !== b.length || a.length === 0) return { ok: false, error: 'no capture' };
     const rows = [Math.floor(PICTURE.height * PICTURE.top), Math.floor(PICTURE.height * PICTURE.bottom)];
     let sum = 0;
+    let sumA = 0;
     let changed = 0;
     let count = 0;
     for (let y = rows[0]; y < rows[1]; y++) {
@@ -437,13 +442,16 @@ const pictureOf = async (name) => {
             if (inToast(x, y)) continue;
             const i = (y * PICTURE.width + x) * 3;
             sum += (b[i] + b[i + 1] + b[i + 2]) / 3;
+            sumA += (a[i] + a[i + 1] + a[i + 2]) / 3;
             if (Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2])) > PICTURE.pixel) changed++;
             count++;
         }
     }
     const brightness = Math.round(sum / count);
+    // Both captures lit: a dark first one (the loading screen) against a still frame changes 100 %.
+    const brightnessA = Math.round(sumA / count);
     const changedRatio = Math.round((changed / count) * 10000) / 10000;
-    return { ok: brightness >= PICTURE.minBrightness && changedRatio >= PICTURE.minChanged, brightness, changedRatio, captures: [`vm-${name}-a.png`, `vm-${name}-b.png`] };
+    return { ok: Math.min(brightness, brightnessA) >= PICTURE.minBrightness && changedRatio >= PICTURE.minChanged, brightness, brightnessA, changedRatio, captures: [`vm-${name}-a.png`, `vm-${name}-b.png`] };
 };
 // The playback checks: the element plays (clock moving) and the picture is on the VM screen. A
 // picture missing with the clock moving counts for the emulator (its pipeline draws nothing:
@@ -455,7 +463,7 @@ const checkPlayback = async (label, result, name, area) => {
     const picture = await pictureOf(name);
     const state = playerState();
     check(`${label}: the picture shows on the VM screen (not dark, moving)`, picture.ok,
-        Object.assign({ currentTime: state && state.video ? state.video.currentTime : null, guard: GUARD }, picture), GUARD === 'off' ? 'emulator (guard off)' : 'emulator/F5.6');
+        Object.assign({ currentTime: state && state.video ? state.video.currentTime : null, guard: GUARD, keys: process.env.KEYS || null }, picture), GUARD === 'off' ? 'emulator (guard off)' : 'emulator/F5.6');
 };
 
 const pipelines = () => ssh('echo $(pgrep starfish-media)').split(/\s+/).filter(Boolean).length;

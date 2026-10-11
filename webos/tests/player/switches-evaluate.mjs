@@ -54,6 +54,7 @@ const pictureOf = (i) => {
     if (!a || !b || a.length !== b.length || a.length === 0) return { ok: false, error: 'no capture' };
     const rows = [Math.floor(PICTURE.height * PICTURE.top), Math.floor(PICTURE.height * PICTURE.bottom)];
     let sum = 0;
+    let sumA = 0;
     let changed = 0;
     let count = 0;
     for (let y = rows[0]; y < rows[1]; y++) {
@@ -61,13 +62,16 @@ const pictureOf = (i) => {
             if (inToast(x, y)) continue;
             const p = (y * PICTURE.width + x) * 3;
             sum += (b[p] + b[p + 1] + b[p + 2]) / 3;
+            sumA += (a[p] + a[p + 1] + a[p + 2]) / 3;
             if (Math.max(Math.abs(a[p] - b[p]), Math.abs(a[p + 1] - b[p + 1]), Math.abs(a[p + 2] - b[p + 2])) > PICTURE.pixel) changed++;
             count++;
         }
     }
     const brightness = Math.round(sum / count);
+    // Both captures lit: a dark first one (the loading screen) against a still frame changes 100 %.
+    const brightnessA = Math.round(sumA / count);
     const changedRatio = Math.round((changed / count) * 10000) / 10000;
-    return { ok: brightness >= PICTURE.minBrightness && changedRatio >= PICTURE.minChanged, brightness, changedRatio };
+    return { ok: Math.min(brightness, brightnessA) >= PICTURE.minBrightness && changedRatio >= PICTURE.minChanged, brightness, brightnessA, changedRatio };
 };
 
 const perLoad = loads.map((load) => {

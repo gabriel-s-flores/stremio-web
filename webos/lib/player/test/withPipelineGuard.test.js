@@ -556,13 +556,20 @@ describe('withPipelineGuard', () => {
         expect(element.style.width).toBe('100%');
     });
 
-    it('a destroy right after the start cancels the width coming back; displayNudge: false leaves the width alone', () => {
+    it('a destroy within the nudge cancels the width coming back: the timer leaves the element alone', () => {
+        // Without the quiet release the destroy runs at once, inside the DISPLAY_NUDGE_MS.
+        setup({ releaseSettleMs: 0 });
         const { video, element } = playing(URL_A);
+        expect(element.style.width).toBe('calc(100% - 2px)');
+        clock.advance(DISPLAY_NUDGE_MS - 1);
         video.dispatch(DESTROY);
-        clock.advance(RELEASE_SETTLE_MS);
-        const width = element.style.width;
+        expect(element.log).toContain('release');
         clock.advance(10 * DISPLAY_NUDGE_MS);
-        expect(element.style.width).toBe(width);
+        expect(element.style.width).toBe('calc(100% - 2px)');
+        expect(clock.timers).toEqual([]);
+    });
+
+    it('displayNudge: false (webos.pipelineGuard.displayNudge = off) leaves the width alone', () => {
         setup({ displayNudge: false });
         const quiet = playing(URL_A);
         expect(quiet.element.style.width).toBe('100%');
