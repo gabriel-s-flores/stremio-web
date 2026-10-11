@@ -105,3 +105,52 @@ test('unmounting removes the listeners', () => {
     content.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(false);
 });
+
+// A screen that does not focus anything itself, inside a router location (the views of
+// src/router/Routes.tsx each get their own).
+const { UNSAFE_LocationContext: LocationContext } = require('react-router');
+const { getInputHub } = require('../../lib/navigation/core/input');
+
+const Plain = () => React.createElement('div', null,
+    React.createElement('a', { href: '#/one', tabIndex: 0 }, 'one'),
+    React.createElement('a', { href: '#/two', tabIndex: 0 }, 'two'));
+const WrappedPlain = withScreenNavigation(Plain, screen);
+const renderAt = (search) => act(() => {
+    root.render(React.createElement(LocationContext.Provider, { value: { location: { pathname: '/library', search, hash: '', state: null, key: search }, navigationType: 'PUSH' } },
+        React.createElement('div', { className: 'route-content' }, React.createElement(WrappedPlain))));
+});
+
+test('mounted with nothing focused: the screen\'s initial element', () => {
+    renderAt('');
+    expect(document.activeElement.textContent).toBe('one');
+});
+
+test('unmounting removes its handlers from the input hub', () => {
+    const before = getInputHub(window).listeners;
+    renderAt('');
+    expect(getInputHub(window).listeners.keys).toBe(before.keys + 1);
+    act(() => root.unmount());
+    root = createRoot(host);
+    expect(getInputHub(window).listeners).toEqual(before);
+});
+
+test('another location on the same screen (a filter): the focus lost with the old list comes back', () => {
+    jest.useFakeTimers();
+    try {
+        renderAt('');
+        const [one] = host.querySelectorAll('a');
+        act(() => one.blur());
+        expect(document.activeElement).toBe(document.body);
+        renderAt('?sort=name');
+        act(() => jest.advanceTimersByTime(0));
+        expect(document.activeElement).toBe(one);
+        // Not while the route is under another one.
+        act(() => one.blur());
+        mockRouteActive = false;
+        renderAt('?sort=year');
+        act(() => jest.advanceTimersByTime(0));
+        expect(document.activeElement).toBe(document.body);
+    } finally {
+        jest.useRealTimers();
+    }
+});

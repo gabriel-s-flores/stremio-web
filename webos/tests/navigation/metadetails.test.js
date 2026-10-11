@@ -572,3 +572,99 @@ describe('review c1: OK under the page, disabled toggles, the swap and the panel
         expect(document.activeElement).toBe($('list'));
     });
 });
+
+describe('F4.4: the low findings of the F4.1c review', () => {
+    it('B4: the title of a movie without a logo (logo-placeholder) does not hold a missing saved focus', () => {
+        open('/detail/movie/tt1/tt1');
+        $('library').focus();
+        navigation.destroy();
+        $('library').blur();
+        // Back: a loaded column with the name in place of the logo, and the toggle gone (not found by
+        // label nor by position: it was the 3rd focusable of the column, one is left).
+        $('cast').parentNode.removeChild($('cast'));
+        $('library').parentNode.removeChild($('library'));
+        $('info').insertAdjacentHTML('afterbegin', '<div class="logo-placeholder-q1">Title</div>');
+        open('/detail/movie/tt1/tt1', 'POP');
+        expect(document.activeElement).toBe($('list'));
+    });
+
+    it('B4: the column placeholder itself still holds it (MetaPreview.Placeholder)', () => {
+        open('/detail/movie/tt1/tt1');
+        $('cast').focus();
+        navigation.destroy();
+        $('cast').blur();
+        $('meta').className = 'meta-preview-placeholder-container-s1';
+        $('meta').innerHTML = '';
+        open('/detail/movie/tt1/tt1', 'POP');
+        expect(document.activeElement).toBe(document.body);
+    });
+
+    it('B5: UP on the streams panel with one addon (no filter above the list) stays, never "Install addons"', () => {
+        $('filter').parentNode.removeChild($('filter'));
+        $('list').insertAdjacentHTML('beforeend', '<a class="button-container-1 install-button-container-x1" href="#/addons" tabindex="0" id="install">Install addons</a>');
+        open();
+        expect(document.activeElement).toBe($('list'));
+        expect(key(KEY.UP).defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe($('list'));
+    });
+
+    it('B5: the back button of an episode\'s streams is the header too', () => {
+        $('filter').parentNode.insertAdjacentHTML('afterbegin', '<div class="button-container-1 back-button-container-y1" tabindex="0" id="episodes">back</div>');
+        open();
+        key(KEY.UP);
+        expect(document.activeElement).toBe($('episodes'));
+    });
+
+    const remountWithColumnLoading = (now) => {
+        now.mockReturnValue(1000);
+        open('/detail/movie/tt1/tt1');
+        $('cast').focus();
+        navigation.destroy();
+        $('cast').blur();
+        const meta = $('meta').innerHTML;
+        $('meta').innerHTML = '<div class="meta-preview-placeholder-container-s1"></div>';
+        open('/detail/movie/tt1/tt1', 'POP');
+        now.mockReturnValue(1000 + 15001);
+        navigation.tick();
+        expect(document.activeElement).toBe($('list'));
+        return () => { $('meta').innerHTML = meta; };
+    };
+
+    it('B6: a focus the pointer moved (no key) is not taken back by the late restore', () => {
+        const now = jest.spyOn(Date, 'now');
+        const loadColumn = remountWithColumnLoading(now);
+        // A click of the Magic Remote focuses a stream; the pointer then hides again.
+        $('s2').focus();
+        loadColumn();
+        navigation.tick();
+        expect(document.activeElement).toBe($('s2'));
+        now.mockRestore();
+    });
+
+    it('B6: nor anything while the pointer is in use, the late restore included', () => {
+        const now = jest.spyOn(Date, 'now');
+        const loadColumn = remountWithColumnLoading(now);
+        document.documentElement.setAttribute('data-webos-pointer', 'visible');
+        loadColumn();
+        navigation.tick();
+        expect(document.activeElement).toBe($('list'));
+        // Once the pointer hides, it does.
+        document.documentElement.setAttribute('data-webos-pointer', 'hidden');
+        navigation.tick();
+        expect(document.activeElement).toBe($('cast'));
+        now.mockRestore();
+    });
+
+    it('the keys and the focus come from the input hub: no listener of its own left after destroy', () => {
+        const { getInputHub } = require('../../lib/navigation/core/input');
+        const hub = getInputHub(window);
+        const before = hub.listeners;
+        open();
+        expect(hub.listeners.keys).toBe(before.keys + 1);
+        expect(hub.listeners.focus).toBe(before.focus + 1);
+        navigation.destroy();
+        navigation = null;
+        expect(hub.listeners.keys).toBe(before.keys);
+        expect(hub.listeners.focus).toBe(before.focus);
+    });
+});

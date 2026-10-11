@@ -542,3 +542,180 @@ describe('Search', () => {
         expect(searchScreen.initial(search([]))).toBe(document.querySelector('input'));
     });
 });
+
+// F4.4: the consolidation's fixes and the cases the reviews found without a test.
+describe('F4.4', () => {
+    let focus;
+    afterEach(() => {
+        if (focus) focus.destroy();
+        focus = null;
+        document.documentElement.removeAttribute('data-webos-pointer');
+    });
+
+    const list = () => queryLocal(document, 'board-content');
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const sideBar = '<nav class="vertical-nav-bar-container-XXXXX"><a class="nav-tab-button-YYYYY" href="#/discover" tabindex="0">Discover</a></nav>';
+    const search = (rows, menu = '') => mount(`<div class="search-container-YYYYY">${topBar(menu)}<div class="search-content-ZZZZZ" data-height="200" data-scroll-height="1000">${rows.join('')}</div></div>`);
+    const posters = (container) => container.querySelectorAll('a.meta-item-link-BBBBB');
+
+    test('Board: left through the side bar, back to the content (the bar is not remembered)', () => {
+        const container = board([row('a', 3, 0)]);
+        container.insertAdjacentHTML('afterbegin', sideBar);
+        focus = createScreenFocus(container, boardScreen);
+        posters(container)[1].focus();
+        container.querySelector('[class*="nav-tab-button"]').focus();
+        expect(text(focus.memory.last)).toBe('a1');
+        // Discover opened from the bar, then the Board again.
+        focus.leave();
+        const route = container.parentElement;
+        route.setAttribute('data-hidden', '');
+        document.activeElement.blur();
+        route.removeAttribute('data-hidden');
+        focus.restore();
+        expect(text(document.activeElement)).toBe('a1');
+    });
+
+    test('Board: up from the first row goes to the top bar, never to the side bar', () => {
+        const container = board([row('a', 2, 0)]);
+        container.insertAdjacentHTML('afterbegin', sideBar);
+        const first = posters(container)[0];
+        let searched = null;
+        first.spatialNavigationSearch = (dir, options) => {
+            searched = { dir, ...options };
+            return options.candidates[0];
+        };
+        focus = createScreenFocus(container, boardScreen);
+        first.focus();
+        expect(press(UP).defaultPrevented).toBe(true);
+        expect(document.activeElement.className).toMatch(/submit-button-container/);
+        const bar = queryLocal(container, 'horizontal-nav-bar-container');
+        expect(searched.dir).toBe('up');
+        expect(searched.container).toBe(bar);
+        expect(searched.candidates.length).toBeGreaterThan(0);
+        expect(searched.candidates.every((candidate) => bar.contains(candidate))).toBe(true);
+        // From a row below: the row above, not the bar.
+        expect(navigateRows(first, 'down', list())).toBe(true);
+    });
+
+    test('Board: nothing above the first row and no top bar: the spatial navigation', () => {
+        const container = mount(`<div class="board-container-LLLLL"><div class="board-content-NNNNN" data-height="200">${row('a', 2, 0)}</div></div>`);
+        focus = createScreenFocus(container, boardScreen);
+        posters(container)[0].focus();
+        expect(press(UP).defaultPrevented).toBe(false);
+    });
+
+    test('a focused row taller than the list: once the row it peeked at is loaded, its title comes back', async () => {
+        const container = board([row('a', 2, 0).replace('data-height="100"', 'data-height="220"'), placeholderRow(230)]);
+        focus = createScreenFocus(container, boardScreen);
+        const links = posters(container);
+        links[0].focus();
+        expect(list().scrollTop).toBe(0);
+        // The row below loads only once it shows: 8px of it, at the cost of the focused row's title.
+        expect(press(DOWN).defaultPrevented).toBe(true);
+        expect(list().scrollTop).toBe(38);
+        expect(document.activeElement).toBe(links[0]);
+        // Still loading: nothing moves.
+        list().children[1].setAttribute('data-x', '1');
+        await flush();
+        expect(list().scrollTop).toBe(38);
+        // It loaded (an addon error here): the focused row back at the top, title included.
+        list().children[1].outerHTML = messageRow(230);
+        await flush();
+        expect(list().scrollTop).toBe(0);
+    });
+
+    test('the realign after a peek: not when the focus moved away, nor under the Magic Remote pointer', async () => {
+        const tall = row('a', 2, 0).replace('data-height="100"', 'data-height="220"');
+        let container = board([tall, placeholderRow(230)]);
+        focus = createScreenFocus(container, boardScreen);
+        posters(container)[0].focus();
+        press(DOWN);
+        document.documentElement.setAttribute('data-webos-pointer', 'visible');
+        list().children[1].outerHTML = messageRow(230);
+        await flush();
+        expect(list().scrollTop).toBe(38);
+        focus.destroy();
+        document.documentElement.removeAttribute('data-webos-pointer');
+        container = board([tall, placeholderRow(230)]);
+        focus = createScreenFocus(container, boardScreen);
+        posters(container)[0].focus();
+        press(DOWN);
+        document.activeElement.blur();
+        list().children[1].outerHTML = messageRow(230);
+        await flush();
+        expect(list().scrollTop).toBe(38);
+    });
+
+    test('a row peeked at near the end or the start of the list: the scroll stays in range', () => {
+        // Near the end: 350 - 200 + 8 would pass the 100px the list can scroll.
+        board([row('a', 2, 0), placeholderRow(350)].map((html, index) => (index === 0 ? html : html)));
+        list().setAttribute('data-scroll-height', '300');
+        expect(navigateRows(document.querySelectorAll('a')[0], 'down', list())).toBe(true);
+        expect(list().scrollTop).toBe(100);
+        // Near the start: a short row above, its bottom 8px would be above the top of the list.
+        board([placeholderRow(0).replace('data-height="100"', 'data-height="5"'), row('a', 2, 300)]);
+        list().scrollTop = 300;
+        expect(navigateRows(document.querySelectorAll('a')[0], 'up', list())).toBe(true);
+        expect(list().scrollTop).toBe(0);
+    });
+
+    test('Discover: filters that render after the screen mounted still take the focus until the catalog shows', async () => {
+        const container = mount('<div class="discover-container-UUUUU"><div class="catalog-container-VVVVV"></div></div>');
+        focus = createScreenFocus(container, discoverScreen);
+        expect(focus.ensureFocus()).toBe(false);
+        container.querySelector('[class*="catalog-container"]').insertAdjacentHTML('beforeend',
+            '<div class="selectable-inputs-container-PPPPP"><div class="multiselect-menu-RRRRR" data-left="0"><div tabindex="0" aria-haspopup="listbox" aria-expanded="false">Type</div></div></div>');
+        await flush();
+        expect(document.activeElement.textContent).toBe('Type');
+        container.querySelector('[class*="catalog-container"]').insertAdjacentHTML('beforeend',
+            '<div class="meta-items-container-WWWWW"><div class="meta-item-container-AAAAA" data-top="0" data-left="0" data-height="100"><a class="meta-item-link-BBBBB" href="#/x" tabindex="0">0</a></div></div>');
+        await flush();
+        expect(document.activeElement.textContent).toBe('0');
+    });
+
+    test('Search: with a query in the field the recovery waits for its first result (the button next to the field clears it)', async () => {
+        const container = search([placeholderRow(0)]);
+        container.querySelector('input').value = 'batman';
+        expect(searchScreen.initial(container, { recovering: true })).toBe(null);
+        focus = createScreenFocus(container, searchScreen);
+        expect(press(DOWN, document.body).defaultPrevented).toBe(false);
+        expect(document.activeElement).toBe(document.body);
+        queryLocal(container, 'search-content').innerHTML = row('r', 2, 0);
+        await flush();
+        expect(text(document.activeElement)).toBe('r0');
+    });
+
+    test('Search: a focused result hidden under the focus gives it to the search button, not to the field', async () => {
+        const container = search([row('a', 2, 0)]);
+        focus = createScreenFocus(container, searchScreen);
+        const result = posters(container)[0];
+        result.focus();
+        queryLocal(container, 'search-content').setAttribute('data-hidden', '');
+        result.blur();
+        await flush();
+        expect(document.activeElement.className).toMatch(/submit-button-container/);
+    });
+
+    test('Search: back on the route with nothing left to restore, the search button and not the field', () => {
+        const container = search([]);
+        focus = createScreenFocus(container, searchScreen);
+        focus.leave();
+        // The SearchBar focuses its field whenever the route comes back.
+        container.querySelector('input').focus();
+        expect(focus.restore()).toBe(true);
+        expect(document.activeElement.className).toMatch(/submit-button-container/);
+    });
+
+    test('Search: a history menu that is not shown is not entered; leaving the menu sends a whole press', () => {
+        const hidden = searchMenu.replace('class="menu-container-OOOOO"', 'class="menu-container-OOOOO" data-hidden');
+        let container = search([row('a', 2, 0)], hidden);
+        const field = container.querySelector('input');
+        expect(text(searchScreen.navigate(field, 'down', container, {}))).toBe('a0');
+        container = search([row('a', 2, 0)], searchMenu);
+        const events = [];
+        ['mousedown', 'mouseup'].forEach((type) => document.body.addEventListener(type, (event) => events.push(`${event.type} ${event.button}`), { once: true }));
+        const last = Array.prototype.find.call(container.querySelectorAll('[tabindex]'), (element) => element.textContent === 'supergirl');
+        expect(text(searchScreen.navigate(last, 'down', container, {}))).toBe('a0');
+        expect(events).toEqual(['mousedown 0', 'mouseup 0']);
+    });
+});
