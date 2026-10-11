@@ -128,6 +128,11 @@ const screenshot = async (name) => {
 const PAGE_HELPERS = `
     window.__f41b = window.__f41b || {};
     var h = window.__f41b;
+    // Arrow and OK keydowns the page received (to tell a key lost by the emulator from a bug).
+    if (!h.keydowns) {
+        h.keydowns = 0;
+        window.addEventListener('keydown', function (event) { if (event.keyCode >= 37 && event.keyCode <= 40 || event.keyCode === 13) h.keydowns++; }, true);
+    }
     h.local = function (element, name) {
         var className = element && typeof element.className === 'string' ? element.className : '';
         return className.split(/\\s+/).some(function (token) { return new RegExp('^' + name + '-[\\\\w-]{5}$').test(token); });
@@ -173,6 +178,9 @@ const PAGE_HELPERS = `
             interfaceScale: document.documentElement.style.getPropertyValue('--interface-scale'),
             expanded: document.querySelectorAll('[aria-expanded="true"], [class*="open-"]').length,
             navigation: window.__webosNavigationF41b ? window.__webosNavigationF41b.status.last : null,
+            skipped: window.__webosNavigationF41b ? window.__webosNavigationF41b.status.skipped || null : null,
+            modals: route ? Array.prototype.filter.call((route.querySelector('.modals-container') || { children: [] }).children, function (m) { return m.getClientRects().length > 0; }).length : 0,
+            keydowns: h.keydowns,
             hasFocus: document.hasFocus(),
         };
     };
@@ -536,8 +544,11 @@ const libraryScenario = async () => {
         check('library-first-page', first.libraryItems === 100, { note: `${first.libraryItems} items` });
         const down = await walk('library-down', 'DOWN', 30, { stopWhen: (s) => s.libraryItems > 100 });
         check('library-next-page-on-demand', down.current.libraryItems > 100, { note: `${down.current.libraryItems} items after ${down.visited.length} DOWN`, screenshot: await screenshot('library-next-page') });
-        const rows = keys.filter((entry) => entry.label === 'library-down').map((entry) => entry.after.text);
-        check('library-down-moves-every-key', new Set(rows).size === rows.length, { note: `${new Set(rows).size} distinct of ${rows.length}` });
+        // Every DOWN that reached the page moves (a key the emulator drops has no keydown).
+        const downs = keys.filter((entry) => entry.label === 'library-down');
+        const received = downs.filter((entry, index) => index === 0 || entry.after.keydowns > downs[index - 1].after.keydowns);
+        const rows = received.map((entry) => entry.after.text);
+        check('library-down-moves-every-key', new Set(rows).size === rows.length, { note: `${new Set(rows).size} distinct of ${rows.length} received (${downs.length} sent)` });
         const up = await walk('library-up', 'UP', 3);
         const upRows = keys.filter((entry) => entry.label === 'library-up').map((entry) => entry.after.text);
         check('library-up-moves-every-key', new Set(upRows).size === 3, { note: upRows.join(' | ') });

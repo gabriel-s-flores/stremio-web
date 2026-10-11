@@ -41,7 +41,7 @@ const INITIAL_FOCUS_PREFERRED_MS = 1500;
 const INITIAL_FOCUS_TIMEOUT_MS = 6000;
 // After the initial focus, a list replaced right after (a filter of Addons) is focused again.
 const INITIAL_FOCUS_VERIFY_MS = 500;
-const INITIAL_FOCUS_VERIFICATIONS = 12;
+const INITIAL_FOCUS_VERIFICATIONS = 24;
 // Part of the list height kept visible beyond the focused item, and scrolled when there is none.
 const REVEAL_MARGIN = 0.15;
 const PAGE_SCROLL = 0.6;
@@ -174,7 +174,10 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
 
     // Modals of the route (ModalDialog renders into the route's .modals-container).
     const inModal = (element) => !!(element && element.closest && element.closest('.modals-container'));
-    const modalOpen = (route) => !!route.querySelector('.modals-container > *');
+    const modalOpen = (route) => {
+        const container = route.querySelector('.modals-container');
+        return !!container && Array.prototype.some.call(container.children, isShown);
+    };
 
     const inNavBars = (element, route) => !!closestLocal(element, [NAV_BAR, HORIZONTAL_NAV_BAR], route);
 
@@ -424,7 +427,10 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
         const screen = currentScreen();
         const active = document.activeElement;
         // A modal of the route is open: the keys are the modal's (F4.3), even with the focus lost.
-        if (modalOpen(route)) return;
+        if (modalOpen(route)) {
+            status.skipped = { reason: 'modal', time: Date.now() };
+            return;
+        }
 
         // Lost focus on a screen of this task: back to its element.
         if (screen !== null && !focusHasPlace(route)) {
