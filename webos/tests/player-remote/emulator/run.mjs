@@ -856,6 +856,7 @@ const exitFocus = async ({ manifestUrl, addonPort }) => {
     record('E01-stream-focused', { ok: /stream-container/.test(String(streamFocused)), note: `${streamFocused} ${streamHref}` });
     remote('OK');
     if (!await waitPlaying('E02-playing')) return;
+    record('E02b-focus-in-player', { note: `${(await state()).focused}; stream still focused: ${await evaluate('return !!document.activeElement && document.activeElement.getAttribute("href") === ' + JSON.stringify(streamHref) + ';')}` });
     await press('E03-down-bar', 'DOWN', (b, a) => ({ 'focus in the bar': /control-bar-button/.test(a.focused) }));
     for (let i = 0; i < 3 && (await state()).hash.indexOf('#/player/') === 0; i++) {
         remote('BACK');
@@ -866,7 +867,7 @@ const exitFocus = async ({ manifestUrl, addonPort }) => {
         samples.push({ ms: i * 400, focused: (await state()).focused, href: await evaluate('return document.activeElement && document.activeElement.getAttribute("href");') });
         await sleep(400);
     }
-    const exit = await evaluate('return window.__webosPlayerRemoteLast ? { entry: window.__webosPlayerRemoteLast.entry, exit: window.__webosPlayerRemoteLast.exit } : null;');
+    const exit = await evaluate('var l = window.__webosPlayerRemoteLast; return l ? { entry: l.entry, installActive: l.installActive, firstFocusFrom: l.firstFocusFrom, exit: l.exit } : null;');
     const last = samples[samples.length - 1];
     record('E04-focus-back-on-stream', { ok: last.href === streamHref, note: `focus ${last.focused} (${last.href}); expected ${streamHref}; remote ${JSON.stringify(exit)}`, samples, exit, screenshot: await screenshot('E04-back') });
 };

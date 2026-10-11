@@ -430,6 +430,20 @@ describe('leaving the Player', () => {
         expect(created.status.exit.restored).toBe(true);
     });
 
+    it('the stream lost its focus when the Player opened (route below display: none): the last focused element is the entry', () => {
+        render({ hidden: true });
+        const stream = document.createElement('a');
+        stream.tabIndex = 0;
+        document.querySelector('.route-container').appendChild(stream);
+        document.activeElement.blur();
+        const created = createPlayerRemote({ window, getBar: () => $('bar'), getProps: () => ({ paused: false, onPauseRequested: () => {} }), isOverlayOpen: () => false, getLastFocused: () => stream });
+        const remove = created.install();
+        expect(created.status.entry).toMatch(/^a/);
+        press(KEYS.OK);
+        remove();
+        expect(document.activeElement).toBe(stream);
+    });
+
     it('with nothing to give the focus back to, takes it off the leaving Player (the page below restores its own, F4.1c)', () => {
         render({ hidden: true });
         document.activeElement.blur();

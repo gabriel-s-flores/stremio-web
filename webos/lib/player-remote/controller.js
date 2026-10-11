@@ -63,7 +63,9 @@ const focusablesIn = (root) => (root ?
     Array.prototype.filter.call(root.querySelectorAll('[tabindex]'), (element) => isFocusable(element) && isShown(element)) :
     []);
 
-const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => false, stop = () => {} }) => {
+// getLastFocused: the element focused last in the page (usePlayerRemote.js tracks it): when the Player
+// opens, the route below goes display: none and its focused element (the stream played) is blurred.
+const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => false, stop = () => {}, getLastFocused = () => null }) => {
     const document = window.document;
     let lastButton = null;
     let heldSeek = null;
@@ -123,6 +125,7 @@ const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => fa
     // key in its document listener, after this one).
     const focus = (element) => {
         if (!element) return false;
+        if (status.firstFocusFrom === undefined) status.firstFocusFrom = describe(document.activeElement);
         if (element.tabIndex < 0 && !element.hasAttribute('tabindex')) element.tabIndex = 0;
         element.focus();
         if (document.activeElement !== element) return false;
@@ -433,8 +436,12 @@ const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => fa
     const install = () => {
         const playerRoot = container();
         const active = document.activeElement;
-        const entry = active && active !== document.body && (playerRoot === null || !playerRoot.contains(active)) ? active : null;
+        const usable = (element) => !!element && element !== document.body && document.body.contains(element) &&
+            (playerRoot === null || !playerRoot.contains(element));
+        const lastFocused = getLastFocused();
+        const entry = usable(active) ? active : usable(lastFocused) ? lastFocused : null;
         status.entry = describe(entry);
+        status.installActive = describe(active);
         window.addEventListener('keydown', onKeyDown, true);
         window.addEventListener('keyup', onKeyUp, true);
         return () => {

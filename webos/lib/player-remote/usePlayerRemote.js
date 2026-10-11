@@ -12,6 +12,13 @@ const { createPlayerRemote } = require('./controller');
 // video popup, which comes up by itself and does not hold the focus (F4.3).
 const isOverlayOpen = () => OVERLAYS.some((overlay) => overlay.name !== 'next-video-popup' && !!overlay.find(document));
 
+// The element focused last in the page. When the Player opens, the route below goes display: none
+// and loses its focus (the stream played): the remote gives the focus back to it on the way out.
+let lastFocused = null;
+document.addEventListener('focusin', (event) => {
+    lastFocused = event.target;
+}, true);
+
 // Stop leaves the Player like Back does, without the "hide the bar first" step of this controller.
 const stop = () => backDispatcher.dispatch({ source: 'stop' });
 
@@ -35,6 +42,7 @@ const usePlayerRemote = (props, barRef) => {
             }),
             isOverlayOpen,
             stop,
+            getLastFocused: () => lastFocused,
         });
         remoteRef.current = remote;
         remote.prepare();
