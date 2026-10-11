@@ -49,6 +49,10 @@ No emulador, dentro de uma reserva do pool:
   multiplica esse fator: 100% = padrão da TV). As margens de overscan são as `--safe-area-inset-*` de
   `webos/styles/app.less`, e o foco do controle remoto também fica lá. `postcss-math-functions.js`
   resolve `min()/max()` para essa mesma escala (`webos/tests/styles/tv-scale.test.js` amarra os três).
+- `webos/tests/perf/` (F7.1): as medições do app no perfil C8 (boot até o Board, navegação, memória por fase e o
+  estouro de memória, trocas de stream, A/B de builds, tamanhos), refeitas com `perf.mjs` e resumidas por
+  `summarize.mjs`, que tira das medianas as rodadas feitas com o host ocupado. Números e método em
+  `webos/docs/BASELINE-C8.md`; como rodar, em `webos/tests/perf/README.md`.
 - `webos/tests/screens/`: roteiro de capturas das telas principais (Board, Discover e menu, Busca,
   Detalhes, streams, Library, Calendar, Addons e modal, Settings, menu do usuário, diálogo de saída,
   Player), com um item focado em cada uma e uma sonda (escala, áreas seguras, caixa e estilos do foco,

@@ -26,6 +26,7 @@ source ~/webos-tv-sdk/env.sh
 | `webos/tools/probe-run.sh` | Instala e roda o app-sonda no emulador ou na TV e salva JSON e capturas em `probe/results/` |
 | `webos/tools/wasm-compile-test.sh` | Compila um `.wasm` dentro de um Worker no emulador e mede tempo e memória |
 | `webos/tools/baseline-c8.sh` | Baseline de CPU de uma instância (boot, sonda, microbenchmark de JS, compilação do core); rode dentro do `emu-run`, com ou sem `--profile c8` ([docs/BASELINE-C8.md](docs/BASELINE-C8.md)) |
+| `webos/tests/perf/` | Medições do app no perfil C8 (F7.1): boot até o Board, navegação, memória por fase, trocas de stream, A/B de builds e tamanhos; `perf.mjs` refaz tudo e `summarize.mjs` tira as rodadas feitas com o host ocupado das medianas ([README](../tests/perf/README.md), [docs/BASELINE-C8.md](docs/BASELINE-C8.md)) |
 | `webos/tools/media-server.mjs` | Servidor de mídia para o emulador: Range (seek), CORS e `/redirect/<arquivo>` (302, como links de debrid) |
 | `webos/tools/play-test.sh` | Teste padronizado de reprodução: eventos, faixas, progresso e seek |
 | `webos/tools/media-suite/` | Bateria de testes de mídia: cenários de reprodução em paralelo no pool de emuladores (um por boot), expectativas derivadas com `ffprobe` e relatório em markdown (`node webos/tools/media-suite/run.mjs`; detalhes no README da pasta) |
