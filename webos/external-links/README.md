@@ -21,6 +21,8 @@ Só entra no build webOS (`src/App/index.webos.js`); o desktop não muda.
 | Links para a própria TV: `127.x.x.x`, `localhost`, `*.localhost`, `0.0.0.0`, `[::1]` (inclusive dentro de `stremio.com/warning#<url>`), como a URL do proxy de certificados da F3.7 (`http://127.0.0.1:<porta>/proxy?t=<token>…`) | **Desativado**: o celular não abriria e a URL leva o token. O link nunca é mostrado, guardado nem registrado em log |
 | `#/rota`, `file:`, `blob:`, `data:` | Intocado |
 
+- Links com `download` (o "Download subtitle" do menu de legendas) também são pegos na fase de captura: o menu de contexto do upstream
+  chama `stopPropagation` nos cliques dentro dele, que então nunca chegariam à fase de bolha (F3.7b). Quem pega primeiro trata, o outro vê o clique cancelado.
 - A interceptação de clique roda em `window`, na fase de bolha: um handler do app que já tratou o clique
   (`preventDefault`) não é duplicado. O `Button` do upstream transforma Enter em clique, então o OK do
   controle cai no mesmo caminho.
