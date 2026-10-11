@@ -23,7 +23,9 @@ FILES=(t1_h264_aac.mp4 t6_h264_aac.mkv t7_h264_ac3.mp4 t2_multi.mkv t4_h264_eac3
 # is left at once, so WebOsVideo's Luna selectTrack (500 ms after the choice) runs during the switch.
 SUBTITLES_AT=3
 # Load 0 opens the Player; then odd loads switch inside it and even loads leave it and open it again.
-WAIT_PLAY_S="${WAIT_PLAY_S:-60}"
+# Longer than the guard's start watchdog (60 s without progress), so a load that never starts shows
+# its error screen before the next one.
+WAIT_PLAY_S="${WAIT_PLAY_S:-75}"
 mkdir -p "$OUT"
 OUT="$(cd "$OUT" && pwd)"
 CDP=(node "$ROOT/webos/tools/cdp.mjs" --port "$EMU_CDP_PORT")
