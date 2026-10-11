@@ -108,6 +108,13 @@ for i in "${!FILES[@]}"; do
     [[ "$played" == null ]] || sleep 4
     after="$(cdp_eval "JSON.stringify(window.__f56.sample())" 2>/dev/null || echo null)"
     wedge="$(node "$ROOT/webos/tests/player/pipeline-state.js" 2>/dev/null || true)"
+    # The page reloaded (the helpers are gone): say so, and put them back for the next loads.
+    if [[ "$(cdp_eval "typeof window.__f56" 2>/dev/null || true)" != object ]]; then
+        log "load $i: the page reloaded (navigationStart $(cdp_eval "performance.timing.navigationStart" 2>/dev/null || echo '?'))"
+        echo "{\"i\":$i,\"reloaded\":true}" >> "$OUT/reloads.jsonl"
+        cdp_eval "$(cat "$ROOT/webos/tests/player/switches-page.js")" > /dev/null 2>&1 || true
+    fi
+    { echo "== load $i $(date +%T)"; "${SSH[@]}" 'free; dmesg 2>&1 | tail -n 15' 2>&1; } >> "$OUT/system.log"
     echo "{\"i\":$i,\"file\":\"$file\",\"way\":\"$way\",\"startedAt\":$start,\"msToPlay\":$played,\"atPlay\":$sample,\"after\":$after,\"pipelines\":${wedge:-null}}" >> "$OUT/loads.jsonl"
     log "load $i: $( [[ "$played" == null ]] && echo 'did not play' || echo "playing after $played ms" ); wedged: $( [[ "$wedge" == *'"wedged":true'* ]] && echo yes || echo no )"
     "${CDP[@]}" screenshot "$OUT/tela-load-$i.png" > /dev/null 2>&1 || true

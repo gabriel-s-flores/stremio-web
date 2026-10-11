@@ -68,6 +68,8 @@ if (guard === 'on') {
     check('a load that does not play ends in the error screen', stuck.every((load) => load.errorLayer), stuck.map((load) => load.i));
 }
 check('no uncaught page errors', page.errors.length === 0, page.errors);
+const reloads = fs.existsSync(path.join(dir, 'reloads.jsonl')) ? read('reloads.jsonl').trim().split('\n').filter(Boolean).map((line) => JSON.parse(line).i) : [];
+check('the page never reloaded during the test', reloads.length === 0, reloads);
 
 const ok = checks.every((c) => c.ok);
 console.log(JSON.stringify({ ok, guard, loads: perLoad, order, checks }, null, 2));
