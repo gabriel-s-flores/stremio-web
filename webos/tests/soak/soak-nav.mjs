@@ -64,7 +64,7 @@ async function step(name, action, expectation, seconds = 45) {
     } catch (e) {
         error = String(e.message).slice(0, 160);
     }
-    const entry = { cycle, name, ok, ms: Date.now() - t0, error };
+    const entry = { cycle, name, ok, ms: Date.now() - t0, error, t0, t: Date.now() }; // host clock, to line the steps up with mem.log
     fs.appendFileSync(stepsFile, `${JSON.stringify(entry)}\n`);
     stats.steps++;
     const by = stats.byName[name] = stats.byName[name] || { runs: 0, failed: 0, ms: [] };
