@@ -209,6 +209,27 @@ describe('initial focus', () => {
         expect(text()).toBe('All');
     });
 
+    test('any key ends the wait of the fallback (the user took over), not only an arrow that moves', async () => {
+        render(libraryRoute({ items: 0 }));
+        mount(libraryScreen);
+        jest.advanceTimersByTime(1800);
+        expect(text()).toBe('All');
+        // OK on the filter (it opens its dropdown in the app).
+        key(13);
+        document.querySelector('.library-content-Zz9_y').insertAdjacentHTML('beforeend',
+            '<div class="meta-items-container-Mm3x4" data-rect="100,200,1800,800"><a class="meta-item-link-veMqr" href="#/detail/0" data-rect="120,200,250,380">item 0</a></div>');
+        await flush();
+        expect(text()).toBe('All');
+    });
+
+    test('an element of the initial focus inside a navigation bar is passed over', () => {
+        render(libraryRoute());
+        document.querySelector('.vertical-nav-bar-container-Ab1c2').insertAdjacentHTML('afterbegin',
+            '<div class="placeholder-Pp1x2" data-rect="10,10,80,80"><a href="#/intro" data-rect="10,10,80,80">bar</a></div>');
+        mount(libraryScreen);
+        expect(text()).toBe('item 0');
+    });
+
     test('the fallback gives up after the timeout', async () => {
         render(libraryRoute({ items: 0 }));
         mount(libraryScreen);
@@ -583,6 +604,17 @@ describe('side navigation bar', () => {
         const event = key(RIGHT);
         expect(event.defaultPrevented).toBe(true);
         expect(text()).toBe('board item');
+    });
+
+    test('the item remembered, not the one the spatial navigation would pick', () => {
+        render(libraryRoute());
+        mount(libraryScreen);
+        removeSideBar = installSideBar(window);
+        const items = document.querySelectorAll('a.meta-item-link-veMqr');
+        items[5].focus();
+        document.querySelectorAll('.nav-tab-button-Ab1c2')[0].focus();
+        expect(key(RIGHT).defaultPrevented).toBe(true);
+        expect(text()).toBe('item 5');
     });
 
     test('without a known item, RIGHT goes into the content, not to the top bar', () => {

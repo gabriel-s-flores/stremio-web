@@ -614,8 +614,8 @@ describe('F4.4', () => {
         expect(press(DOWN).defaultPrevented).toBe(true);
         expect(list().scrollTop).toBe(38);
         expect(document.activeElement).toBe(links[0]);
-        // Still loading: nothing moves.
-        list().children[1].setAttribute('data-x', '1');
+        // Still loading (the placeholder re-renders): nothing moves.
+        list().children[1].appendChild(document.createElement('div'));
         await flush();
         expect(list().scrollTop).toBe(38);
         // It loaded (an addon error here): the focused row back at the top, title included.
