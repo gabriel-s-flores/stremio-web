@@ -624,6 +624,33 @@ describe('F4.4', () => {
         expect(list().scrollTop).toBe(0);
     });
 
+    test('Search: the same realign after a peek (the review case: zoom 1.75, the rows below turning into addon errors)', async () => {
+        const container = search([row('a', 2, 0).replace('data-height="100"', 'data-height="220"'), placeholderRow(230)]);
+        focus = createScreenFocus(container, searchScreen);
+        const results = () => queryLocal(container, 'search-content');
+        posters(container)[0].focus();
+        press(DOWN);
+        expect(results().scrollTop).toBe(38);
+        results().children[1].outerHTML = messageRow(230);
+        await flush();
+        expect(results().scrollTop).toBe(0);
+    });
+
+    test('memory of the top bar: Board, Discover and Search remember it (Back from Search lands on its button), the lists screens do not', () => {
+        expect([boardScreen.rememberTopBar, searchScreen.rememberTopBar, discoverScreen.rememberTopBar]).toEqual([true, true, true]);
+        const container = board([row('a', 3, 0)]);
+        container.insertAdjacentHTML('afterbegin', sideBar);
+        focus = createScreenFocus(container, boardScreen);
+        posters(container)[1].focus();
+        const button = container.querySelector('[class*="submit-button-container"]');
+        button.focus();
+        expect(focus.memory.last).toBe(button);
+        container.querySelector('[class*="nav-tab-button"]').focus();
+        expect(focus.memory.last).toBe(button);
+        // DOWN from the top bar still goes back to the content.
+        expect(text(focus.memory.content)).toBe('a1');
+    });
+
     test('the realign after a peek: not when the focus moved away, nor under the Magic Remote pointer', async () => {
         const tall = row('a', 2, 0).replace('data-height="100"', 'data-height="220"');
         let container = board([tall, placeholderRow(230)]);

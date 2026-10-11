@@ -13,8 +13,9 @@
 // - Recovery: the focused element went away (a row replaced, a list reloaded, a filter applied), or
 //   an arrow came with nothing focused: the focus goes back to the screen, not to the page body
 //   (where the spatial navigation starts over from the top corner).
-// - Memory: the last element focused in the screen, without the navigation bars and the modals
-//   (isMemorable): leaving through the side bar and coming back lands in the content.
+// - Memory: the last element focused in the screen, without the side bar and the modals, and
+//   without the top bar unless `rememberTopBar` (isMemorable): leaving through the side bar and
+//   coming back lands in the content.
 // - Keys: the screen takes the arrows it knows better (`navigate`); whatever it leaves goes on to the
 //   upstream spatial-navigation-polyfill.
 // It all applies only while the screen is the visible route and no modal is open over it.
@@ -25,6 +26,7 @@
 // - fallback(container) (optional): an element to focus meanwhile;
 // - fallbackDelay (ms, default 0): how long the initial element is waited for before the fallback;
 // - timeout (ms): how long the initial element is waited for at all;
+// - rememberTopBar (default false): the top bar is remembered too;
 // - path (default true): a re-rendered element is found again by its place in the tree; false
 //   when that place may hold something else (a list replaced by another one);
 // - navigate(target, dir, container, memory, event) (optional): an element to focus, `true` to
@@ -197,7 +199,7 @@ const createScreenFocus = (container, screen, { window: win = window, hub = getI
         if (!container.contains(element)) return;
         // The user (or anything else) moved the focus: no initial focus to wait for any more.
         if (waiting !== null && element !== waiting.fallback) stopWaiting();
-        if (isMemorable(element, container)) {
+        if (isMemorable(element, container, { topBar: screen.rememberTopBar })) {
             memory.last = element;
             memory.path = pathOf(element, container);
             if (screen.isContent && screen.isContent(element, container)) memory.content = element;

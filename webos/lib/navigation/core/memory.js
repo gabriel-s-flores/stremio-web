@@ -2,13 +2,16 @@
 // remount (its link, its label, its position). And which focus is worth remembering at all.
 
 const { firstFocusable, focusablesIn } = require('./dom');
-const { inNavBars, inRouteModal } = require('./routes');
+const { inNavBars, inRouteModal, inSideBar } = require('./routes');
 
-// What a screen remembers as "where the user was": not the navigation bars (the side bar is how the
-// user left, coming back there means one more press to the content; the top bar holds the search
-// field, which opens the system keyboard) and not a modal of the route (closing it gives the focus
-// back to the item that opened it: webos/lib/navigation/modals.js).
-const isMemorable = (element, stop) => !inNavBars(element, stop) && !inRouteModal(element);
+// What a screen remembers as "where the user was": not the side navigation bar (it is how the user
+// left, coming back there meant one more press to the content) and not a modal of the route (closing
+// it gives the focus back to the item that opened it: webos/lib/navigation/modals.js). The top bar
+// only with `topBar` (Board, Discover, Search: Back from Search lands on the search button it was
+// opened from; Library, Calendar, Addons and Settings come back to their content instead).
+const isMemorable = (element, stop, { topBar = false } = {}) => (
+    !(topBar ? inSideBar(element, stop) : inNavBars(element, stop)) && !inRouteModal(element)
+);
 
 // Child indexes from the container down to the element: where the element was, if it is re-rendered.
 const pathOf = (element, container) => {

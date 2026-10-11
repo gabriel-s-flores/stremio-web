@@ -94,6 +94,7 @@ const navigateGrid = (target, dir, grid, container) => {
 };
 
 const discoverScreen = {
+    rememberTopBar: true,
     initial: (container) => {
         const grid = gridOf(container);
         return grid ? firstVisibleCell(grid) : null;

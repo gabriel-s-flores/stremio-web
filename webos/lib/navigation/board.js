@@ -206,6 +206,8 @@ const rowsScreen = (listName) => {
     const listOf = (container) => queryLocal(container, listName);
     return {
         listOf,
+        // Back from Search lands on the search button it was opened from (F4.1a).
+        rememberTopBar: true,
         initial: (container) => {
             const list = listOf(container);
             return list ? firstItem(list) : null;

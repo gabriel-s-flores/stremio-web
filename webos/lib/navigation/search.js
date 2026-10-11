@@ -84,8 +84,10 @@ const searchScreen = {
         }
         return rows.navigate(target, dir, container, memory);
     },
+    rememberTopBar: true,
     isContent: rows.isContent,
     align: rows.align,
+    onMutation: rows.onMutation,
 };
 
 module.exports = {

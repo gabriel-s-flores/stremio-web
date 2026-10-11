@@ -467,6 +467,13 @@ describe('Settings, two columns', () => {
         expect(document.activeElement).toBe(byText('Interface'));
     });
 
+    test('the top bar is not remembered (Search opened from it, Back: the screen\'s content)', () => {
+        startSettings();
+        byText('General').focus();
+        byText('profile').focus();
+        expect(focus.memory.last).toBe(byText('General'));
+    });
+
     test('LEFT/RIGHT between the zoom steps of the same row', () => {
         startSettings();
         byText('100%').focus();
