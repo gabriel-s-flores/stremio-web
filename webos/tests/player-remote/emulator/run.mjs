@@ -42,6 +42,20 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const run = (command, args, options = {}) => execFileSync(command, args, { encoding: 'utf8', cwd: REPO, ...options });
 const remote = (...keys) => run('node', ['webos/tools/remote.mjs', '--port', REMOTE_PORT, '--delay', '0', ...keys]);
 
+// Guest shell (system log and memory of the emulator).
+const SSH = ['-q', '-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null', '-o', 'HostKeyAlgorithms=+ssh-rsa',
+    '-o', 'PubkeyAcceptedAlgorithms=+ssh-rsa', '-o', 'BatchMode=yes', '-i', path.join(process.env.HOME, 'webos-tv-sdk', 'run', 'ares_webos_emul'),
+    '-p', String(process.env.EMU_SSH_PORT), 'developer@127.0.0.1'];
+const guest = (command) => {
+    try {
+        return run('ssh', [...SSH, command], { timeout: 20000 });
+    } catch (error) {
+        return `ssh failed: ${String(error.stdout || error.message).slice(0, 300)}`;
+    }
+};
+const GUEST_MEMORY = 'grep MemAvailable /proc/meminfo; for s in /proc/[0-9]*/status; do n=$(sed -n "s/^Name:\\t//p" $s 2>/dev/null); case "$n" in WebAppMgr*|*render*|*starfish*) echo "$n $(sed -n "s/^VmRSS:\\t*//p" $s)";; esac; done';
+const SYSTEM_LOG = 'dmesg 2>/dev/null | grep -i -E "oom|kill|segfault" | tail -n 20; for f in /var/log/messages /tmp/var/log/messages; do [ -f $f ] && grep -i -E "oom|kill|crash|renderer|WebAppMgr.*(reload|exit|died)|sigsegv" $f | tail -n 40; done';
+
 // ----- CDP session -----
 let session = null;
 const connect = async () => {
@@ -240,7 +254,18 @@ const PAGE_HELPERS = `
     };
     return true;
 `;
-const state = () => evaluate('return window.__f57.state();');
+// A page that reloads by itself (the WebAppMgr reloads a crashed renderer) loses the helpers: the
+// reload is recorded with the guest memory and log, and the helpers go in again.
+const reloads = [];
+const state = async () => {
+    const now = await evaluate('return window.__f57 ? window.__f57.state() : { reloaded: true, hash: location.hash, navigationStart: performance.timing.navigationStart, uptime: Math.round(performance.now()) };');
+    if (!now || !now.reloaded) return now;
+    const entry = { at: new Date().toISOString(), ...now, guest: guest(GUEST_MEMORY), log: guest(SYSTEM_LOG) };
+    reloads.push(entry);
+    record('page-reloaded', { ok: false, note: `the page reloaded by itself (navigationStart ${now.navigationStart}, ${now.uptime} ms ago, hash ${now.hash})`, ...entry });
+    await evaluate(PAGE_HELPERS);
+    return evaluate('return window.__f57.state();');
+};
 
 const boot = async () => {
     const env = { ...process.env, WEBOS_DEVICE: DEVICE };
@@ -291,7 +316,7 @@ const waitPlaying = async (label, timeoutMs = 120000) => {
     return elapsed !== null;
 };
 
-const waitHidden = async () => waitFor('return window.__f57.state().hidden === true;', 15000, 300);
+const waitHidden = async () => waitFor('return !!window.__f57 && window.__f57.state().hidden === true;', 15000, 300);
 
 // One real remote key, then the state once it settles.
 const press = async (name, keyName, check, { settle = 1200, shot = false } = {}) => {
@@ -411,7 +436,7 @@ const toPopup = async ({ manifestUrl, addonPort }) => {
     if (!await waitPlaying('N00-playing')) return false;
     // 40 s before the end: the popup comes 35 s before it (nextVideoNotificationDuration).
     await evaluate('var v = document.querySelector("video"); v.currentTime = v.duration - 40; return true;');
-    const shown = await waitFor('return window.__f57.state().popup === true;', 20000, 500);
+    const shown = await waitFor('return !!window.__f57 && window.__f57.state().popup === true;', 20000, 500);
     await sleep(1500);
     const now = await state();
     record('N01-popup', { ok: shown !== null && /play-button/.test(now.focused), note: `popup after ${shown} ms, focus ${now.focused}`, state: now, screenshot: await screenshot('N01-popup'), vm: vmScreenshot('N01-popup') });
@@ -487,7 +512,36 @@ const resumeCheck = async ({ manifestUrl, addonPort }) => {
     });
 };
 
-const SCENARIOS = { keys, next, watch, 'resume-save': resumeSave, 'resume-check': resumeCheck };
+// Diagnostics of the page near the end of episode 1 (POPUP_PROBE_LEAD s before it, default 40: the
+// popup comes at 35): page state, JS heap and guest memory every second for 40 s, then the system log.
+const popupProbe = async ({ manifestUrl, addonPort }) => {
+    await openEpisode(manifestUrl, addonPort, 1);
+    if (!await waitPlaying('P00-playing')) return;
+    record('P01-guest-memory', { note: guest(GUEST_MEMORY) });
+    const lead = Number(process.env.POPUP_PROBE_LEAD || 40);
+    await evaluate(`var v = document.querySelector("video"); v.currentTime = v.duration - ${lead}; return true;`);
+    const samples = [];
+    for (let i = 0; i < 40; i++) {
+        await sleep(1000);
+        const sample = { i };
+        try {
+            sample.state = await Promise.race([
+                evaluate('var s = window.__f57 ? window.__f57.state() : { reloaded: true, hash: location.hash }; s.heap = performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null; return s;'),
+                sleep(5000).then(() => 'timeout'),
+            ]);
+        } catch (error) {
+            sample.error = error.message.slice(0, 200);
+            session = null;
+        }
+        if (i % 5 === 0 || sample.error || sample.state === 'timeout') sample.guest = guest(GUEST_MEMORY);
+        samples.push(sample);
+        console.log(JSON.stringify(sample).slice(0, 300));
+    }
+    record('P02-samples', { samples, vm: vmScreenshot('P02-end') });
+    record('P03-system-log', { note: guest(SYSTEM_LOG) });
+};
+
+const SCENARIOS = { keys, next, watch, 'resume-save': resumeSave, 'resume-check': resumeCheck, 'popup-probe': popupProbe };
 
 const main = async () => {
     if (!SCENARIOS[SCENARIO]) throw new Error(`unknown scenario ${SCENARIO}`);
@@ -500,7 +554,8 @@ const main = async () => {
         record('error', { ok: false, note: error.stack });
     }
     const final = await state().catch(() => null);
-    const failed = save({ final, errors: await evaluate('return window.__f57.errors;').catch(() => null) });
+    record('system-log', { note: guest(SYSTEM_LOG), memory: guest(GUEST_MEMORY) });
+    const failed = save({ final, reloads, errors: await evaluate('return window.__f57.errors;').catch(() => null) });
     console.log(failed.length ? `FALHAS: ${failed.join(', ')}` : 'tudo ok');
     if (session) session.close();
     process.exit(failed.length ? 1 : 0);
