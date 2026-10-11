@@ -48,7 +48,8 @@ export const proxyUrlFor = (port, token, url) => `http://127.0.0.1:${port}/proxy
 export const isProxyUrl = (url) => typeof url === 'string' && url.indexOf('http://127.0.0.1:') === 0;
 
 // deps: storage (localStorage), fetch, getWebOS () => window.webOS, firmware (string),
-// online () => boolean, setTimeout, clearTimeout.
+// online () => boolean, setTimeout, clearTimeout, onToken (token) => void (the token of every
+// service start, for the log redaction of webos/lib/redact).
 export const createTlsProxy = (deps) => {
     const { storage, fetch, getWebOS, firmware = '', online = () => true } = deps;
     const setTimer = deps.setTimeout || setTimeout;
@@ -114,6 +115,7 @@ export const createTlsProxy = (deps) => {
                     return;
                 }
                 failures = 0;
+                if (deps.onToken) deps.onToken(response.token);
                 Object.assign(state, { ready: true, port: response.port, token: response.token, error: null });
                 emit();
             },
