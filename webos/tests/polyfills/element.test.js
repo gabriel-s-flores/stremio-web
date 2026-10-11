@@ -6,6 +6,11 @@ class FakeNode {
         this.ownerDocument = ownerDocument;
         this.childNodes = [];
     }
+    // jest-worker JSON-stringifies the operands of a failed expect, and ownerDocument closes a
+    // circle: without this the suite died with "Converting circular structure to JSON".
+    toJSON() {
+        return `<node ${this.nodeType}>`;
+    }
     get firstChild() {
         return this.childNodes[0] || null;
     }

@@ -22,6 +22,12 @@ class FakeElement extends EventTarget {
         this.attributes = {};
         this.dispatched = [];
     }
+    // A failing expect hands the element to jest-worker, which JSON-stringifies it to report the
+    // failure: parentNode and ownerDocument are circular, and the suite died with "Converting
+    // circular structure to JSON" instead of showing the assertion.
+    toJSON() {
+        return `<${this.name}>`;
+    }
     hasAttribute(name) {
         return name in this.attributes;
     }

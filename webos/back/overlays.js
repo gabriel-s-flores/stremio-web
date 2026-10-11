@@ -15,6 +15,8 @@
 // ([local]-[hash]), so they are matched by prefix. Catalog with the upstream line numbers:
 // webos/back/README.md. Components that register their own handler (useBackHandler) run before
 // this layer, so overlays can move off this bridge one by one (F4.3).
+// The same catalogue says where the focus of each overlay lives (`root`) and which ones keep it
+// inside (`trapsFocus`): webos/lib/navigation/modals.js (F4.3) reads it through findTopOverlay.
 
 const classPrefix = (prefix) => `[class^="${prefix}-"], [class*=" ${prefix}-"]`;
 
@@ -90,6 +92,14 @@ const restoreFocus = (win, doc, trigger) => {
     }, 0);
 };
 
+// react-focus-lock marks its wrapper; for the overlays built on it, that is the whole overlay.
+const getLockRoot = (element) => element.closest('[data-focus-lock-disabled]') || element.parentElement || element;
+
+const getOpenPlayerLayer = (container) => (
+    Array.from(container.querySelectorAll(`${classPrefix('menu-layer')}, ${classPrefix('side-drawer-layer')}`))
+        .find((layer) => !isLeaving(layer) && !hasClassToken(layer, /^next-video-popup-container-/)) || null
+);
+
 const POPUP_SELECTORS = [
     // Popup (src/components/Popup), portal or not: the label gets the plain class `active`.
     child('.active', classPrefix('menu-container')),
@@ -113,6 +123,7 @@ const OVERLAYS = [
         // src/App/StreamingServerUrlModal: listens for Escape on window.
         name: 'streaming-server-url-modal',
         find: (doc) => doc.getElementById('streaming-server-url-modal-title'),
+        root: (doc, element) => getLockRoot(element),
         close: (win) => sendEscape(win, win),
     },
     {
@@ -146,6 +157,8 @@ const OVERLAYS = [
         // search bar listen for mousedown, MultiselectMenu for mouseup.
         name: 'popup',
         find: (doc) => find(doc, POPUP_SELECTORS),
+        // The expanded label of a MultiselectMenu without portal sits next to its dropdown.
+        root: (doc, element) => element.getAttribute('aria-haspopup') === 'listbox' ? element.parentElement : element,
         close: (win, doc, element) => {
             const trigger = getPopupTrigger(element);
             sendPress(win, doc.body);
@@ -166,18 +179,16 @@ const OVERLAYS = [
         name: 'player-menu',
         find: (doc) => {
             const container = find(doc, classPrefix('player-container'));
-            if (container === null) {
-                return null;
-            }
-            const open = Array.from(container.querySelectorAll(`${classPrefix('menu-layer')}, ${classPrefix('side-drawer-layer')}`))
-                .some((layer) => !isLeaving(layer) && !hasClassToken(layer, /^next-video-popup-container-/));
-            return open ? container : null;
+            return container !== null && getOpenPlayerLayer(container) !== null ? container : null;
         },
+        root: (doc, container) => getOpenPlayerLayer(container),
         close: (win, doc, container) => sendPress(win, container),
     },
     {
         // Next video popup in the Player: its dismiss button (closeMenus does not close it).
         name: 'next-video-popup',
+        // A corner popup that comes up by itself near the end: it must not take the focus.
+        trapsFocus: false,
         find: (doc) => {
             const popup = find(doc, classPrefix('next-video-popup-container'));
             return popup && popup.querySelector(classPrefix('dismiss'));
@@ -186,16 +197,32 @@ const OVERLAYS = [
     },
 ];
 
-// Closes the topmost open overlay; returns its name, or null when none is open.
-const closeTopOverlay = (win, doc = win.document) => {
+// The topmost open overlay: { name, element, root, trapsFocus, close }, or null. `element` is what
+// the bridge acts on; `root` is the element that holds the overlay content (where the focus goes).
+const findTopOverlay = (doc) => {
     for (const overlay of OVERLAYS) {
         const element = overlay.find(doc);
         if (element) {
-            overlay.close(win, doc, element);
-            return overlay.name;
+            return {
+                name: overlay.name,
+                element,
+                root: (overlay.root && overlay.root(doc, element)) || element,
+                trapsFocus: overlay.trapsFocus !== false,
+                close: overlay.close,
+            };
         }
     }
     return null;
+};
+
+// Closes the topmost open overlay; returns its name, or null when none is open.
+const closeTopOverlay = (win, doc = win.document) => {
+    const overlay = findTopOverlay(doc);
+    if (overlay === null) {
+        return null;
+    }
+    overlay.close(win, doc, overlay.element);
+    return overlay.name;
 };
 
 // Page state that Back undoes before the route changes: the streams list of an episode has its
@@ -209,5 +236,6 @@ module.exports = {
     OVERLAYS,
     closeTopOverlay,
     findPageBackButton,
+    findTopOverlay,
     getActiveRoute,
 };
