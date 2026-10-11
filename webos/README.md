@@ -53,6 +53,12 @@ No emulador, dentro de uma reserva do pool:
   estouro de memória, trocas de stream, A/B de builds, tamanhos), refeitas com `perf.mjs` e resumidas por
   `summarize.mjs`, que tira das medianas as rodadas feitas com o host ocupado. Números e método em
   `webos/docs/BASELINE-C8.md`; como rodar, em `webos/tests/perf/README.md`.
+- Desempenho (F7.2, parte 1b do `BASELINE-C8.md`): `"v8ExtraFlags": "--no-crankshaft"` no `appinfo.json` (o
+  Crankshaft otimizando o core em wasm2js estourava a memória do renderer; com a flag, todo o JS do app roda
+  sem compilador otimizador, e as telas que esperam o core ficam ~25 % mais lentas; se outra flag for
+  necessária, ela entra na mesma string); `webos/stubs/stremio-translations.js` (só o en-US no `main.js`, as outras línguas
+  sob demanda); `webos/lib/core-calls` (pedidos de `getState` iguais e simultâneos compartilham a resposta) e
+  `webos/lib/catalog-trim` (os catálogos chegam ao core sem o `videos` dos itens, que ele descarta).
 - `webos/tests/screens/`: roteiro de capturas das telas principais (Board, Discover e menu, Busca,
   Detalhes, streams, Library, Calendar, Addons e modal, Settings, menu do usuário, diálogo de saída,
   Player), com um item focado em cada uma e uma sonda (escala, áreas seguras, caixa e estilos do foco,

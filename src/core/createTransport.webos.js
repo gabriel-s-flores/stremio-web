@@ -13,9 +13,12 @@
 //   is dropped so the same bad state is not restored again.
 // - Error.tsx's "Clear data" (localStorage.clear() + reload()) goes through the wrapped clear().
 // Diagnostics (F3.6): window.__stremioPersist.status() has the boot reason and the last batch.
+// F7.2: getState calls for the same model that pile up before the worker answers share one answer
+// (webos/lib/core-calls): at boot the core serialized the same "ctx" for each of its subscribers.
 
 const createTransport = require('./createTransport.diagnostics.ts').default;
 const { createMirror } = require('../../webos/persistence/mirror');
+const { coalesceGetState } = require('../../webos/lib/core-calls');
 const appinfo = require('../../webos/app/appinfo.json');
 
 // PalmSystem.identifier is the running app's id (webOSTV.js fetchAppId() splits it the same way).
@@ -47,7 +50,7 @@ window.__stremioPersist = {
 };
 
 const createWebosTransport = () => {
-    const transport = createTransport();
+    const transport = coalesceGetState(createTransport());
 
     const init = (args) => mirror.ready()
         .then((result) => {
