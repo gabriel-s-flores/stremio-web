@@ -39,6 +39,12 @@
                 [class*='meta-links'] {
                     margin-top: 1rem;
                 }
+
+                // The summary takes the focus (the ring is drawn inside the box): room for the ring
+                // so it does not run over the first letters.
+                [class*='description-container'] {
+                    padding: 0.25rem 0.6rem;
+                }
             }
 
             [class*='action-buttons-container'][class*='action-buttons-container'] {
