@@ -281,6 +281,19 @@ Modelos: **O** = `claude-opus-5-5`, **S** = `claude-sonnet-5-5`; effort entre pa
 - **Depende de:** F2.6, F3.2  · **Modelo:** S (high)
 - **Aceite:** foco preso nos modais, Back fecha, nada focável escondido.
 
+### F4.4 · Consolidação e polimento da navegação
+- **Depende de:** F4.1a, F4.1b, F4.1c, F4.3  · **Modelo:** O (high)
+- **Escopo:** juntar os helpers de navegação criados em paralelo (`webos/lib/navigation/` da F4.1a,
+  F4.1b, F4.1c e F4.3: foco inicial, rolagem de listas, recuperação de foco perdido, memória de foco
+  por rota, overlays) num núcleo comum, sem mudar o comportamento validado, e fechar os baixos
+  anotados nas revisões: título cortado com o zoom na Busca; recuperação de foco que cai no X e limpa
+  a busca; memória de foco do Board ao voltar pela barra lateral; o placeholder do logo segura a
+  restauração em Detalhes; UP no painel de streams vai a "Install addons" com um addon só;
+  mutações sobreviventes nos helpers.
+- **Aceite:** os roteiros de emulador das F4.1a–c, F4.3 e F3.2b passam sem regressão, a regressão
+  visual da F2.7 passa (ou as referências são atualizadas com justificativa), o código de
+  navegação fica num núcleo comum documentado e os baixos listados estão resolvidos ou registrados.
+
 ## Fase 5 — player
 
 ### F5.1 · WebOsVideo ativo
