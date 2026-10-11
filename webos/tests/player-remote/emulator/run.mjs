@@ -10,6 +10,7 @@
 //   next          next video popup reached and walked with the arrows, Back dismisses it, the bar's next
 //                 button opens episode 2, STOP leaves the Player
 //   watch         OK on "watch now" of the popup opens episode 2
+//   resume        plays episode 1 up to 200 s, leaves the Player and opens it again: it starts there
 //   resume-save   plays episode 1 up to 200 s and leaves the Player (the core keeps the position)
 //   resume-check  run with `emu-run --keep-state --instance <same>` after resume-save: the episode opens
 //                 where it stopped (SKIP_INSTALL=1 keeps the installed app and its storage)
@@ -653,7 +654,34 @@ const popupProbe = async ({ manifestUrl, addonPort }) => {
     record('P03-system-log', { note: guest(SYSTEM_LOG) });
 };
 
-const SCENARIOS = { keys, next, watch, 'resume-save': resumeSave, 'resume-check': resumeCheck, 'popup-probe': popupProbe };
+// Resume in one boot (the second load works with the pipeline guard, F5.6): play episode 1 up to
+// 200 s, leave the Player, open it again; it must start where it stopped.
+const resume = async (servers) => {
+    await resumeSave(servers);
+    if (steps.some((step) => step.ok === false)) return;
+    await sleep(3000);
+    const saved = steps.filter((step) => step.name === 'R02-left-and-saved')[0].timeOffset;
+    await openEpisode(servers.manifestUrl, servers.addonPort, 1);
+    const samples = [];
+    const started = Date.now();
+    while (Date.now() - started < 120000) {
+        const now = await state();
+        if (now.readyState !== null && now.readyState >= 1) samples.push({ ms: Date.now() - started, t: now.t, readyState: now.readyState, paused: now.paused, label: now.seekLabel, src: now.src });
+        if (samples.length > 0 && now.readyState >= 3 && now.t > 0.5 && !now.paused) break;
+        await sleep(300);
+    }
+    const last = samples[samples.length - 1];
+    const expected = saved / 1000;
+    record('R11-resumed', {
+        ok: !!last && near(last.t, expected, 4) && samples.every((sample) => sample.t === 0 || sample.t > expected - 4),
+        note: `saved ${expected} s; started at ${last ? last.t : '-'} s (label ${last ? last.label : '-'})`,
+        samples,
+        vm: vmScreenshot('R11-resumed'),
+        screenshot: await screenshot('R11-resumed'),
+    });
+};
+
+const SCENARIOS = { keys, next, watch, resume, 'resume-save': resumeSave, 'resume-check': resumeCheck, 'popup-probe': popupProbe };
 
 const main = async () => {
     if (!SCENARIOS[SCENARIO]) throw new Error(`unknown scenario ${SCENARIO}`);
