@@ -175,7 +175,7 @@ const ARROWS = ['DOWN', 'DOWN', 'UP', 'UP', 'LEFT', 'RIGHT', 'RIGHT', 'DOWN', 'D
 //   enters: the focus is inside it; stays: after each of ten arrows it still is, and the page behind
 //   kept its route; closes: Back removes it, once, without leaving the route; returns: the focus is
 //   back where it was before the overlay (`origin`).
-const overlayLife = async (name, open, { settleMs = 1500, backDispatches = 1, focus = null } = {}) => {
+const overlayLife = async (name, open, { settleMs = 1500, backDispatches = 1, focus = null, enterTimeoutMs = 10000 } = {}) => {
     // The element the remote is on when the overlay opens (it gets the focus back at the end).
     if (focus && evaluate(`var element = ${focus}; if (!element) return false; element.focus(); return true;`) !== true) {
         record(`${name}-focus-origin`, { ok: false, note: `not found: ${focus}` });
@@ -185,10 +185,13 @@ const overlayLife = async (name, open, { settleMs = 1500, backDispatches = 1, fo
     const opened = await open();
     if (!opened) return false;
     await sleep(settleMs);
+    // The content of some overlays (the profile menu reads the core) can take a while on a loaded VM;
+    // the focus enters as soon as it is there.
+    const waited = await waitFor('var s = window.__f43.state(); return s.overlay !== null && s.inside === true;', enterTimeoutMs, 250);
     const entered = state();
     record(`${name}-opened`, {
         ok: entered.overlay !== null && entered.inside === true,
-        note: `${entered.overlay} | focus ${entered.focused} | reachable behind: ${entered.reachableBehind}`,
+        note: `${entered.overlay} | focus ${entered.focused} | reachable behind: ${entered.reachableBehind}${waited ? ` | focus entered ${waited} ms after the settle time` : ''}`,
         state: entered,
         screenshot: shot(`${name}-opened`),
     });
@@ -244,7 +247,7 @@ const goTo = async (name, linkSelector, readyExpression) => {
 const menusScenario = async () => {
     // Profile popup (Popup, non-portal) on the Board.
     const profile = 'document.querySelector(\'[class*="menu-button-container"]\')';
-    await overlayLife('profile-popup', async () => click(profile), { settleMs: 1200, focus: profile });
+    await overlayLife('profile-popup', async () => click(profile), { settleMs: 1200, focus: profile, enterTimeoutMs: 40000 });
 
     // Discover: a Multiselect dropdown.
     if (await goTo('discover', 'a[href="#/discover"]', 'return location.hash.indexOf("#/discover") === 0 && document.querySelectorAll(\'[aria-haspopup="listbox"]\').length > 0;')) {

@@ -18,10 +18,13 @@
 // The pointer is left alone: after a trusted mouse event nothing moves the focus, and a click
 // outside keeps closing popups the upstream way. The first arrow key after that enters the overlay.
 //
-// Cost: one MutationObserver on the body (child list only, no attributes) that schedules a check
-// after the burst of mutations, and focus/keydown listeners. A check is a few querySelector calls.
+// Cost: one MutationObserver on the body (child list only, no attributes). It looks at the nodes of
+// each mutation with one selector (OVERLAY_HINT, scoped to the node) and only a hit schedules the
+// check, which is the expensive part: findTopOverlay scans the document several times (30 ms on the
+// c8 profile, measured: running it after every burst of the Board load added 1.2 s to the boot).
+// The key handlers use the overlay found by the last check, they never search.
 
-const { findTopOverlay } = require('../../back/overlays');
+const { findTopOverlay, OVERLAY_HINT } = require('../../back/overlays');
 
 const DIRECTIONS = { 37: 'left', 38: 'up', 39: 'right', 40: 'down' };
 const ARROW_KEYS = Object.keys(DIRECTIONS).map(Number);
@@ -70,6 +73,7 @@ const createModalFocus = (win, {
     // Per overlay root: the element that had the focus when it opened and the last one inside.
     const records = new Map();
     let current = null;
+    let currentOverlay = null;
     let lastInput = 'key';
     let lastPointerTime = -Infinity;
     let checkTimer = null;
@@ -81,6 +85,7 @@ const createModalFocus = (win, {
     const recentFocus = [];
     // The last decisions, for the tests on the emulator and the diagnostics.
     const history = [];
+    const stats = { checks: 0, ms: 0, hits: [] };
     const trace = (what, detail) => {
         history.push({ time: Date.now(), what, detail: detail || null });
         if (history.length > TRACE_LENGTH) history.shift();
@@ -89,13 +94,9 @@ const createModalFocus = (win, {
     const isInside = (root, element) => !!element && root.contains(element);
     const isLost = (element) => !element || element === doc.body || element === doc.documentElement || !doc.body.contains(element);
 
-    const getTopOverlay = () => {
+    const searchTopOverlay = () => {
         const overlay = findTopOverlay(doc);
         return overlay === null || !overlay.trapsFocus || overlay.root.closest(PASSIVE_ROOT) ? null : overlay;
-    };
-    const getTop = () => {
-        const overlay = getTopOverlay();
-        return overlay === null ? null : overlay.root;
     };
 
     // The arrow among the focusables of the overlay only. Returns false when the polyfill (or the
@@ -145,9 +146,18 @@ const createModalFocus = (win, {
     };
 
     const check = () => {
+        const started = win.performance ? win.performance.now() : 0;
         checkTimer = null;
-        const top = getTop();
+        runCheck();
+        stats.checks += 1;
+        stats.ms += win.performance ? win.performance.now() - started : 0;
+    };
+
+    const runCheck = () => {
+        const overlay = searchTopOverlay();
+        const top = overlay === null ? null : overlay.root;
         const previous = current;
+        currentOverlay = overlay;
         if (top === previous) {
             if (top !== null && lastInput === 'key' && !isInside(top, doc.activeElement)) {
                 enter(top);
@@ -183,6 +193,36 @@ const createModalFocus = (win, {
         }
     };
 
+    const mayBeOverlay = (node) => {
+        if (node.nodeType !== 1) {
+            return false;
+        }
+        const hit = node.matches(OVERLAY_HINT) ? node : node.querySelector(OVERLAY_HINT);
+        if (hit && stats.hits.length < TRACE_LENGTH) {
+            stats.hits.push(`${hit.nodeName} ${String(hit.className).slice(0, 50)}`);
+        }
+        return hit !== null;
+    };
+
+    // Decides from the mutated nodes alone whether anything is worth a check.
+    const onMutations = (mutations) => {
+        const rootGone = current !== null && !doc.body.contains(current);
+        let overlayChanged = rootGone;
+        let contentChanged = false;
+        for (let i = 0; i < mutations.length && !overlayChanged; i++) {
+            const { addedNodes, removedNodes, target } = mutations[i];
+            for (let j = 0; j < addedNodes.length && !overlayChanged; j++) overlayChanged = mayBeOverlay(addedNodes[j]);
+            for (let j = 0; j < removedNodes.length && !overlayChanged; j++) overlayChanged = mayBeOverlay(removedNodes[j]);
+            contentChanged = contentChanged || (current !== null && current.contains(target));
+        }
+        if (overlayChanged) {
+            schedule();
+        } else if (contentChanged && lastInput === 'key' && !isInside(current, doc.activeElement)) {
+            // Content that arrived late inside the open overlay: the focus may be able to enter now.
+            enter(current);
+        }
+    };
+
     const schedule = () => {
         if (checkTimer === null) {
             checkTimer = timeout(check, CHECK_DELAY_MS);
@@ -212,8 +252,8 @@ const createModalFocus = (win, {
 
     const onKeyDown = (event) => {
         lastInput = 'key';
-        const overlay = getTopOverlay();
-        const top = overlay === null ? null : overlay.root;
+        const overlay = currentOverlay;
+        const top = current;
         if (top !== null && isInside(top, doc.activeElement) && ARROW_KEYS.indexOf(event.keyCode) !== -1) {
             moveInside(overlay, event);
             return;
@@ -224,9 +264,6 @@ const createModalFocus = (win, {
             trace('key-outside', `keyCode ${event.keyCode}; active ${doc.activeElement && doc.activeElement.nodeName}`);
             event.preventDefault();
             event.stopImmediatePropagation();
-            if (top !== current) {
-                check();
-            }
             enter(top);
         }
     };
@@ -251,10 +288,14 @@ const createModalFocus = (win, {
         win.addEventListener('mousedown', onPointer, true);
         win.addEventListener('mousemove', onPointer, true);
         if (typeof win.MutationObserver === 'function') {
-            observer = new win.MutationObserver(schedule);
+            observer = new win.MutationObserver(onMutations);
             observer.observe(doc.body, { childList: true, subtree: true });
         }
-        schedule();
+        // An overlay already in the page (not at the app boot, but the tests start late): one cheap
+        // scan decides whether the full search is worth it.
+        if (doc.body.querySelector(OVERLAY_HINT) !== null) {
+            schedule();
+        }
     };
 
     const stop = () => {
@@ -275,6 +316,7 @@ const createModalFocus = (win, {
         records.clear();
         recentFocus.length = 0;
         current = null;
+        currentOverlay = null;
     };
 
     return {
@@ -288,6 +330,7 @@ const createModalFocus = (win, {
             return lastInput;
         },
         history,
+        stats,
     };
 };
 

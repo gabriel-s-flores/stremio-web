@@ -197,6 +197,26 @@ const OVERLAYS = [
     },
 ];
 
+// Matches what can be, or hold, an overlay element when it enters or leaves the DOM: the cheap
+// test of the focus layer (webos/lib/navigation/modals.js) on the nodes of a mutation, so the full
+// search above (several scans of the document) only runs when an overlay may have changed. Lists the
+// same things the entries look for; webos/tests/navigation/overlayRoots.test.js checks them against
+// the fixtures of each entry.
+const OVERLAY_HINT = [
+    '#streaming-server-url-modal-title',
+    classPrefix('shortcuts-modal'),
+    '[data-gamepad-modal]',
+    classPrefix('context-menu-container'),
+    '[role="menu"]',
+    POPUP_SELECTORS,
+    // MultiselectMenu without portal: the label only gets aria-expanded, the dropdown is what mounts.
+    classPrefix('dropdown'),
+    '.modals-container > .modal-container',
+    classPrefix('menu-layer'),
+    classPrefix('side-drawer-layer'),
+    classPrefix('next-video-popup-container'),
+].join(', ');
+
 // The topmost open overlay: { name, element, root, trapsFocus, close }, or null. `element` is what
 // the bridge acts on; `root` is the element that holds the overlay content (where the focus goes).
 const findTopOverlay = (doc) => {
@@ -234,6 +254,7 @@ const findPageBackButton = (doc) => {
 
 module.exports = {
     OVERLAYS,
+    OVERLAY_HINT,
     closeTopOverlay,
     findPageBackButton,
     findTopOverlay,
