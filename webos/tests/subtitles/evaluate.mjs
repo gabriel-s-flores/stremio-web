@@ -31,9 +31,10 @@ const overlayTexts = (list) => list.map((s) => (s.overlay ? s.overlay.text : '')
 const consoleText = consoleLog.map((entry) => entry.level + ' ' + entry.text);
 const subtitleErrors = consoleText.filter((text) => /libass|LOAD_FAILED|SubtitlesOctopus/i.test(text));
 
-check('video played', startup.secondsToPlayback !== null && startup.secondsToPlayback !== undefined, startup);
+// The add-on subtitles do not need the video to play (le): the overlay and the requests are checked anyway.
+if (scenario !== 'le') check('video played', startup.secondsToPlayback !== null && startup.secondsToPlayback !== undefined, startup);
 check('no page errors', errors.length === 0, errors);
-check('no subtitle load errors (libass stub, LOAD_FAILED)', subtitleErrors.length === 0, subtitleErrors);
+if (scenario !== 'le') check('no subtitle load errors (libass stub, LOAD_FAILED)', subtitleErrors.length === 0, subtitleErrors);
 
 if (scenario === 'embedded') {
     check('menu: the three text tracks by language, the PGS hidden', JSON.stringify(menuInitial.languages.map((l) => l.lang).filter(Boolean).sort()) === JSON.stringify(['eng', 'por', 'spa']), menuInitial.languages);
@@ -53,6 +54,16 @@ if (scenario === 'embedded') {
     check('Luna: no embedded subtitles turned on', textSelects.length === 0 && !enables.includes(true), subtitleLuna.map((c) => [c.method, c.parameters]));
     const options = readJson('settings-options.json', []);
     check('settings: no "Style ASS subtitles" option, the other subtitle options stay', options.length > 0 && !options.some((t) => /ASS/.test(t)) && options.some((t) => /Subtitles Size/i.test(t)), options);
+} else if (scenario === 'le') {
+    const fetches = readJson('le-fetch.json', {});
+    const requests = readJson('requests-player.json', []);
+    const host = (fetches.url || '').split('/')[2] || '';
+    const proxied = requests.filter((url) => /^http:\/\/127\.0\.0\.1:\d+\/proxy\?/.test(url) && decodeURIComponent(url).indexOf(fetches.url) !== -1);
+    check('tlsproxy in proxy mode with the host known', fetches.status && fetches.status.mode === 'proxy' && fetches.status.hosts.indexOf(host) !== -1, fetches.status);
+    check('a direct page fetch of the Let\'s Encrypt URL fails', /^error/.test(fetches.direct || ''), fetches.direct);
+    check('the same URL through the proxy answers, Let\'s Encrypt issuer', /^status 200/.test(fetches.proxy || '') && /Let's Encrypt|ISRG/i.test(fetches.proxy || ''), fetches.proxy);
+    check('the Player fetched the add-on subtitle through the proxy', proxied.length > 0, proxied.map((url) => url.replace(/t=[^&]+/, 't=…')));
+    check('no direct request to the Let\'s Encrypt URL from the Player', !requests.some((url) => url === fetches.url), requests.filter((url) => url.indexOf(host) !== -1).map((url) => url.replace(/t=[^&]+/, 't=…')));
 } else if (scenario === 'mixed') {
     const initialVariant = selectedVariant(menuInitial);
     check('menu: English chosen by the Player', selectedLanguage(menuInitial) === 'eng', initialVariant);

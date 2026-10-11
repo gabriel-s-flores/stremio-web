@@ -12,6 +12,8 @@
 #             is chosen (plain text, no libass error). Then the Player settings: no ASS option.
 #   mixed     t8_subs.mkv with add-on subtitles too (eng, por): which one the Player turns on by itself
 #             (the B5 rule), then the add-on English one is chosen in the menu (pipeline subtitles off).
+#   le        t1_h264_aac.mp4 with an add-on subtitle on a Let's Encrypt host (needs internet): the page
+#             fetch goes through the tlsproxy (F3.7); a direct fetch of the same URL fails.
 # The pipeline draws embedded subtitles on the video plane (not in the page): in the emulator it draws
 # nothing (webos/tests/subtitles/luna-probe.sh), so the embedded check is the Luna calls and the menu.
 set -euo pipefail
@@ -30,6 +32,7 @@ case "$SCENARIO" in
     embedded) FILE=t8_subs.mkv; SUBS='' ;;
     addon) FILE=t1_h264_aac.mp4; SUBS='eng:addon_eng.srt por:addon_por.srt spa:addon_eng.ass' ;;
     mixed) FILE=t8_subs.mkv; SUBS='eng:addon_eng.srt por:addon_por.srt' ;;
+    le) FILE=t1_h264_aac.mp4; SUBS="eng:${LE_SUBTITLE_URL:-https://debrid-link.com/robots.txt}" ;;
     *) echo "error: unknown scenario $SCENARIO" >&2; exit 1 ;;
 esac
 for f in "$FILE" addon_eng.srt addon_por.srt addon_eng.ass; do
@@ -40,7 +43,7 @@ node "$ROOT/webos/tools/media-server.mjs" "$MEDIA_DIR" "$PORT" > "$OUT/media-ser
 SERVER_PID=$!
 trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 BASE="http://10.0.2.2:$PORT"
-SUBTITLES_JSON="$(for entry in $SUBS; do printf '{"id":"addon-%s","url":"%s/%s","lang":"%s"},' "${entry%%:*}" "$BASE" "${entry#*:}" "${entry%%:*}"; done)"
+SUBTITLES_JSON="$(for entry in $SUBS; do file="${entry#*:}"; [[ "$file" == https://* ]] || file="$BASE/$file"; printf '{"id":"addon-%s","url":"%s","lang":"%s"},' "${entry%%:*}" "$file" "${entry%%:*}"; done)"
 SUBTITLES_JSON="[${SUBTITLES_JSON%,}]"
 echo "$SUBTITLES_JSON" > "$OUT/stream-subtitles.json"
 SUBTITLES_ICON="$(node -e "
@@ -156,6 +159,24 @@ case "$SCENARIO" in
         ;;
 esac
 
+if [[ "$SCENARIO" == le ]]; then
+    # The Player's requests, before the manual fetches below add their own.
+    cdp_eval "JSON.stringify(performance.getEntriesByType('resource').map(function(e) { return e.name; }).filter(function(n) { return !/^file:/.test(n); }))" > "$OUT/requests-player.json"
+    # The same URL directly (the page does not trust Let's Encrypt) and through the proxy.
+    LE_URL="${LE_SUBTITLE_URL:-https://debrid-link.com/robots.txt}"
+    cdp_eval "(function(){
+        var url = '$LE_URL';
+        var bridge = window.__webosTlsProxy;
+        return Promise.all([
+            fetch(url, { credentials: 'omit' }).then(function(r) { return 'status ' + r.status; }, function(e) { return 'error ' + e; }),
+            bridge.config().then(function(c) {
+                if (c.mode !== 'proxy' || !c.ready) return 'mode ' + c.mode + ' ready ' + c.ready;
+                return fetch('http://127.0.0.1:' + c.port + '/proxy?t=' + c.token + '&url=' + encodeURIComponent(url), { credentials: 'omit' })
+                    .then(function(r) { return 'status ' + r.status + ', issuer ' + r.headers.get('X-Proxy-Issuer-O'); }, function(e) { return 'error ' + e; });
+            }),
+        ]).then(function(results) { return JSON.stringify({ url: url, direct: results[0], proxy: results[1], status: bridge.status() }); });
+    })()" > "$OUT/le-fetch.json" || true
+fi
 cdp_eval "JSON.stringify({ luna: window.__f51.luna, errors: window.__f51.errors })" > "$OUT/luna.json"
 cdp_eval "JSON.stringify(window.__f51.console)" > "$OUT/console.json"
 cdp_eval "JSON.stringify(performance.getEntriesByType('resource').map(function(e) { return e.name; }).filter(function(n) { return !/^file:/.test(n); }))" > "$OUT/requests.json"
