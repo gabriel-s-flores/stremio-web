@@ -229,7 +229,7 @@ const walk = async () => {
         // Back into the column from the header: DOWN, and LEFT if that landed in the list.
         focused = await key('DOWN');
         check('movie: DOWN from the page header comes back to the column (not the list)', focused.section === 'meta', focused);
-        if (focused.section === 'list') focused = await key('LEFT');
+        for (let i = 0; i < 3 && focused.section === 'list'; i++) focused = await key('LEFT');
         for (let i = 0; i < 10 && focused.kind !== 'link'; i++) focused = await key('UP');
     }
     // The top may be the IMDb button: the first genre or cast link below it.
