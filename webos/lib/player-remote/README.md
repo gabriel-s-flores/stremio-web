@@ -89,12 +89,15 @@ streams dele). Com o guarda de pipeline da F5.6, o episódio novo começava na p
 
 ## Saída do Player e o foco
 
-No upstream o Player nunca pega o foco: ele fica no elemento que abriu o Player (o stream da página de
-detalhes, um pôster do Board) na rota de baixo, e as páginas restauram a partir dele quando o Player
-fecha (F4.1a, F4.1c). O controle leva o foco para a barra; sem cuidado, ao sair ele cairia no `<body>` e
-a página de detalhes voltava sem foco (achado no ciclo 1 com o teste `player` da F4.1c e o e2e da F6.4).
-Por isso o controlador guarda, ao montar, o elemento focado fora do Player, e ao desmontar devolve o foco
-a ele (com o anel, salvo com o ponteiro do Magic Remote em uso) se o foco ficou no Player ou no `<body>`.
+Quando o Player abre, a rota de baixo (Detalhes, Board) vira `display: none` e perde o foco (o stream
+tocado). Na saída, o guarda da F5.6 segura o nó do Player, escondido, por ~1,5 s; enquanto ele é o último
+filho, a rota de baixo continua escondida, e a restauração da página (F4.1c) tenta uma vez só e não pega.
+O resultado era o foco no `<body>` ao voltar do Player (também na base; a F5.7 tornava isso sistemático
+porque o foco fica na barra). Por isso `usePlayerRemote.js` acompanha o último elemento focado na página
+(`focusin` em captura); ao montar, o controlador guarda esse elemento (o stream) e, ao sair, tira o foco da
+barra e o devolve ao stream, tentando a cada 100 ms por até 3 s, até a rota de baixo reaparecer (com o anel,
+salvo com o ponteiro do Magic Remote em uso). `window.__webosPlayerRemoteLast` (`entry`, `exit`) diz o que
+aconteceu. Cenário de emulador: `exit-focus`.
 
 ## Magic Remote
 
@@ -142,5 +145,6 @@ regras acima.
   próximo vídeo pelas setas, Back que o dispensa, botão "próximo" da barra, STOP. `watch`: OK em
   "assistir". `resume-*`: a posição salva pelo core sobrevive ao reboot e o episódio abre nela.
   `context-menu`: as setas no menu de contexto (amarelo) não mudam volume nem tempo do vídeo atrás.
+  `exit-focus`: Detalhes → stream → Player → Back: o foco volta ao stream tocado.
   `seek-probe` (de preferência com `--profile c8` e `F57_MEDIA` apontando para o 1080p do e2e): teclas
   que chegam à página, tempos aplicados ao `<video>` e paradas de seek.
