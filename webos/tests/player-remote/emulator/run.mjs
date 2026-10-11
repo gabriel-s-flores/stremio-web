@@ -491,7 +491,9 @@ const continueWatching = async () => {
     const items = preview && preview.items ? preview.items : [];
     // The item is the library item flattened: its id is serialized as `_id`.
     const item = items.filter((entry) => (entry._id || entry.id) === 'tt9100001')[0];
-    return item ? { id: item._id || item.id, videoId: item.state && item.state.video_id, timeOffset: item.state && item.state.timeOffset, duration: item.state && item.state.duration } : null;
+    if (!item) return null;
+    // core-web serializes the preview items with their own fields (progress in %, deep links).
+    return { id: item._id || item.id, progress: item.progress, type: item.type, name: item.name };
 };
 
 const resumeSave = async ({ manifestUrl, addonPort }) => {
@@ -507,12 +509,20 @@ const resumeSave = async ({ manifestUrl, addonPort }) => {
     }
     await sleep(4000);
     const item = await continueWatching();
-    record('R02-left-and-saved', { ok: (await state()).hash.indexOf('#/player/') !== 0 && !!item && item.timeOffset > 190000, note: JSON.stringify(item), screenshot: await screenshot('R02-board') });
+    // 200 s of 600 s: about 33 %.
+    record('R02-left-and-saved', { ok: (await state()).hash.indexOf('#/player/') !== 0 && !!item && item.progress > 30 && item.progress < 40, note: JSON.stringify(item), timeOffset: player.libraryItem && player.libraryItem.state.timeOffset, screenshot: await screenshot('R02-board') });
 };
 
 const resumeCheck = async ({ manifestUrl, addonPort }) => {
     const item = await continueWatching();
-    record('R10-saved-after-reboot', { ok: !!item && item.timeOffset > 190000, note: JSON.stringify(item) });
+    record('R10-saved-after-reboot', { ok: !!item && item.progress > 30 && item.progress < 40, note: JSON.stringify(item) });
+    // The position the core kept before the reboot (resume-save, same output folder).
+    let saved = null;
+    try {
+        saved = JSON.parse(fs.readFileSync(path.join(OUT, 'resume-save.json'), 'utf8')).steps.filter((step) => step.name === 'R02-left-and-saved')[0].timeOffset;
+    } catch {
+        // resume-save not in this folder
+    }
     await openEpisode(manifestUrl, addonPort, 1);
     // The first samples after the video starts: it must start at the saved position, not at 0.
     const samples = [];
@@ -524,10 +534,10 @@ const resumeCheck = async ({ manifestUrl, addonPort }) => {
         await sleep(300);
     }
     const last = samples[samples.length - 1];
-    const expected = item ? item.timeOffset / 1000 : 200;
+    const expected = saved ? saved / 1000 : 200;
     record('R11-resumed', {
         ok: !!last && near(last.t, expected, 4) && samples.every((sample) => sample.t === 0 || sample.t > expected - 4),
-        note: `saved ${expected} s; started at ${last ? last.t : '-'} s (label ${last ? last.label : '-'})`,
+        note: `saved ${expected} s (resume-save ${saved}); started at ${last ? last.t : '-'} s (label ${last ? last.label : '-'})`,
         samples,
         vm: vmScreenshot('R11-resumed'),
         screenshot: await screenshot('R11-resumed'),
