@@ -83,6 +83,13 @@ describe('upstream details the F5.6 pipeline guard depends on', () => {
         expect(section('case \'destroy\': {', 'this.on = function')).toMatch(/command\('unload'\);[\s\S]*containerElement\.removeChild\(videoElement\);/);
     });
 
+    it('WebOsVideo unload reports the stream gone (useVideo.webos.js hides the time of the stream being unloaded until then, F5.7)', () => {
+        const unload = section('case \'unload\': {', 'case \'destroy\': {');
+        expect(unload).toMatch(/stream = null;/);
+        expect(unload).toMatch(/onPropChanged\('stream'\);/);
+        expect(webOsVideo).toMatch(/case 'stream': \{\s*return stream;/);
+    });
+
     it('WebOsVideo applies the start time on every loadedmetadata (kept across the watchdog reload)', () => {
         expect(webOsVideo).toMatch(/videoElement\.onloadedmetadata = function\(\) \{[^}]*setProp\('time', startTime\);/);
         expect(section('case \'load\': {', 'case \'unload\': {')).toMatch(/startTime = commandArgs\.time;/);

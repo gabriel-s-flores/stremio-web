@@ -216,6 +216,27 @@ const PAGE_HELPERS = `
     if (!window.__f57) {
         window.__f57 = { errors: [] };
         window.addEventListener('error', function (event) { window.__f57.errors.push(String(event.message) + ' ' + event.filename + ':' + event.lineno); });
+        // Who sets the time and the source of the <video> elements (next episode diagnosis).
+        window.__f57.media = [];
+        var describeVideo = function (video) { return String(video.getAttribute('src') || '').split('/').pop() + '#' + (video.__f57id || (video.__f57id = Math.random().toString(36).slice(2, 6))); };
+        var timeProperty = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'currentTime');
+        Object.defineProperty(HTMLMediaElement.prototype, 'currentTime', {
+            configurable: true,
+            get: timeProperty.get,
+            set: function (value) {
+                window.__f57.media.push({ time: Date.now(), what: 'currentTime', value: value, video: describeVideo(this), readyState: this.readyState, duration: this.duration });
+                return timeProperty.set.call(this, value);
+            },
+        });
+        var srcProperty = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'src');
+        Object.defineProperty(HTMLMediaElement.prototype, 'src', {
+            configurable: true,
+            get: srcProperty.get,
+            set: function (value) {
+                window.__f57.media.push({ time: Date.now(), what: 'src', value: String(value).split('/').pop(), video: describeVideo(this) });
+                return srcProperty.set.call(this, value);
+            },
+        });
         // The pipeline guard's log (F5.6): releases, dropped load() calls, watchdog.
         window.__f57.guard = [];
         var originalInfo = console.info;
@@ -352,7 +373,7 @@ const waitHidden = async () => waitFor('return !!window.__f57 && window.__f57.st
 const press = async (name, keyName, check, { settle = 1200, shot = false } = {}) => {
     const before = await state();
     const started = Date.now();
-    remote(keyName);
+    if (keyName) remote(keyName);
     await sleep(settle);
     const after = await state();
     const wall = (Date.now() - started) / 1000;
@@ -488,9 +509,32 @@ const next = async (servers) => {
     await press('N11-stop-leaves', 'STOP', (b, a) => ({ 'left the Player': a.hash.indexOf('#/player/') !== 0, 'by the route layer': a.lastBack && a.lastBack.consumedBy === 'route' }), { settle: 2500, shot: true });
 };
 
+// The core player state and the <video> calls during the switch to episode 2.
+const traceSwitch = async (name) => {
+    const trace = [];
+    for (let i = 0; i < 20; i++) {
+        const player = await coreState('player').catch(() => null);
+        const now = await state();
+        trace.push({
+            i,
+            hash: now.hash.slice(-30),
+            t: now.t, d: now.d, src: now.src, videos: now.videos, paused: now.paused,
+            selected: player && player.selected && player.selected.streamRequest ? player.selected.streamRequest.path.id : null,
+            libraryVideo: player && player.libraryItem ? player.libraryItem.state.video_id : null,
+            timeOffset: player && player.libraryItem ? player.libraryItem.state.timeOffset : null,
+        });
+        await sleep(300);
+    }
+    const media = await evaluate('return window.__f57.media;');
+    record(name, { note: `${trace.length} samples, ${media.length} media calls`, trace, media });
+};
+
 const watch = async (servers) => {
     if (!await toPopup(servers)) return;
-    await press('W02-ok-watch', 'OK', (b, a) => ({ 'episode 2 route': a.hash.indexOf(encodeURIComponent('tt9100001:1:2')) !== -1 }), { settle: 3000 });
+    await evaluate('window.__f57.media = []; return true;');
+    remote('OK');
+    await traceSwitch('W02a-switch-trace');
+    await press('W02-ok-watch', null, (b, a) => ({ 'episode 2 route': a.hash.indexOf(encodeURIComponent('tt9100001:1:2')) !== -1 }), { settle: 500 });
     await waitPlaying('W03-episode-2-playing', 90000, 'ep2_90s.mp4');
 };
 
