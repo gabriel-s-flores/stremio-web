@@ -27,7 +27,10 @@ for _ in $(seq 1 30); do [[ -s "$OUT/mem.log" ]] && break; sleep 1; done
 sleep 8
 # The scenario runs in the background so that a TERM (the emu-run timeout) can be forwarded to it: its exit
 # handler then saves what was measured, and the context, the dmesg and the memory analysis below still run.
-node "$HERE/$SCENARIO.mjs" --out "$OUT" "$@" > >(tee "$OUT/$SCENARIO.log") 2>&1 &
+# F7.3: the endurance scenarios live in webos/tests/soak (soak-nav, soak-play).
+SCRIPT="$HERE/$SCENARIO.mjs"
+[[ -f "$SCRIPT" ]] || SCRIPT="$HERE/../soak/$SCENARIO.mjs"
+node "$SCRIPT" --out "$OUT" "$@" > >(tee "$OUT/$SCENARIO.log") 2>&1 &
 NODE=$!
 trap 'kill -TERM $NODE 2>/dev/null' TERM
 wait $NODE
