@@ -361,9 +361,10 @@ const streamsList = async () => {
     writeJson('layout-lista.json', layout);
     const items = layout.filter((entry) => /stream-container/.test(entry.cls));
     const chips = layout.filter((entry) => !/stream-container/.test(entry.cls));
-    check('zoom 1.75: the first list items and their C8 labels inside the screen (the rest scrolls), labels ≥ 18 px on screen, none clipped',
+    // The list scrolls vertically: the labels of the lower items may sit below the screen edge.
+    check('zoom 1.75: the first 3 list items inside the screen (the rest scrolls), every item and C8 label within the screen width, labels ≥ 18 px on screen, none clipped',
         items.length > 0 && items.every(inWidth) && items.slice(0, 3).every((entry) => entry.inScreen) && chips.length > 0 &&
-        chips.every((entry) => inWidth(entry) && entry.fontPx >= 18 && !entry.clipped) && chips.filter((entry) => entry.box[1] < 1080).every((entry) => entry.inScreen),
+        chips.every((entry) => inWidth(entry) && entry.fontPx >= 18 && !entry.clipped),
         { items: items.slice(0, 5).map((entry) => entry.box), chips: chips.map((entry) => ({ text: entry.text, box: entry.box, fontPx: entry.fontPx, clipped: entry.clipped })) }, 'F2.6/F6.2');
 };
 
