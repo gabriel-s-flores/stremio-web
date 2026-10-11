@@ -10,14 +10,16 @@
 //   which makes useVisibleCatalogs load it, and the focus waits where it is. With the TV zoom a
 //   focused row can be taller than the list: showing the loading row then takes the focused row's
 //   title out of sight, so once the loading row is done (items or an error) the focused row is
-//   aligned again. UP from the first row is left to the spatial navigation (the top bar).
+//   aligned again. UP from the first row goes to the top bar (search, profile), by the spatial
+//   navigation's search among its buttons only: the side bar, focusable since F4.1b, is closer to the
+//   first poster than the search button and took that UP.
 // - The focused row is scrolled to the top of the list, title included, and the strip just enough
 //   to show the focused item. The polyfill's scrollIntoView() put the poster itself at the top, with
 //   the row title out of sight.
 // - DOWN from the top bar (search, profile) goes back to the content: the item the focus came from,
 //   or the first item of the first row on screen.
 
-const { firstFocusable, hasLocalName, isAttached, isFocusable, isRendered, queryLocal } = require('./core/dom');
+const { firstFocusable, focusablesIn, hasLocalName, isAttached, isFocusable, isRendered, queryLocal } = require('./core/dom');
 const { TOP_BAR } = require('./core/routes');
 const { scrollTopTo } = require('./core/scroll');
 const { getInputHub } = require('./core/input');
@@ -182,6 +184,14 @@ const navigateRows = (target, dir, list) => {
     }
 };
 
+// UP from the first row: the closest button of the top bar, or null (the spatial navigation).
+const toTopBar = (target, container) => {
+    const bar = queryLocal(container, TOP_BAR);
+    const candidates = bar ? focusablesIn(bar) : [];
+    if (candidates.length === 0 || typeof target.spatialNavigationSearch !== 'function') return null;
+    return target.spatialNavigationSearch('up', { candidates, container: bar }) || null;
+};
+
 // DOWN from the top bar: back to the content.
 const fromTopBar = (target, dir, container, list, memory) => {
     if (dir !== 'down' || !list) return null;
@@ -207,7 +217,10 @@ const rowsScreen = (listName) => {
         navigate: (target, dir, container, memory) => {
             const list = listOf(container);
             if (!list) return null;
-            if (list.contains(target)) return navigateRows(target, dir, list);
+            if (list.contains(target)) {
+                const result = navigateRows(target, dir, list);
+                return result === null && dir === 'up' && isRowItem(target, list) ? toTopBar(target, container) : result;
+            }
             return fromTopBar(target, dir, container, list, memory);
         },
         align: (element, container) => {
@@ -239,4 +252,5 @@ module.exports = {
     rowOf,
     rowsScreen,
     sameColumn,
+    toTopBar,
 };
