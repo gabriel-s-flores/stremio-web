@@ -10,6 +10,7 @@ const PLAYER_DIR = path.join(__dirname, '..', '..', '..', '..', 'src', 'routes',
 
 jest.mock('../../../../src/routes/Player/useVideo.js', () => {
     const upstream = {
+        events: new (require('eventemitter3'))(),
         state: { playbackSpeed: 1, time: 5000, duration: 20000 },
         load: jest.fn(),
         addExtraSubtitlesTracks: jest.fn(),

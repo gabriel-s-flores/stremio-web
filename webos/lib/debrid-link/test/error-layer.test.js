@@ -90,6 +90,15 @@ describe('Error.webos', () => {
         expect(container.firstChild.getAttribute('data-link-problem')).toBeNull();
     });
 
+    it('masks the certificate proxy token if the message carries the proxy URL (F3.7b)', async () => {
+        debridLink.diagnose.mockReturnValue(new Promise(() => null));
+        const token = '0123456789abcdef0123456789abcdef';
+        await render({ code: 70, message: `Failed http://127.0.0.1:47443/proxy?t=${token}&url=x`, stream });
+        expect(container.querySelector('.error-label').textContent).toBe('Failed http://127.0.0.1:47443/proxy?t=***&url=x');
+        expect(container.querySelector('.error-label').getAttribute('title')).toBeNull();
+        expect(container.innerHTML).not.toContain(token);
+    });
+
     it('reads the stream the Player loaded when the state no longer has it', async () => {
         debridLink.rememberStream(stream);
         debridLink.diagnose.mockResolvedValue({ kind: 'network', status: null, source: 'request', host: 'cdn.example' });
