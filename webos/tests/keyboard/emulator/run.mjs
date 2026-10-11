@@ -200,10 +200,16 @@ const click = (name, expression) => {
 const keyboardScenario = async () => {
     // The system only opens the keyboard for focus() after the app got a key from the remote.
     // Measured, not asserted: the focus the search route takes by itself does not open it yet.
-    // The Board has links (placeholders) before the nav bar exists: wait for the bar itself.
-    await waitFor('return !!document.querySelector("[class*=search-bar-container]") && !!document.querySelector("a[href=\\"#/addons\\"]");', 60000, 500);
-    click('01-open-search', 'document.querySelector("[class*=search-bar-container]")');
-    await waitFor('return location.hash.indexOf("#/search") === 0;', 30000);
+    // Until the core is ready the nav bar shows a placeholder, a <label> with the same class prefix that does
+    // nothing on a click (it lasts about a second after the app starts; waiting for any element with that
+    // class took the placeholder for the bar and the click went nowhere: step 02 then had no input).
+    // The real bar is a <div>. And the click is confirmed by the route, and repeated while it did not take.
+    await waitFor('return !!document.querySelector("div[class*=search-bar-container]") && !!document.querySelector("a[href=\\"#/addons\\"]");', 60000, 500);
+    let searchRoute = null;
+    for (let attempt = 1; attempt <= 3 && searchRoute === null; attempt++) {
+        click(attempt === 1 ? '01-open-search' : `01-open-search (try ${attempt})`, 'document.querySelector("div[class*=search-bar-container]")');
+        searchRoute = await waitFor('return location.hash.indexOf("#/search") === 0;', attempt === 3 ? 30000 : 8000);
+    }
     await sleep(2500);
     const before = state();
     record('02-search-before-any-key', { data: before, note: `keyboard events: ${JSON.stringify(before.kbEvents)}`, screenshot: screenshot('02-search-before-any-key'), vm: vmScreenshot('02-search-before-any-key') });
