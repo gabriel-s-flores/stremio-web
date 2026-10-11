@@ -597,6 +597,36 @@ describe('F4.4', () => {
         expect(navigateRows(first, 'down', list())).toBe(true);
     });
 
+    test('Board: up from something of the list that is not a row item (a header link) is the spatial navigation\'s', () => {
+        const container = board([row('a', 2, 0).replace('<div>a</div>', '<a class="see-all-ZZZZZ" href="#/all" tabindex="0">a</a>')]);
+        const header = container.querySelector('a.see-all-ZZZZZ');
+        header.spatialNavigationSearch = () => container.querySelector('[class*="submit-button-container"]');
+        focus = createScreenFocus(container, boardScreen);
+        header.focus();
+        expect(press(UP).defaultPrevented).toBe(false);
+        expect(document.activeElement).toBe(header);
+    });
+
+    test('the realign after a peek happens once: the list scrolled later is left alone', async () => {
+        const container = board([row('a', 2, 0).replace('data-height="100"', 'data-height="220"'), placeholderRow(230), placeholderRow(460)]);
+        focus = createScreenFocus(container, boardScreen);
+        posters(container)[0].focus();
+        press(DOWN);
+        list().children[1].outerHTML = messageRow(230);
+        await flush();
+        expect(list().scrollTop).toBe(0);
+        list().scrollTop = 50;
+        list().children[2].appendChild(document.createElement('div'));
+        await flush();
+        expect(list().scrollTop).toBe(50);
+    });
+
+    test('Search: a one letter query is a query (its button is the clear one)', () => {
+        const container = search([placeholderRow(0)]);
+        container.querySelector('input').value = 'b';
+        expect(searchScreen.initial(container, { recovering: true })).toBe(null);
+    });
+
     test('Board: nothing above the first row and no top bar: the spatial navigation', () => {
         const container = mount(`<div class="board-container-LLLLL"><div class="board-content-NNNNN" data-height="200">${row('a', 2, 0)}</div></div>`);
         focus = createScreenFocus(container, boardScreen);

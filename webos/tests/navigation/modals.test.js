@@ -364,6 +364,15 @@ describe('leaving an overlay', () => {
         expect(document.activeElement.id).toBe('behind-a');
     });
 
+    test('in pointer mode the focus is not moved back to the opener when the overlay closes', async () => {
+        page();
+        await openModal();
+        pointerPress();
+        document.querySelector('.modals-container').innerHTML = '';
+        await settle();
+        expect(document.activeElement).toBe(document.body);
+    });
+
     test('it is not stolen back from a page that already moved the focus', async () => {
         page();
         await openModal();

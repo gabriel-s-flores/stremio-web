@@ -82,8 +82,10 @@ const scrollStripTo = (strip, item) => {
 // took the focused row's title out of sight, and the loading row often turns into an addon error.
 const PEEK = 8;
 
-// The loading row each list peeked at, with the item that had the focus then: { row, element }.
-const peeks = new WeakMap();
+// The loading row each list peeked at, with the item that had the focus then: { row, element }. A
+// Map, so that a screen with nothing pending skips its mutations at once (they come in bursts while
+// the catalogs load); an entry goes with its realign, or once its list left the page.
+const peeks = new Map();
 
 const peekRow = (list, row) => {
     const below = row.offsetTop - list.clientHeight + PEEK;
@@ -230,8 +232,11 @@ const rowsScreen = (listName) => {
             if (list && list.contains(element)) align(element, list);
         },
         onMutation: (container) => {
-            const list = listOf(container);
-            if (list) realignAfterPeek(list);
+            if (peeks.size === 0) return;
+            Array.from(peeks.keys()).forEach((list) => {
+                if (!isAttached(list)) peeks.delete(list);
+                else if (container.contains(list)) realignAfterPeek(list);
+            });
         },
     };
 };
