@@ -166,6 +166,17 @@ describe('scroll', () => {
         expect(list.scrollTop).toBeCloseTo(120 / 1.75, 5);
     });
 
+    test('the horizontal axis converts with the width (a strip under the TV zoom)', () => {
+        document.body.innerHTML = '<div id="strip" data-rect="100,0,700,300"><div id="cell" data-rect="900,0,140,300"></div></div>';
+        const strip = document.getElementById('strip');
+        // 400 CSS pixels wide shown as 700 (zoom 1.75); the height says nothing about the width.
+        Object.defineProperty(strip, 'offsetWidth', { value: 400 });
+        Object.defineProperty(strip, 'offsetHeight', { value: 300 });
+        scroll.revealAlong(strip, document.getElementById('cell'), 'x', 0);
+        // 900 + 140 - 800 = 240 screen pixels = 240 / 1.75 CSS pixels.
+        expect(strip.scrollLeft).toBeCloseTo(240 / 1.75, 5);
+    });
+
     test('a list keeps 15% of its height past the focused item, less for a tall item', () => {
         document.body.innerHTML = '<div id="list" data-rect="0,0,300,1000"><div id="item" data-rect="0,950,300,100"></div><div id="tall" data-rect="0,1200,300,900"></div></div>';
         const list = document.getElementById('list');
@@ -377,6 +388,22 @@ describe('input hub', () => {
         expect(hub.lastInput).toBe('pointer');
         document.dispatchEvent(new CustomEvent('cursorStateChange', { detail: {} }));
         expect(hub.lastInput).toBe('pointer');
+        remove();
+    });
+
+    test('a pointer move alone (Chromium sends trusted ones when the layout moves under a still cursor) is no pointer use; the overlays still count it', () => {
+        const hub = createInputHub(window, { isTrusted: () => true });
+        const remove = hub.onKey(() => {});
+        press();
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: 1 }));
+        expect(hub.pointerInUse()).toBe(false);
+        expect(hub.isKeyInput()).toBe(false);
+        window.dispatchEvent(new MouseEvent('mousedown', { clientX: 1 }));
+        expect(hub.pointerInUse()).toBe(true);
+        press();
+        expect(hub.pointerInUse()).toBe(false);
+        document.dispatchEvent(new CustomEvent('cursorStateChange', { detail: { visibility: true } }));
+        expect(hub.pointerInUse()).toBe(true);
         remove();
     });
 

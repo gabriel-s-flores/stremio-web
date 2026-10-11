@@ -33,12 +33,18 @@ const createInputHub = (win, { isTrusted = (event) => event.isTrusted } = {}) =>
     const focusHandlers = [];
     let order = 0;
     let installed = false;
-    // 'key', 'pointer', or null before any input (counts as keys).
+    // 'key', 'pointer', or null before any input (counts as keys): keys, pointer presses and moves (the
+    // overlays, modals.js, as F4.3 had it).
     let lastInput = null;
+    // The same without the moves, for pointerInUse(): Chromium sends trusted mousemove events when the
+    // layout moves under a still cursor (no one touched the remote), and those took the details page
+    // for pointer use: it placed no focus on its second opening, and ~18 MB stayed (c8, review F4.4 c1).
+    let lastPress = null;
     let lastPointerDown = -Infinity;
 
     const onKeyDown = (event) => {
         lastInput = 'key';
+        lastPress = 'key';
         for (const entry of keyHandlers.slice()) {
             if (entry.handler(event) === true) return;
         }
@@ -51,14 +57,17 @@ const createInputHub = (win, { isTrusted = (event) => event.isTrusted } = {}) =>
     const onPointer = (event) => {
         if (!isTrusted(event)) return;
         lastInput = 'pointer';
-        if (event.type === 'mousedown') lastPointerDown = Date.now();
+        if (event.type === 'mousedown') {
+            lastPointerDown = Date.now();
+            lastPress = 'pointer';
+        }
     };
 
     // The Magic Remote's pointer showing or hiding (webOS, webos/magic-remote).
     const onCursorState = (event) => {
         const visibility = event.detail && event.detail.visibility;
-        if (visibility === true) lastInput = 'pointer';
-        else if (visibility === false) lastInput = 'key';
+        if (visibility === true) lastInput = lastPress = 'pointer';
+        else if (visibility === false) lastInput = lastPress = 'key';
     };
 
     const update = () => {
@@ -103,15 +112,17 @@ const createInputHub = (win, { isTrusted = (event) => event.isTrusted } = {}) =>
         },
         isKeyInput: () => lastInput !== 'pointer',
         // The Magic Remote pointer is in use (webos/magic-remote, F4.2): showing, or, before the first
-        // cursorStateChange tells it, the last input was the pointer. A click focuses what it points
-        // at; moving or scrolling things then would take them away from under the pointer.
+        // cursorStateChange tells it, the last key or press was the pointer's (a move alone is not:
+        // see lastPress). A click focuses what it points at; moving or scrolling things then would
+        // take them away from under the pointer.
         pointerInUse: () => {
             const mode = doc.documentElement.getAttribute('data-webos-pointer');
-            return mode === 'visible' || (mode === null && lastInput === 'pointer');
+            return mode === 'visible' || (mode === null && lastPress === 'pointer');
         },
         // For the tests.
         setLastInput: (value) => {
             lastInput = value;
+            lastPress = value;
         },
         get listeners() {
             return { keys: keyHandlers.length, focus: focusHandlers.length, installed };
