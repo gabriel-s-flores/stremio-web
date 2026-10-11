@@ -10,6 +10,7 @@
 //   next          next video popup reached and walked with the arrows, Back dismisses it, the bar's next
 //                 button opens episode 2, STOP leaves the Player
 //   watch         OK on "watch now" of the popup opens episode 2
+//   menu          the audio menu opened from the bar with the remote, Back closes it (F4.3 focus)
 //   resume        plays episode 1 up to 200 s, leaves the Player and opens it again: it starts there
 //   resume-save   plays episode 1 up to 200 s and leaves the Player (the core keeps the position)
 //   resume-check  run with `emu-run --keep-state --instance <same>` after resume-save: the episode opens
@@ -681,7 +682,43 @@ const resume = async (servers) => {
     });
 };
 
-const SCENARIOS = { keys, next, watch, resume, 'resume-save': resumeSave, 'resume-check': resumeCheck, 'popup-probe': popupProbe };
+// A Player menu opened with the remote only (F4.3 owns its focus): the audio button of the bar, OK,
+// the focus inside the menu, arrows stay in it, Back closes it and the focus is back on the button.
+const AUDIO_ICON = 'M57.48 223.57v75.86';
+const isAudioFocused = `return !!document.activeElement && document.activeElement.innerHTML.indexOf('${AUDIO_ICON}') !== -1;`;
+const menu = async ({ manifestUrl, addonPort }) => {
+    await openEpisode(manifestUrl, addonPort, 1);
+    if (!await waitPlaying('M00-playing')) return;
+    const inMenu = 'var layer = document.querySelector(\'[class*="player-container"] [class*="menu-layer"]\'); return !!layer && layer.contains(document.activeElement);';
+    await press('M01-down-row', 'DOWN', (b, a) => ({ 'focus in the row': /control-bar-button/.test(a.focused) }));
+    let now = await state();
+    for (let i = 0; i < 8 && !(await evaluate(isAudioFocused)); i++) {
+        remote('RIGHT');
+        await sleep(700);
+        now = await state();
+    }
+    record('M02-audio-button', { ok: await evaluate(isAudioFocused), note: now.focused });
+    await press('M03-ok-opens-menu', 'OK', () => ({}), { settle: 1500, shot: true });
+    record('M03b-audio-menu-open', { ok: await evaluate('return !!document.querySelector(\'[class*="audio-menu"]\');') });
+    record('M04-focus-in-menu', { ok: await evaluate(inMenu), note: (await state()).focused });
+    remote('DOWN');
+    await sleep(600);
+    remote('DOWN');
+    await sleep(600);
+    record('M05-arrows-stay-in-menu', { ok: await evaluate(inMenu), note: (await state()).focused });
+    await press('M06-back-closes-menu', 'BACK', (b, a) => ({
+        'menu closed': true,
+        'still in the Player': a.hash.indexOf('#/player/') === 0,
+        'by the overlay bridge': !!a.lastBack && a.lastBack.consumedBy === 'overlay',
+    }), { settle: 1500 });
+    record('M07-focus-back-on-button', {
+        ok: await evaluate(`return !document.querySelector('[class*="audio-menu"]') && document.activeElement.innerHTML.indexOf('${AUDIO_ICON}') !== -1;`),
+        note: (await state()).focused,
+        screenshot: await screenshot('M07-after-back'),
+    });
+};
+
+const SCENARIOS = { keys, next, watch, resume, menu, 'resume-save': resumeSave, 'resume-check': resumeCheck, 'popup-probe': popupProbe };
 
 const main = async () => {
     if (!SCENARIOS[SCENARIO]) throw new Error(`unknown scenario ${SCENARIO}`);

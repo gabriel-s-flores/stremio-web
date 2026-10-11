@@ -98,9 +98,14 @@ regras acima.
   webos/tools/emu-run --timeout 20 -- node webos/tests/player-remote/emulator/run.mjs ~/saida keys
   webos/tools/emu-run --timeout 20 -- node webos/tests/player-remote/emulator/run.mjs ~/saida next
   webos/tools/emu-run --timeout 20 -- node webos/tests/player-remote/emulator/run.mjs ~/saida watch
+  webos/tools/emu-run --timeout 20 -- node webos/tests/player-remote/emulator/run.mjs ~/saida menu
+  webos/tools/emu-run --timeout 20 -- node webos/tests/player-remote/emulator/run.mjs ~/saida resume
   webos/tools/emu-run --timeout 20 --instance N -- node webos/tests/player-remote/emulator/run.mjs ~/saida resume-save
   SKIP_INSTALL=1 webos/tools/emu-run --timeout 20 --instance N --keep-state -- node webos/tests/player-remote/emulator/run.mjs ~/saida resume-check
   ```
+
+  (`menu`: o menu de áudio aberto pela barra só com o controle; a F4.3 põe o foco dentro e o Back o
+  fecha, com o foco de volta no botão.)
 
   `keys`: OK, setas, FF/RW (apertadas e seguradas, por eventos CDP com `autoRepeat`), PLAY/PAUSE,
   arrasto do Magic Remote no seek bar, Back que esconde a barra e Back que sai. `next`: popup de
