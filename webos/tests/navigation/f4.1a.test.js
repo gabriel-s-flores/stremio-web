@@ -338,6 +338,13 @@ describe('Discover grid', () => {
         expect(text(discoverScreen.initial(grid3x2()))).toBe('0');
     });
 
+    test('initial focus: the filters only once Discover shows it has no catalog', () => {
+        const opening = mount(`<div class="discover-container-UUUUU"><div class="catalog-container-VVVVV">${filters}</div></div>`);
+        expect(discoverScreen.initial(opening)).toBe(null);
+        const empty = mount(`<div class="discover-container-UUUUU"><div class="catalog-container-VVVVV">${filters}<div class="message-container-MMMMM">No catalog</div></div></div>`);
+        expect(text(discoverScreen.initial(empty))).toBe('Type');
+    });
+
     test('the focused line goes to the top of the grid', () => {
         const container = grid3x2();
         discoverScreen.align(link('4'), container);

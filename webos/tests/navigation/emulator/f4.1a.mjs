@@ -79,6 +79,7 @@ const HELPERS = `
             rowTop: row && list ? Math.round(row.offsetTop - list.scrollTop) : null,
             column: strip && active ? Array.prototype.indexOf.call(strip.children, active.parentElement) : null,
             listScroll: list ? Math.round(list.scrollTop) : null,
+            listAtEnd: list ? list.scrollTop >= list.scrollHeight - list.clientHeight - 1 : null,
             stripScroll: strip ? Math.round(strip.scrollLeft) : null,
             gridScroll: grid && !list ? Math.round(grid.scrollTop) : null,
             gridItems: grid && !list ? grid.querySelectorAll('a').length : null,
@@ -117,16 +118,36 @@ const shot = (name) => {
 };
 
 // One real remote key, then the state once the app settled.
-const key = async (name, keyName, checkFn = () => ({}), { settleMs = 900, screenshot = false } = {}) => {
+// leaves: the key opens a screen of another task (MetaDetails, F4.1c), whose focus is not checked.
+const key = async (name, keyName, checkFn = () => ({}), { settleMs = 900, screenshot = false, leaves = false } = {}) => {
     const before = state();
     run('node', ['webos/tools/remote.mjs', '--port', REMOTE_PORT, '--delay', '0', keyName]);
     await sleep(settleMs);
     const after = state();
-    return record(name, after, {
+    const focusCheck = leaves ? {} : {
         'focus on an element of the visible route (not body)': after.focused !== 'body' && after.focused !== null && (after.inRoute || after.keyboardVisible),
+    };
+    return record(name, after, {
+        ...focusCheck,
         'no page errors': after.errors === before.errors,
         ...checkFn(before, after),
     }, { key: keyName, screenshot: screenshot ? shot(name) : undefined });
+};
+
+// Back until the Board, at most `max` presses: history entries in between are F3.2's and the
+// upstream's (MetaDetails goes back to its origin with replace, which leaves the origin twice; a
+// submitted search is one more entry), so the number of presses is recorded, not checked.
+const backToBoard = async (name, checkFn, max = 4) => {
+    let s = state();
+    let presses = 0;
+    while (presses < max && !(s.hash === '#/' || s.hash === '')) {
+        presses++;
+        s = await key(`${name}-${presses}`, 'BACK', () => ({}), { settleMs: 2500 });
+    }
+    return record(name, s, {
+        'Board': s.hash === '#/' || s.hash === '',
+        ...checkFn(s),
+    }, { presses, screenshot: shot(name) });
 };
 
 const waitFor = async (body, timeoutMs, intervalMs = 500) => {
@@ -182,7 +203,7 @@ const board = async () => {
         } : {
             'next row with items': after.row > before.row,
             'same column on screen': Math.abs(after.rect[0] - before.rect[0]) < 30,
-            'row title in view (row at the top of the list)': after.rowTop >= 0 && after.rowTop < 40,
+            'row title in view (row at the top of the list, or the list at its end)': after.rowTop >= 0 && (after.rowTop < 40 || after.listAtEnd),
             'item on screen': after.onScreen,
         }), { screenshot: index === 2 });
         if (s.row === b.row) break;
@@ -198,7 +219,7 @@ const board = async () => {
     s = await key('down-to-row-3', 'DOWN');
     s = await key('right-to-column-4', 'RIGHT');
     const left = s;
-    s = await key('ok-opens-details', 'OK', (b, a) => ({ 'details opened': /^#\/(detail|metadetails)\//.test(a.hash) }), { settleMs: 3000 });
+    s = await key('ok-opens-details', 'OK', (b, a) => ({ 'details opened': /^#\/(detail|metadetails)\//.test(a.hash) }), { settleMs: 3000, leaves: true });
     s = await key('back-restores-focus', 'BACK', (b, a) => ({
         'back on the Board': a.hash === '#/' || a.hash === '',
         'same item focused': a.title === left.title && a.row === left.row && a.column === left.column,
@@ -232,7 +253,7 @@ const discover = async () => {
     record('page-loaded', s, { 'more items after the end of the first page': loadedMore || s.gridItems > firstPage });
     s = await key('up-1', 'UP', (b, a) => ({ 'line above': a.gridIndex < b.gridIndex, 'item on screen': a.onScreen }));
     const left = s;
-    s = await key('ok-opens-details', 'OK', (b, a) => ({ 'details opened': /^#\/(detail|metadetails)\//.test(a.hash) }), { settleMs: 3000 });
+    s = await key('ok-opens-details', 'OK', (b, a) => ({ 'details opened': /^#\/(detail|metadetails)\//.test(a.hash) }), { settleMs: 3000, leaves: true });
     s = await key('back-restores-focus', 'BACK', (b, a) => ({
         'back on Discover': a.hash.indexOf('#/discover') === 0,
         'same item focused': a.gridIndex === left.gridIndex && a.title === left.title,
@@ -243,7 +264,8 @@ const discover = async () => {
     }
     s = await key('up-to-filters', 'UP', (b, a) => ({ 'a filter above the item': a.gridIndex === null && a.inRoute && /button/.test(a.focused) }), { screenshot: true });
     s = await key('down-from-filters', 'DOWN', (b, a) => ({ 'back to the grid item': a.gridIndex !== null && a.gridIndex <= 2 }));
-    s = await key('back-to-board', 'BACK', (b, a) => ({ 'Board': a.hash === '#/' || a.hash === '', 'focus on the Board': a.inRoute }), { settleMs: 2500, screenshot: true });
+    // Discover was opened from a Board item (the nav bar link was clicked over CDP): Back comes back to it.
+    s = await backToBoard('back-to-board', (a) => ({ 'focus back on the Board item': a.row === 0 && a.column === 0 }));
 };
 
 const search = async () => {
@@ -271,7 +293,7 @@ const search = async () => {
         const b = state();
         s = await key(`down-${index}`, 'DOWN', (before, after) => (after.row === before.row ? { 'last row: stays': true } : {
             'next row with items': after.row > before.row,
-            'row title in view': after.rowTop >= 0 && after.rowTop < 40,
+            'row title in view (row at the top of the list, or the list at its end)': after.rowTop >= 0 && (after.rowTop < 40 || after.listAtEnd),
             'item on screen': after.onScreen,
         }), { settleMs: 1500, screenshot: index === 2 });
         if (s.row === b.row) break;
@@ -279,7 +301,7 @@ const search = async () => {
     }
     record('result-rows-walked', s, { 'went down at least 1 row': rows >= 1 });
     const left = s;
-    s = await key('ok-opens-details', 'OK', (b, a) => ({ 'details opened': /^#\/(detail|metadetails)\//.test(a.hash) }), { settleMs: 3000 });
+    s = await key('ok-opens-details', 'OK', (b, a) => ({ 'details opened': /^#\/(detail|metadetails)\//.test(a.hash) }), { settleMs: 3000, leaves: true });
     s = await key('back-restores-focus', 'BACK', (b, a) => ({
         'back on Search': a.hash.indexOf('#/search') === 0,
         'same result focused (not the search field)': a.title === left.title && a.row === left.row,
@@ -294,10 +316,7 @@ const search = async () => {
         await sleep(1500);
     }
     s = await key('down-from-field', 'DOWN', (b, a) => ({ 'back to the result it came from': a.row === 0 }));
-    s = await key('back-to-board', 'BACK', (b, a) => ({
-        'Board': a.hash === '#/' || a.hash === '',
-        'focus back on the search button': /submit-button-container/.test(a.focused),
-    }), { settleMs: 2500, screenshot: true });
+    s = await backToBoard('back-to-board', (a) => ({ 'focus back on the search button': /submit-button-container/.test(a.focused) }));
 };
 
 const SCENARIO_FNS = { board, discover, search };

@@ -100,9 +100,11 @@ const discoverScreen = {
         const grid = gridOf(container);
         const first = grid ? firstVisibleCell(grid) : null;
         if (first) return first;
-        // No catalog (an addon error, nothing installed): the filters.
+        // No catalog to show (the "no catalog selected" or the addon error message): the filters. Not
+        // before: right after the route opens there is no catalog yet, nor any message.
+        if (!queryLocal(container, 'message-container')) return null;
         const filters = filterControls(container);
-        return filters.length > 0 && !(grid && grid.children.length > 0) ? filters[0] : null;
+        return filters.length > 0 ? filters[0] : null;
     },
     navigate: (target, dir, container, memory) => {
         const grid = gridOf(container);
