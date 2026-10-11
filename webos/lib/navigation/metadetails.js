@@ -18,8 +18,10 @@
 //   order of the C8 ranking (F6.2), whose probes may still reorder the top of the list until the
 //   first key. From the panel, DOWN, RIGHT or OK enters the first stream, UP the list header and
 //   LEFT the column. Coming back to the page (Back from a route above, the Player closing, the
-//   streams list going back to the episodes) focuses the element focused there last. Never while
-//   the Magic Remote pointer is in use (F4.2).
+//   streams list going back to the episodes) focuses the element focused there last, waiting while
+//   its section is still loading (RESTORE_GUARD). Never while the Magic Remote pointer is in use
+//   (F4.2). An OK while the page opens is kept from the poster of the Board, which still has the
+//   focus under it.
 // - The summary. With the TV zoom (F2.6) the info column overflows and the summary has no focusable
 //   element, so it could not be reached: it gets a tabindex while the column overflows, and the
 //   arrows scroll the column while it has the focus.
@@ -49,9 +51,13 @@ const SELECTORS = {
 
 const FOCUSABLE = '[tabindex], a[href], button, input, select, textarea';
 
-// How long a focus to restore is waited for, and how often it is looked for meanwhile.
-const RESTORE_WAIT = 3000;
+// A focus to restore is waited for while its section is still loading (a placeholder): in the C8
+// profile the info column took 6.4 s to come back after Back from Discover, with the streams already
+// on screen from the cache. The guard only caps the wait; past it the default focus goes in, and the
+// restored one replaces it when it shows up, if no key came meanwhile.
+const RESTORE_GUARD = 15000;
 const RESTORE_RETRY = 250;
+const PLACEHOLDER = '[class*="placeholder"]';
 
 // Last focused element of each page path, across mounts (Back from a route above remounts the page).
 const MEMORY_SIZE = 32;
@@ -180,9 +186,13 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
     let routeActive = true;
     let pathname = null;
     let restore = false;
-    // Until then a focus to restore that is not there yet is waited for (the page is still loading:
-    // the streams may be cached while the info column is a placeholder); then the default.
+    // The guard of the wait for a focus to restore (RESTORE_GUARD).
     let restoreUntil = 0;
+    // The default focus went in while the section of the focus to restore was still loading:
+    // { saved, placed }. Cleared by a key or once the section loaded.
+    let late = null;
+    // A key came since the page was reached (setLocation, the route active again).
+    let keyPressed = false;
     let tickTimer = null;
     let nativeScrollIntoView = null;
 
@@ -284,20 +294,40 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
         return route === null || route === root.closest('.route-container');
     };
 
+    const inOtherRoute = (element) => {
+        const route = element && element.nodeType === 1 ? element.closest('.route-container') : null;
+        return route !== null && route !== root.closest('.route-container');
+    };
+
+    // The section of a saved focus is still a placeholder (the column), or has no items yet (the list).
+    const isLoading = (parts, section) => {
+        if (section === 'meta') return !parts.meta || matches(parts.meta, PLACEHOLDER) || parts.meta.querySelector(PLACEHOLDER) !== null;
+        if (section === 'list') return !parts.list || (listItems(parts).length === 0 && parts.list.querySelector(PLACEHOLDER) !== null);
+        return false;
+    };
+
+    const savedSection = (parts, saved) => (
+        saved.section === 'list' ? parts.list : saved.section === 'meta' ? parts.meta : parts.navBar
+    );
+
     // Focuses what the page should have focused now; false while the content is still loading.
     const placeFocus = (parts) => {
         let target = null;
+        let pending = null;
         if (restore) {
             const saved = memory.get(pathname);
             if (saved && saved.section === 'listEntry' && parts.list && parts.streams) {
                 parts.list.setAttribute('tabindex', '-1');
                 target = parts.list;
             } else if (saved) {
-                const section = saved.section === 'list' ? parts.list : saved.section === 'meta' ? parts.meta : parts.navBar;
+                const section = savedSection(parts, saved);
                 target = section ? resolve(saved.locator, section) : null;
-                if (target === null && Date.now() < restoreUntil) {
-                    schedule(RESTORE_RETRY);
-                    return false;
+                if (target === null && isLoading(parts, saved.section)) {
+                    if (Date.now() < restoreUntil) {
+                        schedule(RESTORE_RETRY);
+                        return false;
+                    }
+                    pending = saved;
                 }
             }
         }
@@ -306,7 +336,26 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
             // Nothing to list (no addons, no streams, an error): the list's own buttons or the column.
             target = fallbackTarget(parts);
         }
-        return focus(target);
+        const placed = focus(target);
+        if (placed && pending !== null && !keyPressed) late = { saved: pending, placed: target };
+        return placed;
+    };
+
+    // The focus to restore showed up after the default one went in: it takes its place, unless a key
+    // came or the focus moved since.
+    const restoreLate = (parts) => {
+        if (keyPressed || doc.activeElement !== late.placed) {
+            late = null;
+            return;
+        }
+        if (isLoading(parts, late.saved.section)) {
+            schedule(RESTORE_RETRY);
+            return;
+        }
+        const section = savedSection(parts, late.saved);
+        const target = section ? resolve(late.saved.locator, section) : null;
+        late = null;
+        if (target) focus(target);
     };
 
     const tick = () => {
@@ -315,6 +364,7 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
         const parts = sections();
         if (!parts) return;
         prepare(parts);
+        if (late !== null) restoreLate(parts);
         if (hasFocusHere() || pointerInUse(doc)) return;
         placeFocus(parts);
     };
@@ -373,15 +423,28 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
     const onKeyDownCapture = (event) => {
         const key = KEYS[event.keyCode];
         if (!key || destroyed || !routeActive || event.defaultPrevented) return;
+        // The user took over: no late restore moves the focus from now on.
+        keyPressed = true;
+        late = null;
         const parts = sections();
         if (!parts) return;
         // No focus on this page yet (still loading, the pointer was in use): the first arrow places it.
         // Not left to the polyfill: it would move from an element of the route below.
         if (!hasFocusHere()) {
-            if (key !== 'ok') {
-                if (!placeFocus(parts)) focus(firstFocusable(parts.container));
-                consume(event);
+            if (key === 'ok') {
+                // The poster of the Board keeps the focus under the page while it opens: its Button
+                // clicks on the keydown and would open this page again (a second history entry).
+                // Stopped here, before the event reaches it.
+                if (inOtherRoute(doc.activeElement)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                return;
             }
+            // A key while a focus to restore is awaited: the wait ends, what is there gets the focus.
+            restoreUntil = 0;
+            if (!placeFocus(parts)) focus(firstFocusable(parts.container));
+            consume(event);
             return;
         }
         const active = doc.activeElement;
@@ -447,7 +510,8 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
         restoreScrollIntoView();
         if (KEYS[event.keyCode] !== 'ok' || event.defaultPrevented || destroyed || !routeActive) return;
         const active = doc.activeElement;
-        if (active && root.contains(active) && matches(active, SELECTORS.actionsGroupItem)) {
+        // Not a disabled one (the ratings while they load): upstream only blocks its pointer events.
+        if (active && root.contains(active) && matches(active, SELECTORS.actionsGroupItem) && !matches(active, '[class*="disabled"]')) {
             event.preventDefault();
             active.click();
         }
@@ -496,7 +560,9 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
         setLocation(nextPathname, navigationType) {
             pathname = nextPathname;
             restore = navigationType !== 'PUSH';
-            restoreUntil = restore ? Date.now() + RESTORE_WAIT : 0;
+            restoreUntil = restore ? Date.now() + RESTORE_GUARD : 0;
+            late = null;
+            keyPressed = false;
             schedule();
         },
         // The route below the top one is not active (the Player on top of the page); coming back
@@ -504,7 +570,9 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
         setRouteActive(active) {
             if (active && !routeActive) {
                 restore = true;
-                restoreUntil = Date.now() + RESTORE_WAIT;
+                restoreUntil = Date.now() + RESTORE_GUARD;
+                late = null;
+                keyPressed = false;
             }
             routeActive = active;
             if (!active) restoreScrollIntoView();

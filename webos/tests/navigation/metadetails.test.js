@@ -434,8 +434,9 @@ describe('reaching the summary and restoring while loading', () => {
         expect(document.activeElement).toBe($('description'));
     });
 
-    it('a focus to restore that is not there yet (the column still loading) is waited for', () => {
-        const now = jest.spyOn(Date, 'now').mockReturnValue(1000);
+    // Review c1, M1: in the C8 profile the column came back 6.4 s after Back from Discover.
+    const remountWithColumnLoading = (now) => {
+        now.mockReturnValue(1000);
         open('/detail/movie/tt1/tt1');
         $('cast').focus();
         navigation.destroy();
@@ -444,19 +445,122 @@ describe('reaching the summary and restoring while loading', () => {
         const meta = $('meta').innerHTML;
         $('meta').innerHTML = '<div class="meta-preview-placeholder-container-s1"></div>';
         open('/detail/movie/tt1/tt1', 'POP');
+        return () => { $('meta').innerHTML = meta; };
+    };
+
+    it('a focus to restore is waited for while its section is a placeholder, past 3 s too', () => {
+        const now = jest.spyOn(Date, 'now');
+        const loadColumn = remountWithColumnLoading(now);
         expect(document.activeElement).toBe(document.body);
-        $('meta').innerHTML = meta;
+        now.mockReturnValue(7400);
+        navigation.tick();
+        expect(document.activeElement).toBe(document.body);
+        loadColumn();
         navigation.tick();
         expect(document.activeElement).toBe($('cast'));
-        // Never there: the default once the wait is over.
-        navigation.destroy();
-        $('cast').blur();
-        $('meta').innerHTML = '<div class="meta-preview-placeholder-container-s1"></div>';
-        open('/detail/movie/tt1/tt1', 'POP');
-        expect(document.activeElement).toBe(document.body);
-        now.mockReturnValue(5000);
+        now.mockRestore();
+    });
+
+    it('past the guard the default goes in, and the restored focus replaces it when the column shows up', () => {
+        const now = jest.spyOn(Date, 'now');
+        const loadColumn = remountWithColumnLoading(now);
+        now.mockReturnValue(1000 + 15001);
+        navigation.tick();
+        expect(document.activeElement).toBe($('list'));
+        loadColumn();
+        navigation.tick();
+        expect(document.activeElement).toBe($('cast'));
+        now.mockRestore();
+    });
+
+    it('not when a key came after the default went in', () => {
+        const now = jest.spyOn(Date, 'now');
+        const loadColumn = remountWithColumnLoading(now);
+        now.mockReturnValue(1000 + 15001);
+        navigation.tick();
+        expect(document.activeElement).toBe($('list'));
+        key(KEY.DOWN);
+        expect(document.activeElement).toBe($('s1'));
+        loadColumn();
+        navigation.tick();
+        expect(document.activeElement).toBe($('s1'));
+        now.mockRestore();
+    });
+
+    it('a key while the restore is awaited ends the wait: the default goes in', () => {
+        const now = jest.spyOn(Date, 'now');
+        const loadColumn = remountWithColumnLoading(now);
+        expect(key(KEY.DOWN, document.body).defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe($('list'));
+        loadColumn();
         navigation.tick();
         expect(document.activeElement).toBe($('list'));
         now.mockRestore();
+    });
+
+    it('a saved item missing from a loaded section does not hold the page: the default at once', () => {
+        open('/detail/movie/tt1/tt1');
+        $('s3').focus();
+        navigation.destroy();
+        $('s3').blur();
+        $('s3').parentNode.removeChild($('s3'));
+        $('s2').setAttribute('href', '#/player/other');
+        open('/detail/movie/tt1/tt1', 'POP');
+        // Not by link, label or position (it was the 4th focusable of the list): the default, at once.
+        expect(document.activeElement).toBe($('list'));
+    });
+});
+
+describe('review c1: OK under the page, disabled toggles, the swap and the panel memory', () => {
+    it('B1: an OK while the focus is still on the poster of the route below does not reach it', () => {
+        const items = Array.from(document.querySelectorAll('[class*="stream-container"]'));
+        items.forEach((item) => { item.__rect = { top: 0, left: 0, width: 0, height: 0 }; });
+        const placeholder = document.createElement('div');
+        placeholder.className = 'stream-placeholder-container-z1';
+        $('list').appendChild(placeholder);
+        $('poster').focus();
+        open();
+        const click = jest.fn();
+        $('poster').addEventListener('keydown', click);
+        const event = key(KEY.OK, $('poster'));
+        expect(event.defaultPrevented).toBe(true);
+        expect(click).not.toHaveBeenCalled();
+        // An OK on the body (nothing below) is left alone.
+        document.activeElement.blur();
+        expect(key(KEY.OK, document.body).defaultPrevented).toBe(false);
+    });
+
+    it('B2: OK does not click a disabled toggle (the ratings while they load)', () => {
+        open();
+        const click = jest.fn();
+        $('library').className += ' disabled-q9';
+        $('library').addEventListener('click', click);
+        $('library').focus();
+        key(KEY.OK);
+        expect(click).not.toHaveBeenCalled();
+    });
+
+    it('B3: during an arrow, scrollIntoView() on an element outside the page stays native', () => {
+        const native = Element.prototype.scrollIntoView = jest.fn();
+        const polyfill = () => {
+            $('poster').scrollIntoView();
+        };
+        window.addEventListener('keydown', polyfill);
+        open();
+        $('s1').focus();
+        key(KEY.DOWN);
+        window.removeEventListener('keydown', polyfill);
+        expect(native).toHaveBeenCalledTimes(1);
+        expect(native.mock.instances[0]).toBe($('poster'));
+    });
+
+    it('B3: the list panel itself is restored, not an earlier item of the list', () => {
+        open('/detail/movie/tt1/tt1');
+        $('s2').focus();
+        $('list').focus();
+        navigation.destroy();
+        $('list').blur();
+        open('/detail/movie/tt1/tt1', 'POP');
+        expect(document.activeElement).toBe($('list'));
     });
 });
