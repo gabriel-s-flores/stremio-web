@@ -10,5 +10,6 @@
     "bgColor": "#0c0b11",
     "resolution": "1920x1080",
     "disableBackHistoryAPI": true,
-    "handlesRelaunch": true
+    "handlesRelaunch": true,
+    "v8ExtraFlags": "--no-crankshaft"
 }
