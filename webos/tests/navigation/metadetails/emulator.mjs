@@ -273,18 +273,26 @@ const restoreRun = async () => {
     await openMovieFromBoard();
     for (let round = 1; round <= 2; round++) {
         let focused = await key('LEFT');
-        for (let i = 0; i < 16 && !(focused.kind === 'link' && /#\/(discover|search)/.test(evaluate('document.activeElement.getAttribute("href")'))); i++) {
+        // A genre link (Discover), the reviewer's case: Search focuses its field, and with F3.4 the
+        // system keyboard takes the first Back.
+        for (let i = 0; i < 16 && !(focused.kind === 'link' && /#\/discover/.test(evaluate('document.activeElement.getAttribute("href")'))); i++) {
             focused = await key('UP');
         }
         const link = focused.text;
-        check(`restore ${round}: a genre/cast link has the focus`, focused.kind === 'link', focused);
+        check(`restore ${round}: a genre link has the focus`, focused.kind === 'link', focused);
         await key('OK', 1500);
         const left = evaluate('location.hash');
         await waitFor('!/#\\/detail\\//.test(location.hash)', 30);
         await sleep(1500);
         spawnSync('node', [path.join(ROOT, 'webos/tools/remote.mjs'), '--port', EMU_REMOTE_PORT, '--delay', '0', 'BACK']);
-        const timeline = [];
         const started = Date.now();
+        // A Back that only hid the system keyboard (a text field had the focus): one more.
+        await sleep(1500);
+        if (!/#\/detail\//.test(evaluate('location.hash'))) {
+            log(`restore ${round}: still on ${evaluate('location.hash').slice(0, 50)} after Back, Back again`);
+            spawnSync('node', [path.join(ROOT, 'webos/tools/remote.mjs'), '--port', EMU_REMOTE_PORT, '--delay', '0', 'BACK']);
+        }
+        const timeline = [];
         let restored = null;
         while (Date.now() - started < 20000) {
             const sample = json('JSON.stringify({ f: JSON.parse(window.__f41c.focus()), p: document.querySelectorAll(".route-container:last-child [class*=metadetails-container] [class*=placeholder]").length })');
