@@ -50,7 +50,10 @@ const withC8Tracks = (Video, deps) => {
     function VideoWithC8Tracks(options) {
         const video = new Video(options);
         const containerElement = options.containerElement;
-        const videoElement = containerElement.querySelector('video');
+        // The element the inner video just created: the last one. The <video> of the previous stream
+        // can still be in the container while its pipeline is released (F5.6, withPipelineGuard).
+        const videoElements = containerElement.querySelectorAll('video');
+        const videoElement = videoElements.length ? videoElements[videoElements.length - 1] : null;
         const listeners = {};
         const observed = {};
         const values = { audioTracks: [], selectedAudioTrackId: null, subtitlesTracks: [], selectedSubtitlesTrackId: null };

@@ -27,6 +27,13 @@ const umsDownFrom = (() => {
     return index === -1 ? null : Number(sections[index].split(' ')[0]);
 })();
 
+// The kernel's OOM killer (1 GB VM without swap): it kills the app's page, which WebAppMgr reloads.
+const oomFrom = (() => {
+    const sections = systemLog.split(/^== load /m).slice(1);
+    const index = sections.findIndex((section) => /out of memory|killed process|oom-killer|oom_reaper|\[ *pid *\] *uid/i.test(section));
+    return index === -1 ? null : Number(sections[index].split(' ')[0]);
+})();
+
 const perLoad = loads.map((load) => {
     const played = load.msToPlay !== null && load.after && load.after.video && load.after.video.src === load.file &&
         load.after.video.currentTime > (load.atPlay && load.atPlay.video ? load.atPlay.video.currentTime : 0) + 2;
@@ -48,6 +55,7 @@ check('6 loads were made (5 stream switches)', loads.length === 6, loads.map((lo
 check('every load plays (video moving 4 s after the start)', perLoad.every((load) => load.played),
     perLoad.map((load) => `${load.i} ${load.way} ${load.file}: ${load.played ? `${load.msToPlay} ms` : 'did not play'}`));
 check('the uMediaServer stayed up (dmesg)', umsDownFrom === null, umsDownFrom === null ? null : `down at load ${umsDownFrom}`);
+check('no process killed for memory (dmesg OOM)', oomFrom === null, oomFrom === null ? null : `OOM by load ${oomFrom}`);
 check('no wedged pipeline in the emulator after any load', perLoad.every((load) => !load.wedged),
     perLoad.filter((load) => load.wedged).map((load) => load.i));
 // Both ways remount the Player (a new <video> per load). The previous one has to release its pipeline
@@ -96,7 +104,7 @@ check('the page never reloaded during the test', reloads.length === 0, reloads);
 
 const ok = checks.every((c) => c.ok);
 // A failure with the emulator broken (wedged pipeline, uMediaServer down, page reloaded) says nothing about the app.
-const emulatorBroken = umsDownFrom !== null || perLoad.some((load) => load.wedged) || reloads.length > 0;
+const emulatorBroken = umsDownFrom !== null || oomFrom !== null || perLoad.some((load) => load.wedged) || reloads.length > 0;
 const verdict = ok ? 'pass' : emulatorBroken ? 'inconclusive (emulator)' : 'fail';
 console.log(JSON.stringify({ ok, verdict, guard, loads: perLoad, order, checks }, null, 2));
 process.exit(ok ? 0 : 1);

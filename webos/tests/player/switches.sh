@@ -46,9 +46,15 @@ choose_subtitles_and_leave() {
         var button = path ? path.closest('[class*=\"control-bar-button\"]') : null;
         if (button) button.click();
         return !!button;
-    })()" > /dev/null
+    })()" > "$OUT/subtitles-button.txt"
     sleep 1
-    cdp_eval "(function(){ var b = document.querySelector('[class*=\"subtitles-menu-container\"] [data-lang=\"$1\"]'); if (b) { window.__f56.mark('subtitles chosen'); b.click(); } setTimeout(function(){ window.__f56.mark('left the Player'); location.hash = '#/'; }, 100); return !!b; })()"
+    cdp_eval "(function(){
+        var languages = Array.prototype.map.call(document.querySelectorAll('[class*=\"subtitles-menu-container\"] [data-lang]'), function(b) { return b.getAttribute('data-lang'); });
+        var b = document.querySelector('[class*=\"subtitles-menu-container\"] [data-lang=\"$1\"]');
+        if (b) { window.__f56.mark('subtitles chosen'); b.click(); }
+        setTimeout(function(){ window.__f56.mark('left the Player'); location.hash = '#/'; }, 100);
+        return JSON.stringify({ subtitlesButton: $(cat "$OUT/subtitles-button.txt" 2>/dev/null || echo null), menu: !!document.querySelector('[class*=\"subtitles-menu-container\"]'), languages: languages, clicked: !!b });
+    })()"
 }
 log() { echo "$(date +%T) $*" | tee -a "$OUT/steps.log" >&2; }
 
@@ -143,7 +149,7 @@ for i in "${!FILES[@]}"; do
         echo "{\"i\":$i,\"reloaded\":true}" >> "$OUT/reloads.jsonl"
         cdp_eval "$(cat "$ROOT/webos/tests/player/switches-page.js")" > /dev/null 2>&1 || true
     fi
-    { echo "== load $i $(date +%T)"; "${SSH[@]}" 'free; dmesg 2>&1 | tail -n 15' 2>&1; } >> "$OUT/system.log"
+    { echo "== load $i $(date +%T)"; "${SSH[@]}" 'free; dmesg 2>&1 | grep -iE "out of memory|killed process|oom|umediaserver|starfish" | tail -n 20' 2>&1; } >> "$OUT/system.log"
     echo "{\"i\":$i,\"file\":\"$file\",\"way\":\"$way\",\"startedAt\":$start,\"msToPlay\":$played,\"atPlay\":$sample,\"after\":$after,\"pipelines\":${wedge:-null}}" >> "$OUT/loads.jsonl"
     log "load $i: $( [[ "$played" == null ]] && echo 'did not play' || echo "playing after $played ms" ); wedged: $( [[ "$wedge" == *'"wedged":true'* ]] && echo yes || echo no )"
     "${CDP[@]}" screenshot "$OUT/tela-load-$i.png" > /dev/null 2>&1 || true
