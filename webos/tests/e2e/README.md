@@ -37,7 +37,7 @@ Responde ao recurso `stream` de qualquer filme ou série `tt…`, com nomes no f
 | 5 | `1080p.BluRay.H264.AC3` | `/redirect/status/410/…`: o resolvedor responde, o host do arquivo diz que o link expirou | a tela de erro da F6.3 |
 | 6 | `[P2P]` com `infoHash` | — | escondido (F6.1) |
 
-As mídias têm 120 s (o Player volta sozinho no fim de um arquivo), GOP de 1 s e o relógio e a descrição desenhados na imagem, para as capturas da VM mostrarem qual stream toca e se ele anda. As legendas mudam a cada 2 s (`EN-SRT n`, `PT-SRT n`, `ADDON EN n`, `ADDON PT n`).
+As mídias têm 300 s (`DURATION`; o Player volta sozinho no fim de um arquivo, e 120 s acabaram no meio do roteiro no perfil c8), GOP de 1 s e o relógio e a descrição desenhados na imagem, para as capturas da VM mostrarem qual stream toca e se ele anda. As legendas mudam a cada 2 s (`EN-SRT n`, `PT-SRT n`, `ADDON EN n`, `ADDON PT n`).
 
 ## Como rodar
 

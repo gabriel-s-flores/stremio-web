@@ -444,6 +444,8 @@ const audioTrack = async () => {
     check('the audio menu marks the Portuguese track as selected', (state.audioMenu || []).filter((entry) => entry.selected).map((entry) => entry.id).join() === 'EMBEDDED_1', state.audioMenu, 'F5.4');
     // Back closes the menu (the overlays of the back dispatcher, F3.2).
     await key('BACK', 1200);
+    // The menu fades out (slow in the c8 profile).
+    await waitFor('!document.querySelector("[class*=audio-menu]")', 6 * SLOW);
     state = playerState();
     check('Back closes the audio menu and stays in the Player', !state.audioMenu && /#\/player\//.test(state.hash), { hash: state.hash }, 'F3.2');
 };
@@ -505,6 +507,7 @@ const seek = async () => {
     const settings = json('window.core.getState("ctx").then(function(ctx){ return JSON.stringify({ seek: ctx.profile.settings.seekTimeDuration, short: ctx.profile.settings.seekShortTimeDuration }); })') || {};
     const seekS = (settings.seek || 10000) / 1000;
     let state = playerState();
+    if (!check('still in the Player with the video (it did not end or close)', state && state.video && /#\/player\//.test(state.hash), state && { hash: state.hash, video: state.video }, 'run')) return;
     const before = state.video.currentTime;
     const started = Date.now();
     await key('RIGHT', 300);

@@ -3,13 +3,14 @@
 # (webos/tests/addon/catalog.js), each one matching what its debrid-like name says.
 #   webos/tests/e2e/make-media.sh [folder]      (default: $E2E_MEDIA_DIR or ~/webos-tv-sdk/media-tests/e2e)
 # Files already there are kept (delete one to make it again).
-#   e2e_1080p_h264_aac.mp4      1920x1080 H.264, AAC stereo, 120 s
+#   e2e_1080p_h264_aac.mp4      1920x1080 H.264, AAC stereo, $DURATION s (default 300)
 #   e2e_2160p_hevc_hdr10.mkv    3840x2160 HEVC Main10 with HDR10 (PQ, BT.2020, mastering display), E-AC3 5.1, 10 s:
 #                               for the list and the probe only (the emulator decodes in software, up to 1080p)
 #   e2e_720p_multi_subs.mkv     1280x720 H.264, audio AAC eng / AAC por / AC3 5.1 eng, embedded SRT eng and por
-#                               ("EN-SRT n" / "PT-SRT n", one per 2 s), 120 s
+#                               ("EN-SRT n" / "PT-SRT n", one per 2 s), $DURATION s
 #   e2e_addon_eng.srt, e2e_addon_por.srt   add-on subtitles of the MKV stream ("ADDON EN n" / "ADDON PT n")
-# Long enough for the whole Player part of the run (a clip that ends sends the Player back on its own);
+# Long enough for the whole Player part of the run, also in the c8 profile, where every step is about
+# three times slower (a clip that ends sends the Player back on its own: 120 s did end in c8);
 # GOP of 24 frames (1 s) so that seeks land near the asked time. The picture has a burned-in clock and
 # the file name, so the VM screenshots show which stream plays and whether it moves.
 set -euo pipefail
@@ -18,6 +19,7 @@ mkdir -p "$OUT"
 cd "$OUT"
 q=(-loglevel error -y -nostdin)
 gop=(-g 24 -keyint_min 24 -sc_threshold 0)
+DURATION="${DURATION:-300}"
 FONT="$(fc-match -f '%{file}' 'DejaVu Sans:bold' 2>/dev/null || true)"
 # testsrc2 with the time and a label drawn on it.
 picture() { # <size> <seconds> <label>
@@ -34,11 +36,11 @@ srt() { # <prefix> <seconds> <file>: one cue per 2 s
     done
 }
 
-[[ -s e2e_addon_eng.srt ]] || srt 'ADDON EN' 120 e2e_addon_eng.srt
-[[ -s e2e_addon_por.srt ]] || srt 'ADDON PT' 120 e2e_addon_por.srt
+[[ -s e2e_addon_eng.srt ]] || srt 'ADDON EN' "$DURATION" e2e_addon_eng.srt
+[[ -s e2e_addon_por.srt ]] || srt 'ADDON PT' "$DURATION" e2e_addon_por.srt
 
 if [[ ! -s e2e_1080p_h264_aac.mp4 ]]; then
-    ffmpeg "${q[@]}" -f lavfi -i "$(picture 1920x1080 120 '1080p H264 AAC')" -f lavfi -i "sine=frequency=440:duration=120" \
+    ffmpeg "${q[@]}" -f lavfi -i "$(picture 1920x1080 "$DURATION" '1080p H264 AAC')" -f lavfi -i "sine=frequency=440:duration=$DURATION" \
         -c:v libx264 "${gop[@]}" -profile:v high -pix_fmt yuv420p -crf 30 -c:a aac -b:a 128k \
         -metadata:s:a:0 language=eng -movflags +faststart e2e_1080p_h264_aac.mp4
 fi
@@ -54,10 +56,10 @@ fi
 if [[ ! -s e2e_720p_multi_subs.mkv ]]; then
     tmp="$(mktemp -d)"
     trap 'rm -rf "$tmp"' EXIT
-    srt 'EN-SRT' 120 "$tmp/en.srt"
-    srt 'PT-SRT' 120 "$tmp/pt.srt"
-    ffmpeg "${q[@]}" -f lavfi -i "$(picture 1280x720 120 '720p MULTI')" \
-        -f lavfi -i "sine=frequency=440:duration=120" -f lavfi -i "sine=frequency=880:duration=120" -f lavfi -i "sine=frequency=220:duration=120" \
+    srt 'EN-SRT' "$DURATION" "$tmp/en.srt"
+    srt 'PT-SRT' "$DURATION" "$tmp/pt.srt"
+    ffmpeg "${q[@]}" -f lavfi -i "$(picture 1280x720 "$DURATION" '720p MULTI')" \
+        -f lavfi -i "sine=frequency=440:duration=$DURATION" -f lavfi -i "sine=frequency=880:duration=$DURATION" -f lavfi -i "sine=frequency=220:duration=$DURATION" \
         -i "$tmp/en.srt" -i "$tmp/pt.srt" \
         -map 0:v -map 1:a -map 2:a -map 3:a -map 4 -map 5 \
         -c:v libx264 "${gop[@]}" -pix_fmt yuv420p -crf 30 -c:a:0 aac -c:a:1 aac -c:a:2 ac3 -ac:a:2 6 -c:s srt \
