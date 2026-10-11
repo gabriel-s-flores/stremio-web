@@ -246,7 +246,7 @@ const discover = async () => {
         } : {
             // A shorter last line: its nearest item, to the left.
             'next line, same column (or the nearest item of a shorter line)': a.gridIndex > b.gridIndex &&
-                (Math.abs(a.rect[0] - b.rect[0]) < 30 || (a.rect[0] < b.rect[0] && a.gridIndex === a.gridItems - 1)),
+                (Math.abs(a.rect[0] - b.rect[0]) < 30 || (a.rect[0] < b.rect[0] && a.gridIndex === b.gridItems - 1)),
             'item on screen': a.onScreen,
         }), { screenshot: index === 3 });
         if (s.gridItems > firstPage) loadedMore = true;
