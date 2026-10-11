@@ -11,4 +11,23 @@ Player do app no webOS (F5.1): o que o `Player` manda para o `stremio-video` na 
 ## Testes
 
 - `pnpm exec jest webos/lib/player`: argumentos do `load`, `removeElements`, os dois overrides contra dublês do upstream (`test/overrides.test.js`) e a guarda de deriva (`test/upstream.test.js`), que falha se o upstream mudar os pontos de que os overrides dependem.
-- Emulador: `webos/tests/player/emulator.sh` (ver o cabeçalho do script).
+- `pnpm exec jest webos/lib/player webos/tests/player/pipeline-state.test.js`: o guarda das trocas (`test/withPipelineGuard.test.js`) e o detector de pipeline travado.
+- Emulador: `webos/tests/player/emulator.sh` (F5.1) e `webos/tests/player/switches.sh` (F5.6: 6 cargas seguidas, trocando dentro do Player e saindo e voltando; argumento `off` para o A/B sem o guarda). Ver os cabeçalhos.
+
+## Trocas de stream (F5.6)
+
+**A trava do emulador.** No emulador, um pipeline de mídia (`starfish-media-pipeline`) às vezes nasce, faz o seu único GET e nunca chega ao `loadedmetadata` (`readyState` 0, só `loadstart`). Medido em 2026-10-10 com a sonda e o app (`webos/tests/player/pipeline-state.js`):
+- A thread de vídeo do pipeline (`vqueue:src`) fica em **laço ocupado no kernel**: estado R, ~75–80 % de `stime`, sem trocas de contexto voluntárias, e a de áudio nunca recebe dados. Num pipeline que toca, a mesma thread gasta tempo de usuário (decodificação).
+- O estado é **do sistema, não do app**: depois da primeira trava, todo pipeline novo do boot trava igual, mesmo após `location.reload()`, fechar e reabrir o app ou esperar 30 s. O app não lê o PmLog nem o `getActivePipelines` (negado), e não há root.
+- **Gatilho: liberar um pipeline que está renderizando.** `removeAttribute('src')` + `load()` com o vídeo tocando (o `unload` do `WebOsVideo`), ou pausar e liberar no mesmo instante: só 1 de 13 boots chegou a 6 cargas seguidas sem travar. Pausar e esperar 0,5–2 s antes de liberar, esconder o vídeo e esperar, ou liberar depois do `ended`: 12 de 12 boots, 72 de 72 cargas. O intervalo entre liberar e carregar o próximo não muda nada (liberando direto, 3, 6, 10 e 15 s travam igual; liberando em silêncio, 0 e 3 s passam). O caminho é o de vídeo: só áudio tocou 6 de 6, só vídeo travou, e o `muted` não resolve (3 de 7 boots). Tabela por boot: evidências da F5.6 (`sonda/resumo-boots.md`).
+- **A "1ª mídia que trava".** O `WebOsVideo` atribui `src` e, 0,3–1,5 s depois (quando aparece o `mediaId`), chama `videoElement.load()` de novo: isso destrói o pipeline que estava começando (já renderizando) e cria outro, o mesmo gatilho. São os "dois GETs 200 e nada mais" vistos nos roteiros das tarefas anteriores.
+
+**O que o app faz (`withPipelineGuard.js`, decorador do `WebOsVideo` por baixo do `withC8Tracks`):**
+- **Liberação silenciosa:** em `unload`, `destroy` e `load` por cima de um stream, pausa o `<video>` e só libera o pipeline `RELEASE_SETTLE_MS` (1 s) depois; na hora, se o vídeo já estava pausado ou terminado havia esse tempo. As ações que chegam nesse meio-tempo (o Player manda `unload` e `load` juntos) esperam e rodam na ordem. Uma troca de stream fica até 1 s mais lenta.
+- **Um pipeline por carga:** o `load()` que o `WebOsVideo` chama com o `src` já atribuído é descartado (pela especificação, atribuir `src` já inicia o carregamento). Na TV, isso evita um segundo GET ao link do debrid.
+- **Watchdog de início:** sem `loadedmetadata` 20 s depois da carga, uma recarga controlada do mesmo stream (liberação silenciosa e `src` de novo, mantendo o tempo inicial); se falhar de novo, erro crítico `STREAM_FAILED_TO_LOAD` (código 3), que o Player mostra na tela de erro, em vez de um carregando infinito. No emulador, um pipeline já travado não volta; a recarga é para uma trava passageira, que só a TV vai mostrar.
+- **Desligar:** `localStorage['webos.pipelineGuard'] = 'off'` (lido ao abrir o app) volta ao `WebOsVideo` puro: A/B no emulador e saída de emergência na Fase 8.
+
+**Para os roteiros das outras tarefas:** um cenário que trava em `readyState` 0 pode ser o emulador. Dentro do `emu-run`, `node webos/tests/player/pipeline-state.js` diz se há pipeline travado (saída 3); nesse caso o resultado é inconclusivo, não falha do app. Com o guarda, a 1ª mídia do boot deixa de criar dois pipelines.
+
+**Para a Fase 8 (TV):** confirmar na C8 que (1) trocas seguidas tocam com o guarda (`webos/tests/player/switches.sh` adaptado para a TV); (2) a pausa de 1 s antes de liberar não incomoda; (3) atribuir só o `src`, sem o `load()` extra, inicia a reprodução; (4) o watchdog de 20 s não dispara em links de debrid lentos (4K remux). Se algo disso falhar, `webos.pipelineGuard = off` volta ao comportamento do upstream.

@@ -174,7 +174,9 @@ Emulador oficial 4.0 em QEMU/KVM, mídia sintética gerada com ffmpeg e servida 
   - troca direta do `src`;
   - recarga da página.
 
-  O processo `starfish-media-pipeline` termina em menos de 2 s após a liberação. Tarefa 5.6 do plano.
+  O processo `starfish-media-pipeline` termina em menos de 2 s após a liberação.
+
+  **Causa medida na F5.6 (2026-10-10):** liberar um pipeline **enquanto ele renderiza** (o `unload` do `WebOsVideo`, ou pausar e liberar no mesmo instante) deixa o próximo pipeline com a thread de vídeo (`vqueue:src`) em laço ocupado no kernel. O estado é do sistema: vale para o resto do boot, mesmo com reload ou reabrindo o app. Pausar e esperar 0,5–2 s antes de liberar, ou liberar depois do `ended`: 72 de 72 cargas sem trava (12 boots), contra 1 de 13 boots sem trava liberando direto. O app passou a fazer isso (`webos/lib/player/withPipelineGuard.js`). Detalhes, detector (`webos/tests/player/pipeline-state.js`) e teste no app em `webos/lib/player/README.md`, "Trocas de stream".
 - **Placa de som:** com AC97 e backend `none`, a reprodução também travou. O emulador roda sem placa de som por padrão (`--sound pa` liga o som no PC).
 - **Rede:** a NIC PCnet da VM oficial travava sob transferências grandes no QEMU; com e1000 está estável.
 
