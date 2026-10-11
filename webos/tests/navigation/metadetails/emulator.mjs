@@ -269,7 +269,7 @@ const player = async () => {
     await openMovieFromBoard();
     let focused = await key('DOWN');
     // Tested in the page: the item's text has line breaks (evaluate keeps the last line of the output).
-    const onMulti = () => evaluate('/MULTI/.test(document.activeElement.textContent)') === 'true';
+    const onMulti = () => evaluate('/H264\\.MULTI\\.AC3/.test(document.activeElement.textContent)') === 'true';
     for (let i = 0; i < 16 && !onMulti(); i++) focused = await key('DOWN');
     const stream = evaluate('document.activeElement.getAttribute("href")');
     check('player: DOWN to the kit stream with several audio tracks (t2_multi.mkv)', focused.kind === 'stream' && onMulti(), focused);
@@ -284,7 +284,8 @@ const player = async () => {
     check('player: the audio menu of F5.4 opens (capture for the zoom check)', menu !== 'none', menu);
     shot('02-player-audio-menu');
     log(`audio menu: ${menu}`);
-    await key('BACK', 1200);
+    // Back closes the menu (when it opened), then Back leaves the Player.
+    if (menu !== 'none') await key('BACK', 1200);
     focused = await key('BACK', 3000);
     for (let i = 0; i < 10 && focused.kind !== 'stream'; i++) {
         await sleep(500);
