@@ -116,6 +116,34 @@ describe('useVideo.webos', () => {
         expect(upstreamVideo.load.mock.calls[1][0].stream.subtitles[0].url).toBe('http://127.0.0.1:47443/proxy?t=x&url=' + encodeURIComponent('https://debrid-link.com/a.srt'));
     });
 
+    it('shows the Player the add-on subtitle URLs, not the proxy ones, while the pipeline keeps the proxy ones (F3.7b)', () => {
+        const original = 'https://debrid-link.com/subs/a.srt?x=1&y=2';
+        const proxied = 'http://127.0.0.1:47443/proxy?t=x&url=' + encodeURIComponent(original);
+        const plain = { id: 'b', url: 'https://example.com/b.srt', lang: 'por' };
+        const video = renderHook(useVideo);
+        video.addExtraSubtitlesTracks([{ id: 'a', url: original, fallbackUrl: original, lang: 'eng' }, plain]);
+        // what the pipeline got
+        const [sent] = upstreamVideo.addExtraSubtitlesTracks.mock.calls[0];
+        expect(sent[0].url).toBe(proxied);
+        expect(sent[0].fallbackUrl).toBe(proxied);
+        // what the video state holds comes from the pipeline (proxy URLs); the Player reads it restored
+        const previous = upstreamVideo.state;
+        upstreamVideo.state = { ...previous, extraSubtitlesTracks: sent, selectedExtraSubtitlesTrackId: 'a' };
+        try {
+            const shown = renderHook(useVideo).state;
+            expect(shown.extraSubtitlesTracks[0]).toEqual({ id: 'a', url: original, fallbackUrl: original, lang: 'eng' });
+            expect(shown.extraSubtitlesTracks[1]).toBe(plain);
+            expect(shown.selectedExtraSubtitlesTrackId).toBe('a');
+            expect(JSON.stringify(shown)).not.toContain('127.0.0.1');
+            expect(upstreamVideo.state.extraSubtitlesTracks[0].url).toBe(proxied);
+            // nothing to restore: the very same tracks
+            upstreamVideo.state = { ...previous, extraSubtitlesTracks: [plain] };
+            expect(renderHook(useVideo).state.extraSubtitlesTracks[0]).toBe(plain);
+        } finally {
+            upstreamVideo.state = previous;
+        }
+    });
+
     it('keeps the other upstream commands', () => {
         const video = renderHook(useVideo);
         expect(video.setPaused).toBe(upstreamVideo.setPaused);

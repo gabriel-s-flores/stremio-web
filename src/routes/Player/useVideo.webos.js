@@ -4,14 +4,15 @@
 // Player already reads as "no speed control" (speed menu, shortcuts), and speed changes are ignored
 // (the C8 plays without sound at rates other than 1x). Add-on subtitles from hosts with a Let's
 // Encrypt certificate go through the tlsproxy (F5.5, webos/lib/subtitles); the errors the Player
-// receives (log, toast, error layer) have the token of those proxy URLs masked (F3.7b, webos/lib/redact).
+// receives (log, toast, error layer) have the token of those proxy URLs masked (F3.7b, webos/lib/redact),
+// and the state shows the add-on's own subtitle URLs, not the proxy ones.
 // The <video> stays in place until the pipeline guard releases it (F5.6, webos/lib/player/withPipelineGuard.js).
 
 const React = require('react');
 // The explicit extension resolves to the upstream hook, not to this file.
 const useUpstreamVideo = require('./useVideo.js');
 const { PLAYBACK_SPEED_SUPPORTED, toWebOsLoadArgs } = require('../../../webos/lib/player');
-const { proxifySubtitlesTracks } = require('../../../webos/lib/subtitles');
+const { proxifySubtitlesTracks, restoreSubtitlesTracksUrls } = require('../../../webos/lib/subtitles');
 const tlsProxy = require('../../../webos/tlsproxy/page').default;
 const { rememberStream } = require('../../../webos/lib/debrid-link');
 const { holdVideosInPlace } = require('../../../webos/lib/player/withPipelineGuard');
@@ -43,10 +44,13 @@ const useVideo = () => {
         upstreamAddExtraSubtitlesTracks(proxifySubtitlesTracks(tracks, tlsProxy.proxify));
     }, [upstreamAddExtraSubtitlesTracks]);
     const state = React.useMemo(() => {
-        return PLAYBACK_SPEED_SUPPORTED || video.state.playbackSpeed === null ?
+        const base = PLAYBACK_SPEED_SUPPORTED || video.state.playbackSpeed === null ?
             video.state
             :
             { ...video.state, playbackSpeed: null };
+        // The pipeline got the proxy URLs; the Player gets the ones the add-ons gave (F3.7b).
+        const extraSubtitlesTracks = restoreSubtitlesTracksUrls(base.extraSubtitlesTracks);
+        return extraSubtitlesTracks === base.extraSubtitlesTracks ? base : { ...base, extraSubtitlesTracks };
     }, [video.state]);
 
     const events = React.useMemo(() => withRedactedErrors(video.events), [video.events]);

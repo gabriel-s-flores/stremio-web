@@ -96,6 +96,38 @@ const proxifySubtitlesTracks = (tracks, proxify) => {
     return result.some((track, i) => track !== tracks[i]) ? result : tracks;
 };
 
+// The tlsproxy URL of a subtitle (http://127.0.0.1:<port>/proxy?t=<token>&url=<encoded>, see
+// webos/tlsproxy/client.js proxyUrlFor) back to the URL it stands for; anything else comes back as is.
+const PROXY_URL = /^http:\/\/127\.0\.0\.1:\d+\/proxy\?t=[\w-]*&url=([^&#]+)$/;
+const originalUrl = (url) => {
+    const match = typeof url === 'string' ? PROXY_URL.exec(url) : null;
+    if (!match) return url;
+    try {
+        return decodeURIComponent(match[1]);
+    } catch (error) {
+        return url;
+    }
+};
+
+// The add-on subtitles tracks of the video state with the URLs the add-on gave, not the proxy ones
+// (F3.7b): the Player shows them ("Copy subtitle URL", the link of "Download subtitles", which the
+// external links dialog turns into a QR), and a proxy URL is a loopback address with the proxy token.
+// The pipeline keeps getting the proxy URL (proxifySubtitlesTracks, on the way in). With nothing to
+// change, the same array comes back.
+const restoreSubtitlesTracksUrls = (tracks) => {
+    if (!Array.isArray(tracks)) return tracks;
+    const result = tracks.map((track) => {
+        if (!track || typeof track !== 'object') return track;
+        const url = originalUrl(track.url);
+        const fallbackUrl = originalUrl(track.fallbackUrl);
+        if (url === track.url && fallbackUrl === track.fallbackUrl) return track;
+        const restored = Object.assign({}, track, { url });
+        if (track.fallbackUrl !== undefined) restored.fallbackUrl = fallbackUrl;
+        return restored;
+    });
+    return result.some((track, i) => track !== tracks[i]) ? result : tracks;
+};
+
 module.exports = {
     WEBOS_COLORS,
     TRANSPARENT_KEY,
@@ -103,4 +135,6 @@ module.exports = {
     toWebOsTextColor,
     toWebOsBackgroundColor,
     proxifySubtitlesTracks,
+    originalUrl,
+    restoreSubtitlesTracksUrls,
 };

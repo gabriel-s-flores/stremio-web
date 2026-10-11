@@ -72,7 +72,7 @@ const proxyState = readJson('proxy-state.json', {});
 check('the certificate proxy was in use (mode proxy, service up)', proxyState.mode === 'proxy' && proxyState.ready === true, JSON.stringify(proxyState));
 
 const player_ = readJson('page-audit-player.json', {});
-check('the Player screen text and the storage do not hold the token', player_.tokenInVisibleText === false && Array.isArray(player_.localStorageKeysWithToken) && player_.localStorageKeysWithToken.length === 0, JSON.stringify(player_));
+check('with the subtitle context menu open: no token on screen or in storage, no proxy URL in any attribute (the menu\'s href is the add-on\'s)', player_.tokenInVisibleText === false && player_.attributesWithToken === 0 && Array.isArray(player_.localStorageKeysWithToken) && player_.localStorageKeysWithToken.length === 0, JSON.stringify(player_));
 const diag = readJson('page-audit-diagnostics.json', {});
 check('the diagnostics screen, its report object and the saved report do not hold the token',
     diag.tokenInReportBlock === false && diag.tokenInBodyText === false && diag.tokenInReportObject === false && diag.tokenInSavedReport === false && diag.reportBlockChars > 0, JSON.stringify(diag));
@@ -82,11 +82,17 @@ check('Save report stored the report', saved.includes('Stremio webOS diagnostics
 const toasts = readJson('toasts.json', []);
 check('the toast of the failed subtitle shows no token', !JSON.stringify(toasts).includes(token), JSON.stringify(toasts));
 
+const missing = process.env.MISSING_SUBTITLE_URL || 'https://debrid-link.com/zz-f37b-missing-subtitle.srt';
 const dialog = readJson('external-link-dialog.json', {});
-check('"Download subtitles" opens no link dialog (F3.4 keeps loopback links off)', dialog.externalLinkDialog === false && dialog.qr === false, JSON.stringify(dialog));
+check('"Download subtitles" opens the link dialog with the add-on\'s own URL, no proxy URL, no token (F3.4 + F3.7b)',
+    dialog.externalLinkDialog === true && dialog.qr === true && dialog.qrLabel === missing && !JSON.stringify(dialog).includes('127.0.0.1') && !JSON.stringify(dialog).includes(token), JSON.stringify(dialog));
+const copied = readJson('copied.json', {});
+check('"Copy subtitle URL" copies the add-on\'s own URL (not the proxy URL)', copied.copied === missing, JSON.stringify(copied));
+const dialogAudit = readJson('page-audit-dialog.json', {});
+check('with the dialog open: no token on screen or in storage, no proxy URL in any attribute', dialogAudit.tokenInVisibleText === false && dialogAudit.attributesWithToken === 0 && dialogAudit.localStorageKeysWithToken.length === 0, JSON.stringify(dialogAudit));
 const menu = readJson('context-menu.json', []);
 const download = menu.find((option) => /ownload/.test(option.title || ''));
-check('the subtitle context menu offers "Download subtitles" (so the F3.4 check ran on it)', !!download, JSON.stringify(menu));
+check('the subtitle context menu offers "Download subtitles" with the add-on\'s URL as its link', !!download && download.href === missing, JSON.stringify(menu));
 
 // What the page cannot filter: the browser's own network messages carry the url of the request, and
 // the proxy URL has the token. Not a check (no page code can change it, only the protocol of the

@@ -35,27 +35,30 @@ O texto fica como estava, com `t=***` no lugar do token: o log continua dizendo 
 `redactValue` olha strings, `Error` (mensagem, pilha e propriedades próprias), arrays e objetos; copia só o
 ramo que tinha o token. Nós do DOM, eventos, `Map`, buffers e funções ficam como estão.
 
-## Limites
+## Limitação conhecida (aceita)
 
 - **As mensagens de rede do próprio navegador não passam por `console.*`, e nenhum script da página as filtra.**
   Toda resposta `4xx/5xx` (e erro de conexão) de uma requisição tem uma linha `Failed to load resource: the server
   responded with a status of 404 (Not Found)` no console do inspetor, com a **URL da requisição** num campo à
   parte, e a do proxy leva o token. Medido no emulador (Chromium 53, `Console.messageAdded` com `source: network`):
   a legenda de addon que falha (404 pelo proxy) gera uma dessas linhas, e cada imagem que o proxy não acha
-  (por exemplo `yt3.ggpht.com` no Board) gera outra. Elas só aparecem para quem anexa o inspetor (`ares-inspect`
-  ou o CDP); nenhuma tela do app nem log do app as mostra. Só tirar o token da URL resolveria, e isso muda o
-  protocolo do proxy (F3.7), que a F3.7b não pode mudar. Caminho sugerido, para uma tarefa à parte: o serviço
-  entrega o token num cookie (`Set-Cookie` na resposta do `/status`) e o `fetch`/`<img>` o levam sozinhos, ou o
-  `fetch` usa um cabeçalho (com CORS) e só as imagens ficam com o parâmetro `t`.
+  (por exemplo `yt3.ggpht.com` no Board) gera outra. Elas só aparecem para quem anexa o inspetor (`ares-inspect` ou o
+  CDP, que exigem o modo desenvolvedor da TV); nenhuma tela do app nem log do app as mostra, e o token só vale enquanto
+  aquele processo do serviço vive. Tirar o token da URL mudaria o protocolo do proxy (F3.7), o que a F3.7b não faz:
+  o risco residual está **aceito e registrado**; nenhuma tarefa de protocolo foi aberta.
 - O filtro é um quadro a mais entre quem loga e o navegador: o DevTools passa a mostrar `redact/index.js` como
   origem de cada linha do `console`.
-- "Copy subtitle URL" e o `href` de "Download subtitles" do menu de legendas são do upstream e usam a URL do
-  estado do vídeo, que é a do proxy. "Download subtitles" não abre nada (F3.4: link para a própria TV; medido no
-  emulador: nem diálogo nem QR). O "Copy subtitle URL" **copia a URL do proxy, com o token**, para a área de
-  transferência do app (o polyfill `navigator.clipboard` da F3.4 existe no Chromium 53 do emulador; ela só é lida de
-  volta pelo evento `paste` do campo de busca). Não é log nem tela; fica como pendência, com a correção natural:
-  devolver ao Player a URL original da legenda no estado do vídeo (assim o QR do "Download" e a cópia ficam úteis).
 - Argumentos além de 5 níveis de profundidade ou 1000 valores num único argumento de `console` não são examinados.
+
+## "Copy subtitle URL" e "Download subtitles"
+
+O estado do vídeo guarda as legendas de addon com a URL do proxy (é o que o pipeline recebeu). O menu de legendas do
+upstream usa essa URL no `href` de "Download subtitles" e em "Copy subtitle URL". `useVideo.webos.js` entrega ao Player
+o `state` com `extraSubtitlesTracks` de volta com a URL **que o addon deu** (`restoreSubtitlesTracksUrls`, em
+`webos/lib/subtitles`: desfaz `proxyUrlFor` em `url` e `fallbackUrl`; sem nada a trocar, o mesmo array). O pipeline
+continua recebendo a URL do proxy (`proxifySubtitlesTracks`, na entrada de `load` e `addExtraSubtitlesTracks`), então a
+reprodução pelo proxy da F5.5 não muda. Efeito: "Copy subtitle URL" copia a URL real e "Download subtitles" abre o diálogo
+com QR da F3.4 com ela, sem token.
 
 ## Testes
 

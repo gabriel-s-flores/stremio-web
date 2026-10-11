@@ -9,7 +9,7 @@
 # What it does: starts the DevTools recorder (cdp-log.mjs: every console call with its arguments, the
 # browser's own log entries and the exceptions), plays t1_h264_aac.mp4 with a subtitle on
 # debrid-link.com that answers 404, picks it in the menu, opens its context menu and presses
-# "Download subtitles", opens the diagnostics screen and saves its report. Then token-check.mjs looks
+# "Copy subtitle URL" and "Download subtitles", opens the diagnostics screen and saves its report. Then token-check.mjs looks
 # for the token in everything it wrote. The token itself is never written to <output-dir>.
 # A control logs the proxy URL through the unfiltered console of an iframe: the recorder must see
 # the token there, or its silence would prove nothing.
@@ -134,27 +134,40 @@ sleep 4
 shot "$OUT/tela-legenda-falhou.png" || true
 cdp_eval "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[class*=\"toast\"]'), function(e) { return e.textContent; }))" > "$OUT/toasts.json" || true
 
-# The context menu of the add-on subtitle: "Download subtitles" must not show the link (F3.4).
-log "context menu: $(cdp_eval "(function(){ var b = document.querySelector('[class*=\"subtitles-menu-container\"] [class*=\"variant-option\"]'); if (!b) return null; b.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 600, clientY: 400 })); return b.getAttribute('title'); })()")"
-sleep 1
-shot "$OUT/tela-menu-contexto.png" || true
-cdp_eval "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[class*=\"context-menu-option\"]'), function(e) { return { title: e.getAttribute('title'), tag: e.tagName, text: e.textContent }; }))" > "$OUT/context-menu.json" || true
-log "press Download subtitles: $(cdp_eval "(function(){ var b = Array.prototype.filter.call(document.querySelectorAll('[class*=\"context-menu-option\"]'), function(e) { return /ownload/.test(e.getAttribute('title') || ''); })[0]; if (b) b.click(); return !!b; })()")"
-sleep 2
-shot "$OUT/tela-apos-download.png" || true
-cdp_eval "JSON.stringify({ externalLinkDialog: !!document.querySelector('[role=dialog]'), qr: !!document.querySelector('[role=img][aria-label]'), url: location.hash.length > 0 })" > "$OUT/external-link-dialog.json" || true
-
-# What the page shows, and where the token could still be: the text on screen, every attribute, the storage.
-cdp_eval "(function(){
+# The context menu of the add-on subtitle (F3.7b): the Player has the URL the add-on gave, not the proxy
+# one. "Copy subtitle URL" copies it, "Download subtitles" opens the external link dialog (F3.4) with it.
+open_context_menu() {
+    cdp_eval "(function(){ var b = document.querySelector('[class*=\"subtitles-menu-container\"] [class*=\"variant-option\"]'); if (!b) return null; b.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 600, clientY: 400 })); return b.getAttribute('title'); })()"
+}
+audit() { # <file>: where the token could be, with whatever is on screen now
+    cdp_eval "(function(){
     var token = '$TOKEN';
     var attributes = 0;
     Array.prototype.forEach.call(document.querySelectorAll('*'), function(e) {
-        Array.prototype.forEach.call(e.attributes, function(a) { if (a.value.indexOf(token) !== -1) attributes += 1; });
+        Array.prototype.forEach.call(e.attributes, function(a) { if (a.value.indexOf(token) !== -1 || a.value.indexOf('127.0.0.1') !== -1) attributes += 1; });
     });
     var storage = [];
     for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if ((localStorage.getItem(k) || '').indexOf(token) !== -1) storage.push(k); }
     return JSON.stringify({ clipboard: typeof navigator.clipboard, visibleText: document.body.innerText.length, tokenInVisibleText: document.body.innerText.indexOf(token) !== -1, attributesWithToken: attributes, localStorageKeysWithToken: storage });
-})()" > "$OUT/page-audit-player.json"
+})()" > "$1"
+}
+log "context menu: $(open_context_menu)"
+sleep 1
+shot "$OUT/tela-menu-contexto.png" || true
+cdp_eval "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[class*=\"context-menu-option\"]'), function(e) { return { title: e.getAttribute('title'), tag: e.tagName, text: e.textContent, href: e.getAttribute('href') }; }))" > "$OUT/context-menu.json" || true
+audit "$OUT/page-audit-player.json"
+# What "Copy subtitle URL" puts in the clipboard.
+cdp_eval "(function(){ window.__f37bCopied = null; var c = navigator.clipboard, write = c.writeText; c.writeText = function(text) { window.__f37bCopied = String(text); return write.apply(c, arguments); }; return 'hooked'; })()" > /dev/null || true
+log "press Copy subtitle URL: $(cdp_eval "(function(){ var b = Array.prototype.filter.call(document.querySelectorAll('[class*=\"context-menu-option\"]'), function(e) { return /Copy subtitle URL/.test(e.getAttribute('title') || ''); })[0]; if (b) b.click(); return !!b; })()")"
+sleep 1
+cdp_eval "JSON.stringify({ copied: window.__f37bCopied })" > "$OUT/copied.json" || true
+log "context menu again: $(open_context_menu)"
+sleep 1
+log "press Download subtitles: $(cdp_eval "(function(){ var b = Array.prototype.filter.call(document.querySelectorAll('[class*=\"context-menu-option\"]'), function(e) { return /ownload/.test(e.getAttribute('title') || ''); })[0]; if (b) b.click(); return !!b; })()")"
+sleep 2
+shot "$OUT/tela-apos-download.png" || true
+cdp_eval "(function(){ var d = document.querySelector('[role=dialog]'); var q = document.querySelector('[role=img][aria-label]'); return JSON.stringify({ externalLinkDialog: !!d, qr: !!q, dialogText: d ? d.textContent : null, qrLabel: q ? q.getAttribute('aria-label') : null }); })()" > "$OUT/external-link-dialog.json" || true
+audit "$OUT/page-audit-dialog.json"
 
 # The diagnostics screen (F3.6): shown report, then Save (localStorage + console.info). Opened from the
 # Board: from the Player, with the media still playing, the page stopped answering in 3 of 5 runs of the

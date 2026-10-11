@@ -6,7 +6,10 @@ const {
     toWebOsTextColor,
     toWebOsBackgroundColor,
     proxifySubtitlesTracks,
+    originalUrl,
+    restoreSubtitlesTracksUrls,
 } = require('../index');
+const { proxyUrlFor } = require('../../../tlsproxy/client');
 
 describe('parseColor', () => {
     it('reads the settings format and the CSS forms WebOsVideo knows', () => {
@@ -77,5 +80,53 @@ describe('proxifySubtitlesTracks', () => {
         expect(proxifySubtitlesTracks(tracks, proxify)).toBe(tracks);
         expect(proxifySubtitlesTracks(undefined, proxify)).toBeUndefined();
         expect(proxifySubtitlesTracks(tracks, null)).toBe(tracks);
+    });
+});
+
+describe('originalUrl and restoreSubtitlesTracksUrls (F3.7b)', () => {
+    const TOKEN = '0123456789abcdef0123456789abcdef';
+    const URLS = [
+        'https://debrid-link.com/subs/pt-BR.srt',
+        'https://debrid-link.com/a b/ç.srt?x=1&y=2#frag',
+        'https://image.tmdb.org/sub.ass?token=a%26b',
+    ];
+
+    it('undoes proxyUrlFor for any URL', () => {
+        URLS.forEach((url) => {
+            expect(originalUrl(proxyUrlFor(47443, TOKEN, url))).toBe(url);
+            expect(originalUrl(proxyUrlFor(1234, 'abc-DEF_9', url))).toBe(url);
+        });
+    });
+
+    it('leaves everything else as it is', () => {
+        ['https://example.com/a.srt', 'http://127.0.0.1:11470/subs.srt', 'http://127.0.0.1:47443/status?t=x', 'blob:abc', '', undefined, null, 5].forEach((value) => {
+            expect(originalUrl(value)).toBe(value);
+        });
+        const broken = 'http://127.0.0.1:47443/proxy?t=x&url=%E0%A4%A';
+        expect(originalUrl(broken)).toBe(broken);
+    });
+
+    it('restores url and fallbackUrl of the tracks and returns the same array when nothing changes', () => {
+        const [first, second] = URLS;
+        const tracks = [
+            { id: 'a', url: proxyUrlFor(47443, TOKEN, first), fallbackUrl: proxyUrlFor(47443, TOKEN, second), lang: 'eng' },
+            { id: 'b', url: 'https://example.com/b.srt', lang: 'por' },
+            { id: 'c', content: 'text', lang: 'spa' },
+        ];
+        const restored = restoreSubtitlesTracksUrls(tracks);
+        expect(restored[0]).toEqual({ id: 'a', url: first, fallbackUrl: second, lang: 'eng' });
+        expect(restored[1]).toBe(tracks[1]);
+        expect(restored[2]).toBe(tracks[2]);
+        expect(JSON.stringify(restored)).not.toContain(TOKEN);
+        expect(tracks[0].url).toContain(TOKEN);
+        const plain = [tracks[1], tracks[2]];
+        expect(restoreSubtitlesTracksUrls(plain)).toBe(plain);
+        expect(restoreSubtitlesTracksUrls(undefined)).toBe(undefined);
+    });
+
+    it('is the inverse of proxifySubtitlesTracks', () => {
+        const proxify = (url) => proxyUrlFor(47443, TOKEN, url);
+        const tracks = URLS.map((url, i) => ({ id: String(i), url, fallbackUrl: url, lang: 'eng' }));
+        expect(restoreSubtitlesTracksUrls(proxifySubtitlesTracks(tracks, proxify))).toEqual(tracks);
     });
 });
