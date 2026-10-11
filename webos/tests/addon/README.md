@@ -24,10 +24,14 @@ Os streams estão em [`catalog.js`](catalog.js), na ordem do addon, com o result
 - um não cacheado (`[RD download]`, nunca lido);
 - um torrent (`infoHash`, que a F6.1 esconde).
 
+### Conjunto `e2e` (F6.4)
+
+`--set e2e` troca a lista pela do roteiro ponta a ponta ([`../e2e/`](../e2e/README.md)): um REMUX DV P5 + TrueHD no topo (a C8 o leva para o fim), um REMUX sem nada no nome (só o probe o leva para baixo), 4K HEVC HDR10, 1080p H.264 AAC, um 720p MKV com três faixas de áudio, legendas embutidas e duas legendas de addon (no próprio stream), um link cujo resolvedor redireciona para um 410 (expirado) e um torrent. As mídias ficam em `e2e/` na raiz de mídia, ligadas de `~/webos-tv-sdk/media-tests/e2e` (`E2E_MEDIA_DIR`), geradas por [`../e2e/make-media.sh`](../e2e/make-media.sh).
+
 ## Uso
 
 ```bash
-node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <raiz de mídia>] [--info addon.json] [--delay <ms>]
+node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <raiz de mídia>] [--info addon.json] [--delay <ms>] [--set f62|e2e]
 ```
 
 - `--delay <ms>` põe um proxy na frente do servidor de mídia que segura cada pedido por esse tempo, para simular a latência de um debrid real. As URLs dos streams passam a apontar para o proxy.

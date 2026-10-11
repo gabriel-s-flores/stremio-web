@@ -3,8 +3,9 @@
 // or series id starting with "tt") whose URLs point at webos/tools/media-server.mjs, started here
 // on a media root with the kit media, the F0.10 headers and the rebuilt probe fixtures (media.js).
 //
-//   node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <media root>] [--info <file.json>] [--delay <ms>]
+//   node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <media root>] [--info <file.json>] [--delay <ms>] [--set f62|e2e]
 //
+// --set picks the streams (catalog.js SETS): f62 (default, the F6.2 list) or e2e (the end-to-end run, F6.4).
 // Ports default to free ones. --delay puts a proxy in front of the media server that holds every
 // request that long (debrid latency); the stream URLs then point at the proxy. --host is how the client reaches this machine (10.0.2.2 from the
 // emulator, 127.0.0.1 from a desktop browser). When ready, prints and writes (--info) a JSON with
@@ -19,7 +20,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
-const { STREAMS, MANIFEST, toStreams } = require('./catalog.js');
+const { SETS, MANIFEST, toStreams } = require('./catalog.js');
 const { prepareMedia } = require('./media.js');
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -64,10 +65,18 @@ const ownDir = option('dir', null) === null;
 const dir = path.resolve(ownDir ? fs.mkdtempSync(path.join(os.tmpdir(), 'webos-test-addon-')) : option('dir'));
 const infoFile = option('info', null);
 const delay = Number(option('delay', 0)) || 0;
+const set = option('set', 'f62');
+if (!SETS[set]) {
+    console.error(`erro: conjunto desconhecido ${set} (${Object.keys(SETS).join(', ')})`);
+    process.exit(1);
+}
+const STREAMS = SETS[set];
 
-const missing = prepareMedia(dir, STREAMS.filter((entry) => entry.media).map((entry) => entry.media));
+const files = STREAMS.filter((entry) => entry.media).map((entry) => entry.media)
+    .concat(...STREAMS.map((entry) => (entry.subtitles || []).map((subtitle) => subtitle.file)));
+const missing = prepareMedia(dir, files.filter((file, index) => files.indexOf(file) === index));
 if (missing.length > 0) {
-    console.warn(`aviso: mídias ausentes (rode webos/tools/gen-media.sh com GOP=24): ${missing.join(', ')}`);
+    console.warn(`aviso: mídias ausentes (rode webos/tools/gen-media.sh com GOP=24 ou webos/tests/e2e/make-media.sh): ${missing.join(', ')}`);
 }
 
 const media = spawn(process.execPath, [path.join(ROOT, 'webos', 'tools', 'media-server.mjs'), dir, String(mediaPort)], {
@@ -136,13 +145,13 @@ http.createServer((req, res) => {
     }
     const stream = /^\/stream\/(movie|series)\/(tt[^/]+)\.json$/.exec(url.pathname);
     if (stream) {
-        send(res, 200, { streams: toStreams(mediaUrl), cacheMaxAge: 0 });
+        send(res, 200, { streams: toStreams(mediaUrl, set), cacheMaxAge: 0 });
         return log(200);
     }
     send(res, 404, { err: 'not found' });
     return log(404);
 }).listen(port, '127.0.0.1', () => {
-    const info = { manifestUrl, mediaUrl, port, mediaPort, delay, dir, streams: STREAMS.length };
+    const info = { manifestUrl, mediaUrl, port, mediaPort, delay, dir, set, streams: STREAMS.length };
     if (infoFile) fs.writeFileSync(infoFile, JSON.stringify(info, null, 4));
     process.stdout.write(`${JSON.stringify(info)}\n`);
 });

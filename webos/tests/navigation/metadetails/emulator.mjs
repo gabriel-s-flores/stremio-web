@@ -16,6 +16,12 @@
 // player: a stream of the kit (plays in the emulator) opened from the list, the audio menu of the
 //   Player (opened with a click, the Player controls are not part of this task) and Back to the
 //   list: the focus must come back to the stream. One media scenario per boot.
+// Catalogs from the live Cinemeta (the walk expects a real column: a Trailer button first, a summary
+// that overflows); a movie row is looked for up and down (F6.4: the first live row became series).
+// The title of the day still decides the top of the column: with no IMDb button there, UP from the
+// first link goes on to the page header. FIXTURE=1 rewrites the guest profile with the fixture addon
+// of the visual regression (F2.7, webos/tests/screens/fixture) for a Board that never changes; the
+// walk's column checks do not fit its movie (no trailer), so it suits `player` and `restore`.
 
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -70,6 +76,7 @@ const check = (name, ok, detail) => {
 const key = async (name, wait = 800) => {
     spawnSync('node', [path.join(ROOT, 'webos/tools/remote.mjs'), '--port', EMU_REMOTE_PORT, '--delay', '0', name]);
     await sleep(wait);
+    ensureHelpers();
     const focused = focus();
     log(`${name.padEnd(5)} -> ${focused.kind} ${focused.index >= 0 ? `#${focused.index} ` : ''}"${focused.text || ''}" ${focused.section || ''} ${focused.hash || ''}`);
     return focused;
@@ -101,24 +108,64 @@ const setup = async () => {
     process.on('exit', () => server.kill());
     for (let i = 0; i < 50 && !fs.existsSync(info); i++) await sleep(200);
     const { manifestUrl } = JSON.parse(fs.readFileSync(info, 'utf8'));
+    let fixtureUrl = null;
+    if (process.env.FIXTURE === '1') {
+        const fixtureInfo = path.join(OUT, 'fixture.json');
+        fs.rmSync(fixtureInfo, { force: true });
+        const fixture = spawn('node', [path.join(ROOT, 'webos/tests/screens/fixture/server.mjs'), '--host', '10.0.2.2', '--info', fixtureInfo], { stdio: ['ignore', fs.openSync(path.join(OUT, 'fixture-server.log'), 'w'), 'inherit'] });
+        process.on('exit', () => fixture.kill());
+        for (let i = 0; i < 50 && !fs.existsSync(fixtureInfo); i++) await sleep(200);
+        fixtureUrl = JSON.parse(fs.readFileSync(fixtureInfo, 'utf8')).manifestUrl;
+    }
     const ipk = process.env.IPK || fs.readdirSync(path.join(ROOT, 'dist-webos')).filter((file) => file.endsWith('.ipk')).map((file) => path.join(ROOT, 'dist-webos', file))[0];
     log(`ipk ${ipk}`);
     spawnSync('ares-install', ['-d', EMU_DEVICE, ipk], { stdio: 'inherit' });
     spawnSync('ares-launch', ['-d', EMU_DEVICE, APP_ID], { stdio: 'inherit' });
     const board = await waitFor('!!window.core && document.querySelectorAll("[class*=meta-item-container]").length > 0', 120);
     check('setup: Board with catalogs', board, null);
+    if (fixtureUrl) {
+        // As webos/tests/screens/run does: the profile with the fixture addon alone, then a reload.
+        evaluate(fs.readFileSync(path.join(ROOT, 'webos/tests/screens/page.js'), 'utf8'));
+        const seeded = evaluate(`window.__screens.seed('${fixtureUrl}')`);
+        cdp('reload');
+        await sleep(3000);
+        const fixtureBoard = await waitFor('!!window.core && document.querySelectorAll("[class*=meta-item-container]").length > 0', 120);
+        check('setup: Board with the fixture catalogs (F2.7)', seeded === 'seeded' && fixtureBoard, { fixtureUrl, seeded });
+    }
+    // The boot memory peak may kill the page (OOM, WebAppMgr reloads it; F5.6/F7.1): wait for it to
+    // pass before the helpers and the addon go in, and check the page kept them (BOOT_SETTLE_S).
+    await sleep(Number(process.env.BOOT_SETTLE_S || 30) * 1000);
+    await waitFor('!!window.core && document.querySelectorAll("[class*=meta-item-container]").length > 0', 120);
     evaluate(fs.readFileSync(path.join(HERE, 'page.js'), 'utf8'));
     evaluate(fs.readFileSync(path.join(ROOT, 'webos/tests/streams/page.js'), 'utf8'));
     evaluate(`window.__f62.install('${manifestUrl}')`);
     check('setup: test addon installed', await waitFor('!!window.__f62.installed', 10), manifestUrl);
 };
 
-// From the Board with the remote: DOWN until a poster has the focus, OK.
+// The page lost the helpers (reloaded after an OOM of the renderer): put them back, say so.
+const ensureHelpers = () => {
+    if (evaluate('!!window.__f41c') === 'true') return;
+    log('the page reloaded: helpers installed again');
+    results.push({ name: 'event: the page reloaded during the run', ok: true, detail: evaluate('location.hash') });
+    evaluate(fs.readFileSync(path.join(HERE, 'page.js'), 'utf8'));
+    evaluate(fs.readFileSync(path.join(ROOT, 'webos/tests/streams/page.js'), 'utf8'));
+};
+
+// From the Board with the remote: DOWN until a movie poster has the focus (the live Cinemeta rows
+// change: the first row may be series, F6.4), OK.
 const openMovieFromBoard = async () => {
-    for (let i = 0; i < 6; i++) {
-        await key('DOWN');
-        if (evaluate('/meta-item-link/.test(String(document.activeElement && document.activeElement.className))') === 'true') break;
+    ensureHelpers();
+    // DOWN row by row; at the last row (the focus does not move), UP.
+    let direction = 'DOWN';
+    let previous = null;
+    for (let i = 0; i < 10; i++) {
+        await key(direction);
+        if (evaluate('/meta-item-link/.test(String(document.activeElement && document.activeElement.className)) && /^#\\/detail\\/movie\\//.test(document.activeElement.getAttribute("href"))') === 'true') break;
+        const current = evaluate('document.activeElement && document.activeElement.getAttribute("href")');
+        if (current === previous) direction = 'UP';
+        previous = current;
     }
+    check('board: the remote reaches a movie poster', /^#\/detail\/movie\//.test(evaluate('document.activeElement && document.activeElement.getAttribute("href")')), evaluate('document.activeElement && document.activeElement.getAttribute("href")'));
     await key('OK', 1500);
     const opened = await waitFor('/#\\/detail\\/movie\\//.test(location.hash) && JSON.parse(window.__f41c.counts()).items > 0', 40);
     check('movie: details opened from the Board with OK, streams listed', opened, evaluate('location.hash'));
@@ -175,8 +222,18 @@ const walk = async () => {
         previous = focused;
     }
     check('movie: the summary is reached with UP from the buttons and scrolled into view', summary !== null && summary.inView, summary);
+    // The top of the column depends on the live title: with an IMDb button (an external link, F3.4)
+    // UP stays on it; without one, UP from the first link goes on to the page header and this check
+    // fails (F6.4 run, kept as is: the focus leaves the column).
     check('movie: UP to the top of the column never leaves it for the list', !visited.includes('stream') && focused.section === 'meta', visited);
-    // The top may be the IMDb button (an external link, F3.4): the first genre or cast link below it.
+    if (focused.section !== 'meta') {
+        // Back into the column from the header: DOWN, and LEFT if that landed in the list.
+        focused = await key('DOWN');
+        check('movie: DOWN from the page header comes back to the column (not the list)', focused.section === 'meta', focused);
+        for (let i = 0; i < 3 && focused.section === 'list'; i++) focused = await key('LEFT');
+        for (let i = 0; i < 10 && focused.kind !== 'link'; i++) focused = await key('UP');
+    }
+    // The top may be the IMDb button: the first genre or cast link below it.
     for (let i = 0; i < 3 && focused.kind !== 'link'; i++) focused = await key('DOWN');
     shot('05-movie-column-top');
     check('movie: the order of the list did not change after the first key (F6.2 freeze)', evaluate('window.__f41c.order()') === order, null);

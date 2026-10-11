@@ -74,6 +74,12 @@ check('cada arquivo é lido por no máximo 3 pedidos Range', Object.keys(request
 check('o stream não cacheado ([RD download]) nunca é lido', probedIds.indexOf('uncached-hdr10') === -1, probedIds);
 const byId = (list, id) => list.filter((item) => idOfFile(item.file) === id)[0];
 const files = (list) => list.map((item) => item.file);
+// The order did not change from `reference` to the later `list`: the streams of an addon that
+// answers later (the guest profile has other addons) only come after the ones already on screen,
+// so `list` starts with the files of `reference` and may be longer, never shorter.
+const keepsPrefix = (reference, list) => list.length >= reference.length &&
+    JSON.stringify(files(list).slice(0, reference.length)) === JSON.stringify(files(reference));
+const withFocus = timeline.filter((entry) => entry.list.some((item) => item.focused));
 
 if (MODE === 'entrada') {
     const before = read('lista-entrada-antes.json');
@@ -87,12 +93,15 @@ if (MODE === 'entrada') {
     check('parado no item, o stream focado não muda enquanto os probes chegam (achado 1 da revisão c1)',
         samples.every((sample) => JSON.stringify(focusedAt(sample.list)) === JSON.stringify(focusedAt(entered))),
         samples.map((sample) => ({ t: sample.t, focused: focusedAt(sample.list) })));
-    // Streams of an addon that answers later may only come after the ones on screen.
-    const keepsOrder = (list) => JSON.stringify(files(list).slice(0, entered.length)) === JSON.stringify(files(entered));
+    // lista-entrada.json is read after the key, so the first focused lists of the timeline may come
+    // before it (shorter, if another addon answered in between): each focused list of the timeline
+    // keeps the prefix of the one before, lista-entrada.json keeps the prefix of the first one and
+    // the samples taken after it keep its prefix.
     check('a ordem na tela fica igual à da entrada (o que chega depois só entra no fim)',
-        samples.every((sample) => keepsOrder(sample.list)) &&
-        timeline.filter((entry) => entry.list.some((item) => item.focused)).every((entry) => keepsOrder(entry.list)),
-        { entered: files(entered), final: files(finalList) });
+        (withFocus.length === 0 || keepsPrefix(withFocus[0].list, entered)) &&
+        samples.every((sample) => keepsPrefix(entered, sample.list)) &&
+        withFocus.every((entry, index) => index === 0 || keepsPrefix(withFocus[index - 1].list, entry.list)),
+        { entered: files(entered), final: files(finalList), timeline: withFocus.map((entry) => ({ t: entry.t, items: entry.list.length })) });
     check('os probes chegaram com o foco parado (rótulos atualizados no lugar)',
         byId(finalList, 'remux-unnamed').source === 'probe' && byId(finalList, 'remux-unnamed').labels.join() === 'DV P5: cores erradas,TrueHD: sem som nesta TV',
         finalList.map((item) => ({ id: idOfFile(item.file), source: item.source, labels: item.labels })));
@@ -129,7 +138,7 @@ if (MODE === 'entrada') {
     const focused = afterFocus.filter((item) => item.focused)[0];
     check('foco pelo controle: o item parado ganha o probe (Atmos) e a ordem não muda',
         focused && idOfFile(focused.file) === 'web-unnamed-atmos' && focused.labels.join() === 'Atmos' && focused.source === 'probe' &&
-        JSON.stringify(afterFocus.map((item) => item.file)) === JSON.stringify(afterProbes.map((item) => item.file)),
+        keepsPrefix(afterProbes, afterFocus),
         { focused, before: ids(afterProbes), after: ids(afterFocus) });
     check('sem o foco/ordem congelada, o Atmos subiria o item (prova de que a ordem foi mantida)',
         probedOrder.indexOf('web-unnamed-atmos') < ids(afterFocus).indexOf('web-unnamed-atmos'),
@@ -138,8 +147,8 @@ if (MODE === 'entrada') {
     check('o controle entra na lista a partir da página (DOWN no body) no 1º item',
         entered.length === 1 && entered[0] === `0 ${afterProbes[0].file}`, entered);
     check('depois de entrar, a ordem não muda mais (nem com o probe do foco)',
-        timeline.filter((entry) => entry.list.some((item) => item.focused)).every((entry) => JSON.stringify(files(entry.list)) === JSON.stringify(files(afterProbes))),
-        { afterProbes: files(afterProbes) });
+        withFocus.every((entry) => keepsPrefix(afterProbes, entry.list)),
+        { afterProbes: files(afterProbes), timeline: withFocus.map((entry) => ({ t: entry.t, items: entry.list.length })) });
 }
 const errors = consoleData.errors.concat(consoleData.console.filter((entry) => entry.level === 'error'));
 check('sem erros de página no console', errors.length === 0, errors.slice(0, 10));

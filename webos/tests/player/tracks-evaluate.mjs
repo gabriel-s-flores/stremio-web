@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-// Evaluates the output of webos/tests/player/tracks.sh (F5.4) and exits non-zero on failure.
-//   node tracks-evaluate.mjs <output-dir> <switch-to>
-// The expected initial track is computed by the same libraries (probe of the local file + C8
-// rules) with the audio language of the app settings.
+// Evaluates the output of webos/tests/player/tracks.sh (F5.4, embedded subtitles as of F5.5) and
+// exits non-zero on failure.
+//   node tracks-evaluate.mjs <output-dir> <switch-to> [subtitles-to]
+// The expected initial audio track and the embedded subtitles (id, Luna index) are computed by the
+// same libraries (probe of the local file + C8 rules) with the languages of the app settings.
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -12,9 +13,9 @@ const ROOT = path.join(path.dirname(new URL(import.meta.url).pathname), '..', '.
 const { probe } = require(path.join(ROOT, 'webos', 'lib', 'header-probe'));
 const { bufferReadRange } = require(path.join(ROOT, 'webos', 'lib', 'header-probe', 'test', 'replay'));
 const { evaluate } = require(path.join(ROOT, 'webos', 'lib', 'c8-rules'));
-const { buildAudioTracks, chooseAudioTrack, trackIndex } = require(path.join(ROOT, 'webos', 'lib', 'tracks'));
+const { buildAudioTracks, buildSubtitleTracks, chooseAudioTrack, trackIndex } = require(path.join(ROOT, 'webos', 'lib', 'tracks'));
 
-const [dir, switchTo] = process.argv.slice(2);
+const [dir, switchTo, subtitlesTo = 'por'] = process.argv.slice(2);
 const read = (file) => fs.readFileSync(path.join(dir, file), 'utf8');
 const readJson = (file, fallback) => {
     try {
@@ -45,6 +46,12 @@ const fileProbe = await probe(bufferReadRange(new Uint8Array(fs.readFileSync(pat
 const audioLanguage = settings.audioLanguage || 'eng';
 const expectedTracks = buildAudioTracks({ probe: fileProbe, rules: evaluate({ probe: fileProbe }), elementTracks: [], selectedIndex: null });
 const expectedInitial = chooseAudioTrack({ tracks: expectedTracks, probe: fileProbe, stream: null, languages: [audioLanguage] });
+// Embedded subtitles: the Player's own choice is the first listed one (complete before forced) in
+// the subtitles language of the settings; the manual one is the first in <subtitles-to>.
+const subtitlesLanguage = settings.subtitlesLanguage || 'eng';
+const expectedSubtitles = buildSubtitleTracks({ probe: fileProbe, selectedId: null });
+const autoSubtitles = expectedSubtitles.filter((track) => track.lang === subtitlesLanguage)[0] || null;
+const chosenSubtitles = expectedSubtitles.filter((track) => track.lang === subtitlesTo)[0] || null;
 
 const startup = readJson('startup.json', {});
 check('playback starts', startup.secondsToPlayback !== null && startup.secondsToPlayback !== undefined, startup);
@@ -91,15 +98,38 @@ check('the app never subscribes to com.webos.media', mediaSubscribe.length === 0
 // the Player, F5.5); the audio switch is done on the element only.
 check('the audio switch did not use Luna selectTrack', !luna.luna.some((c) => c.method === 'selectTrack' && (c.parameters || {}).type === 'audio'),
     luna.luna.map((c) => c.uri + '/' + c.method + (c.method === 'selectTrack' ? ' ' + JSON.stringify(c.parameters) : '')));
-// Embedded subtitles are listed only (F5.5 shows them): neither the Player's automatic choice nor
-// the manual one in the menu may turn them on through Luna, and the menu stays coherent (OFF).
-const subtitleLuna = luna.luna.filter((c) => c.method === 'setSubtitleEnable' || (c.method === 'selectTrack' && (c.parameters || {}).type === 'text'));
-check('embedded subtitles are not turned on in the pipeline (no setSubtitleEnable, no selectTrack of text)', subtitleLuna.length === 0, subtitleLuna);
-check('the subtitles menu stays on OFF (nothing shown, nothing selected)', subtitlesMenu.length > 0 && subtitlesMenu.filter((entry) => entry.selected).map((entry) => entry.title).join() === 'OFF', subtitlesMenu);
-check('the embedded subtitle choices were dropped by the decorator (console)', consoleLog.some((entry) => /embedded subtitles EMBEDDED_\d+ listed only/.test(entry.text)),
-    consoleLog.filter((entry) => /embedded subtitles/.test(entry.text)).map((entry) => entry.text));
+// Embedded subtitles (F5.5): turned on through Luna (setSubtitleEnable true + selectTrack text with
+// the index among the text tracks), first by the Player (subtitles language of the settings), then by
+// the menu choice; the menu shows each choice.
+const textSelects = luna.luna.filter((c) => c.method === 'selectTrack' && (c.parameters || {}).type === 'text');
+const enables = luna.luna.filter((c) => c.method === 'setSubtitleEnable').map((c) => (c.parameters || {}).enable);
+const selectedLanguage = (entries) => entries.filter((entry) => entry.selected).map((entry) => entry.lang).join();
+const throughLuna = (track) => track && consoleLog.some((entry) => entry.text.indexOf('[webos] subtitles: embedded ' + track.id + ' (' + track.lang + ', ' + track.codec + ') through Luna, index ' + track.lunaIndex) !== -1);
+const subtitlesConsole = consoleLog.filter((entry) => /\[webos\] subtitles/.test(entry.text)).map((entry) => entry.text);
+const subtitlesMenuAfter = readJson('subtitles-menu-after-choice.json', []);
+check('the Player turned on the embedded subtitles in the settings language (' + subtitlesLanguage + ') by itself: the menu shows it selected',
+    autoSubtitles && selectedLanguage(subtitlesMenu) === subtitlesLanguage, { expected: autoSubtitles && autoSubtitles.id, menu: subtitlesMenu });
+check('Luna: subtitles turned on (setSubtitleEnable true)', enables.includes(true), enables);
+check('Luna: the automatic choice = selectTrack text index ' + (autoSubtitles && autoSubtitles.lunaIndex), autoSubtitles && textSelects.length > 0 &&
+    textSelects[0].parameters.index === autoSubtitles.lunaIndex, textSelects.map((c) => c.parameters));
+check('console: the automatic choice through Luna (' + (autoSubtitles && autoSubtitles.id) + ')', throughLuna(autoSubtitles), subtitlesConsole);
+check('the menu shows the subtitles chosen by hand (' + subtitlesTo + ') as selected', chosenSubtitles && selectedLanguage(subtitlesMenuAfter) === subtitlesTo,
+    { expected: chosenSubtitles && chosenSubtitles.id, menu: subtitlesMenuAfter });
+check('Luna: the manual choice = selectTrack text index ' + (chosenSubtitles && chosenSubtitles.lunaIndex) + ', subtitles still on', chosenSubtitles &&
+    textSelects.length > 1 && textSelects[textSelects.length - 1].parameters.index === chosenSubtitles.lunaIndex && enables[enables.length - 1] === true,
+{ selects: textSelects.map((c) => c.parameters), enables });
+check('console: the manual choice through Luna (' + (chosenSubtitles && chosenSubtitles.id) + ')', throughLuna(chosenSubtitles), subtitlesConsole);
 check('no page errors', luna.errors.length === 0, luna.errors);
 
 const ok = checks.every((c) => c.ok);
-console.log(JSON.stringify({ ok, checks }, null, 2));
+// A page killed for memory (dmesg) makes a failed run inconclusive (emulator), as in switches-evaluate.mjs.
+let systemLog = '';
+try {
+    systemLog = read('system.log');
+} catch (_e) {
+    // Older runs have no system.log.
+}
+const oom = systemLog.split('\n').filter((line) => /out of memory|killed process|oom-killer|oom_reaper/i.test(line));
+const verdict = ok ? 'pass' : oom.length > 0 ? 'inconclusive (emulator)' : 'fail';
+console.log(JSON.stringify({ ok, verdict, passed: checks.filter((c) => c.ok).length, total: checks.length, oom, checks }, null, 2));
 process.exit(ok ? 0 : 1);

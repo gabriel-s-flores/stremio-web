@@ -2,15 +2,20 @@
 # F5.4 check in the emulator: the Player's audio menu lists the tracks of t2_multi.mkv (AAC eng,
 # AAC por, AC-3 5.1 eng) from the header probe with their language, the initial track follows the
 # C8 rules, and a menu choice switches the audio (audioTracks[i].enabled) with the video still
-# playing. One media scenario per boot. Run inside a pool reservation, after `pnpm webos:package`:
-#   webos/tools/emu-run --timeout 15 -- webos/tests/player/tracks.sh <output-dir> [file] [switch-to]
+# playing. Embedded subtitles (F5.5): the Player turns on the one in the subtitles language of the
+# settings by itself (eng: setSubtitleEnable true + Luna selectTrack text index 0), and a menu choice
+# after the audio switch turns on another one (Portuguese: index 1). One media scenario per boot. Run
+# inside a pool reservation, after `pnpm webos:package`:
+#   webos/tools/emu-run --timeout 15 -- webos/tests/player/tracks.sh <output-dir> [file] [switch-to] [subtitles-to]
 # <file> (default t2_multi.mkv) is served from $MEDIA_DIR through /redirect/<file> (302, like a
-# debrid link); <switch-to> is the menu entry chosen after the start (default EMBEDDED_1, Portuguese).
+# debrid link); <switch-to> is the audio menu entry chosen after the start (default EMBEDDED_1,
+# Portuguese); <subtitles-to> is the subtitles language chosen in the menu then (default por).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
-OUT="${1:?usage: tracks.sh <output-dir> [file] [switch-to]}"
+OUT="${1:?usage: tracks.sh <output-dir> [file] [switch-to] [subtitles-to]}"
 FILE="${2:-t2_multi.mkv}"
 SWITCH_TO="${3:-EMBEDDED_1}"
+SUBTITLES_TO="${4:-por}"
 MEDIA_DIR="${MEDIA_DIR:-$HOME/webos-tv-sdk/media-tests/suite}"
 mkdir -p "$OUT"
 OUT="$(cd "$OUT" && pwd)"
@@ -126,22 +131,33 @@ sample menu-switched
 "${CDP[@]}" screenshot "$OUT/tela-menu-audio-trocado.png" || true
 "${EMU[@]}" screenshot "$OUT/tela-vm-menu-audio-trocado.png" || true
 
-# Embedded subtitles: listed (by language) in the subtitles menu once the video plays; the Player's
-# own choice (subtitles language of the settings) is dropped by the decorator until F5.5.
+# Luna calls and console so far, kept in case the page does not survive the subtitles menu.
+cdp_eval "JSON.stringify({ luna: window.__f51.luna, errors: window.__f51.errors })" > "$OUT/luna-before-subtitles.json" || true
+cdp_eval "JSON.stringify(window.__f51.console)" > "$OUT/console-before-subtitles.json" || true
+
+# Embedded subtitles (F5.5): listed (by language) in the subtitles menu once the video plays, and the
+# Player has already turned on the one in the subtitles language of the settings through Luna.
 echo "open subtitles menu: $(click_control "$SUBTITLES_ICON")" | tee -a "$OUT/actions.log"
 sleep 1
 cdp_eval "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[class*=\"subtitles-menu-container\"] [class*=\"language-option\"]'), function(b) { return { lang: b.getAttribute('data-lang'), title: b.getAttribute('title'), selected: /(^| )selected( |$)/.test(b.className) }; }))" > "$OUT/subtitles-menu.json" || true
 "${CDP[@]}" screenshot "$OUT/tela-menu-legendas.png" || true
-# Choosing an embedded subtitle by hand: listed only until F5.5, so nothing reaches Luna.
-echo "choose embedded subtitles eng: $(cdp_eval "(function(){ var b = document.querySelector('[class*=\"subtitles-menu-container\"] [data-lang=\"eng\"]'); if (b) b.click(); return !!b; })()")" | tee -a "$OUT/actions.log"
+# Another embedded subtitle chosen by hand: Luna selectTrack text with its index (WebOsVideo sends it
+# 500 ms after the choice).
+echo "choose embedded subtitles $SUBTITLES_TO: $(cdp_eval "(function(){ var b = document.querySelector('[class*=\"subtitles-menu-container\"] [data-lang=\"$SUBTITLES_TO\"]'); if (b) b.click(); return !!b; })()")" | tee -a "$OUT/actions.log"
 sleep 2
 cdp_eval "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[class*=\"subtitles-menu-container\"] [class*=\"language-option\"]'), function(b) { return { lang: b.getAttribute('data-lang'), title: b.getAttribute('title'), selected: /(^| )selected( |$)/.test(b.className) }; }))" > "$OUT/subtitles-menu-after-choice.json" || true
 "${CDP[@]}" screenshot "$OUT/tela-menu-legendas-depois-da-escolha.png" || true
 
-cdp_eval "JSON.stringify({ luna: window.__f51.luna, errors: window.__f51.errors })" > "$OUT/luna.json"
-cdp_eval "JSON.stringify(window.__f51.console)" > "$OUT/console.json"
-cdp_eval "JSON.stringify(performance.getEntriesByType('resource').map(function(e) { return e.name; }).filter(function(n) { return !/^file:/.test(n); }))" > "$OUT/requests.json"
+"${EMU[@]}" screenshot "$OUT/tela-vm-legendas-depois-da-escolha.png" || true
+# A page that reloaded has no window.__f51: the evaluation then fails on the missing data, with the
+# pipeline logs below still collected.
+cdp_eval "JSON.stringify({ luna: window.__f51.luna, errors: window.__f51.errors })" > "$OUT/luna.json" || true
+cdp_eval "JSON.stringify(window.__f51.console)" > "$OUT/console.json" || true
+cdp_eval "JSON.stringify(performance.getEntriesByType('resource').map(function(e) { return e.name; }).filter(function(n) { return !/^file:/.test(n); }))" > "$OUT/requests.json" || true
 "${SSH[@]}" 'for f in $(find /tmp/var/log /tmp -maxdepth 3 -type f -newer /tmp/f54-marker 2>/dev/null); do echo "=== $f"; tail -n 3000 "$f"; done; echo "=== ps"; ps w 2>/dev/null | grep -i -E "starfish|media|ums|pmlog" | grep -v grep' > "$OUT/pipeline.log" 2>&1 || true
 grep -i -E 'audio|track|select|lang' "$OUT/pipeline.log" > "$OUT/pipeline-audio.log" || true
+# The 1 GB VM's OOM killer kills the page (WebAppMgr reloads it, without window.__f51): that run is
+# the emulator's failure, not the app's (as in switches.sh).
+"${SSH[@]}" 'free; dmesg 2>&1 | grep -iE "out of memory|killed process|oom|umediaserver" | tail -n 20' > "$OUT/system.log" 2>&1 || true
 
-node "$ROOT/webos/tests/player/tracks-evaluate.mjs" "$OUT" "$SWITCH_TO" | tee "$OUT/resultado.json"
+node "$ROOT/webos/tests/player/tracks-evaluate.mjs" "$OUT" "$SWITCH_TO" "$SUBTITLES_TO" | tee "$OUT/resultado.json"
