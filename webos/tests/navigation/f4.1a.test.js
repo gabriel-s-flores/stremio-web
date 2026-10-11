@@ -621,6 +621,27 @@ describe('F4.4', () => {
         expect(list().scrollTop).toBe(50);
     });
 
+    test('a list that left the page forgets its peek: put back, its row loading later does not realign it (F7.3)', async () => {
+        const container = board([row('a', 2, 0).replace('data-height="100"', 'data-height="220"'), placeholderRow(230)]);
+        focus = createScreenFocus(container, boardScreen);
+        const links = posters(container);
+        links[0].focus();
+        expect(press(DOWN).defaultPrevented).toBe(true);
+        expect(list().scrollTop).toBe(38);
+        // The list goes away with the peek pending, and comes back (its mutation is seen in between).
+        const gone = list();
+        gone.remove();
+        await flush();
+        container.appendChild(gone);
+        await flush();
+        links[0].focus();
+        gone.scrollTop = 50;
+        // The row it had peeked at loads: no peek is left to realign (the old one is not this list's now).
+        gone.children[1].outerHTML = messageRow(230);
+        await flush();
+        expect(list().scrollTop).toBe(50);
+    });
+
     test('Search: a one letter query is a query (its button is the clear one)', () => {
         const container = search([placeholderRow(0)]);
         container.querySelector('input').value = 'b';

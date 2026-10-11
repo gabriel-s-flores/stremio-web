@@ -800,6 +800,51 @@ describe('F4.4 c2: M2, the page keeps its own input tracking', () => {
         expect($('list').hasAttribute('data-focus-visible-added')).toBe(true);
     });
 
+    // jsdom cannot make a trusted event (isTrusted is false on every dispatched one, and it cannot be
+    // redefined), and the tracking only listens to the trusted ones. So the tracking is installed again
+    // here with window.addEventListener wrapped: its mouse listeners see isTrusted true, as in Chromium
+    // (F7.3: without this the test above passed with a `mousemove` listener that sets the pointer).
+    const withTrustedMouse = (run) => {
+        const original = window.addEventListener;
+        const added = [];
+        delete window.__webosMetaDetailsInput;
+        window.addEventListener = function addEventListener(type, listener, options) {
+            if (type !== 'mousedown' && type !== 'mousemove') return original.call(this, type, listener, options);
+            const wrapped = (event) => listener({ isTrusted: true, type: event.type });
+            added.push([type, wrapped, options]);
+            return original.call(this, type, wrapped, options);
+        };
+        try {
+            run();
+        } finally {
+            window.addEventListener = original;
+            added.forEach(([type, wrapped, options]) => window.removeEventListener(type, wrapped, options));
+            delete window.__webosMetaDetailsInput;
+        }
+    };
+
+    it('a trusted mousedown is pointer use (the control of the next test: the wrapper makes trusted events)', () => {
+        withTrustedMouse(() => {
+            navigation = createMetaDetailsNavigation({ root: $('root'), window });
+            navigation.setRouteActive(true);
+            window.dispatchEvent(new MouseEvent('mousedown', { clientX: 5, clientY: 5 }));
+            navigation.setLocation('/detail/movie/tt1/tt1', 'PUSH');
+            navigation.tick();
+            expect(document.activeElement).toBe(document.body);
+        });
+    });
+
+    it('a trusted mousemove (Chromium, the layout moving under a still cursor) is not pointer use', () => {
+        withTrustedMouse(() => {
+            navigation = createMetaDetailsNavigation({ root: $('root'), window });
+            navigation.setRouteActive(true);
+            window.dispatchEvent(new MouseEvent('mousemove', { clientX: 5, clientY: 5 }));
+            navigation.setLocation('/detail/movie/tt1/tt1', 'PUSH');
+            navigation.tick();
+            expect(document.activeElement).toBe($('list'));
+        });
+    });
+
     it('the cursor of the Magic Remote showing is pointer use until a key', () => {
         document.dispatchEvent(new CustomEvent('cursorStateChange', { detail: { visibility: true } }));
         open();
