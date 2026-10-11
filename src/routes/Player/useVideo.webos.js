@@ -11,6 +11,7 @@ const useUpstreamVideo = require('./useVideo.js');
 const { PLAYBACK_SPEED_SUPPORTED, toWebOsLoadArgs } = require('../../../webos/lib/player');
 const { proxifySubtitlesTracks } = require('../../../webos/lib/subtitles');
 const tlsProxy = require('../../../webos/tlsproxy/page').default;
+const { rememberStream } = require('../../../webos/lib/debrid-link');
 
 // Keeps the native rate: setPlaybackSpeed(2) from the "hold for 2x" gesture does nothing.
 const ignorePlaybackSpeed = () => { /* no-op */ };
@@ -19,6 +20,8 @@ const useVideo = () => {
     const video = useUpstreamVideo();
     const upstreamLoad = video.load;
     const load = React.useCallback((args, options) => {
+        // The Error layer reads it (F6.3): the Player state has no stream once the video unloaded.
+        rememberStream(args && args.stream);
         const subtitles = args && args.stream ? args.stream.subtitles : undefined;
         const proxied = proxifySubtitlesTracks(subtitles, tlsProxy.proxify);
         const webOsArgs = proxied !== subtitles ? { ...args, stream: { ...args.stream, subtitles: proxied } } : args;

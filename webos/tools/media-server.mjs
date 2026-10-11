@@ -3,6 +3,9 @@
 // CORS aberto e uma rota que imita links de debrid (302 para o arquivo).
 //   node media-server.mjs [pasta] [porta]      (padrão: ~/webos-tv-sdk/media-tests/files, 8099)
 //   No emulador: http://10.0.2.2:8099/<arquivo>  ou  http://10.0.2.2:8099/redirect/<arquivo>
+//   Links de debrid com problema (F6.3): /status/<código>/<arquivo> responde com esse HTTP (403, 410, 404,
+//   429, 503…); /drop/<arquivo> derruba a conexão (erro de rede). Ambos podem vir depois de /redirect/,
+//   como num link que redireciona para um servidor que falha: /redirect/status/403/<arquivo>.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -25,6 +28,17 @@ http.createServer((req, res) => {
         res.writeHead(302, { Location: target });
         res.end();
         return log(302, target);
+    }
+
+    const failing = /^\/status\/(\d{3})(\/|$)/.exec(url.pathname);
+    if (failing) {
+        res.writeHead(Number(failing[1]), { 'Content-Type': 'text/plain' });
+        res.end(`simulated ${failing[1]}`);
+        return log(Number(failing[1]), 'simulated');
+    }
+    if (url.pathname.startsWith('/drop/')) {
+        req.socket.destroy();
+        return log('dropped');
     }
 
     const file = path.join(root, decodeURIComponent(url.pathname));
