@@ -30,6 +30,9 @@ jest.mock('../../../../webos/tlsproxy/page', () => ({
     },
 }));
 
+// The remote hook (F5.7) needs the app's window and webos/back: webos/lib/player-remote/test covers it.
+jest.mock('../../player-remote/usePlayerRemote', () => jest.fn());
+
 // Same parts of the upstream render the override relies on: the speed button opens the menu
 // through onClick, and the seek bar label divides the remaining time by playbackSpeed.
 jest.mock('../../../../src/routes/Player/ControlBar/ControlBar.js', () => {
@@ -38,7 +41,7 @@ jest.mock('../../../../src/routes/Player/ControlBar/ControlBar.js', () => {
     const ControlBar = MockReact.forwardRef((props, ref) => h('div', { ref, id: 'bar' },
         h('span', { id: 'remaining' }, String((props.duration - props.time) / props.playbackSpeed)),
         h('div', { id: 'buttons' },
-            h('button', { id: 'play', onClick: props.onPlayRequested }),
+            h('button', { id: 'play', onClick: props.onPlayRequested, tabIndex: -1 }),
             h('button', { id: 'speed', onClick: props.onToggleSpeedMenu, className: props.playbackSpeed === null ? 'disabled' : '' }),
             h('button', { id: 'audio', onClick: props.onToggleAudioMenu }),
         ),
@@ -163,6 +166,18 @@ describe('ControlBar.webos', () => {
 
     it('renders the bar at the native rate, so the remaining time is a number (not Infinity)', () => {
         expect(markup()).toContain('<span id="remaining">15000</span>');
+    });
+
+    it('makes the buttons the upstream keeps out of the tab order focusable (F5.7)', () => {
+        expect(markup()).toMatch(/<button id="play" tabindex="0">/);
+    });
+
+    it('installs the Player remote with the bar props', () => {
+        const usePlayerRemote = require('../../player-remote/usePlayerRemote');
+        usePlayerRemote.mockClear();
+        markup();
+        expect(usePlayerRemote).toHaveBeenCalledTimes(1);
+        expect(usePlayerRemote.mock.calls[0][0]).toEqual(props);
     });
 
     it('keeps the upstream propTypes', () => {
