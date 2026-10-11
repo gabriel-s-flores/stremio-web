@@ -58,6 +58,14 @@ Player. Nos outros casos passa adiante: com menu, gaveta ou popup aberto, a pont
 o de cima; pausado ou com a barra escondida, a camada de rota sai do Player. O STOP pula este passo
 (`context.source === 'stop'`), mas um menu aberto ainda é fechado antes pela ponte.
 
+## Próximo episódio
+
+O popup e o botão "próximo" da barra chamam o `onNextVideoRequested` do upstream; com o `bingeGroup` igual
+nos dois episódios o core monta o deep link do Player e o próximo toca direto (senão, abre a lista de
+streams dele). Com o guarda de pipeline da F5.6, o episódio novo começava na posição do anterior (o
+`time` do `<video>` segurado chegava ao core como posição do novo): corrigido no `useVideo.webos.js`
+(ver `webos/lib/player/README.md`, "O tempo do stream que sai").
+
 ## Magic Remote
 
 Os eventos de mouse continuam com o upstream: o ponteiro mostra a barra, clica nos botões e arrasta o
