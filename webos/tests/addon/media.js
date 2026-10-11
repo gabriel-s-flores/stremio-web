@@ -1,4 +1,4 @@
-// Media root of the test addon (see catalog.js): kit media and F0.10 headers linked, header probe
+// Media root of the test addon (see catalog.js): kit media, F0.10 headers and e2e media linked, header probe
 // fixtures rebuilt at their original size. A fixture .bin holds the recorded byte ranges back to
 // back (`pieces` in its .json); here each piece goes back to its offset in a sparse file, so the
 // probe reads over HTTP exactly the bytes it read when the fixture was recorded.
@@ -11,6 +11,9 @@ const ROOT = path.resolve(__dirname, '..', '..', '..');
 const FIXTURES_DIR = path.join(ROOT, 'webos', 'lib', 'header-probe', '__fixtures__');
 const HEADERS_DIR = path.join(ROOT, 'webos', 'tests', 'media', 'headers');
 const KIT_DIR = process.env.MEDIA_DIR || path.join(os.homedir(), 'webos-tv-sdk', 'media-tests', 'suite');
+// Media of the end-to-end run (F6.4): webos/tests/e2e/make-media.sh.
+const E2E_DIR = process.env.E2E_MEDIA_DIR || path.join(os.homedir(), 'webos-tv-sdk', 'media-tests', 'e2e');
+const SOURCES = { kit: KIT_DIR, headers: HEADERS_DIR, e2e: E2E_DIR };
 
 // fixtures/<id>.<ext> -> <id>
 const fixtureIdOf = (media) => path.basename(media).replace(/\.[^.]+$/, '');
@@ -39,20 +42,20 @@ const link = (source, target) => {
 };
 
 // Fills `dir` with the files of `media` (catalog paths). Returns the ones that could not be made
-// (kit media not generated yet: webos/tools/gen-media.sh).
+// (kit media not generated yet: webos/tools/gen-media.sh; e2e media: webos/tests/e2e/make-media.sh).
 const prepareMedia = (dir, media, kitDir) => {
     const missing = [];
-    ['kit', 'headers', 'fixtures'].forEach((sub) => fs.mkdirSync(path.join(dir, sub), { recursive: true }));
+    ['kit', 'headers', 'fixtures', 'e2e'].forEach((sub) => fs.mkdirSync(path.join(dir, sub), { recursive: true }));
     media.forEach((file) => {
         const target = path.join(dir, file);
         const [kind, name] = file.split('/');
         if (kind === 'fixtures') {
             rebuildFixture(fixtureIdOf(name), target);
-        } else if (!link(path.join(kind === 'kit' ? kitDir || KIT_DIR : HEADERS_DIR, name), target)) {
+        } else if (!link(path.join(kind === 'kit' ? kitDir || KIT_DIR : SOURCES[kind], name), target)) {
             missing.push(file);
         }
     });
     return missing;
 };
 
-module.exports = { FIXTURES_DIR, HEADERS_DIR, KIT_DIR, fixtureIdOf, rebuildFixture, prepareMedia };
+module.exports = { FIXTURES_DIR, HEADERS_DIR, KIT_DIR, E2E_DIR, fixtureIdOf, rebuildFixture, prepareMedia };

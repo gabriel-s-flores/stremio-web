@@ -1,5 +1,6 @@
 // Streams of the local test addon (F6.2; reused by F6.4): debrid-like names and files whose
 // headers match them, so the C8 rules can be checked on the name alone and with the probe.
+// Two sets (SETS): `f62` (STREAMS, the default) and `e2e` (E2E_STREAMS, the end-to-end run).
 // The order is the addon's (like a debrid addon sorted by resolution), not the C8 one.
 //
 // `media` is the file under the media root that server.mjs prepares (see README.md):
@@ -115,6 +116,66 @@ const STREAMS = [
     },
 ];
 
+// The `e2e` set (F6.4, `server.mjs --set e2e`): what a debrid addon answers for a movie, with files
+// that play in the emulator (webos/tests/e2e/make-media.sh, under e2e/) and the variations of a
+// real list: a DV P5 + TrueHD REMUX on top (the C8 rules move it down), 1080p H.264 AAC, 4K HEVC
+// HDR10, an MKV with several audio tracks, embedded subtitles and
+// add-on subtitles, a link that expired (the resolver redirects to a host that answers 410) and a
+// torrent (hidden by F6.1). `subtitles` are add-on subtitles (files under e2e/, like an
+// OpenSubtitles answer attached to the stream). Order and labels come from the C8 rules
+// (webos/tests/e2e/catalog.test.js).
+const E2E_STREAMS = [
+    {
+        // First in the addon's order (biggest file), demoted by the C8 rules (probe only, no playback).
+        id: 'e2e-remux-dv-p5-truehd',
+        name: '[RD+] Teste\n4k DV | HDR',
+        description: `${TITLE}.2160p.BluRay.REMUX.DV.P5.HEVC.TrueHD.7.1.Atmos-GRP.mkv\n💾 58.4 GB ⚙️ Teste`,
+        media: 'fixtures/dv-p5-truehd-atmos-mkv.mkv',
+        expect: { name: ['demoted', 'DV_WRONG_COLORS', 'AUDIO_UNSUPPORTED_POSSIBLE'], probe: ['demoted', 'DV_WRONG_COLORS', 'AUDIO_UNSUPPORTED'] },
+    },
+    {
+        id: 'e2e-uhd-hdr10',
+        name: '[RD+] Teste\n4k HDR',
+        description: `${TITLE}.2160p.WEB-DL.HDR10.HEVC.DDP5.1-GRP.mkv\n💾 16.8 GB ⚙️ Teste`,
+        media: 'e2e/e2e_2160p_hevc_hdr10.mkv',
+        expect: { name: ['ok', 'hdr10'], probe: ['ok', 'hdr10'] },
+    },
+    {
+        id: 'e2e-fhd-h264-aac',
+        name: '[RD+] Teste\n1080p',
+        description: `${TITLE}.1080p.WEB-DL.H264.AAC-GRP.mp4\n💾 2.4 GB ⚙️ Teste`,
+        media: 'e2e/e2e_1080p_h264_aac.mp4',
+        expect: { name: ['ok'], probe: ['ok'] },
+    },
+    {
+        id: 'e2e-multi-subs',
+        name: '[RD+] Teste\n720p',
+        description: `${TITLE}.720p.WEB-DL.H264.MULTI.AAC.AC3.SUBS-GRP.mkv\n💾 1.6 GB ⚙️ Teste`,
+        media: 'e2e/e2e_720p_multi_subs.mkv',
+        subtitles: [{ lang: 'eng', file: 'e2e/e2e_addon_eng.srt' }, { lang: 'por', file: 'e2e/e2e_addon_por.srt' }],
+        expect: { name: ['ok'], probe: ['ok'] },
+    },
+    {
+        // The resolver still answers (302), the file host says the link expired (410): F6.3.
+        id: 'e2e-expired',
+        name: '[RD+] Teste\n1080p',
+        description: `${TITLE}.1080p.BluRay.H264.AC3-GRP.mkv\n💾 9.7 GB ⚙️ Teste`,
+        media: 'e2e/e2e_1080p_h264_aac.mp4',
+        path: 'status/410/e2e/e2e_1080p_h264_aac.mp4',
+        expect: { name: ['ok'], probe: null },
+    },
+    {
+        id: 'e2e-torrent',
+        name: '[P2P] Teste\n1080p',
+        description: `${TITLE}.1080p.WEB-DL.H264.AAC-GRP.mp4\n👤 12 💾 2.4 GB ⚙️ Teste`,
+        infoHash: 'fedcba9876543210fedcba9876543210fedcba98',
+        fileIdx: 0,
+        expect: null,
+    },
+];
+
+const SETS = { f62: STREAMS, e2e: E2E_STREAMS };
+
 const MANIFEST = {
     id: 'io.github.gabrielsflores.webos.test-debrid',
     version: '1.0.0',
@@ -129,17 +190,21 @@ const MANIFEST = {
 
 const fileNameOf = (entry) => entry.description.split('\n')[0];
 
-// The addon stream objects; `mediaUrl` is the media server as the client sees it.
-const toStreams = (mediaUrl) => STREAMS.map((entry) => {
+// The addon stream objects; `mediaUrl` is the media server as the client sees it; `set` is a key
+// of SETS (default: the F6.2 one).
+const toStreams = (mediaUrl, set) => (set ? SETS[set] : STREAMS).map((entry) => {
     const stream = { name: entry.name, description: entry.description, behaviorHints: { filename: fileNameOf(entry), bingeGroup: `teste-${entry.id}` } };
     if (entry.infoHash) {
         stream.infoHash = entry.infoHash;
         stream.fileIdx = entry.fileIdx;
     } else {
         // /redirect/ answers 302, like a debrid link.
-        stream.url = `${mediaUrl}/redirect/${entry.media}`;
+        stream.url = `${mediaUrl}/redirect/${entry.path || entry.media}`;
+    }
+    if (entry.subtitles) {
+        stream.subtitles = entry.subtitles.map((subtitle) => ({ id: `${entry.id}-${subtitle.lang}`, lang: subtitle.lang, url: `${mediaUrl}/${subtitle.file}` }));
     }
     return stream;
 });
 
-module.exports = { STREAMS, MANIFEST, toStreams, fileNameOf };
+module.exports = { STREAMS, E2E_STREAMS, SETS, MANIFEST, toStreams, fileNameOf };
