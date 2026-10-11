@@ -363,7 +363,14 @@ const waitPlaying = async (label, timeoutMs = 120000, file = null) => {
     const elapsed = await waitFor(`var vs = document.querySelectorAll('video'); var v = vs[vs.length - 1];
         return !!v && v.readyState >= 3 && v.currentTime > 0.5 && !v.paused${file ? ` && String(v.currentSrc || v.src).indexOf(${JSON.stringify(file)}) !== -1` : ''};`, timeoutMs, 1000);
     const now = await state();
-    record(label, { ok: elapsed !== null, note: elapsed !== null ? `playing after ${elapsed} ms, t=${now.t}/${now.d}` : `did not play (readyState ${now.readyState}, t=${now.t})`, state: now, vm: vmScreenshot(label) });
+    // The next episode plays from its start (not from the position of the previous one).
+    const fromStart = !file || (now.t !== null && now.t < 30);
+    record(label, {
+        ok: elapsed !== null && fromStart,
+        note: elapsed !== null ? `playing after ${elapsed} ms, t=${now.t}/${now.d} (${now.src})${fromStart ? '' : '; FAILED: not from the start'}` : `did not play (readyState ${now.readyState}, t=${now.t})`,
+        state: now,
+        vm: vmScreenshot(label),
+    });
     return elapsed !== null;
 };
 
