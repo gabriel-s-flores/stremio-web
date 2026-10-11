@@ -41,6 +41,8 @@ No emulador, dentro de uma reserva do pool:
   (`service/`, Node 0.12) vai no IPK ao lado do app e faz proxy HTTPS local com as raízes ISRG; a
   página (imagens, `Image.webos.tsx`) e o worker do core o usam só para hosts Let's Encrypt, e nunca
   para vídeo. Detalhes em `webos/tlsproxy/README.md`.
+- `webos/lib/redact/`: o token do proxy de certificados fora dos logs (F3.7b). Um filtro de `console.*` instalado
+  no início da página e do worker, os erros do Player e o relatório da tela de diagnóstico passam por ele. Veja o README da pasta.
 - `webos/vendor/webOSTVjs-1.2.13/`: webOSTV.js da LG, sem alterações (origem e sha256 no README).
 - Escala de TV (F2.6): o app inteiro é ampliado pelo zoom da escala de interface do upstream, com o
   fator `TV_SCALE` de `src/common/interfaceScale.webos.ts` (a opção "Interface zoom" das configurações
