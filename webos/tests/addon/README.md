@@ -26,7 +26,7 @@ Os streams estão em [`catalog.js`](catalog.js), na ordem do addon, com o result
 
 ### Conjunto `e2e` (F6.4)
 
-`--set e2e` troca a lista pela do roteiro ponta a ponta ([`../e2e/`](../e2e/README.md)): um REMUX DV P5 + TrueHD no topo (a C8 o leva para o fim), 4K HEVC HDR10, 1080p H.264 AAC, um 720p MKV com três faixas de áudio, legendas embutidas e duas legendas de addon (no próprio stream), um link cujo resolvedor redireciona para um 410 (expirado) e um torrent. As mídias ficam em `e2e/` na raiz de mídia, ligadas de `~/webos-tv-sdk/media-tests/e2e` (`E2E_MEDIA_DIR`), geradas por [`../e2e/make-media.sh`](../e2e/make-media.sh).
+`--set e2e` troca a lista pela do roteiro ponta a ponta ([`../e2e/`](../e2e/README.md)): um REMUX DV P5 + TrueHD no topo (a C8 o leva para o fim), um REMUX sem nada no nome (só o probe o leva para baixo), 4K HEVC HDR10, 1080p H.264 AAC, um 720p MKV com três faixas de áudio, legendas embutidas e duas legendas de addon (no próprio stream), um link cujo resolvedor redireciona para um 410 (expirado) e um torrent. As mídias ficam em `e2e/` na raiz de mídia, ligadas de `~/webos-tv-sdk/media-tests/e2e` (`E2E_MEDIA_DIR`), geradas por [`../e2e/make-media.sh`](../e2e/make-media.sh).
 
 ## Uso
 
