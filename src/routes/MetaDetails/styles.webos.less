@@ -1,0 +1,67 @@
+// webOS TV 4.x build only (resolved instead of styles.less by webos/webpack/app.js, F4.1c): the
+// upstream styles plus the remote control navigation of the page (webos/lib/navigation/metadetails.js)
+// and the info column at the TV scale (F2.6).
+
+@import './styles.less';
+
+.metadetails-container {
+    .metadetails-content {
+        // The info column and the list are spatial navigation containers: the polyfill looks inside
+        // the one with the focus first, and when it finds nothing there, the navigation module picks
+        // the target in the other one. Custom properties inherit in Chromium 53 (no
+        // CSS.registerProperty), and every element with `contain` would be a container of its own:
+        // the children are set back to `auto`.
+        .meta-preview, .videos-list, .streams-list {
+            --spatial-navigation-contain: contain;
+
+            > * {
+                --spatial-navigation-contain: auto;
+            }
+        }
+
+        // With the TV zoom the column showed the logo, the release info and the genres, cut the cast
+        // in half and left the summary out of view. A shorter logo, and less of the room the action
+        // buttons keep above them for the hover labels, bring the cast into view; the summary is
+        // reached with the remote (the module makes it focusable while the column overflows).
+        // The MetaPreview classes are matched by prefix (CSS modules); the attribute selectors outrank
+        // the rules of src/components/MetaPreview/styles.less and the logo rule of webos/styles/app.less.
+        .meta-preview {
+            [class*='meta-info-container'] {
+                img[class*='logo'][class*='logo'] {
+                    height: 6.5rem;
+                    margin-bottom: 1rem;
+                }
+
+                [class*='runtime-release-info-container'] {
+                    margin-top: 0;
+                }
+
+                [class*='meta-links'] {
+                    margin-top: 1rem;
+                }
+            }
+
+            [class*='action-buttons-container'][class*='action-buttons-container'] {
+                padding-top: 1.5rem;
+            }
+        }
+    }
+}
+
+// Chromium 53 does not round an outline, and the remote focus ring of webos/styles/app.less kept
+// square corners on the round buttons of the page (F2.6, B3). Here the ring is an inset box-shadow,
+// which follows the border radius. The selectors outrank the app.less rule (both !important).
+html:root body .metadetails-container {
+    [class*='action-button-container'],
+    [class*='group-container'] > [class*='icon-container'],
+    [class*='link-container'],
+    [class*='imdb-button-container'],
+    [class*='prev-season-button'],
+    [class*='next-season-button'],
+    [class*='back-button-container'] {
+        &[data-focus-visible-added] {
+            outline: none !important;
+            box-shadow: inset 0 0 0 var(--focus-outline-size) var(--webos-focus-color), var(--webos-focus-glow) !important;
+        }
+    }
+}
