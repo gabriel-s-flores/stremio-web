@@ -338,6 +338,18 @@ Modelos: **O** = `claude-opus-5-5`, **S** = `claude-sonnet-5-5`; effort entre pa
 - **Aceite:** 5 trocas seguidas de stream no emulador, ou explicação medida de por que não dá e qual
   estratégia ficou (com teste automatizado).
 
+### F5.6b · Imagem da 2ª mídia com o guarda do pipeline
+- **Depende de:** F5.6, F6.4  · **Modelo:** O (high)
+- **Escopo:** achado da F6.4 (A/B no roteiro ponta a ponta): com o guarda da F5.6 ligado, a 2ª mídia
+  do boot toca (o relógio anda) mas a tela da VM fica escura (0/4); com `GUARD=off`, mostra imagem
+  (2/2). Descobrir se é o guarda (ex.: `holdVideosInPlace` segurando o nó/plano de vídeo antigo por cima,
+  um pipeline por carga, liberação silenciosa) ou limitação do emulador, e corrigir sem perder o que a
+  F5.6 resolveu (trocas sem travar, 10/10 × 0/7). Coordenar com a F4.4 (restauração de foco depois do
+  Player, que depende do mesmo `holdVideosInPlace`).
+- **Aceite:** no emulador, 2ª e 3ª mídias do mesmo boot com imagem (captura da VM avaliada, não só o
+  relógio) e trocas seguidas sem travar, com o guarda ligado; A/B documentado; roteiros da F5.6
+  (`switches.sh`) e da F6.4 (`e2e`) sem regressão.
+
 ### F5.7 · Seek, retomada, próximo episódio, teclas de mídia
 - **Depende de:** F5.1, F3.2  · **Modelo:** O (high)
 - **Aceite:** no emulador: seek pelas setas e pelas teclas FF/RW, play/pause, retomada da posição,
