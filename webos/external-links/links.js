@@ -125,6 +125,8 @@ const isLoopbackHost = (hostname) => {
 
 // The upstream Platform.openExternal sends hosts outside its list through stremio.com/warning#<url>.
 const WARNING_PATH = '/warning';
+// How many warning pages wrapped one inside the other are opened to look at the link they end in.
+const MAX_WARNING_DEPTH = 2;
 
 // 'web' (show it as a QR code), 'blocked' (disable it) or 'local' (not external: let it be).
 const classify = (url, win, depth = 0) => {
@@ -146,7 +148,7 @@ const classify = (url, win, depth = 0) => {
             return 'blocked';
         }
         // The link behind the warning page counts too: it is what the phone ends up opening.
-        if (depth === 0 && parsed.pathname === WARNING_PATH && parsed.hash.length > 1) {
+        if (depth < MAX_WARNING_DEPTH && parsed.pathname === WARNING_PATH && parsed.hash.length > 1) {
             let inner = null;
             try {
                 // Absolute only: a relative text after the # is not a link.

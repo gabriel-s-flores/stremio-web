@@ -69,6 +69,14 @@ describe('classify', () => {
         expect(classify(url, win)).toBe('web');
     });
 
+    test('a warning page inside a warning page is looked through too (up to two wrappers)', () => {
+        const wrap = (url) => `https://www.stremio.com/warning#${encodeURIComponent(url)}`;
+        const proxy = 'http://127.0.0.1:47443/proxy?t=SECRET';
+        expect(classify(wrap(wrap(proxy)), win)).toBe('blocked');
+        expect(classify(wrap(wrap(wrap(proxy))), win)).toBe('web');
+        expect(classify(wrap(wrap('https://example.com/configure')), win)).toBe('web');
+    });
+
     test('the host is read here too, not only as `new URL` writes it', () => {
         // Hostnames as a platform that does not canonicalize would hand them over.
         ['2130706433', '0x7f000001', '017700000001', '127.1', '0177.0.1', '0', '0x0', '127.0.0.1.', 'localhost.', 'LocalHost',
