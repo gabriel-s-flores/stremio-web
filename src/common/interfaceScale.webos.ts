@@ -17,6 +17,12 @@ let cssScale = 1;
 // (webos/tests/styles/tv-scale.test.js keeps the two equal).
 const TV_SCALE = 1.75;
 
+// webOS: the steps of the interface zoom setting on the TV (F4.1b). Below 100% the text gets smaller
+// than LG's minimum; from 150% the layout is the small-screen one (no Settings menu, the last tab of
+// the side bar below the screen, measured in the emulator). A stored value outside these steps is
+// normalized to 100%. Scale.webos.tsx shows only these.
+const TV_INTERFACE_SCALES = [100, 125];
+
 // webOS: Chromium before 128 (every webOS TV) gives getBoundingClientRect() in the unzoomed CSS pixels
 // of the element, while pointer coordinates, innerWidth and elementFromPoint() are in screen pixels.
 // The app (getInterfaceRect below, Slider, SeekBar) and spatial-navigation-polyfill (hitTest) are
@@ -39,7 +45,8 @@ const setRectScale = (scale: number) => {
 };
 
 const normalizeInterfaceScale = (value: number) => (
-    INTERFACE_SCALES.includes(value) ? value : 100
+    // webOS: only the TV steps.
+    INTERFACE_SCALES.includes(value) && TV_INTERFACE_SCALES.includes(value) ? value : 100
 );
 
 const getInterfaceScale = () => cssScale;
@@ -89,3 +96,5 @@ const setInterfaceScale = (setting: number) => {
 };
 
 export { normalizeInterfaceScale, getInterfaceScale, getInterfaceRect, setInterfaceScale };
+// webOS: the TV steps of the setting.
+export { TV_INTERFACE_SCALES };

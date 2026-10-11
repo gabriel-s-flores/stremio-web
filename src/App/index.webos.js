@@ -3,7 +3,8 @@
 // webOS TV 4.x build only (resolved instead of index.js by webos/webpack/app.js): the App plus the
 // Back key dispatcher of webos/back (F3.2) and the app lifecycle of webos/lifecycle (F3.3), inside
 // the same router, the remote shortcut of the diagnostics screen (F3.6), the QR code dialog of the
-// external links and Enter on the text fields for the system keyboard (F3.4).
+// external links and Enter on the text fields for the system keyboard (F3.4), and the remote
+// navigation of Library, Calendar, Addons, Settings and the side navigation bar (F4.1b).
 
 const React = require('react');
 const { BackNavigation } = require('../../webos/back');
@@ -11,6 +12,7 @@ const { LifecycleHandler } = require('../../webos/lifecycle');
 const DiagnosticsShortcut = require('../../webos/lib/diagnostics/ShortcutHandler');
 const { ExternalLinks } = require('../../webos/external-links');
 require('../../webos/keyboard');
+const F41bNavigation = require('../../webos/lib/navigation/F41bNavigation');
 const App = require('./App');
 
 const WebOSApp = () => (
@@ -20,6 +22,7 @@ const WebOSApp = () => (
         <LifecycleHandler />
         <DiagnosticsShortcut />
         <ExternalLinks />
+        <F41bNavigation />
     </React.Fragment>
 );
 
