@@ -72,7 +72,7 @@ const proxyState = readJson('proxy-state.json', {});
 check('the certificate proxy was in use (mode proxy, service up)', proxyState.mode === 'proxy' && proxyState.ready === true, JSON.stringify(proxyState));
 
 const player_ = readJson('page-audit-player.json', {});
-check('with the subtitle context menu open: no token on screen or in storage, no proxy URL in any attribute (the menu\'s href is the add-on\'s)', player_.tokenInVisibleText === false && player_.attributesWithToken === 0 && Array.isArray(player_.localStorageKeysWithToken) && player_.localStorageKeysWithToken.length === 0, JSON.stringify(player_));
+check('with the subtitle context menu open: no token on screen, in an attribute or in storage (the menu\'s href is the add-on\'s)', player_.tokenInVisibleText === false && player_.attributesWithToken === 0 && Array.isArray(player_.localStorageKeysWithToken) && player_.localStorageKeysWithToken.length === 0, JSON.stringify(player_));
 const diag = readJson('page-audit-diagnostics.json', {});
 check('the diagnostics screen, its report object and the saved report do not hold the token',
     diag.tokenInReportBlock === false && diag.tokenInBodyText === false && diag.tokenInReportObject === false && diag.tokenInSavedReport === false && diag.reportBlockChars > 0, JSON.stringify(diag));
@@ -89,7 +89,7 @@ check('"Download subtitles" opens the link dialog with the add-on\'s own URL, no
 const copied = readJson('copied.json', {});
 check('"Copy subtitle URL" copies the add-on\'s own URL (not the proxy URL)', copied.copied === missing, JSON.stringify(copied));
 const dialogAudit = readJson('page-audit-dialog.json', {});
-check('with the dialog open: no token on screen or in storage, no proxy URL in any attribute', dialogAudit.tokenInVisibleText === false && dialogAudit.attributesWithToken === 0 && dialogAudit.localStorageKeysWithToken.length === 0, JSON.stringify(dialogAudit));
+check('with the dialog open: no token on screen, in an attribute or in storage', dialogAudit.tokenInVisibleText === false && dialogAudit.attributesWithToken === 0 && dialogAudit.localStorageKeysWithToken.length === 0, JSON.stringify(dialogAudit));
 const menu = readJson('context-menu.json', []);
 const download = menu.find((option) => /ownload/.test(option.title || ''));
 check('the subtitle context menu offers "Download subtitles" with the add-on\'s URL as its link', !!download && download.href === missing, JSON.stringify(menu));
@@ -102,6 +102,7 @@ const info = {
     pageConsoleCalls: rest.filter(isPageConsole).length,
     exceptions: rest.filter((record) => record.kind === 'exception').length,
     attributesWithToken: player_.attributesWithToken,
+    otherLoopbackAttributes: player_.otherLoopbackAttributes,
     clipboard: player_.clipboard,
     browserNetworkMessages: networkRecords.length,
     browserNetworkMessagesWithToken: networkWithToken.length,
