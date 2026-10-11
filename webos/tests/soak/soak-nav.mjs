@@ -136,7 +136,7 @@ async function oneCycle() {
     await step('details-back', () => soak.key('BACK'), COND.board, 45);
     await step('discover-open', () => pointerLink('#/discover'), COND.discover);
     await step('discover-items', () => sleep(500), COND.discoverItems, 60);
-    await step('discover-arrows', () => soak.keys(['DOWN', 'DOWN', 'DOWN', 'DOWN', 'RIGHT', 'RIGHT', 'DOWN', 'DOWN', 'UP', 'UP']), COND.discover);
+    await step('discover-arrows', () => soak.keys(['DOWN', 'DOWN', 'RIGHT', 'RIGHT', 'DOWN', 'UP']), COND.discover); // the grid may have two rows only: not above the first (the filters)
     // A movie of the Discover grid (the default catalog is movies): Details with the stream list of the test addon
     // (the probe on demand), and back, one screen at a time.
     for (let i = 0; i < 4 && !(await soak.evaluate(`!!(document.activeElement && document.activeElement.closest('[class*="meta-items-container"] [class*="meta-item-container"]'))`).catch(() => false)); i++) {
