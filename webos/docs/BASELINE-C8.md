@@ -303,9 +303,9 @@ Base: `origin/webos` em `d34cbc376` (com F5.7, F6.4 e F7.1). Os IPKs "base" e "f
 
 | | Meta do G7 | Base (F7.1, `d34cbc376`) | Final (F7.2) | Atinge? |
 |---|---|---|---|---|
-| Boot até o Board (1º item visível) | ≤ 10 s | 29,2 s (25,0–33,6), n = 15 | **25,5 s** (23,2–32,0), n = 12; p = 0,014 | **não** (ver "Onde está o tempo agora, e por que 10 s não cabe no emulador") |
-| Core pronto | – | 12,4 s (11,3–13,7) | **10,1 s** (9,3–11,8); p < 0,0001 | – |
-| Memória com a lista de streams, a reprodução e 5 trocas | ≤ 250 MB, sem OOM | **OOM em 3 de 3** (picos de 484–504 MB) | **sem OOM em 3 de 3**, pico de 220–227 MB; 188–203 MB depois das trocas | **sim** |
+| Boot até o Board (1º item visível) | ≤ 10 s | 29,0 s (24,3–39,3) | **21,6 s** (18,6–28,7); A/B pareado na mesma reserva, n = 16 × 16, p < 0,0001 (revisão c1) | **não** (ver "Onde está o tempo agora, e por que 10 s não cabe no emulador") |
+| Core pronto | – | 11,0 s (9,9–18,4) | **9,1 s** (8,6–10,3); o mesmo A/B pareado | – |
+| Memória com a lista de streams, a reprodução e 5 trocas | ≤ 250 MB, sem OOM | **OOM em 6 de 9** (picos de 400–511 MB) | **sem OOM em 10 de 10**, pico de 217–229 MB; 188–203 MB depois das trocas | **sim**, com a flag (sem ela, as outras mudanças ainda chegam a 261–400 MB) |
 | Memória parada no Board (antes de abrir Detalhes) | ≤ 250 MB | 190–214 MB | **146–162 MB** | sim |
 | `main.js` (interpretado antes do core começar) | – | 8,94 MB (2,65 MB gzip) | **1,99 MB** (0,58 MB gzip) | – |
 
@@ -332,16 +332,22 @@ Cenário: Detalhes com a lista de streams, 1ª reprodução e 5 trocas (`play --
 | `--no-opt` (nenhuma otimização) | 4 (3 em pares com a base) | 0 de 4 | 241–259 MB | **nenhum** | sem compilador otimizador, sem salto |
 | **`--no-crankshaft`** (base) | 1 | 0 de 1 | 256 MB | **nenhum** | o Crankshaft é o culpado |
 | **`--no-crankshaft`** (IPK final) | 3 | **0 de 3** | **220–227 MB** | **nenhum** | a correção, com as outras mudanças da F7.2 |
+| revisão c1: base `59208dffb` / final / final sem a flag | 6 / 6 / 4 | **3 de 6** / **0 de 6** / 0 de 4 | 400–511 / **217–229** / 261–400 MB | – | a flag é o que segura o pico abaixo de 250 MB |
 
 ![base: o salto e o OOM depois da 2ª troca](baseline-c8/f72-mem-w3-2-base2.svg)
 
 ![final, com --no-crankshaft: sem salto nas 6 reproduções](baseline-c8/f72-mem-final.svg)
 
-Fisher exato: sem Crankshaft 0 de 4 × base 3 de 3, p = 0,029; contando as rodadas da F7.1 (base 5 de 5 no A/B da base `608aee79c`), 0 de 4 × 8 de 8, p = 0,002. Com `--no-opt`, que também desliga o Crankshaft, são 0 de 8 sem Crankshaft no total.
+Fisher exato: sem Crankshaft 0 de 4 × base 3 de 3, p = 0,029; contando as rodadas da F7.1 (base 5 de 5 no A/B da base `608aee79c`), 0 de 4 × 8 de 8, p = 0,002. Com `--no-opt`, que também desliga o Crankshaft, são 0 de 8 sem Crankshaft no total. Somando a revisão c1: base com OOM em 6 de 9 × final em 0 de 10 (Fisher exato unilateral p ≈ 0,003).
 
-- **Por que a compilação estoura a memória.** O wasm2js tem ~4.600 funções num arquivo de 9 MB, algumas enormes, e o Crankshaft otimiza uma função inteira de uma vez (grafo Hydrogen/Lithium numa zona de memória nativa). Numa das funções gigantes isso pode chegar a centenas de MB que só existem por alguns segundos, o que casa com os saltos transitórios da F7.1 e com o kernel só matando quando o salto coincide com o resto da memória ocupada. (Inferência: não medi a zona por função. O que os dados mostram é o salto sumir com `--no-crankshaft` e não com `--no-turbo`.) Com `--no-crankshaft` o V8 5.8 ainda otimiza com o TurboFan o que ele aceita, sem os saltos.
-- **Custo.** O código quente fica sem o Crankshaft. Com o worker ocioso e o código já aquecido, um `getState('board')` (110 KB) custa ~430 ms (325–694, 15 medidas) com `--no-crankshaft`, ~205 ms (110–513) sem flag e ~600 ms (397–900) com `--no-opt`, numa reserva só (`evidencias/boot-instr/iab5-*`). No uso real isso quase não aparece. O boot melhora (abaixo), porque o Crankshaft gastava a CPU da cota otimizando o serde durante a interpretação dos catálogos. As trocas de stream ficam no tempo da base, dominadas pela decodificação por software do emulador. Na navegação, só as telas que esperam o core pagam: itens do Discover +0,7 s e Busca +0,4 s (tabela em "Navegação e memória do build final").
-- **Por que `--no-crankshaft` e não `--no-opt`.** Os dois eliminam o OOM e empatam no uso real: no A/B direto (2 reservas ABBA, n = 8 cada), 1º item em 25,5 s × 24,3 s, e itens do Discover em 6,3–6,9 s × 6,6–7,4 s (2 pares de navegação). `--no-crankshaft` é a flag mais estreita (desliga só o compilador que causa o problema) e mantém o TurboFan onde ele acelera o código quente.
+- **Por que a compilação estoura a memória.** O wasm2js tem ~4.600 funções num arquivo de 9 MB, algumas enormes, e o Crankshaft otimiza uma função inteira de uma vez (grafo Hydrogen/Lithium numa zona de memória nativa). Numa das funções gigantes isso pode chegar a centenas de MB que só existem por alguns segundos, o que casa com os saltos transitórios da F7.1 e com o kernel só matando quando o salto coincide com o resto da memória ocupada. (Inferência: não medi a zona por função. O que os dados mostram é o salto sumir com `--no-crankshaft` e não com `--no-turbo`.) **Com `--no-crankshaft`, o JS comum não é otimizado de jeito nenhum.** No V8 5.8 o TurboFan só pega o que o Crankshaft recusa (asm.js e afins). Medido pela revisão c1 com `--allow-natives-syntax`: depois de `%OptimizeFunctionOnNextCall`, uma função quente fica com `%GetOptimizationStatus` = 3 ("nunca otimiza") com a flag e 17 (otimizada pelo Crankshaft) sem ela, na página e num worker dedicado. Para este app, `--no-crankshaft` equivale a `--no-opt`: **todo o JS do processo, o React da página e o core em wasm2js no worker, roda no interpretador e no compilador base**, sem compilador otimizador.
+- **Custo.** Sem compilador otimizador, as telas que esperam o core ficam mais lentas. No A/B direto da revisão c1 (o mesmo IPK com e sem a flag, intercalado, perfil c8, n = 4 × 4): **itens do Discover 7,4 s (7,0–8,6) × 5,8 s (5,0–6,4), +1,6 s (+27 %, p = 0,029)**; **resultados da Busca 5,5 s (5,2–5,6) × 4,4 s (4,3–5,8), +1,1 s (+25 %)**. Abrir Detalhes, Library, Settings e os Back empatam (±0,2 s). (Uma versão anterior deste texto dizia +0,7 s e +0,4 s: comparava base × final, e as outras otimizações do final mascaravam o custo. Também dizia que um `getState('board')` aquecido custava ~430 ms com `--no-crankshaft` × ~600 ms com `--no-opt`; as medidas do `--no-opt` daquela reserva pegaram o host mais ocupado, com o core pronto em 14,6–15,4 s × 9,5–11 s, e a diferença não vem da flag.) O boot melhora mesmo assim (abaixo): no perfil c8 o Crankshaft gastava a CPU da cota otimizando as funções do serde durante a interpretação dos catálogos, mais do que devolvia. As trocas de stream ficam no tempo da base, dominadas pela decodificação por software do emulador.
+- **`--no-crankshaft` × `--no-opt`: empatam.** Pelo mecanismo acima, os dois deixam o JS do app sem otimização. Nas medidas também: no A/B direto (2 reservas ABBA, n = 8 cada), 1º item em 25,5 s × 24,3 s; em 2 pares de navegação, itens do Discover em 6,3–6,9 s × 6,6–7,4 s. Ficou `--no-crankshaft` porque é o IPK validado (0 de 10 OOM somando esta tarefa e a revisão), não por manter otimização.
+- **Alternativas mais estreitas, para a Fase 8 ou uma tarefa futura** (só se o custo nas telas do core pesar na TV):
+  - **flags só para o worker do core:** não existem; as flags do V8 valem para o processo inteiro, e o WAM só aceita `v8ExtraFlags` por app;
+  - **`--hydrogen-filter`** (filtro de funções do Crankshaft; o nome aparece no `libcbe.so` como sufixo de `trace_hydrogen_filter`): o filtro é por nome de função, e os nomes do wasm2js e da página estão minificados, então só valeria com um wasm2js que não otimize, ou com nomes preservados. Não testado;
+  - **impedir o Crankshaft só no wasm2js**, no build do core (por exemplo, funções que o Crankshaft recusa): é a trilha do core (`webos/core`), fora desta tarefa;
+  - **o WASM** (`webos.coreVariant`): sem OOM e mais rápido nas telas do core, mas ~5 s mais lento no boot (abaixo).
 - **Por que não o WASM.** A F7.1 achou 0 OOM em 11 rodadas com o WASM, e ele continua sendo a reserva (chave `webos.coreVariant`). Mas, num IPK com todas as mudanças de boot (HEAD + `--no-opt`), o WASM ainda deixa o boot ~5 s pior que o wasm2js: core pronto em 25,6 s contra 10,8 s, 1º item em 32,0 s contra 26,8 s (A/B intercalado na mesma reserva, n = 2 calmas × 4; `evidencias/ab/b5-resumo.md`). Com o OOM resolvido no wasm2js, o padrão do G0 (wasm2js) fica.
 
 ## WASM em segundo plano: inviável no Chromium 53
@@ -360,7 +366,10 @@ Sobra compilar dentro do próprio worker do core. No V8 5.8 o `WebAssembly.compi
 3. **Catálogos sem a lista de episódios** (`webos/lib/catalog-trim`, no `fetch` do worker do core): o catálogo de séries do Cinemeta traz em cada item o `videos` inteiro (412 dos 522 KB do "top" de séries). O core 0.65 lê o texto, monta o JSON inteiro como `serde_json::Value` dentro do wasm e fica só com os campos do `MetaItemPreview`, que não tem `videos` (`stremio-core`, `src/types/addon/response.rs`). A resposta `200`/`201` de um `GET …/catalog/….json` chega ao core sem esse campo, e o resto do JSON fica igual. **JSON que o core interpreta no boot: 1,55 → 0,64 MB** (séries top 522 → 109 KB, séries por nota 607 → 111 KB). A equivalência foi provada com o core de verdade: o core 0.65.0 do npm, rodando no Node sobre as mesmas respostas gravadas, dá os estados `board`, `discover` (50 séries, com os campos da prévia) e `search` **idênticos byte a byte** com e sem a mudança (`evidencias/catalog-trim/`).
 4. `--no-crankshaft` (acima) também tira do boot a CPU que o Crankshaft gastava otimizando as funções do serde que a interpretação dos catálogos esquenta.
 
-**A/B intercalado (ABBA), perfil c8, rodadas calmas, 1º item do Board visível (a sonda da F3.6):**
+**A/B pareado da revisão c1 (base `59208dffb` × final, ABBA, 4 rodadas × 2 lançamentos, 2 reservas, todas calmas):** 1º item do Board visível **29,0 s (24,3–39,3) → 21,6 s (18,6–28,7)**, n = 16 × 16, Mann-Whitney p < 0,0001; core pronto **11,0 → 9,1 s**. É o número de referência.
+
+**Medidas desta tarefa, perfil c8, rodadas calmas, 1º item do Board visível (a sonda da F3.6).** Atenção ao método: cada reserva intercala (ABBA) só os builds da coluna "Reservas". A base e o final foram intercalados diretamente só na b6 (n = 4 × 4). As linhas "todas as reservas" juntam reservas diferentes (a base de b2–b4 e b6, o final de b6–b8), o que a parte 1 desaconselha. Valem como indicação; o pareado acima é a medida.
+
 
 | Build | n | Core pronto | 1º item | Reservas |
 |---|---|---|---|---|
@@ -372,7 +381,7 @@ Sobra compilar dentro do próprio worker do core. No V8 5.8 o `WebAssembly.compi
 | **final** (HEAD + `--no-crankshaft`), todas as reservas | 12 | **10,1 s** (9,3–11,8) | **25,5 s** (23,2–32,0) | b6, b7, b8 |
 | HEAD + `--no-opt`, todas as reservas | 22 | 10,6 s | 24,6 s (22,1–34,9) | b2, b3, b4, b6, b7, b8 |
 
-Base × final: 1º item −3,7 s (−13 %), Mann-Whitney exato p = 0,014 (n = 15 × 12); core pronto −2,3 s, p < 0,0001. A base foi intercalada com o final na reserva b6 e com `--no-opt` em b2–b4, e as duas flags foram intercaladas em b7–b8. Base × HEAD + `--no-opt`: −4,6 s, p = 0,0019 (n = 15 × 22). As mudanças só aparecem juntas: o `main.js` menor adianta o core (~1,4 s), mas o 1º item espera os catálogos. Os catálogos menores só aparecem quando o Crankshaft deixa de gastar a CPU da cota otimizando o serde.
+Juntando reservas (não pareado): base × final −3,7 s, p = 0,014 (n = 15 × 12); base × HEAD + `--no-opt` −4,6 s, p = 0,0019 (n = 15 × 22). O pareado da revisão (−7,4 s) confirma o ganho e mostra que estas juntas o subestimam. As mudanças só aparecem juntas: o `main.js` menor adianta o core (~1,4 s), mas o 1º item espera os catálogos. Os catálogos menores só aparecem quando o Crankshaft deixa de gastar a CPU da cota otimizando o serde.
 
 Marcas do próprio app no build final (tela de diagnóstico, `run.sh boot`, 4 lançamentos calmos; `evidencias/ui/boot-c8`), contra a parte 1:
 
@@ -406,13 +415,14 @@ Só o core pronto já leva ~9,5–11 s: carregar e instanciar 9 MB de wasm2js nu
 
 1. **Primeira tela útil com cache**: guardar a última resposta do Board (ou os catálogos) e mostrá-la antes do core, atualizando quando ele ficar pronto. É a opção 2 do G0 ("primeira tela útil < 10 s"), e é a única que leva o Board para perto de 5–6 s no emulador.
 2. **Menos trabalho por catálogo**: aparar também os outros campos que o `MetaItemPreview` descarta (`popularities`, `cast`, `awards`, `slug`, `keywords`… levam 614 → 449 KB, −27 %). Não foi feito porque acopla o app à lista de campos de uma versão do core: um campo que um core novo passe a ler sumiria sem aviso. O `videos`, ao contrário, nunca faz parte de uma prévia.
-3. **Um core menor ou mais rápido de carregar** (o wasm2js de 9 MB e o init), na trilha do core.
+3. **Pedir os catálogos antes de o core ficar pronto** (ideia da revisão c1): o Board só pede os catálogos depois do core pronto (12,7 s), e a rede leva ~4,3 s. Um *prefetch* dos catálogos do Cinemeta no início do worker, servido ao `fetch` do core pelo mesmo wrapper do `catalog-trim`, sobreporia esses ~4 s ao carregamento do wasm2js. Combina com o item 1.
+4. **Um core menor ou mais rápido de carregar** (o wasm2js de 9 MB e o init), na trilha do core.
 
-**O que a Fase 8 pode mudar:** a CPU real da C8 (o perfil de 40 % é uma estimativa, parte 2), uma placa de rede de verdade (no emulador a rede passa pelo `slirp` dentro da cota de CPU, e os ~4 s de catálogos devem cair) e a latência da rede da casa. Na TV também é preciso confirmar que o WAM aplica `v8ExtraFlags` (o mesmo cenário de reprodução com 5 trocas, sem OOM).
+**O que a Fase 8 pode mudar:** a CPU real da C8 (o perfil de 40 % é uma estimativa, parte 2), uma placa de rede de verdade (no emulador a rede passa pelo `slirp` dentro da cota de CPU, e os ~4 s de catálogos devem cair) e a latência da rede da casa. Na TV também é preciso confirmar que o WAM aplica `v8ExtraFlags`, **medindo o pico** do cenário `play --switches 5`, não só a ausência de OOM: **a flag é o ponto único da meta de memória.** Sem ela, o build final não teve OOM em 4 rodadas da revisão, mas chegou a 261–400 MB (a base: 400–511 MB e OOM em metade). Se a TV ignorar a chave, a meta de 250 MB cai.
 
 ## Navegação e memória do build final
 
-Rodadas `nav` (perfil c8, calmas; do evento de entrada até a tela pronta, na linha do tempo da página; `evidencias/nav/`):
+Rodadas `nav` (perfil c8, calmas; do evento de entrada até a tela pronta, na linha do tempo da página; `evidencias/nav/`). Esta tabela compara a base com o final inteiro, em que as outras otimizações compensam parte do custo da flag. O custo da flag sozinha é o do A/B direto ("Custo", acima): itens do Discover +1,6 s, Busca +1,1 s.
 
 | Passo | Base (n = 2) | Final, `--no-crankshaft` (n = 3) | `--no-opt` (n = 3) |
 |---|---|---|---|
