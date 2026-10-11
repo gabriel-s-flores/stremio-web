@@ -32,12 +32,14 @@
 //    Every sign of progress restarts the time, the time stops while the app is hidden, and nothing is
 //    aborted before the error: a slow link (a debrid resolve answering the 302 late) keeps its request.
 //    A wedged pipeline in the emulator does not recover anyway (the state outlives the app).
-// 4. Display window (F5.6b). In the emulator, a load after the first one of the boot can play with a
+// 4. Display window (F5.6b). In the emulator, a load after the first one of the page can play with a
 //    black screen: the pipeline decodes (the clock moves) but the video plane never gets the place of
 //    the <video> on the screen, which goes to the pipeline only when the element's geometry changes,
-//    and the new <video> takes exactly the place of the previous one. At the first `playing` of each
-//    load the guard narrows the element by DISPLAY_NUDGE_PX for DISPLAY_NUDGE_MS and puts it back,
-//    which sends the place again to the pipeline that is playing.
+//    and the new <video> takes exactly the place of the previous one. What sets it off depends on the
+//    flow: leaving the Player for another stream, it is the quiet release of 1 above (without it the
+//    picture shows); on an immediate route switch, it happens without the guard too. At the first
+//    `playing` of each load the guard narrows the element by DISPLAY_NUDGE_PX for DISPLAY_NUDGE_MS and
+//    puts it back, which sends the place again to the pipeline that is playing (both flows).
 // localStorage keys (read once, when the app starts; A/B in the emulator and a way out in Phase 8):
 //   webos.pipelineGuard = "off"            WebOsVideo as it is (all of the above off)
 //   webos.pipelineGuard.extraLoad = "keep" keep WebOsVideo's second load() (2 above)
