@@ -62,3 +62,56 @@ describe('upstream Player details the webOS overrides depend on', () => {
         expect(source).toMatch(/platform: platform\.name/);
     });
 });
+
+// The pipeline guard (withPipelineGuard.js, F5.6) relies on how stremio-video's WebOsVideo and the
+// Player drive the <video> element.
+describe('upstream details the F5.6 pipeline guard depends on', () => {
+    const ROOT = path.join(__dirname, '..', '..', '..', '..');
+    const VIDEO_SRC = path.join(path.dirname(require.resolve('@stremio/stremio-video/package.json', { paths: [ROOT] })), 'src');
+    const webOsVideo = fs.readFileSync(path.join(VIDEO_SRC, 'WebOsVideo', 'WebOsVideo.js'), 'utf8');
+    const section = (from, to) => webOsVideo.slice(webOsVideo.indexOf(from), webOsVideo.indexOf(to, webOsVideo.indexOf(from)));
+
+    it('WebOsVideo load: sets src, then calls load() and play() once the mediaId shows up (the load() the guard drops)', () => {
+        const load = section('case \'load\': {', 'case \'unload\': {');
+        expect(load).toMatch(/videoElement\.src = stream\.url;\s*initMediaId\(startVideo\);/);
+        expect(load).toMatch(/var startVideo = function \(\) \{[\s\S]*videoElement\.load\(\);[\s\S]*videoElement\.play\(\);/);
+        expect(load).not.toMatch(/removeAttribute/);
+    });
+
+    it('WebOsVideo unload releases the pipeline with removeAttribute(\'src\') + load(), and destroy goes through unload', () => {
+        expect(section('case \'unload\': {', 'case \'destroy\': {')).toMatch(/videoElement\.removeAttribute\('src'\);\s*videoElement\.load\(\);/);
+        expect(section('case \'destroy\': {', 'this.on = function')).toMatch(/command\('unload'\);[\s\S]*containerElement\.removeChild\(videoElement\);/);
+    });
+
+    it('WebOsVideo applies the start time on every loadedmetadata (kept across the watchdog reload)', () => {
+        expect(webOsVideo).toMatch(/videoElement\.onloadedmetadata = function\(\) \{[^}]*setProp\('time', startTime\);/);
+        expect(section('case \'load\': {', 'case \'unload\': {')).toMatch(/startTime = commandArgs\.time;/);
+    });
+
+    it('WebOsVideo selects an embedded subtitle through Luna 500 ms later, with the mediaId of that moment', () => {
+        const setProp = webOsVideo.slice(webOsVideo.indexOf('function setProp('));
+        const select = setProp.slice(setProp.indexOf('case \'selectedSubtitlesTrackId\': {'), setProp.indexOf('case \'subtitlesOffset\': {'));
+        expect(select).toMatch(/setTimeout\(function\(\) \{[\s\S]*method: 'selectTrack',[\s\S]*'mediaId': videoElement\.mediaId,[\s\S]*\}, 500\);/);
+    });
+
+    it('stremio-video has STREAM_FAILED_TO_LOAD (code 3), the error of a stream that never starts', () => {
+        expect(require(path.join(VIDEO_SRC, 'error.js')).STREAM_FAILED_TO_LOAD).toEqual({ code: 3, message: 'Stream failed to load' });
+    });
+
+    it('Player.js unloads and loads in the same effect (a stream switch reaches the guard as unload + load)', () => {
+        expect(read('Player.js')).toMatch(/video\.unload\(\);\s*if \(player\.selected && player\.stream\?\.type === 'Ready'[^\n]*\{\s*video\.load\(\{/);
+    });
+
+    it('useVideo destroys the video in a passive effect cleanup and returns containerRef (holdVideosInPlace runs before, in a layout cleanup)', () => {
+        const source = read('useVideo.js');
+        expect(source).toMatch(/React\.useEffect\(\(\) => \{\s*video\.current = new Video\(\);[\s\S]*?return \(\) => \{[\s\S]*?video\.current\.destroy\(\);/);
+        expect(source.slice(source.lastIndexOf('return {'))).toMatch(/\n\s+containerRef,\n/);
+        expect(fs.readFileSync(path.join(PLAYER_DIR, 'useVideo.webos.js'), 'utf8')).toMatch(/React\.useLayoutEffect\([\s\S]*holdVideosInPlace\(containerElement\)/);
+    });
+
+    it('the webOS WebOsVideo is the guarded one, under the tracks decorator', () => {
+        const composed = fs.readFileSync(path.join(ROOT, 'webos', 'lib', 'tracks', 'WebOsVideo.js'), 'utf8');
+        expect(composed).toMatch(/settings\.enabled \?\s*withPipelineGuard\(WebOsVideo, \{ log: console, dropExtraLoad: settings\.dropExtraLoad, watchdog: settings\.watchdog \}\)/);
+        expect(composed).toMatch(/withC8Tracks\(Video, /);
+    });
+});

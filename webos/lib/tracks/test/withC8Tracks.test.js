@@ -83,7 +83,8 @@ const setup = (options) => {
     const log = { info: jest.fn(), warn: jest.fn() };
     const trackList = createTrackList(opts.languages || [], opts.enabled === undefined ? null : opts.enabled);
     const element = createElement(trackList);
-    const containerElement = { querySelector: () => element };
+    // A released <video> of the previous stream can still be first in the container (F5.6).
+    const containerElement = { querySelectorAll: () => (opts.previousElement ? [opts.previousElement, element] : [element]) };
     const Video = withC8Tracks(Inner, { probeCache, log });
     const video = new Video({ containerElement });
     const events = [];
@@ -147,6 +148,18 @@ describe('withC8Tracks', () => {
             ['EMBEDDED_2', 'eng', 'AC3 5.1', 'disabled'],
         ]);
         expect(t.last('subtitlesTracks').map((track) => [track.id, track.lang])).toEqual([['EMBEDDED_0', 'eng'], ['EMBEDDED_1', 'por']]);
+    });
+
+    it('follows the <video> the inner video created, not a previous one still in the container (F5.6)', async () => {
+        const previousElement = createElement(createTrackList([], null));
+        t = setup({ languages: ['en', 'pt', 'en'], enabled: 0, previousElement });
+        t.load();
+        t.probe.resolve(kit);
+        await flush();
+        previousElement.fire('playing');
+        expect(t.last('subtitlesTracks')).toEqual([]);
+        t.play();
+        expect(t.last('subtitlesTracks').map((track) => track.lang)).toEqual(['eng', 'por']);
     });
 
     it('switch: enables the chosen track, disables the others, and does not go to WebOsVideo (no Luna)', async () => {

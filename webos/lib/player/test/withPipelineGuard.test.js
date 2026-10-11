@@ -1,0 +1,552 @@
+/* global describe, it, expect, beforeEach */
+// The pipeline guard against a double of WebOsVideo (same calls on the element as the upstream
+// one) and of the <video> element, on a manual clock: when the pipeline is released, how many
+// pipelines a load creates, and the start watchdog.
+
+const { withPipelineGuard, holdVideosInPlace, LEAVE_DELAY_MS, RELEASE_SETTLE_MS, START_TIMEOUT_MS, SUBTITLE_SELECT_SETTLE_MS } = require('../withPipelineGuard');
+
+const URL_A = 'http://10.0.2.2:8099/redirect/t1_h264_aac.mp4';
+const URL_B = 'http://10.0.2.2:8099/redirect/t6_h264_aac.mkv';
+
+// Timers on a manual clock.
+const createClock = () => {
+    const clock = { t: 0, timers: [], seq: 0 };
+    clock.now = () => clock.t;
+    clock.setTimeout = (fn, ms) => {
+        const timer = { id: ++clock.seq, at: clock.t + ms, fn };
+        clock.timers.push(timer);
+        return timer.id;
+    };
+    clock.clearTimeout = (id) => {
+        clock.timers = clock.timers.filter((timer) => timer.id !== id);
+    };
+    clock.advance = (ms) => {
+        const end = clock.t + ms;
+        for (;;) {
+            const due = clock.timers.filter((timer) => timer.at <= end).sort((a, b) => a.at - b.at || a.id - b.id)[0];
+            if (!due) break;
+            clock.timers = clock.timers.filter((timer) => timer !== due);
+            clock.t = due.at;
+            due.fn();
+        }
+        clock.t = end;
+    };
+    return clock;
+};
+
+// <video> double: `load` lives on the prototype, like HTMLMediaElement.prototype.load. `log` keeps
+// what reached the pipeline: a pipeline starts on `src =` and on load() with a src, and is
+// released by load() without one.
+const elementProto = {
+    load() {
+        if (this.hasAttribute('src')) {
+            this.log.push('restart ' + this.attributes.src);
+        } else {
+            this.mediaId = null;
+            this.log.push('release');
+        }
+    },
+};
+const createElement = () => {
+    const element = Object.create(elementProto);
+    Object.assign(element, { attributes: {}, paused: true, readyState: 0, networkState: 0, handlers: {}, log: [] });
+    Object.defineProperty(element, 'src', {
+        get: () => element.attributes.src || '',
+        set: (value) => {
+            element.attributes.src = String(value);
+            element.mediaId = 'id:' + value;
+            element.log.push('start ' + value);
+        },
+    });
+    element.hasAttribute = (name) => Object.prototype.hasOwnProperty.call(element.attributes, name);
+    element.removeAttribute = (name) => {
+        delete element.attributes[name];
+    };
+    element.addEventListener = (name, handler) => {
+        element.handlers[name] = (element.handlers[name] || []).concat(handler);
+    };
+    element.removeEventListener = (name, handler) => {
+        element.handlers[name] = (element.handlers[name] || []).filter((entry) => entry !== handler);
+    };
+    element.fire = (name) => (element.handlers[name] || []).forEach((handler) => handler());
+    element.play = () => {
+        element.paused = false;
+        element.log.push('play');
+        element.fire('play');
+        return Promise.resolve();
+    };
+    element.pause = () => {
+        element.paused = true;
+        element.log.push('pause');
+        element.fire('pause');
+    };
+    // The pipeline got going: what the guard waits for.
+    element.started = () => {
+        element.readyState = 4;
+        element.fire('loadedmetadata');
+        element.fire('playing');
+    };
+    return element;
+};
+
+// WebOsVideo double: the element calls of stremio-video 0.0.98 (src, then load() + play() when the
+// mediaId shows up; unload = removeAttribute('src') + load(); destroy = unload + removeChild).
+const createWebOsVideo = (clock, record) => {
+    function FakeWebOsVideo(options) {
+        const element = createElement();
+        options.containerElement.appendChild(element);
+        const listeners = {};
+        record.instances.push({ element, listeners });
+        let destroyed = false;
+        this.on = (eventName, listener) => {
+            if (destroyed) throw new Error('Video is destroyed');
+            listeners[eventName] = (listeners[eventName] || []).concat(listener);
+        };
+        this.dispatch = (action) => {
+            if (destroyed) throw new Error('Video is destroyed');
+            record.actions.push(action.type === 'command' ? action.commandName : action.type + ':' + action.propName);
+            // Embedded subtitles: Luna selectTrack 500 ms later, with the mediaId of that moment.
+            if (action.type === 'setProp' && action.propName === 'selectedSubtitlesTrackId' && /^EMBEDDED_/.test(action.propValue)) {
+                clock.setTimeout(() => record.selectTracks.push(element.mediaId), 500);
+            }
+            if (action.type !== 'command') return;
+            if (action.commandName === 'load') {
+                element.src = action.commandArgs.stream.url;
+                clock.setTimeout(() => {
+                    element.load();
+                    element.play();
+                }, 300);
+            } else if (action.commandName === 'unload' || action.commandName === 'destroy') {
+                element.removeAttribute('src');
+                element.load();
+                if (action.commandName === 'destroy') {
+                    destroyed = true;
+                    if (element.parentNode !== options.containerElement) throw new Error('NotFoundError: not a child of the container');
+                    options.containerElement.removeChild(element);
+                }
+            }
+        };
+    }
+    FakeWebOsVideo.manifest = { name: 'WebOsVideo', props: [], commands: ['load', 'unload', 'destroy'], events: ['error'] };
+    FakeWebOsVideo.canPlayStream = () => Promise.resolve(true);
+    return FakeWebOsVideo;
+};
+
+// A node that holds children (the Player's container and its ancestors); appendChild/removeChild on
+// the prototype, like Node.prototype.
+const nodeProto = {
+    appendChild(child) {
+        if (child.parentNode) child.parentNode.removeChild(child);
+        this.children.push(child);
+        child.parentNode = this;
+        return child;
+    },
+    removeChild(child) {
+        this.children = this.children.filter((entry) => entry !== child);
+        child.parentNode = null;
+        return child;
+    },
+};
+const createNode = () => {
+    const node = Object.create(nodeProto);
+    Object.assign(node, { children: [], style: {}, parentNode: null });
+    node.querySelectorAll = (selector) => {
+        const found = [];
+        const walk = (entry) => entry.children && entry.children.forEach((child) => {
+            if (selector === 'video' && child.log !== undefined) found.push(child);
+            walk(child);
+        });
+        walk(node);
+        return found;
+    };
+    return node;
+};
+const createContainer = createNode;
+
+const load = (url) => ({ type: 'command', commandName: 'load', commandArgs: { stream: { url }, autoplay: true, time: 0 } });
+const UNLOAD = { type: 'command', commandName: 'unload' };
+const DESTROY = { type: 'command', commandName: 'destroy' };
+
+describe('withPipelineGuard', () => {
+    let clock;
+    let record;
+    let Guarded;
+    let logs;
+    let doc;
+
+    // The document's visibility (the app in the background).
+    const createDocument = () => {
+        const fake = { hidden: false, handlers: [] };
+        fake.addEventListener = (name, handler) => fake.handlers.push(handler);
+        fake.removeEventListener = (name, handler) => {
+            fake.handlers = fake.handlers.filter((entry) => entry !== handler);
+        };
+        fake.setHidden = (hidden) => {
+            fake.hidden = hidden;
+            fake.handlers.slice().forEach((handler) => handler());
+        };
+        return fake;
+    };
+
+    const setup = (options) => {
+        clock = createClock();
+        record = { instances: [], actions: [], selectTracks: [] };
+        logs = [];
+        doc = createDocument();
+        const log = { info: (message) => logs.push(message), warn: (message) => logs.push(message) };
+        Guarded = withPipelineGuard(createWebOsVideo(clock, record), Object.assign({
+            log,
+            now: clock.now,
+            setTimeout: clock.setTimeout,
+            clearTimeout: clock.clearTimeout,
+            document: doc,
+        }, options));
+    };
+    const create = (container) => {
+        const containerElement = container || createContainer();
+        const video = new Guarded({ containerElement });
+        return { video, element: record.instances[record.instances.length - 1].element, containerElement };
+    };
+    // A stream that started playing.
+    const playing = (url) => {
+        const created = create();
+        created.video.dispatch(load(url));
+        clock.advance(300);
+        created.element.started();
+        return created;
+    };
+
+    beforeEach(() => setup());
+
+    it('keeps the manifest and canPlayStream of the decorated video', () => {
+        expect(Guarded.manifest.name).toBe('WebOsVideo');
+        expect(typeof Guarded.canPlayStream).toBe('function');
+    });
+
+    it('creates one pipeline per load: the load() WebOsVideo calls after setting src is dropped', () => {
+        const { element } = playing(URL_A);
+        expect(element.log).toEqual(['start ' + URL_A, 'play']);
+        expect(logs.join('\n')).toMatch(/repeated load\(\) calls dropped: 1/);
+    });
+
+    it('pauses a playing video on unload and releases the pipeline RELEASE_SETTLE_MS later', () => {
+        const { video, element } = playing(URL_A);
+        element.log.length = 0;
+        video.dispatch(UNLOAD);
+        expect(element.log).toEqual(['pause']);
+        clock.advance(RELEASE_SETTLE_MS - 1);
+        expect(element.log).toEqual(['pause']);
+        clock.advance(1);
+        expect(element.log).toEqual(['pause', 'release']);
+    });
+
+    it('runs the actions dispatched during the release afterwards, in order (unload + load = a stream switch)', () => {
+        const { video, element } = playing(URL_A);
+        element.log.length = 0;
+        record.actions.length = 0;
+        video.dispatch(UNLOAD);
+        video.dispatch(load(URL_B));
+        video.dispatch({ type: 'setProp', propName: 'volume', propValue: 50 });
+        expect(record.actions).toEqual([]);
+        clock.advance(RELEASE_SETTLE_MS);
+        expect(record.actions).toEqual(['unload', 'load', 'setProp:volume']);
+        expect(element.log).toEqual(['pause', 'release', 'start ' + URL_B]);
+        clock.advance(300);
+        expect(element.log).toEqual(['pause', 'release', 'start ' + URL_B, 'play']);
+    });
+
+    it('releases at once when the video has been paused for RELEASE_SETTLE_MS already', () => {
+        const { video, element } = playing(URL_A);
+        element.pause();
+        clock.advance(RELEASE_SETTLE_MS);
+        element.log.length = 0;
+        video.dispatch(UNLOAD);
+        video.dispatch(load(URL_B));
+        expect(element.log).toEqual(['release', 'start ' + URL_B]);
+    });
+
+    it('releases at once after the end of the video', () => {
+        const { video, element } = playing(URL_A);
+        element.paused = true;
+        element.fire('ended');
+        clock.advance(RELEASE_SETTLE_MS);
+        element.log.length = 0;
+        video.dispatch(UNLOAD);
+        expect(element.log).toEqual(['release']);
+    });
+
+    it('releases a load over a playing stream first, quietly', () => {
+        const { video, element } = playing(URL_A);
+        element.log.length = 0;
+        video.dispatch(load(URL_B));
+        expect(element.log).toEqual(['pause']);
+        clock.advance(RELEASE_SETTLE_MS);
+        expect(element.log).toEqual(['pause', 'release', 'start ' + URL_B]);
+    });
+
+    it('does not wait when there is no pipeline', () => {
+        const { video, element } = create();
+        video.dispatch(UNLOAD);
+        video.dispatch(load(URL_A));
+        expect(element.log).toEqual(['release', 'start ' + URL_A]);
+    });
+
+    it('destroys at once for the caller, and releases the pipeline quietly before the inner destroy', () => {
+        const { video, element } = playing(URL_A);
+        element.log.length = 0;
+        video.dispatch(DESTROY);
+        expect(() => video.dispatch(UNLOAD)).toThrow('Video is destroyed');
+        expect(() => video.on('error', () => null)).toThrow('Video is destroyed');
+        expect(element.log).toEqual(['pause']);
+        expect(record.actions).not.toContain('destroy');
+        clock.advance(RELEASE_SETTLE_MS);
+        expect(record.actions).toContain('destroy');
+        expect(element.log).toEqual(['pause', 'release']);
+        // The element gets its own load() back.
+        expect(Object.prototype.hasOwnProperty.call(element, 'load')).toBe(false);
+    });
+
+    it('starts a load no sooner than loadGapMs after the last release of any guarded video', () => {
+        setup({ loadGapMs: 500 });
+        const first = playing(URL_A);
+        first.element.pause();
+        clock.advance(RELEASE_SETTLE_MS);
+        first.video.dispatch(DESTROY);
+        clock.advance(100);
+        const second = create();
+        second.video.dispatch(load(URL_B));
+        expect(second.element.log).toEqual([]);
+        clock.advance(399);
+        expect(second.element.log).toEqual([]);
+        clock.advance(1);
+        expect(second.element.log).toEqual(['start ' + URL_B]);
+    });
+
+    it('a new video loads only after the release of a destroyed one still settling (the Player remounts on a switch)', () => {
+        const first = playing(URL_A);
+        first.element.log.length = 0;
+        first.video.dispatch(DESTROY);
+        clock.advance(200);
+        const second = create();
+        second.video.dispatch(load(URL_B));
+        expect(second.element.log).toEqual([]);
+        clock.advance(RELEASE_SETTLE_MS - 200);
+        expect(first.element.log).toEqual(['pause', 'release']);
+        expect(second.element.log).toEqual([]);
+        clock.advance(50);
+        expect(second.element.log).toEqual(['start ' + URL_B]);
+        // Nothing left in progress: the next switch is not held back.
+        const third = create();
+        third.video.dispatch(load(URL_A));
+        expect(third.element.log).toEqual(['start ' + URL_A]);
+    });
+
+    it('the delayed subtitle selectTrack reaches the pipeline it was meant for, not the next stream', () => {
+        const selectSubtitles = { type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: 'EMBEDDED_1' };
+        // While playing: the release waits RELEASE_SETTLE_MS anyway.
+        const { video, element } = playing(URL_A);
+        video.dispatch(selectSubtitles);
+        clock.advance(100);
+        video.dispatch(UNLOAD);
+        video.dispatch(load(URL_B));
+        clock.advance(2000);
+        expect(record.selectTracks).toEqual(['id:' + URL_A]);
+        expect(element.log).toContain('start ' + URL_B);
+        // Paused for long (the release would be immediate): it still waits for the selection.
+        element.started();
+        element.pause();
+        clock.advance(RELEASE_SETTLE_MS);
+        element.log.length = 0;
+        video.dispatch(selectSubtitles);
+        video.dispatch(UNLOAD);
+        video.dispatch(load(URL_A));
+        expect(element.log).toEqual([]);
+        clock.advance(SUBTITLE_SELECT_SETTLE_MS);
+        expect(record.selectTracks).toEqual(['id:' + URL_A, 'id:' + URL_B]);
+        expect(element.log).toEqual(['release', 'start ' + URL_A]);
+    });
+
+    it('the Player unmounts: the node React removes stays in place, hidden, until after the quiet release', () => {
+        const { video, element, containerElement } = playing(URL_A);
+        // routes-container > route (React removes this one) > player > container > <video>
+        const routes = createNode();
+        const route = createNode();
+        const player = createNode();
+        routes.appendChild(route);
+        route.appendChild(player);
+        player.appendChild(containerElement);
+        element.log.length = 0;
+        // Layout effect cleanup, then React removes the route node, then the destroy (passive effect).
+        expect(holdVideosInPlace(containerElement, { setTimeout: clock.setTimeout })).toBe(1);
+        expect(element.log).toEqual(['pause']);
+        expect(routes.removeChild(route)).toBe(route);
+        expect(route.parentNode).toBe(routes);
+        expect(route.style.display).toBe('none');
+        video.dispatch(DESTROY);
+        clock.advance(RELEASE_SETTLE_MS - 1);
+        expect(element.log).toEqual(['pause']);
+        clock.advance(1);
+        // Released while still in place.
+        expect(element.log).toEqual(['pause', 'release']);
+        expect(route.parentNode).toBe(routes);
+        clock.advance(LEAVE_DELAY_MS - RELEASE_SETTLE_MS);
+        expect(route.parentNode).toBeNull();
+        // The interception is gone: other removals are untouched.
+        expect(Object.prototype.hasOwnProperty.call(routes, 'removeChild')).toBe(false);
+        const other = createNode();
+        routes.appendChild(other);
+        routes.removeChild(other);
+        expect(other.parentNode).toBeNull();
+    });
+
+    it('holdVideosInPlace leaves alone what the guard does not hold, and undoes itself if nothing is removed', () => {
+        const idle = create();
+        const parent = createNode();
+        parent.appendChild(idle.containerElement);
+        expect(holdVideosInPlace(idle.containerElement, { setTimeout: clock.setTimeout })).toBe(0);
+        expect(Object.prototype.hasOwnProperty.call(parent, 'removeChild')).toBe(false);
+        const other = createContainer();
+        other.appendChild(createElement());
+        other.children[0].attributes.src = URL_A;
+        expect(holdVideosInPlace(other, { setTimeout: clock.setTimeout })).toBe(0);
+        expect(holdVideosInPlace(null)).toBe(0);
+        const { containerElement } = playing(URL_B);
+        const host = createNode();
+        host.appendChild(containerElement);
+        expect(holdVideosInPlace(containerElement, { setTimeout: clock.setTimeout })).toBe(1);
+        expect(Object.prototype.hasOwnProperty.call(host, 'removeChild')).toBe(true);
+        clock.advance(LEAVE_DELAY_MS);
+        expect(Object.prototype.hasOwnProperty.call(host, 'removeChild')).toBe(false);
+    });
+
+    // A load watched by the start watchdog: the errors it reports.
+    const watched = () => {
+        const created = create();
+        created.errors = [];
+        created.video.on('error', (error) => created.errors.push(error));
+        created.video.dispatch(load(URL_A));
+        clock.advance(300);
+        created.element.log.length = 0;
+        return created;
+    };
+
+    it('a slow link plays: metadata 25 s after the load, no reload and nothing aborted', () => {
+        const { element, errors } = watched();
+        clock.advance(25000 - 300);
+        element.started();
+        clock.advance(10 * START_TIMEOUT_MS);
+        expect(errors).toEqual([]);
+        expect(element.log).toEqual([]);
+        expect(logs.join('\n')).toMatch(/loadedmetadata 25000 ms after the load/);
+    });
+
+    it('every sign of progress restarts the time; the request is never touched before the error', () => {
+        const { video, element, errors } = watched();
+        // The 302 of a debrid resolve after 45 s, then data, then metadata after 100 s.
+        clock.advance(45000);
+        element.fire('loadstart');
+        clock.advance(START_TIMEOUT_MS - 1);
+        element.fire('progress');
+        clock.advance(START_TIMEOUT_MS - 1);
+        element.fire('durationchange');
+        clock.advance(START_TIMEOUT_MS - 1);
+        expect(errors).toEqual([]);
+        expect(element.log).toEqual([]);
+        element.started();
+        clock.advance(10 * START_TIMEOUT_MS);
+        expect(errors).toEqual([]);
+        expect(video).toBeDefined();
+    });
+
+    it('no sign of life for START_TIMEOUT_MS: STREAM_FAILED_TO_LOAD, and only then the release', () => {
+        const { element, errors } = watched();
+        clock.advance(START_TIMEOUT_MS - 301);
+        expect(errors).toEqual([]);
+        expect(element.log).toEqual([]);
+        clock.advance(1);
+        expect(errors).toHaveLength(1);
+        expect(errors[0]).toMatchObject({ code: 3, critical: true, stream: { url: URL_A } });
+        expect(logs.join('\n')).toMatch(/no sign of the load for 60 s/);
+        clock.advance(RELEASE_SETTLE_MS);
+        expect(element.log).toEqual(['pause', 'release']);
+        expect(record.actions.filter((action) => action === 'unload')).toHaveLength(1);
+        clock.advance(10 * START_TIMEOUT_MS);
+        expect(errors).toHaveLength(1);
+    });
+
+    it('the time stops while the app is hidden and starts again when it comes back', () => {
+        const { errors } = watched();
+        clock.advance(30000);
+        doc.setHidden(true);
+        clock.advance(10 * START_TIMEOUT_MS);
+        expect(errors).toEqual([]);
+        doc.setHidden(false);
+        clock.advance(START_TIMEOUT_MS - 1);
+        expect(errors).toEqual([]);
+        clock.advance(1);
+        expect(errors).toHaveLength(1);
+    });
+
+    it('drops the watchdog of a stream that was unloaded, or that the element failed', () => {
+        const unloaded = watched();
+        unloaded.video.dispatch(UNLOAD);
+        clock.advance(10 * START_TIMEOUT_MS);
+        expect(unloaded.errors).toEqual([]);
+        const failed = watched();
+        failed.element.fire('error');
+        clock.advance(10 * START_TIMEOUT_MS);
+        expect(failed.errors).toEqual([]);
+        expect(doc.handlers).toHaveLength(2);
+        unloaded.video.dispatch(DESTROY);
+        clock.advance(RELEASE_SETTLE_MS);
+        expect(doc.handlers).toHaveLength(1);
+    });
+
+    it('watchdog: false (webos.pipelineGuard.watchdog = off): no error however long the load takes', () => {
+        setup({ watchdog: false });
+        const { errors } = watched();
+        clock.advance(10 * START_TIMEOUT_MS);
+        expect(errors).toEqual([]);
+        expect(doc.handlers).toEqual([]);
+    });
+
+    it('dropExtraLoad: false (webos.pipelineGuard.extraLoad = keep): WebOsVideo\'s second load() goes through', () => {
+        setup({ dropExtraLoad: false });
+        const { element } = playing(URL_A);
+        expect(element.log).toEqual(['start ' + URL_A, 'restart ' + URL_A, 'play']);
+        expect(logs.join('\n')).toMatch(/repeated load\(\) calls dropped: 0/);
+    });
+
+    it('two <video> in the same container: each guard holds the one its WebOsVideo created (the last)', () => {
+        const first = playing(URL_A);
+        const second = create(first.containerElement);
+        expect(first.containerElement.querySelectorAll('video')).toEqual([first.element, second.element]);
+        first.element.log.length = 0;
+        second.video.dispatch(load(URL_B));
+        clock.advance(300);
+        // The second guard dropped its own element's extra load() and left the first one alone.
+        expect(second.element.log).toEqual(['start ' + URL_B, 'play']);
+        expect(first.element.log).toEqual([]);
+        second.video.dispatch(UNLOAD);
+        expect(second.element.log).toEqual(['start ' + URL_B, 'play', 'pause']);
+        expect(first.element.log).toEqual([]);
+        expect(first.element.paused).toBe(false);
+    });
+});
+
+describe('readGuardSettings', () => {
+    const { readGuardSettings, GUARD_KEY, EXTRA_LOAD_KEY, WATCHDOG_KEY } = require('../withPipelineGuard');
+    const storage = (values) => ({ getItem: (key) => (Object.prototype.hasOwnProperty.call(values, key) ? values[key] : null) });
+
+    it('everything on by default; each key turns its part off', () => {
+        expect([GUARD_KEY, EXTRA_LOAD_KEY, WATCHDOG_KEY]).toEqual(['webos.pipelineGuard', 'webos.pipelineGuard.extraLoad', 'webos.pipelineGuard.watchdog']);
+        const all = { enabled: true, dropExtraLoad: true, watchdog: true };
+        expect(readGuardSettings(storage({}))).toEqual(all);
+        expect(readGuardSettings(null)).toEqual(all);
+        expect(readGuardSettings({ getItem: () => { throw new Error('denied'); } })).toEqual(all);
+        expect(readGuardSettings(storage({ [GUARD_KEY]: 'off' }))).toEqual({ ...all, enabled: false });
+        expect(readGuardSettings(storage({ [GUARD_KEY]: 'on' }))).toEqual(all);
+        expect(readGuardSettings(storage({ [EXTRA_LOAD_KEY]: 'keep' }))).toEqual({ ...all, dropExtraLoad: false });
+        expect(readGuardSettings(storage({ [WATCHDOG_KEY]: 'off' }))).toEqual({ ...all, watchdog: false });
+    });
+});
