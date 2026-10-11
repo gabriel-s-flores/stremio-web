@@ -31,7 +31,7 @@
 
 'use strict';
 
-const { focusablesIn, firstFocusable, isFocusable } = require('./core/dom');
+const { focusablesIn, firstFocusable, isFocusable, isRendered } = require('./core/dom');
 const { createKeyedMemory, locate, resolve } = require('./core/memory');
 const { keepInView: keepInViewUpTo, offsetInto } = require('./core/scroll');
 const { PRIORITY, getInputHub } = require('./core/input');
@@ -88,9 +88,31 @@ const insideOverlay = (element, section) => {
 // hitTest). See ./core/scroll.js.
 const keepInView = (element, stop) => keepInViewUpTo(element, stop);
 
+// Pointer or keys: the last input that came (F4.1c's own tracking, kept on purpose). The Magic
+// Remote's cursorStateChange tells when the pointer shows or hides (webos/magic-remote); a pointer
+// move alone is not pointer use. Unknown (nothing yet) counts as keys. With the pointer mode of the
+// input hub instead, the renderer kept ~15 MB more after the second opening of this page in the c8
+// profile (review F4.4 c1, M2; the bisection is in the F4.4 report): the page keeps this one.
+let lastInput = null;
+const installInputTracking = (win) => {
+    if (win.__webosMetaDetailsInput) return;
+    win.__webosMetaDetailsInput = true;
+    win.addEventListener('keydown', () => { lastInput = 'keys'; }, true);
+    win.addEventListener('mousedown', (event) => { if (event.isTrusted !== false) lastInput = 'pointer'; }, true);
+    win.document.addEventListener('cursorStateChange', (event) => {
+        const visibility = event.detail && event.detail.visibility;
+        if (visibility === true) lastInput = 'pointer';
+        else if (visibility === false) lastInput = 'keys';
+    });
+};
+
 const createMetaDetailsNavigation = ({ root, window: win, hub = getInputHub(win) }) => {
     const doc = win.document;
-    const pointerInUse = () => hub.pointerInUse();
+    installInputTracking(win);
+    const pointerInUse = () => {
+        const mode = doc.documentElement.getAttribute('data-webos-pointer');
+        return mode === 'visible' || (mode === null && lastInput === 'pointer');
+    };
 
     let destroyed = false;
     let routeActive = true;
@@ -247,8 +269,10 @@ const createMetaDetailsNavigation = ({ root, window: win, hub = getInputHub(win)
             }
         }
         target = target || defaultTarget(parts);
-        if (target === null && parts.list && !parts.list.querySelector(SELECTORS.item) && !root.querySelector('[class*="placeholder"]')) {
+        if (target === null && parts.list && !parts.list.querySelector(SELECTORS.item) && !parts.list.querySelector(PLACEHOLDER) && !isLoading(parts, 'meta')) {
             // Nothing to list (no addons, no streams, an error): the list's own buttons or the column.
+            // Not while the list or the column still load; the title of a movie without a logo is no
+            // loading placeholder (MetaPreview's logo-placeholder).
             target = fallbackTarget(parts);
         }
         const placed = focus(target);
@@ -278,6 +302,13 @@ const createMetaDetailsNavigation = ({ root, window: win, hub = getInputHub(win)
         if (destroyed || !routeActive) return;
         const parts = sections();
         if (!parts) return;
+        // The page is not on screen yet: the Player's node stays in place for a moment after it
+        // closes (holdVideosInPlace, F5.6) and covers the page, and its removal is no mutation of
+        // this page. A focus to restore is waited for meanwhile, within the guard.
+        if (!isRendered(root)) {
+            if (restore && Date.now() < restoreUntil) schedule(RESTORE_RETRY);
+            return;
+        }
         prepare(parts);
         // Nothing moves the focus while the pointer is in use, a late restore included.
         if (pointerInUse()) return;
@@ -529,5 +560,7 @@ module.exports = {
     resolve,
     offsetInto,
     _memory: memory,
-    _setLastInput: (value) => getInputHub(window).setLastInput(value),
+    _setLastInput: (value) => {
+        lastInput = value === 'key' ? 'keys' : value;
+    },
 };

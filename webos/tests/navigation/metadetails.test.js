@@ -18,6 +18,8 @@ const rectOf = function rectOf() {
 };
 // A box for every element with a rect.
 const rectsOf = function rectsOf() {
+    // display: none on an ancestor (the route under another one).
+    if (this.closest('[data-hidden]')) return [];
     const rect = this.getBoundingClientRect();
     return rect.width > 0 || rect.height > 0 ? [rect] : [];
 };
@@ -192,6 +194,23 @@ describe('initial focus', () => {
         $('list').innerHTML = '<div class="message-container-q1"><input class="search-q2" id="picker" tabindex="0" /><div>No streams</div></div>';
         open();
         expect(document.activeElement).toBe($('trailer'));
+    });
+
+    it('with no streams on a movie without a logo (its title in a logo-placeholder): the fallback all the same', () => {
+        $('list').innerHTML = '<div class="message-container-q1"><div>No addons</div><a class="install-button-container-x1" href="#/addons" tabindex="0" id="install">Install addons</a></div>';
+        $('info').insertAdjacentHTML('afterbegin', '<div class="logo-placeholder-q1">Title</div>');
+        open();
+        expect(document.activeElement).toBe($('install'));
+    });
+
+    it('with no streams yet but the list or the column still loading: waits', () => {
+        $('list').innerHTML = '<div class="stream-placeholder-container-z1"></div>';
+        open();
+        expect(document.activeElement).toBe(document.body);
+        $('list').innerHTML = '<div class="message-container-q1"><div>No streams</div></div>';
+        $('meta').className = 'meta-preview-placeholder-container-s1';
+        navigation.tick();
+        expect(document.activeElement).toBe(document.body);
     });
 });
 
@@ -692,3 +711,102 @@ describe('F4.4: a series opened from a movie in the same page, and the bar on to
         expect(document.activeElement).toBe($('cast'));
     });
 });
+
+describe('F4.4 c2: Back from the Player while its node is still held in place (F5.6)', () => {
+    // holdVideosInPlace keeps the Player's node as the last route for 1.5 s: the details route under
+    // it is display: none, and the node leaving is no mutation of the page.
+    const playerClosing = () => {
+        open();
+        $('s3').focus();
+        navigation.setRouteActive(false);
+        $('s3').blur();
+        const route = $('root').parentNode;
+        route.setAttribute('data-hidden', '');
+        navigation.setRouteActive(true);
+        return route;
+    };
+
+    it('A1: the stream played gets the focus back once the held node goes', () => {
+        jest.useFakeTimers();
+        try {
+            const route = playerClosing();
+            jest.advanceTimersByTime(100);
+            expect(document.activeElement).toBe(document.body);
+            jest.advanceTimersByTime(1400);
+            expect(document.activeElement).toBe(document.body);
+            route.removeAttribute('data-hidden');
+            jest.advanceTimersByTime(300);
+            expect(document.activeElement).toBe($('s3'));
+        } finally {
+            jest.useRealTimers();
+        }
+    });
+
+    it('A1 with F5.7: the Player put the focus back on the stream first, the restore leaves it there', () => {
+        jest.useFakeTimers();
+        try {
+            const route = playerClosing();
+            jest.advanceTimersByTime(800);
+            route.removeAttribute('data-hidden');
+            // usePlayerRemote (F5.7) focuses the entry element as soon as the page shows.
+            $('s3').focus();
+            const focusSpy = jest.spyOn(HTMLElement.prototype, 'focus');
+            jest.advanceTimersByTime(1000);
+            expect(document.activeElement).toBe($('s3'));
+            expect(focusSpy).not.toHaveBeenCalled();
+            focusSpy.mockRestore();
+        } finally {
+            jest.useRealTimers();
+        }
+    });
+
+    it('A1 with F5.7: the restore first, then the Player\'s own retry finds the focus in place (nothing to undo)', () => {
+        jest.useFakeTimers();
+        try {
+            const route = playerClosing();
+            route.removeAttribute('data-hidden');
+            jest.advanceTimersByTime(300);
+            expect(document.activeElement).toBe($('s3'));
+            // The same element again (the F5.7 retry acts only with the focus lost; even if it did):
+            $('s3').focus();
+            jest.advanceTimersByTime(1000);
+            expect(document.activeElement).toBe($('s3'));
+        } finally {
+            jest.useRealTimers();
+        }
+    });
+
+    it('A1: within the guard only (a page left hidden stops trying)', () => {
+        jest.useFakeTimers();
+        try {
+            const route = playerClosing();
+            jest.advanceTimersByTime(16000);
+            route.removeAttribute('data-hidden');
+            jest.advanceTimersByTime(1000);
+            expect(document.activeElement).toBe(document.body);
+            expect(jest.getTimerCount()).toBe(0);
+        } finally {
+            jest.useRealTimers();
+        }
+    });
+});
+
+
+describe('F4.4 c2: M2, the page keeps its own input tracking', () => {
+    it('a pointer move alone (Chromium sends trusted ones when the layout moves under a still cursor) does not keep the focus out', () => {
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: 5, clientY: 5 }));
+        open();
+        expect(document.activeElement).toBe($('list'));
+        expect($('list').hasAttribute('data-focus-visible-added')).toBe(true);
+    });
+
+    it('the cursor of the Magic Remote showing is pointer use until a key', () => {
+        document.dispatchEvent(new CustomEvent('cursorStateChange', { detail: { visibility: true } }));
+        open();
+        expect(document.activeElement).toBe(document.body);
+        key(KEY.DOWN, document.body);
+        navigation.tick();
+        expect(document.activeElement).not.toBe(document.body);
+    });
+});
+
