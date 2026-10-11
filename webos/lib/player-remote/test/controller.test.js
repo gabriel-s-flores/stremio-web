@@ -134,6 +134,7 @@ describe('bar hidden', () => {
         expect(props.onPauseRequested).toHaveBeenCalledTimes(1);
         expect(document.activeElement).toBe($('play'));
         expect($('play').hasAttribute('data-focus-visible-added')).toBe(true);
+        expect($('play').classList.contains('focus-visible')).toBe(true);
         expect(reached('shortcuts')).toHaveLength(0);
         expect(reached('polyfill')).toHaveLength(0);
         expect(revealed()).toBe(1);
@@ -305,6 +306,42 @@ describe('overlays', () => {
         press(KEYS.FF);
         expect(reached('shortcuts').filter((entry) => entry.key === 'ArrowRight')).toHaveLength(0);
         expect(revealed()).toBe(0);
+    });
+
+    it('an arrow the focus layer (F4.3) already handled stops here: no volume, no seek, no polyfill behind the menu', () => {
+        // F4.3 registers its capture listener when the app starts, before this controller.
+        const focusLayer = (event) => {
+            if (event.keyCode >= 37 && event.keyCode <= 40 && event.__handled) event.preventDefault();
+        };
+        window.addEventListener('keydown', focusLayer, true);
+        cleanups.push(() => window.removeEventListener('keydown', focusLayer, true));
+        setup();
+        overlayOpen = true;
+        $('seek').focus();
+        [40, 38, 39, 37].forEach((keyCode) => {
+            const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true });
+            Object.defineProperty(event, 'keyCode', { get: () => keyCode });
+            event.__handled = true;
+            document.activeElement.dispatchEvent(event);
+        });
+        expect(reached('shortcuts')).toHaveLength(0);
+        expect(reached('polyfill')).toHaveLength(0);
+        expect(remote.status.result).toBe('overlay-arrow');
+        // An arrow it leaves to the overlay itself goes on.
+        press(KEYS.DOWN);
+        expect(reached('shortcuts')).toHaveLength(1);
+        expect(remote.status.result).toBe('overlay');
+    });
+
+    it('next video popup up: FF/RW and LEFT/RIGHT on the seek bar do nothing (the upstream seek is off) and say so', () => {
+        setup({ popup: true });
+        press(KEYS.FF);
+        expect(remote.status.result).toBe('none');
+        $('seek').focus();
+        press(KEYS.RIGHT);
+        expect(remote.status.result).toBe('none');
+        expect(reached('shortcuts')).toHaveLength(0);
+        expect(reached('polyfill')).toHaveLength(0);
     });
 
     it('next video popup: an arrow from outside goes to "watch", LEFT/RIGHT inside, DOWN to the bar, UP back', () => {

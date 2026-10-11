@@ -11,6 +11,8 @@
 //                 button opens episode 2, STOP leaves the Player
 //   watch         OK on "watch now" of the popup opens episode 2
 //   menu          the audio menu opened from the bar with the remote, Back closes it (F4.3 focus)
+//   context-menu  the YELLOW context menu (F4.3) over the video: its arrows change neither the volume
+//                 nor the time of the video behind it; Back closes it; paused, Back leaves
 //   resume        plays episode 1 up to 200 s, leaves the Player and opens it again: it starts there
 //   resume-save   plays episode 1 up to 200 s and leaves the Player (the core keeps the position)
 //   resume-check  run with `emu-run --keep-state --instance <same>` after resume-save: the episode opens
@@ -524,6 +526,8 @@ const toPopup = async ({ manifestUrl, addonPort }) => {
 
 const next = async (servers) => {
     if (!await toPopup(servers)) return;
+    // With the popup up the upstream keyboard seek is off: FF does nothing and says so.
+    await press('N01b-ff-with-popup', 'FASTFORWARD', (b, a, wall) => ({ 'no seek': near(a.t - b.t, wall, 2), 'result none': !!a.remote && a.remote.result === 'none', 'popup still up': a.popup }));
     await press('N02-down-to-seek-bar', 'DOWN', (b, a) => ({ 'seek bar focused': a.seekFocused, 'popup still up': a.popup }));
     await press('N03-up-to-popup', 'UP', (b, a) => ({ 'watch focused': /play-button/.test(a.focused) }));
     await press('N04-left-dismiss', 'LEFT', (b, a) => ({ 'dismiss focused': /dismiss/.test(a.focused) }), { shot: true });
@@ -718,7 +722,45 @@ const menu = async ({ manifestUrl, addonPort }) => {
     });
 };
 
-const SCENARIOS = { keys, next, watch, resume, menu, 'resume-save': resumeSave, 'resume-check': resumeCheck, 'popup-probe': popupProbe };
+// The F4.3 context menu (YELLOW) over the playing video: its arrows move the focus in the menu and
+// must not reach the video behind it (volume, seek), as the review of cycle 1 found (X05b/X06 of its
+// review2 scenario). Then Back closes the menu, and paused, Back leaves the Player.
+const volumeNow = 'var v = window.__f57.video(); return v ? Math.round(v.volume * 100) : null;';
+const contextMenu = async ({ manifestUrl, addonPort }) => {
+    await openEpisode(manifestUrl, addonPort, 1);
+    if (!await waitPlaying('C00-playing')) return;
+    record('C01-bar-hidden', { ok: await waitHidden() !== null });
+    const v0 = await evaluate(volumeNow);
+    await press('C02-down-no-menu', 'DOWN', () => ({}));
+    const v1 = await evaluate(volumeNow);
+    record('C02b-volume-no-menu', { ok: v1 === v0, note: `volume ${v0} -> ${v1}` });
+    await sleep(3500);
+    await press('C03-yellow', 'YELLOW', () => ({}), { settle: 1500 });
+    record('C03b-menu-open', { ok: await evaluate('return !!document.querySelector(\'[class*="context-menu-container"]\');') });
+    const v2 = await evaluate(volumeNow);
+    const focusBefore = (await state()).focused;
+    await press('C04-down-in-menu', 'DOWN', (b, a) => ({ 'remote leaves it to F4.3': !!a.remote && a.remote.result === 'overlay-arrow' }));
+    await press('C05-down-in-menu', 'DOWN', () => ({}));
+    const v3 = await evaluate(volumeNow);
+    const focusAfter = (await state()).focused;
+    record('C05b-volume-in-menu', { ok: v3 === v2 && focusAfter !== null, note: `volume ${v2} -> ${v3} after two DOWN in the context menu; focus ${focusBefore} -> ${focusAfter}`, screenshot: await screenshot('C05-menu') });
+    await press('C06-right-in-menu', 'RIGHT', (b, a, wall) => ({ 'no seek': near(a.t - b.t, wall, 2) }));
+    await press('C07-left-in-menu', 'LEFT', (b, a, wall) => ({ 'no seek': near(a.t - b.t, wall, 2) }));
+    await press('C08-up-in-menu', 'UP', () => ({}));
+    const v4 = await evaluate(volumeNow);
+    record('C08b-volume-after-up', { ok: v4 === v2, note: `volume ${v2} -> ${v4}` });
+    await press('C09-back-closes', 'BACK', (b, a) => ({
+        'still in the Player': a.hash.indexOf('#/player/') === 0,
+        'menu closed': true,
+        'by the overlay bridge': !!a.lastBack && a.lastBack.consumedBy === 'overlay',
+    }), { settle: 1500 });
+    record('C09b-menu-closed', { ok: await evaluate('return !document.querySelector(\'[class*="context-menu-container"]\');') });
+    await press('C10-right-seeks-again', 'RIGHT', seekedBy(10));
+    await press('C11-pause', 'PAUSE', (b, a) => ({ paused: a.paused === true }));
+    await press('C12-back-paused-leaves', 'BACK', (b, a) => ({ 'left the Player': a.hash.indexOf('#/player/') !== 0 }), { settle: 2500, shot: true });
+};
+
+const SCENARIOS = { keys, next, watch, resume, menu, 'context-menu': contextMenu, 'resume-save': resumeSave, 'resume-check': resumeCheck, 'popup-probe': popupProbe };
 
 const main = async () => {
     if (!SCENARIOS[SCENARIO]) throw new Error(`unknown scenario ${SCENARIO}`);

@@ -214,8 +214,10 @@ const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => fa
                 return togglePaused();
             case ACTIONS.FAST_FORWARD:
             case ACTIONS.REWIND: {
-                // An open menu has the arrows (F4.3): the seek waits until it closes.
-                if (overlayOpen) return 'none';
+                // An open menu has the arrows (F4.3): the seek waits until it closes. With the next
+                // video popup up, the upstream Player turns its keyboard seek off (menusOpen): the
+                // seek comes back once the popup is dismissed (Back).
+                if (overlayOpen || popup() !== null) return 'none';
                 seekByKey(action === ACTIONS.FAST_FORWARD ? 'right' : 'left', event.repeat);
                 return 'seek';
             }
@@ -240,6 +242,7 @@ const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => fa
     };
 
     const isSeekArrow = (action) => action === ACTIONS.LEFT || action === ACTIONS.RIGHT;
+    const isArrow = (action) => isSeekArrow(action) || action === ACTIONS.UP || action === ACTIONS.DOWN;
 
     // Arrows and OK with no overlay open. Returns what it did; `event` is consumed unless the key
     // goes on to the upstream seek or to the focused button.
@@ -257,6 +260,11 @@ const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => fa
                 return 'popup-focus';
             case 'outside':
             case 'seek':
+                if (isSeekArrow(action) && next !== null) {
+                    // The upstream keyboard seek is off while the next video popup is up (menusOpen).
+                    consume(event);
+                    return 'none';
+                }
                 if (isSeekArrow(action)) {
                     // The upstream shortcut seeks; the polyfill must not also move the focus.
                     event.preventDefault();
@@ -322,6 +330,17 @@ const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => fa
             consume(event);
             status.result = onMediaKey(action, event, overlayOpen);
         } else if (overlayOpen) {
+            // The focus layer of F4.3 (a capture listener registered before this one) prevents the
+            // arrows it moves the focus with. The upstream shortcuts on document do not look at that
+            // (volume, seek: the Player's menusOpen does not know the context menu), nor would the
+            // video behind the menu: those arrows stop here. Arrows F4.3 leaves to the overlay itself
+            // (not prevented) go on.
+            if (isArrow(action) && event.defaultPrevented) {
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                status.result = 'overlay-arrow';
+                return;
+            }
             status.result = 'overlay';
             return;
         } else {

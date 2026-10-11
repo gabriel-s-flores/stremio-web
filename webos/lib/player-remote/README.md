@@ -15,23 +15,33 @@ botão de velocidade, F5.1) monta o controlador. O `Player.js` do upstream não 
 
 O controlador só age com o Player na rota visível e, para setas e OK, sem overlay aberto (menus de
 áudio/legendas/opções, gaveta de episódios, menu de contexto, modais: o foco e as setas deles são da
-F4.3, e o Back fecha cada um pela ponte do `webos/back`). O popup de "próximo vídeo" não conta como
-overlay aqui: ele não prende o foco.
+F4.3, e o Back fecha cada um pela ponte do `webos/back`). Com um overlay aberto, a seta que a F4.3 já
+usou para mover o foco (ela faz `preventDefault`) **para aqui**: os atalhos do upstream (`volume`,
+`seekForward`/`seekBackward`, em `document`, que não olham `defaultPrevented`) e a navegação espacial
+não a recebem. Sem isso, com o menu de contexto aberto (tecla amarela), ↑/↓ no menu mudavam o volume
+do vídeo atrás dele e ←/→ faziam seek: o `menusOpen` do Player não conhece o `ContextMenu` (achado da
+revisão do ciclo 1; também na base). Setas que a F4.3 deixa para o próprio overlay (não prevenidas)
+seguem adiante. O popup de "próximo vídeo" não conta como overlay aqui: ele não prende o foco.
 
 | Tecla | Barra escondida (ou foco fora dela) | Foco no seek bar | Foco num botão da barra | Foco no popup de próximo vídeo |
 |---|---|---|---|---|
 | OK | play/pause; foco no play/pause | play/pause | aciona o botão (o `Button` do upstream clica no Enter) | aciona o botão |
-| ← → | seek de 10 s pelo upstream; foco vai para o seek bar | seek de 10 s | anda entre os botões (para nas pontas) | dispensar ↔ assistir |
+| ← → | seek de 10 s pelo upstream; foco vai para o seek bar | seek de 10 s (com o popup de próximo vídeo aberto: nada, ver abaixo) | anda entre os botões (para nas pontas) | dispensar ↔ assistir |
 | ↑ | mostra a barra; foco no último botão usado (ou play/pause) | vai para o popup, se estiver aberto | seek bar | fica |
 | ↓ | idem | último botão usado (ou play/pause) | fica | seek bar |
 | PLAY (415) / PAUSE (19) / `MediaPlayPause` | toca / pausa / alterna, em qualquer estado (também com menu aberto) | | | |
-| FF (417) / RW (412) | seek de 10 s, com aceleração ao segurar, igual às setas | | | |
+| FF (417) / RW (412) | seek de 10 s, com aceleração ao segurar, igual às setas (com menu ou popup de próximo vídeo aberto: nada) | | | |
 | STOP (413) | sai do Player pelo despachante do `webos/back` (`dispatch({ source: 'stop' })`) | | | |
 | `MediaTrackNext` | próximo episódio (o controle LG não tem essa tecla; vale para outros controles e teclados) | | | |
 | qualquer outra | mostra a barra e segue (cores, números: o amarelo abre o menu de contexto da F4.3) | | | |
 
 Com o foco num elemento do popup ou fora de tudo e o popup aberto, a primeira seta leva o foco para
 "assistir". O upstream já põe o foco lá quando a animação do popup termina.
+
+**Seek com o popup de próximo vídeo aberto** (últimos ~35 s): o upstream desliga o seek por teclado
+enquanto ele está na tela (`menusOpen` inclui o popup). FF/RW e ←/→ no seek bar não fazem nada
+(`status.result` = `none`); o Back dispensa o popup e o seek volta. O arrasto do Magic Remote no seek
+bar continua valendo.
 
 **Seek.** É o do upstream (`useKeyboardSeek`, pelos atalhos `ArrowLeft`/`ArrowRight`): passo de
 `settings.seekTimeDuration` (10 s), e, segurando a tecla, o passo cresce 5 % a cada repetição aceita
