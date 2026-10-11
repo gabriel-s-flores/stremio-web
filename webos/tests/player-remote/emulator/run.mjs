@@ -241,6 +241,15 @@ const PAGE_HELPERS = `
                 return srcProperty.set.call(this, value);
             },
         });
+        // Every key event that reaches the page (capture on window, before the Player remote).
+        window.__f57.keys = [];
+        ['keydown', 'keyup'].forEach(function (type) {
+            window.addEventListener(type, function (event) {
+                if (event.keyCode === 1536 || event.keyCode === 1537) return;
+                window.__f57.keys.push({ type: type, keyCode: event.keyCode, repeat: event.repeat, trusted: event.isTrusted, at: Date.now() });
+                if (window.__f57.keys.length > 200) window.__f57.keys.shift();
+            }, true);
+        });
         // Player actions sent to the core, with the route and how many Players are mounted.
         window.__f57.core = [];
         if (window.core && !window.core.__f57) {
@@ -760,7 +769,68 @@ const contextMenu = async ({ manifestUrl, addonPort }) => {
     await press('C12-back-paused-leaves', 'BACK', (b, a) => ({ 'left the Player': a.hash.indexOf('#/player/') !== 0 }), { settle: 2500, shot: true });
 };
 
-const SCENARIOS = { keys, next, watch, resume, menu, 'context-menu': contextMenu, 'resume-save': resumeSave, 'resume-check': resumeCheck, 'popup-probe': popupProbe };
+// Seek timing (the c8 profile of F6.4 measured 5-13 s net for two RIGHT asking 20 s): the gesture of
+// the e2e (two RIGHT 300 ms apart, then 3 s) and a single RIGHT, with the times the app set on the
+// <video>, its seeking/seeked/waiting/playing events and the net jump the e2e way (forward - elapsed).
+const SEEK_EVENTS = `
+    var v = window.__f57.video();
+    window.__f57.mediaEvents = [];
+    ['seeking', 'seeked', 'waiting', 'playing', 'pause', 'play', 'canplay'].forEach(function (type) {
+        v.addEventListener(type, function () { window.__f57.mediaEvents.push({ type: type, at: Date.now(), t: Math.round(v.currentTime * 10) / 10 }); });
+    });
+    window.__f57.media = [];
+    return true;
+`;
+const seekRound = async (name, presses) => {
+    await evaluate(SEEK_EVENTS);
+    await evaluate('window.__f57.keys = []; return true;');
+    const countBefore = ((await state()).remote || {}).count || 0;
+    const before = await state();
+    const started = Date.now();
+    for (let i = 0; i < presses; i++) {
+        if (i > 0) await sleep(300);
+        remote('RIGHT');
+    }
+    const samples = [];
+    let atThree = null;
+    while (Date.now() - started < 12000) {
+        const now = await state();
+        samples.push({ ms: Date.now() - started, t: now.t, readyState: now.readyState, paused: now.paused, label: now.seekLabel });
+        if (atThree === null && Date.now() - started >= 3300 + 300 * (presses - 1)) atThree = { ms: Date.now() - started, t: now.t };
+        await sleep(250);
+    }
+    const events = await evaluate('return window.__f57.mediaEvents.map(function (e) { return e; });');
+    const sets = await evaluate('return window.__f57.media.filter(function (e) { return e.what === "currentTime"; });');
+    const keysSeen = await evaluate('return window.__f57.keys;');
+    const countAfter = ((await state()).remote || {}).count || 0;
+    const firstSeeking = events.filter((e) => e.type === 'seeking')[0];
+    const lastPlaying = events.filter((e) => e.type === 'playing' || e.type === 'canplay').slice(-1)[0];
+    const asked = 10 * presses;
+    const net = atThree ? Math.round((atThree.t - before.t - atThree.ms / 1000) * 10) / 10 : null;
+    const last = samples[samples.length - 1];
+    record(name, {
+        note: `asked +${asked} s from ${before.t}; time(s) set ${sets.map((e) => Math.round(e.value * 10) / 10).join(', ')}; ` +
+            `keys at the page ${keysSeen.filter((k) => k.type === 'keydown').length} down/${keysSeen.filter((k) => k.type === 'keyup').length} up, handled ${countAfter - countBefore}; net the e2e way at ${atThree && atThree.ms} ms: ${net} s; stall ${firstSeeking && lastPlaying ? lastPlaying.at - firstSeeking.at : '-'} ms; ` +
+            `after 12 s: t=${last.t} (target + playback = ${Math.round((before.t + asked + 12 - (firstSeeking && lastPlaying ? (lastPlaying.at - firstSeeking.at) / 1000 : 0)) * 10) / 10})`,
+        before: before.t, sets, events, samples, net, keysSeen, remoteKeys: countAfter - countBefore,
+    });
+};
+const seekProbe = async ({ manifestUrl, addonPort }) => {
+    await openEpisode(manifestUrl, addonPort, 1);
+    if (!await waitPlaying('S00-playing')) return;
+    record('S01-bar-hidden', { ok: await waitHidden() !== null });
+    await seekRound('S02-two-right', 2);
+    await waitHidden();
+    await seekRound('S03-one-right', 1);
+    await waitHidden();
+    await seekRound('S04-two-right-again', 2);
+    for (let i = 5; i <= 8; i++) {
+        await waitHidden();
+        await seekRound(`S0${i}-two-right`, 2);
+    }
+};
+
+const SCENARIOS = { keys, next, watch, resume, menu, 'context-menu': contextMenu, 'seek-probe': seekProbe, 'resume-save': resumeSave, 'resume-check': resumeCheck, 'popup-probe': popupProbe };
 
 const main = async () => {
     if (!SCENARIOS[SCENARIO]) throw new Error(`unknown scenario ${SCENARIO}`);
