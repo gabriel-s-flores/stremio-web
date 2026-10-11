@@ -85,18 +85,23 @@ if (guard === 'on') {
     check('a load that does not play ends in the error screen', stuck.every((load) => load.errorLayer), stuck.map((load) => load.i));
 }
 // F5.5 review: the selectTrack WebOsVideo sends 500 ms after a subtitle choice made right before
-// leaving the Player targets that stream's pipeline, while it is still there.
+// leaving the Player must not reach the next stream's pipeline, nor this stream's once released. (On
+// webOS the <video> leaving its place clears its mediaId at once, so the call may carry an empty id:
+// it then reaches no pipeline.)
 if (fs.existsSync(path.join(dir, 'subtitles-load.txt'))) {
     const at = Number(read('subtitles-load.txt'));
     const load = perLoad[at];
+    const next = perLoad[at + 1] || null;
+    const idsOf = (video) => page.events.filter((e) => e.video === video && e.mediaId && e.mediaId !== '<invalid mediaId>').map((e) => e.mediaId);
+    const ownIds = idsOf(load.video);
+    const nextIds = next ? idsOf(next.video) : [];
     const chosen = (page.marks || []).filter((mark) => mark.name === 'subtitles chosen')[0] || null;
-    const mediaIds = page.events.filter((e) => e.video === load.video && e.mediaId && e.mediaId !== '<invalid mediaId>').map((e) => e.mediaId);
-    const ownId = mediaIds[mediaIds.length - 1] || null;
     const released = chosen ? page.events.filter((e) => e.video === load.video && e.event === 'emptied' && e.t >= chosen.t)[0] || null : null;
     const selects = chosen ? (page.luna || []).filter((call) => call.method === 'selectTrack' && call.t >= chosen.t) : [];
-    check('a subtitle chosen right before leaving: selectTrack goes to that stream\'s pipeline before its release',
-        chosen !== null && selects.length > 0 && selects.every((call) => call.mediaId === ownId && released !== null && call.t <= released.t),
-        { chosenAt: chosen && chosen.t, ownMediaId: ownId, releasedAt: released && released.t, selectTrack: selects });
+    check('a subtitle chosen right before leaving: its selectTrack reaches neither the next stream nor a released pipeline',
+        chosen !== null && selects.length > 0 && selects.every((call) => nextIds.indexOf(call.mediaId) === -1 &&
+            (ownIds.indexOf(call.mediaId) === -1 || (released !== null && call.t <= released.t))),
+        { chosenAt: chosen && chosen.t, ownMediaIds: ownIds, nextMediaIds: nextIds, releasedAt: released && released.t, selectTrack: selects });
 }
 check('no uncaught page errors', page.errors.length === 0, page.errors);
 const reloads = fs.existsSync(path.join(dir, 'reloads.jsonl')) ? read('reloads.jsonl').trim().split('\n').filter(Boolean).map((line) => JSON.parse(line).i) : [];
