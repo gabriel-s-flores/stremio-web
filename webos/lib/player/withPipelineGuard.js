@@ -8,6 +8,9 @@
 //    down a pipeline that is rendering wedges the next one for the rest of the boot. The guard
 //    pauses the element first and releases it RELEASE_SETTLE_MS later (at once if the video was
 //    already paused or ended that long ago); actions dispatched meanwhile wait and run in order.
+//    An embedded subtitle selection makes WebOsVideo call Luna selectTrack 500 ms later with the
+//    element's mediaId of that moment: the release also waits SUBTITLE_SELECT_SETTLE_MS after the
+//    last selection, so that call reaches the pipeline it was meant for, never the next one.
 //    A load starts only after the releases in progress of every guarded video of the page (a stream
 //    switch remounts the Player: the new <video> loads while the old one is still settling) and no
 //    sooner than LOAD_GAP_MS after the last one, so two pipelines never overlap.
@@ -28,6 +31,8 @@ const ERROR = require('@stremio/stremio-video/src/error');
 
 const RELEASE_SETTLE_MS = 1000;
 const LOAD_GAP_MS = 0;
+// WebOsVideo's selectTrack delay (500 ms) and a margin.
+const SUBTITLE_SELECT_SETTLE_MS = 600;
 const START_TIMEOUT_MS = 20000;
 const START_RETRIES = 1;
 
@@ -80,6 +85,8 @@ const withPipelineGuard = (Video, deps) => {
         let releasing = false;
         // Since when the video is paused or ended (null while it plays).
         let quietSince = null;
+        // When the last subtitle selection went to WebOsVideo.
+        let subtitlesSelectedAt = -Infinity;
         let stream = null;
         let loadedAt = 0;
         let retries = 0;
@@ -123,7 +130,7 @@ const withPipelineGuard = (Video, deps) => {
         const settle = () => {
             if (!videoElement.paused) videoElement.pause();
             if (quietSince === null) quietSince = now();
-            return Math.max(0, quietSince + releaseSettleMs - now());
+            return Math.max(0, quietSince + releaseSettleMs - now(), subtitlesSelectedAt + SUBTITLE_SELECT_SETTLE_MS - now());
         };
 
         const hold = (entries, delay) => {
@@ -251,6 +258,7 @@ const withPipelineGuard = (Video, deps) => {
                     ELEMENT_LISTENERS.forEach(([eventName, listener]) => videoElement.removeEventListener(eventName, listener));
                 }
             }
+            if (action && action.type === 'setProp' && action.propName === 'selectedSubtitlesTrackId') subtitlesSelectedAt = now();
             video.dispatch(action);
             if (command === 'destroy' && videoElement) {
                 // The element is out of the page now; give it its own load() back.
@@ -303,4 +311,4 @@ const pipelineGuardEnabled = (storage) => {
     }
 };
 
-module.exports = { withPipelineGuard, pipelineGuardEnabled, GUARD_KEY, RELEASE_SETTLE_MS, LOAD_GAP_MS, START_TIMEOUT_MS, START_RETRIES };
+module.exports = { withPipelineGuard, pipelineGuardEnabled, GUARD_KEY, SUBTITLE_SELECT_SETTLE_MS, RELEASE_SETTLE_MS, LOAD_GAP_MS, START_TIMEOUT_MS, START_RETRIES };

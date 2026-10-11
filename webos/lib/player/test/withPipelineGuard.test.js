@@ -3,7 +3,7 @@
 // one) and of the <video> element, on a manual clock: when the pipeline is released, how many
 // pipelines a load creates, and the start watchdog.
 
-const { withPipelineGuard, RELEASE_SETTLE_MS, START_TIMEOUT_MS } = require('../withPipelineGuard');
+const { withPipelineGuard, RELEASE_SETTLE_MS, START_TIMEOUT_MS, SUBTITLE_SELECT_SETTLE_MS } = require('../withPipelineGuard');
 
 const URL_A = 'http://10.0.2.2:8099/redirect/t1_h264_aac.mp4';
 const URL_B = 'http://10.0.2.2:8099/redirect/t6_h264_aac.mkv';
@@ -42,6 +42,7 @@ const elementProto = {
         if (this.hasAttribute('src')) {
             this.log.push('restart ' + this.attributes.src);
         } else {
+            this.mediaId = null;
             this.log.push('release');
         }
     },
@@ -53,6 +54,7 @@ const createElement = () => {
         get: () => element.attributes.src || '',
         set: (value) => {
             element.attributes.src = String(value);
+            element.mediaId = 'id:' + value;
             element.log.push('start ' + value);
         },
     });
@@ -103,6 +105,10 @@ const createWebOsVideo = (clock, record) => {
         this.dispatch = (action) => {
             if (destroyed) throw new Error('Video is destroyed');
             record.actions.push(action.type === 'command' ? action.commandName : action.type + ':' + action.propName);
+            // Embedded subtitles: Luna selectTrack 500 ms later, with the mediaId of that moment.
+            if (action.type === 'setProp' && action.propName === 'selectedSubtitlesTrackId' && /^EMBEDDED_/.test(action.propValue)) {
+                clock.setTimeout(() => record.selectTracks.push(element.mediaId), 500);
+            }
             if (action.type !== 'command') return;
             if (action.commandName === 'load') {
                 element.src = action.commandArgs.stream.url;
@@ -143,7 +149,7 @@ describe('withPipelineGuard', () => {
 
     const setup = (options) => {
         clock = createClock();
-        record = { instances: [], actions: [] };
+        record = { instances: [], actions: [], selectTracks: [] };
         logs = [];
         const log = { info: (message) => logs.push(message), warn: (message) => logs.push(message) };
         Guarded = withPipelineGuard(createWebOsVideo(clock, record), Object.assign({
@@ -289,6 +295,31 @@ describe('withPipelineGuard', () => {
         const third = create();
         third.video.dispatch(load(URL_A));
         expect(third.element.log).toEqual(['start ' + URL_A]);
+    });
+
+    it('the delayed subtitle selectTrack reaches the pipeline it was meant for, not the next stream', () => {
+        const selectSubtitles = { type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: 'EMBEDDED_1' };
+        // While playing: the release waits RELEASE_SETTLE_MS anyway.
+        const { video, element } = playing(URL_A);
+        video.dispatch(selectSubtitles);
+        clock.advance(100);
+        video.dispatch(UNLOAD);
+        video.dispatch(load(URL_B));
+        clock.advance(2000);
+        expect(record.selectTracks).toEqual(['id:' + URL_A]);
+        expect(element.log).toContain('start ' + URL_B);
+        // Paused for long (the release would be immediate): it still waits for the selection.
+        element.started();
+        element.pause();
+        clock.advance(RELEASE_SETTLE_MS);
+        element.log.length = 0;
+        video.dispatch(selectSubtitles);
+        video.dispatch(UNLOAD);
+        video.dispatch(load(URL_A));
+        expect(element.log).toEqual([]);
+        clock.advance(SUBTITLE_SELECT_SETTLE_MS);
+        expect(record.selectTracks).toEqual(['id:' + URL_A, 'id:' + URL_B]);
+        expect(element.log).toEqual(['release', 'start ' + URL_A]);
     });
 
     it('reloads a stream that does not start, then reports STREAM_FAILED_TO_LOAD', () => {

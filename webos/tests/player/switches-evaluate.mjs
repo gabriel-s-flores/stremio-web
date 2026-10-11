@@ -19,6 +19,14 @@ const check = (name, ok, detail) => checks.push({ name, ok: !!ok, detail });
 // asks for ranges, and a seek would too).
 const pipelineGets = (file) => serverLog.split('\n').filter((line) => new RegExp(`GET /${file.replace(/\./g, '\\.')}  -> 200`).test(line)).length;
 
+// dmesg after each load (switches.sh): the uMediaServer process dying is the emulator's, not the app's.
+const systemLog = fs.existsSync(path.join(dir, 'system.log')) ? read('system.log') : '';
+const umsDownFrom = (() => {
+    const sections = systemLog.split(/^== load /m).slice(1);
+    const index = sections.findIndex((section) => /umediaserver main process ended/.test(section));
+    return index === -1 ? null : Number(sections[index].split(' ')[0]);
+})();
+
 const perLoad = loads.map((load) => {
     const played = load.msToPlay !== null && load.after && load.after.video && load.after.video.src === load.file &&
         load.after.video.currentTime > (load.atPlay && load.atPlay.video ? load.atPlay.video.currentTime : 0) + 2;
@@ -39,6 +47,7 @@ const perLoad = loads.map((load) => {
 check('6 loads were made (5 stream switches)', loads.length === 6, loads.map((load) => load.way));
 check('every load plays (video moving 4 s after the start)', perLoad.every((load) => load.played),
     perLoad.map((load) => `${load.i} ${load.way} ${load.file}: ${load.played ? `${load.msToPlay} ms` : 'did not play'}`));
+check('the uMediaServer stayed up (dmesg)', umsDownFrom === null, umsDownFrom === null ? null : `down at load ${umsDownFrom}`);
 check('no wedged pipeline in the emulator after any load', perLoad.every((load) => !load.wedged),
     perLoad.filter((load) => load.wedged).map((load) => load.i));
 // Both ways remount the Player (a new <video> per load). The previous one has to release its pipeline
@@ -72,5 +81,8 @@ const reloads = fs.existsSync(path.join(dir, 'reloads.jsonl')) ? read('reloads.j
 check('the page never reloaded during the test', reloads.length === 0, reloads);
 
 const ok = checks.every((c) => c.ok);
-console.log(JSON.stringify({ ok, guard, loads: perLoad, order, checks }, null, 2));
+// A failure with the emulator broken (wedged pipeline, uMediaServer down, page reloaded) says nothing about the app.
+const emulatorBroken = umsDownFrom !== null || perLoad.some((load) => load.wedged) || reloads.length > 0;
+const verdict = ok ? 'pass' : emulatorBroken ? 'inconclusive (emulator)' : 'fail';
+console.log(JSON.stringify({ ok, verdict, guard, loads: perLoad, order, checks }, null, 2));
 process.exit(ok ? 0 : 1);

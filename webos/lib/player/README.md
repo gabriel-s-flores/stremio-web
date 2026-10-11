@@ -24,9 +24,12 @@ Player do app no webOS (F5.1): o que o `Player` manda para o `stremio-video` na 
 
 **O que o app faz (`withPipelineGuard.js`, decorador do `WebOsVideo` por baixo do `withC8Tracks`):**
 - **Liberação silenciosa:** em `unload`, `destroy` e `load` por cima de um stream, pausa o `<video>` e só libera o pipeline `RELEASE_SETTLE_MS` (1 s) depois; na hora, se o vídeo já estava pausado ou terminado havia esse tempo. As ações que chegam nesse meio-tempo (o Player manda `unload` e `load` juntos) esperam e rodam na ordem. Uma troca de stream fica até 1 s mais lenta.
+- **Legenda embutida numa troca (F5.5):** o `WebOsVideo` chama o Luna `selectTrack` 500 ms depois da escolha, com o `mediaId` do elemento naquele instante. A liberação espera também 600 ms depois da última escolha de legenda, para que essa chamada chegue ao pipeline a que se destinava, nunca ao do stream seguinte.
 - **Um pipeline por carga:** o `load()` que o `WebOsVideo` chama com o `src` já atribuído é descartado (pela especificação, atribuir `src` já inicia o carregamento). Na TV, isso evita um segundo GET ao link do debrid.
 - **Watchdog de início:** sem `loadedmetadata` 20 s depois da carga, uma recarga controlada do mesmo stream (liberação silenciosa e `src` de novo, mantendo o tempo inicial); se falhar de novo, erro crítico `STREAM_FAILED_TO_LOAD` (código 3), que o Player mostra na tela de erro, em vez de um carregando infinito. No emulador, um pipeline já travado não volta; a recarga é para uma trava passageira, que só a TV vai mostrar.
 - **Desligar:** `localStorage['webos.pipelineGuard'] = 'off'` (lido ao abrir o app) volta ao `WebOsVideo` puro: A/B no emulador e saída de emergência na Fase 8.
+
+**Outra falha do emulador: o uMediaServer cai.** Em 1 das 4 rodadas do teste no app com o guarda (e também sem ele), o `umediaserver` terminou sozinho e o `init` desistiu de reiniciá-lo (`dmesg`: "umediaserver respawning too fast, stopped"); dali em diante nenhuma mídia toca no boot, e o app mostra a tela de erro depois da recarga controlada. Em outras rodadas a página do app foi recarregada no meio do teste, com e sem o guarda. O `switches.sh` registra memória e `dmesg` a cada carga e marca essas rodadas como inconclusivas.
 
 **Para os roteiros das outras tarefas:** um cenário que trava em `readyState` 0 pode ser o emulador. Dentro do `emu-run`, `node webos/tests/player/pipeline-state.js` diz se há pipeline travado (saída 3); nesse caso o resultado é inconclusivo, não falha do app. Com o guarda, a 1ª mídia do boot deixa de criar dois pipelines.
 

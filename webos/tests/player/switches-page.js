@@ -30,7 +30,9 @@
         });
     };
     watch();
-    setInterval(watch, 100);
+    // Registered in the microtask after the Player appends the <video>, before its loadstart task.
+    new MutationObserver(watch).observe(document.body, { childList: true, subtree: true });
+    setInterval(watch, 500);
 
     ['log', 'info', 'warn', 'error'].forEach(function(level) {
         var original = console[level];

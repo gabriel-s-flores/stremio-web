@@ -88,6 +88,12 @@ describe('upstream details the F5.6 pipeline guard depends on', () => {
         expect(section('case \'load\': {', 'case \'unload\': {')).toMatch(/startTime = commandArgs\.time;/);
     });
 
+    it('WebOsVideo selects an embedded subtitle through Luna 500 ms later, with the mediaId of that moment', () => {
+        const setProp = webOsVideo.slice(webOsVideo.indexOf('function setProp('));
+        const select = setProp.slice(setProp.indexOf('case \'selectedSubtitlesTrackId\': {'), setProp.indexOf('case \'subtitlesOffset\': {'));
+        expect(select).toMatch(/setTimeout\(function\(\) \{[\s\S]*method: 'selectTrack',[\s\S]*'mediaId': videoElement\.mediaId,[\s\S]*\}, 500\);/);
+    });
+
     it('stremio-video has STREAM_FAILED_TO_LOAD (code 3), the error of a stream that never starts', () => {
         expect(require(path.join(VIDEO_SRC, 'error.js')).STREAM_FAILED_TO_LOAD).toEqual({ code: 3, message: 'Stream failed to load' });
     });
