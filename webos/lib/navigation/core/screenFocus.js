@@ -31,7 +31,8 @@
 //   when that place may hold something else (a list replaced by another one);
 // - navigate(target, dir, container, memory, event) (optional): an element to focus, `true` to
 //   swallow the arrow, or null to leave it to the spatial navigation; `memory.last` is the last
-//   focused element of the screen, `memory.content` the last one inside its lists;
+//   focused element of the screen, `memory.lastContent` the same out of both bars, `memory.content`
+//   the last one inside its lists;
 // - capture (default false): navigate runs in the capture phase on the container, before the
 //   focused element's own key handlers (open dropdowns of Settings);
 // - isContent(element, container) (optional): the element is in the screen's lists;
@@ -40,7 +41,7 @@
 //   zoom); neither while the Magic Remote pointer is in use;
 // - onMutation(container) (optional): the screen's content changed.
 
-const { ARROWS, isAttached, isFocusable, isRendered, isShown } = require('./dom');
+const { ARROWS, ENTER, isAttached, isFocusable, isRendered, isShown } = require('./dom');
 const { isFocusLost, modalOpen, routeOf } = require('./routes');
 const { isMemorable, pathOf, resolvePath } = require('./memory');
 const { PRIORITY, getInputHub } = require('./input');
@@ -64,7 +65,9 @@ const describe = (element) => {
 const createScreenFocus = (container, screen, { window: win = window, hub = getInputHub(win), timeout = screen.timeout || INITIAL_FOCUS_TIMEOUT } = {}) => {
     const doc = win.document;
     const route = routeOf(container);
-    const memory = { last: null, path: null, content: null };
+    // last/path: where Back restores to; lastContent: the same without any navigation bar (where the
+    // side bar's RIGHT goes back to); content: the last one inside the screen's lists.
+    const memory = { last: null, path: null, content: null, lastContent: null };
     // The wait for the initial element: { recovering, fallback, fallbackTimer, timer }.
     let waiting = null;
     // What had the focus when another route came on top.
@@ -186,11 +189,12 @@ const createScreenFocus = (container, screen, { window: win = window, hub = getI
         }, 0);
     };
 
-    // The layout changed under the focused element (the interface zoom): its list scrolls to it again.
+    // The layout changed under the focused element (the interface zoom): its list scrolls to it again,
+    // also when the zoom was changed with the pointer (the element under it moved anyway, F4.1b).
     const realign = () => {
         const align = screen.realign || screen.align;
         const active = doc.activeElement;
-        if (!align || !isVisible() || !container.contains(active) || !isShown(active) || pointerInUse()) return;
+        if (!align || !isVisible() || !container.contains(active) || !isShown(active)) return;
         align(active, container);
     };
 
@@ -199,6 +203,7 @@ const createScreenFocus = (container, screen, { window: win = window, hub = getI
         if (!container.contains(element)) return;
         // The user (or anything else) moved the focus: no initial focus to wait for any more.
         if (waiting !== null && element !== waiting.fallback) stopWaiting();
+        if (isMemorable(element, container)) memory.lastContent = element;
         if (isMemorable(element, container, { topBar: screen.rememberTopBar })) {
             memory.last = element;
             memory.path = pathOf(element, container);
@@ -228,11 +233,13 @@ const createScreenFocus = (container, screen, { window: win = window, hub = getI
         if (result !== true && result !== doc.activeElement) focus(result, 'navigate');
     };
 
-    // Before the spatial navigation (the hub runs in the capture phase on window): any key ends the
-    // fallback's wait (the user took over), and an arrow with nothing focused goes to the screen's
-    // element first, instead of the top of the page.
+    // Before the spatial navigation (the hub runs in the capture phase on window): an arrow or OK ends
+    // the fallback's wait (the user took over; not the keys webOS sends when the Magic Remote pointer
+    // shows or hides, 1536/1537), and an arrow with nothing focused goes to the screen's element
+    // first, instead of the top of the page.
     const onHubKey = (event) => {
-        if (waiting !== null && waiting.fallback !== null && isVisible()) stopWaiting();
+        const userKey = Boolean(ARROWS[event.keyCode]) || event.keyCode === ENTER;
+        if (userKey && waiting !== null && waiting.fallback !== null && isVisible()) stopWaiting();
         if (!ARROWS[event.keyCode] || event.defaultPrevented || !isFocusLost(doc)) return;
         if (ensureFocus({ recovering: true, now: true })) {
             event.preventDefault();

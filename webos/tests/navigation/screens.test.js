@@ -230,6 +230,19 @@ describe('initial focus', () => {
         expect(text()).toBe('item 0');
     });
 
+    test('the keys of the Magic Remote pointer showing or hiding (1536, 1537) do not end the wait', async () => {
+        render(libraryRoute({ items: 0 }));
+        mount(libraryScreen);
+        jest.advanceTimersByTime(1800);
+        expect(text()).toBe('All');
+        key(1536);
+        key(1537);
+        document.querySelector('.library-content-Zz9_y').insertAdjacentHTML('beforeend',
+            '<div class="meta-items-container-Mm3x4" data-rect="100,200,1800,800"><a class="meta-item-link-veMqr" href="#/detail/0" data-rect="120,200,250,380">item 0</a></div>');
+        await flush();
+        expect(text()).toBe('item 0');
+    });
+
     test('the fallback gives up after the timeout', async () => {
         render(libraryRoute({ items: 0 }));
         mount(libraryScreen);
@@ -370,7 +383,7 @@ describe('interface zoom', () => {
         expect(rect.top).toBeGreaterThanOrEqual(200);
     });
 
-    test('not while the Magic Remote pointer shows', () => {
+    test('also when the zoom was changed with the Magic Remote pointer (as F4.1b did)', () => {
         render(libraryRoute());
         mount(libraryScreen);
         const list = document.querySelector('.meta-items-container-Mm3x4');
@@ -379,7 +392,7 @@ describe('interface zoom', () => {
         document.documentElement.setAttribute('data-webos-pointer', 'visible');
         try {
             focus.realign();
-            expect(list.scrollTop).toBe(0);
+            expect(list.scrollTop).toBeGreaterThan(0);
         } finally {
             document.documentElement.removeAttribute('data-webos-pointer');
         }
@@ -550,6 +563,26 @@ describe('modal inside the route', () => {
         expect(document.activeElement).toBe(byText('WatchHub'));
     });
 
+    test('no fallback behind a modal, nor the list when it comes while the modal is open', async () => {
+        render(libraryRoute({ items: 0 }));
+        mount(libraryScreen);
+        const modals = document.createElement('div');
+        modals.className = 'modals-container';
+        document.querySelector('.route-container').appendChild(modals);
+        modals.innerHTML = '<div class="modal-container" data-rect="0,0,1920,1080"><div tabindex="0" data-rect="10,10,80,80">Close</div></div>';
+        jest.advanceTimersByTime(2000);
+        expect(document.activeElement).toBe(document.body);
+        document.querySelector('.library-content-Zz9_y').insertAdjacentHTML('beforeend',
+            '<div class="meta-items-container-Mm3x4" data-rect="100,200,1800,800"><a class="meta-item-link-veMqr" href="#/detail/0" data-rect="120,200,250,380">item 0</a></div>');
+        await flush();
+        expect(document.activeElement).toBe(document.body);
+        // Once it is closed, the next change brings the focus in.
+        modals.innerHTML = '';
+        document.querySelector('.meta-items-container-Mm3x4').insertAdjacentHTML('beforeend', '<span></span>');
+        await flush();
+        expect(text()).toBe('item 0');
+    });
+
     test('no screen focus while a modal is opening', () => {
         render(addonsRoute(true));
         mount(addonsScreen);
@@ -629,17 +662,73 @@ describe('side navigation bar', () => {
             <div class="routes-container"><div class="route-container" data-rect="0,0,1920,1080">
                 <div class="route-content" data-rect="0,0,1920,1080">
                     <nav class="horizontal-nav-bar-container-Hh1x2" data-rect="0,0,1920,100">
-                        <div class="submit-button-container-MImNa" tabindex="0" data-rect="1200,10,100,80">search</div>
+                        <div class="submit-button-container-MImNa" tabindex="0" data-rect="120,90,100,80">search</div>
                     </nav>
                     ${NAV_BAR}
                     <a class="meta-item-link-veMqr" href="#/detail/b" data-rect="300,200,250,380">board item</a>
                 </div>
             </div></div>`);
         removeSideBar = installSideBar(window);
+        // The search button is the closest element on the right of the tab: only the content counts.
         document.querySelector('.nav-tab-button-Ab1c2').focus();
         const event = key(RIGHT);
         expect(event.defaultPrevented).toBe(true);
         expect(text()).toBe('board item');
+    });
+
+    // Review c1, M1: Board, Discover and Search remember the top bar for Back (rememberTopBar); the
+    // side bar does not go back there.
+    const boardWithTopBar = (query = '') => {
+        const { searchScreen } = require('../../lib/navigation/search');
+        const { boardScreen } = require('../../lib/navigation/board');
+        const local = query === null ? 'board-content-Bb1x2' : 'search-content-Ss1x2';
+        render(`
+            <div class="route-container" data-rect="0,0,1920,1080">
+                <div class="route-content" data-rect="0,0,1920,1080">
+                    <nav class="horizontal-nav-bar-container-Hh1x2" data-rect="0,0,1920,100">
+                        <div class="search-bar-container-Qq1x2" data-rect="600,10,700,80"><input value="${query || ''}" tabindex="-1" data-rect="600,10,600,80">
+                        <div class="submit-button-container-MImNa" tabindex="0" data-rect="1200,10,100,80">${query ? 'clear' : 'search'}</div></div>
+                    </nav>
+                    ${NAV_BAR}
+                    <div class="${local}" data-rect="100,100,1820,980">
+                        <div data-rect="100,100,1820,400"><div class="meta-items-container-Mm3x4" data-rect="100,150,1820,380">
+                            <div data-rect="300,200,250,380"><a class="meta-item-link-veMqr" href="#/detail/b" tabindex="0" data-rect="300,200,250,380">first item</a></div>
+                        </div></div>
+                    </div>
+                </div>
+            </div>`);
+        mount(query === null ? boardScreen : searchScreen);
+        removeSideBar = installSideBar(window);
+    };
+
+    test.each([['Board', null], ['Search with a query (the clear button)', 'batman']])('%s: top bar -> side bar -> RIGHT goes back to the content, not to the top bar', (name, query) => {
+        boardWithTopBar(query);
+        document.querySelector('a.meta-item-link-veMqr').focus();
+        document.querySelector('.submit-button-container-MImNa').focus();
+        // Back still lands on the top bar (F4.1a)...
+        expect(focus.memory.last).toBe(document.querySelector('.submit-button-container-MImNa'));
+        document.querySelector('.nav-tab-button-Ab1c2').focus();
+        expect(key(RIGHT).defaultPrevented).toBe(true);
+        // ...the side bar goes back to the content.
+        expect(text()).toBe('first item');
+    });
+
+    test('nothing focusable in the content (an empty Search): RIGHT stays on the bar, never the top bar', () => {
+        render(`
+            <div class="routes-container"><div class="route-container" data-rect="0,0,1920,1080">
+                <div class="route-content" data-rect="0,0,1920,1080">
+                    <nav class="horizontal-nav-bar-container-Hh1x2" data-rect="0,0,1920,100">
+                        <div class="submit-button-container-MImNa" tabindex="0" data-rect="1200,10,100,80">search</div>
+                    </nav>
+                    ${NAV_BAR}
+                    <div class="placeholder-Pp1x2" data-rect="200,300,1600,600">You can search anything</div>
+                </div>
+            </div></div>`);
+        removeSideBar = installSideBar(window);
+        const tab = document.querySelector('.nav-tab-button-Ab1c2');
+        tab.focus();
+        expect(key(RIGHT).defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(tab);
     });
 
     test('LEFT and the other keys on the bar are the spatial navigation\'s; a modal over it keeps its keys', () => {
