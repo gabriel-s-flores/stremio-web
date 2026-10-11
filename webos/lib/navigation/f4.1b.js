@@ -160,6 +160,8 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
     // Per list of a screen: the last element focused in it.
     const lastInList = new WeakMap();
     let pendingInitial = null;
+    // The fallback the initial focus took while the screen's list was not there yet.
+    let fallbackFocus = null;
     let pendingProfileMenu = null;
 
     const visibleRoute = () => {
@@ -246,14 +248,23 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
             const route = visibleRoute();
             // A modal is open (or opening): its focus is the modal's.
             if (route !== null && modalOpen(route)) return;
-            if (route !== null && focusHasPlace(route)) return;
+            if (route !== null && focusHasPlace(route)) {
+                // Still on the fallback (the location changed again, as the Library adding ?sort):
+                // keep waiting for the list.
+                if (fallbackFocus !== null && document.activeElement === fallbackFocus) {
+                    pendingInitial = window.setTimeout(() => verify(fallbackFocus, true), INITIAL_FOCUS_VERIFY_MS);
+                }
+                return;
+            }
             const preferredOnly = Date.now() - started < INITIAL_FOCUS_PREFERRED_MS;
             const target = route !== null ? screenTarget(screen, route, preferredOnly) : null;
             if (target !== null) {
+                const fallback = !preferredOnly && target.reason === 'initial' && findInitial(screen, route, true) !== target.element;
+                fallbackFocus = fallback ? target.element : null;
                 target.element.focus();
                 record(target.reason, target.element);
                 if (verifications < INITIAL_FOCUS_VERIFICATIONS) {
-                    pendingInitial = window.setTimeout(() => verify(target.element, !preferredOnly && target.reason === 'initial'), INITIAL_FOCUS_VERIFY_MS);
+                    pendingInitial = window.setTimeout(() => verify(target.element, fallback), INITIAL_FOCUS_VERIFY_MS);
                 }
                 return;
             }
@@ -270,6 +281,7 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
             if (fallback && route !== null && document.activeElement === element && currentScreen() === screen) {
                 const preferred = findInitial(screen, route, true);
                 if (preferred !== null && preferred !== element) {
+                    fallbackFocus = null;
                     preferred.focus();
                     record('initial', preferred);
                     return;
@@ -415,6 +427,7 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
     const onKeyDown = (event) => {
         const dir = ARROWS[event.keyCode];
         if (pendingInitial !== null) cancelInitial();
+        fallbackFocus = null;
         cancelProfileMenu();
         if (event.keyCode === 13 && document.activeElement && closestLocal(document.activeElement, [PROFILE_BUTTON], null)) {
             const route = visibleRoute();

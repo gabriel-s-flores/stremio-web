@@ -177,6 +177,21 @@ describe('initial focus', () => {
         expect(text()).toBe('item 0');
     });
 
+    test('the fallback still gives way after a second location change (Library adding ?sort)', () => {
+        render(libraryRoute({ items: 0 }));
+        start('#/library');
+        navigation.focusScreen();
+        jest.advanceTimersByTime(1800);
+        expect(text()).toBe('All');
+        window.location.hash = '#/library?sort=lastwatched';
+        navigation.focusScreen();
+        jest.advanceTimersByTime(3000);
+        document.querySelector('.library-content-Zz9_y').insertAdjacentHTML('beforeend',
+            '<div class="meta-items-container-Mm3x4" data-rect="100,200,1800,800"><a class="meta-item-link-veMqr" href="#/detail/0" data-rect="120,200,250,380">item 0</a></div>');
+        jest.advanceTimersByTime(600);
+        expect(text()).toBe('item 0');
+    });
+
     test('a list that comes later still gets the focus', () => {
         render(libraryRoute({ items: 0 }));
         start('#/library');
