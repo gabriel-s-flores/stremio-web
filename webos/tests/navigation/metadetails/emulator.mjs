@@ -6,9 +6,13 @@
 // to it. Run inside a pool reservation, after `pnpm webos:package` (or IPK=<file>):
 //   webos/tools/emu-run --timeout 15 -- node webos/tests/navigation/metadetails/emulator.mjs <out> walk
 //   webos/tools/emu-run --timeout 15 -- node webos/tests/navigation/metadetails/emulator.mjs <out> player
+//   webos/tools/emu-run --timeout 20 --profile c8 -- node webos/tests/navigation/metadetails/emulator.mjs <out> restore
 // walk: a movie opened from the Board (initial focus, the list, the column, the summary, a cast link
 //   and Back), a series (episodes, seasons, an episode's streams and Back to the episodes, the
 //   library toggle) and the Magic Remote pointer (QEMU's mouse through QMP: no focus stolen).
+// restore: review c1, M1. A genre/cast link of a movie, OK (Discover or Search unmount the page),
+//   Back: the focus must come back to the link however long the column takes to load (6.4 s in the
+//   C8 profile), with a timeline of the focus and the placeholders. Twice. Meant for --profile c8.
 // player: a stream of the kit (plays in the emulator) opened from the list, the audio menu of the
 //   Player (opened with a click, the Player controls are not part of this task) and Back to the
 //   list: the focus must come back to the stream. One media scenario per boot.
@@ -265,6 +269,42 @@ const walk = async () => {
     check('pointer: an arrow hides the pointer and the remote takes over from the page', focused.section === 'list' && evaluate('window.__f41c.pointer()') !== 'visible', { focused, pointer: evaluate('window.__f41c.pointer()') });
 };
 
+const restoreRun = async () => {
+    await openMovieFromBoard();
+    for (let round = 1; round <= 2; round++) {
+        let focused = await key('LEFT');
+        for (let i = 0; i < 16 && !(focused.kind === 'link' && /#\/(discover|search)/.test(evaluate('document.activeElement.getAttribute("href")'))); i++) {
+            focused = await key('UP');
+        }
+        const link = focused.text;
+        check(`restore ${round}: a genre/cast link has the focus`, focused.kind === 'link', focused);
+        await key('OK', 1500);
+        const left = evaluate('location.hash');
+        await waitFor('!/#\\/detail\\//.test(location.hash)', 30);
+        await sleep(1500);
+        spawnSync('node', [path.join(ROOT, 'webos/tools/remote.mjs'), '--port', EMU_REMOTE_PORT, '--delay', '0', 'BACK']);
+        const timeline = [];
+        const started = Date.now();
+        let restored = null;
+        while (Date.now() - started < 20000) {
+            const sample = json('JSON.stringify({ f: JSON.parse(window.__f41c.focus()), p: document.querySelectorAll(".route-container:last-child [class*=metadetails-container] [class*=placeholder]").length })');
+            if (sample) {
+                timeline.push({ ms: Date.now() - started, kind: sample.f.kind, text: sample.f.text, placeholders: sample.p });
+                if (sample.f.kind === 'link' && sample.f.text === link) {
+                    restored = sample.f;
+                    break;
+                }
+            }
+            await sleep(250);
+        }
+        fs.writeFileSync(path.join(OUT, `restore-${round}-timeline.json`), JSON.stringify(timeline, null, 1));
+        const firstFocus = timeline.filter((entry) => entry.kind !== 'body' && entry.kind !== 'unknown')[0] || null;
+        log(`restore ${round}: left for ${left.slice(0, 60)}; first focus ${JSON.stringify(firstFocus)}; restored at ${restored ? timeline[timeline.length - 1].ms : '-'} ms; column placeholder until ${Math.max(0, ...timeline.filter((entry) => entry.placeholders > 0).map((entry) => entry.ms))} ms`);
+        check(`restore ${round}: Back from ${/discover/.test(left) ? 'Discover' : 'Search'}, the link "${link}" has the focus again, with the ring`, restored !== null && restored.focusVisible, { restored, samples: timeline.length });
+        shot(`restore-${round}-after-back`);
+    }
+};
+
 const player = async () => {
     await openMovieFromBoard();
     let focused = await key('DOWN');
@@ -299,6 +339,7 @@ const player = async () => {
     try {
         await setup();
         if (MODE === 'player') await player();
+        else if (MODE === 'restore') await restoreRun();
         else await walk();
     } catch (error) {
         check('no exception in the scenario', false, String(error && error.stack || error));
