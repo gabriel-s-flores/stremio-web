@@ -47,9 +47,19 @@ a mais nada, polyfill incluído):
 | `global` (30) | `sideBar.js`: RIGHT da barra lateral |
 | `screen` (40) | o motor de cada tela montada (seta com o foco perdido) e `metadetails.js` |
 
-Os ouvintes que restam fora do hub não são de captura de tecla/foco: o `keydown` das telas no próprio
-contêiner (as setas que a tela conhece, ver abaixo), o `keydown` em bolha de Detalhes (depois do
-polyfill), o `navnotarget` de Detalhes e o gesto de segurar o ponteiro do `contextMenu.js`.
+Fora do hub restam estes ouvintes (conferido em `grep addEventListener webos/lib/navigation`):
+
+- o `keydown` das telas no próprio contêiner (as setas que a tela conhece, ver abaixo): em bolha, ou **em
+  captura** nas telas de lista (`capture: true` em `screens.js`: Library, Calendar, Addons e Settings), para rodar antes das
+  teclas dos dropdowns abertos; ainda depois do hub, que está na `window`;
+- o **rastreio de entrada de Detalhes** (`installInputTracking`, em `metadetails.js`): um `keydown` e um
+  `mousedown` **de captura na `window`**, mais um `cursorStateChange` no `document`, instalados **uma vez por
+  janela** (`window.__webosMetaDetailsInput`) e nunca removidos. Só leem (guardam `keys` ou `pointer`, o
+  `mousedown` só se confiável) e não chamam `preventDefault()` nem param a tecla. É a exceção ao "um só
+  `keydown` de captura": o hub não serve a Detalhes (ver **Modo de entrada**);
+- o `keydown` em bolha de Detalhes (depois do polyfill) e o `navnotarget` de Detalhes, na `window`;
+- o gesto de segurar o ponteiro do `contextMenu.js` (`mousedown`, `mousemove`, `mouseup` e `click` em
+  captura, `blur`, `cursorStateChange`) e o `resize` do `RemoteNavigation.js`.
 
 **Modo de entrada.** Tecla, ponteiro (um `mousedown`/`mousemove` confiável) ou o cursor do Magic
 Remote (`cursorStateChange`). `pointerInUse()`: o atributo `data-webos-pointer="visible"` da F4.2 ou,
