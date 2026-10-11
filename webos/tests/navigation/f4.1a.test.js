@@ -253,6 +253,18 @@ describe('screen focus', () => {
         expect(document.activeElement.textContent).toBe('a0');
     });
 
+    test('with the Magic Remote pointer showing, a focused item does not scroll the lists', () => {
+        const container = board([row('a', 6, 0), row('b', 6, 100), row('c', 6, 200)]);
+        focus = createScreenFocus(container, boardScreen);
+        document.documentElement.setAttribute('data-webos-pointer', 'visible');
+        container.querySelectorAll('a')[10].focus();
+        expect(queryLocal(container, 'board-content').scrollTop).toBe(0);
+        document.documentElement.setAttribute('data-webos-pointer', 'hidden');
+        container.querySelectorAll('a')[11].focus();
+        expect(queryLocal(container, 'board-content').scrollTop).toBe(100);
+        document.documentElement.removeAttribute('data-webos-pointer');
+    });
+
     test('a blur with the element still there (pointer click on the background) is left alone', async () => {
         const container = board([row('a', 3, 0)]);
         focus = createScreenFocus(container, boardScreen);

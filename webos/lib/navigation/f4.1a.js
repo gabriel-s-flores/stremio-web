@@ -80,6 +80,10 @@ const queryLocal = (root, local) => {
 // The route of this screen is the one on screen: the routes under it are display: none.
 const isVisibleRoute = (container) => isRendered(container);
 
+// The Magic Remote pointer is showing (webos/magic-remote, F4.2): a click focuses what it points at,
+// and scrolling the list then would move the item away from under the pointer.
+const isPointerVisible = (document) => document.documentElement.getAttribute('data-webos-pointer') === 'visible';
+
 // A modal or dialog of the app over the screen: its own focus handling wins (F4.3, F3.2).
 const hasOverlay = (document) => document.querySelector('[class*="modal-container"], [role="dialog"]') !== null;
 
@@ -89,7 +93,8 @@ const hasOverlay = (document) => document.querySelector('[class*="modal-containe
 //   null to leave it to the spatial navigation; `memory.last` is the last focused element of the
 //   screen, `memory.content` the last one inside its lists (to go back to from the top bar);
 // - isContent(element, container): the element is in the screen's lists;
-// - align(element, container): scrolls the lists so the focused element shows (optional).
+// - align(element, container): scrolls the lists so the focused element shows (optional); not while
+//   the Magic Remote pointer shows.
 const createScreenFocus = (container, screen, { window: win = window, timeout = INITIAL_FOCUS_TIMEOUT } = {}) => {
     const document = win.document;
     const memory = { last: null, path: null, content: null };
@@ -155,7 +160,7 @@ const createScreenFocus = (container, screen, { window: win = window, timeout = 
         left = null;
         if (!element) return ensureFocus();
         if (document.activeElement !== element) focus(element);
-        if (screen.align) screen.align(element, container);
+        if (screen.align && !isPointerVisible(document)) screen.align(element, container);
         return true;
     };
 
@@ -166,7 +171,7 @@ const createScreenFocus = (container, screen, { window: win = window, timeout = 
         memory.path = pathOf(element, container);
         if (screen.isContent(element, container)) memory.content = element;
         stopWaiting();
-        if (screen.align) screen.align(element, container);
+        if (screen.align && !isPointerVisible(document)) screen.align(element, container);
     };
 
     // The focused element was removed or hidden (a placeholder row replaced, the grid reloading):
