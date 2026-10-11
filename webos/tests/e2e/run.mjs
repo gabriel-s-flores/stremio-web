@@ -405,6 +405,23 @@ const remoteRoute = async (keysToTry, reachedExpression) => {
     return evaluate(reachedExpression) === 'true';
 };
 
+// Walks the focus to the element of `selector` with the arrows, each one toward where it is on
+// screen (window.__e2e.direction); a DOWN first when nothing has the focus. Gives up after
+// `maxKeys` or when an arrow does not move the focus.
+const remoteTo = async (selector, maxKeys = 14) => {
+    let last = null;
+    for (let i = 0; i < maxKeys; i++) {
+        const direction = evaluate(`window.__e2e.direction(${JSON.stringify(selector)})`);
+        if (direction === 'HERE') return true;
+        const name = direction === 'null' ? 'DOWN' : direction;
+        const focused = await key(name, 700);
+        const now = `${focused.cls}|${focused.text}`;
+        if (direction !== 'null' && now === last) return false;
+        last = now;
+    }
+    return evaluate(`window.__e2e.direction(${JSON.stringify(selector)})`) === 'HERE';
+};
+
 const audioTrack = async () => {
     const before = playerState();
     // The remote in the Player: the arrows are the upstream shortcuts (LEFT/RIGHT seek, UP/DOWN
@@ -429,7 +446,7 @@ const audioTrack = async () => {
     check('zoom 1.75: the audio menu and its 3 options inside the screen, text ≥ 18 px on screen, not clipped',
         layout.length === 5 && layout.every((entry) => entry.inScreen && !entry.clipped) && layout.slice(1).every((entry) => entry.fontPx >= 18), layout, 'F2.6/F5.4');
     // Inside the open menu the arrows are not shortcuts (menus open): the spatial navigation.
-    const inMenu = await remoteRoute(['DOWN', 'DOWN', 'DOWN', 'UP'], '(function(){ var a = document.activeElement; return !!a && a.getAttribute(\'data-id\') === \'EMBEDDED_1\'; })()');
+    const inMenu = await remoteTo('[class*=audio-menu] [data-id=EMBEDDED_1]');
     check('the remote moves inside the audio menu to the Portuguese track', inMenu, active(), 'F5.7');
     if (inMenu) {
         await key('OK', 1500);
@@ -478,8 +495,8 @@ const subtitles = async () => {
         layout.slice(1).every((entry) => entry.fontPx >= 18) && layout.filter((entry) => /selected/.test(entry.cls)).every((entry) => entry.inScreen),
         { menu: layout[0], selected: layout.filter((entry) => /selected/.test(entry.cls)), options: layout.length - 1 }, 'F2.6/F5.5');
     // The add-on English subtitle (attached to the stream: an "exclusive" variant), drawn in the overlay.
-    const inMenu = await remoteRoute(['DOWN', 'RIGHT', 'DOWN', 'DOWN', 'RIGHT', 'DOWN'],
-        '(function(){ var a = document.activeElement; return !!a && /variant-option/.test(String(a.className)) && /xclusiv/i.test(a.textContent); })()');
+    evaluate('(function(){ var o = Array.prototype.filter.call(document.querySelectorAll("[class*=subtitles-menu-container] [class*=variant-option]"), function(v){ return /xclusiv/i.test(v.textContent); })[0]; if (o) o.setAttribute("data-e2e-target", "addon-variant"); return !!o; })()');
+    const inMenu = await remoteTo('[data-e2e-target=addon-variant]');
     check('the remote moves inside the subtitles menu to the add-on variant', inMenu, active(), 'F5.7');
     if (inMenu) {
         await key('OK', 1500);

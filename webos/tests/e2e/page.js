@@ -139,6 +139,22 @@
         }));
     };
 
+    // Which arrow takes the focus toward the first element matching `selector` (what a user looks
+    // at on screen): a column to the side first, then up or down. HERE when it has the focus; null
+    // when there is no such element or nothing is focused.
+    state.direction = function(selector) {
+        var target = document.querySelector(selector);
+        var active = document.activeElement;
+        if (!target) return 'null';
+        if (target === active || target.contains(active)) return 'HERE';
+        if (!active || active === document.body) return 'null';
+        var a = active.getBoundingClientRect();
+        var t = target.getBoundingClientRect();
+        if (t.left >= a.right - 1) return 'RIGHT';
+        if (t.right <= a.left + 1) return 'LEFT';
+        return t.top + t.height / 2 > a.top + a.height / 2 ? 'DOWN' : 'UP';
+    };
+
     state.memory = function() {
         return JSON.stringify(window.performance && performance.memory ? { usedMB: round(performance.memory.usedJSHeapSize / 1048576), totalMB: round(performance.memory.totalJSHeapSize / 1048576) } : null);
     };
