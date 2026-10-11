@@ -1,0 +1,87 @@
+// QR code dialog of the external links (webos/external-links/ExternalLinkDialog.js).
+// Flexbox margins instead of gap: Chromium 53.
+
+.external-link-dialog {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.6);
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 36rem;
+        padding: 2.5rem 3rem;
+        border-radius: var(--border-radius);
+        background-color: var(--modal-background-color);
+        box-shadow: var(--outer-glow);
+        text-align: center;
+
+        .title {
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+            font-weight: 500;
+            color: var(--primary-foreground-color);
+        }
+
+        // Fixed side (Chromium 53 has no min()); the modules are not a whole number of pixels, which
+        // crispEdges makes sharp enough for a phone camera. Long links have denser codes: larger.
+        .qr {
+            flex: none;
+            width: 20rem;
+            height: 20rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0.5rem;
+
+            &.large {
+                width: 26rem;
+                height: 26rem;
+            }
+        }
+
+        // Long links (addon pages, signed URLs) are cut after a few lines; the QR code has all of it.
+        .url {
+            max-width: 100%;
+            max-height: 4rem;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            font-size: 1.1rem;
+            line-height: 1.3rem;
+            color: rgba(255, 255, 255, 0.6);
+            word-break: break-all;
+        }
+
+        .close {
+            min-width: 11rem;
+            height: 3.5rem;
+            padding: 0 2rem;
+            // The ring is this border: the global focus outline of the TV (webos/styles/app.less) would
+            // draw a square one around the pill.
+            border: var(--focus-outline-size) solid transparent;
+            border-radius: 3.5rem;
+            outline: none;
+            background-color: var(--overlay-color);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-foreground-color);
+            cursor: pointer;
+
+            &:focus {
+                border-color: var(--webos-focus-color);
+            }
+        }
+    }
+}
+
+// The global focus ring of the TV (webos/styles/app.less, `html:root body [data-focus-visible-added]:not(...)`,
+// !important) is square and would sit around the pill, which draws its own ring as a border: out-weigh it.
+html:root body .external-link-dialog .container .close[class] {
+    outline: none !important;
+}

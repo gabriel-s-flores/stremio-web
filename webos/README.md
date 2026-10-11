@@ -55,3 +55,10 @@ No emulador, dentro de uma reserva do pool:
 - `webos/lib/diagnostics/`: tela de diagnóstico (`#/webos-diagnostics`; atalho vermelho-verde-amarelo-azul
   em qualquer rota e item "Diagnostics" no menu de Settings): versão, core, tempos de boot, WebAssembly,
   configs Luna, `canPlayType`, memória e relatório exportável. Chunk lazy, nada roda no boot; veja o README da pasta.
+- `webos/external-links/`: links para fora do app (F3.4). `window.open` e cliques em links `http(s)` viram um
+  diálogo com **QR code** para ler com o celular (gerador próprio em `qr.js`, sem dependência); `magnet:`,
+  `stremio:` e outros esquemas externos ficam desativados. Veja o README da pasta.
+- `webos/keyboard/`: teclado do sistema nos campos de texto (F3.4). OK num campo com o teclado fechado abre o
+  teclado em vez de enviar; o Enter do teclado envia e o fecha mantendo o foco no campo. O que se mediu no
+  emulador e pode diferir da TV está no README da pasta. `webos/polyfills/clipboard.js`: `navigator.clipboard`
+  para as ações de copiar não lançarem no Chromium 53.
