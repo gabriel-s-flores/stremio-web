@@ -86,8 +86,8 @@ if (guard === 'on') {
 }
 // F5.5 review: the selectTrack WebOsVideo sends 500 ms after a subtitle choice made right before
 // leaving the Player must not reach the next stream's pipeline, nor this stream's once released. (On
-// webOS the <video> leaving its place clears its mediaId at once, so the call may carry an empty id:
-// it then reaches no pipeline.)
+// webOS a <video> taken out of its place has its mediaId cleared at once; then the call carries an
+// empty id and reaches no pipeline. With the guard the node stays in place and the id is kept.)
 if (fs.existsSync(path.join(dir, 'subtitles-load.txt'))) {
     const at = Number(read('subtitles-load.txt'));
     const load = perLoad[at];
