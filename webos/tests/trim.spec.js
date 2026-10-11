@@ -67,6 +67,29 @@ describe('webos trim', () => {
             expect(loads).toEqual(['pt-BR']);
         });
 
+        test('a code written differently from its file (bn-Bd in the profile) loads the file i18next looks up (bn-BD)', async () => {
+            const { i18n, loads } = await instance({ 'bn-BD': { HELLO: 'হ্যালো' } });
+            await i18n.changeLanguage('bn-Bd');
+            await flush();
+            expect(loads).toEqual(['bn-BD']);
+            expect(i18n.t('HELLO')).toBe('হ্যালো');
+        });
+
+        test('every interface language that upstream shows translated is a file the stub can load', async () => {
+            const fs = require('fs');
+            const path = require('path');
+            // Upstream bundles the whole package (index.js); the stub loads xx-XX.json files of the same folder.
+            const upstream = require('stremio-translations')();
+            const folder = path.dirname(require.resolve('stremio-translations/package.json'));
+            const files = new Set(fs.readdirSync(folder).filter((file) => /^[a-z]{2}-[A-Z]{2}\.json$/.test(file)).map((file) => file.replace(/\.json$/, '')));
+            const { i18n } = await instance({});
+            const codes = require('../../src/common/interfaceLanguages.json')
+                .map(({ codes }) => i18n.services.languageUtils.formatLanguageCode(codes[0]));
+            expect(codes.filter((code) => upstream[code] && !files.has(code))).toEqual([]);
+            expect(Object.keys(upstream).filter((code) => !files.has(code))).toEqual([]);
+            expect(codes.filter((code) => upstream[code]).length).toBeGreaterThan(40);
+        });
+
         test('a code without a file keeps en-US, and a language left before its chunk arrives is not shown', async () => {
             const { i18n, loads } = await instance({ 'de-DE': { HELLO: 'Hallo' } });
             await i18n.changeLanguage('eng');
