@@ -21,14 +21,107 @@ const WEB_PROTOCOLS = ['http:', 'https:'];
 
 // Loopback addresses: the TV itself. The tlsproxy of the app (F3.7, http://127.0.0.1:<port>/proxy?t=<token>…)
 // and anything else listening there mean nothing to a phone, and the proxy URL carries its token.
-const isLoopbackHost = (hostname) => (
-    /^127\.\d+\.\d+\.\d+$/.test(hostname) ||
-    hostname === '0.0.0.0' ||
-    hostname === 'localhost' ||
-    /\.localhost$/.test(hostname) ||
-    hostname === '[::1]' ||
-    hostname === '[::]'
-);
+//
+// `hostname` comes from `new URL`, which in Chromium 53 (measured on the emulator) already writes the
+// numeric forms the canonical way: 2130706433, 0x7f000001, 0177.0.0.1, 127.1 → 127.0.0.1; 0 → 0.0.0.0;
+// [0:0:0:0:0:0:0:1] → [::1]; [::ffff:127.0.0.1] → [::ffff:7f00:1]; user@127.0.0.1 → 127.0.0.1. What it
+// leaves as written is a trailing dot (`localhost.`, `a.localhost.`) and the IPv6 forms that carry an IPv4
+// address ([::ffff:7f00:1], [::7f00:1]). The parsing below does not rely on that canonical form (it reads
+// the WHATWG numeric forms itself), so a platform that does not rewrite them is covered too. Only a host
+// made entirely of numbers is read as an address: 127.example.com and 0x7f.example.com are public names.
+
+// WHATWG "IPv4 number parser": decimal, 0x hex or 0 octal; null when it is not a number.
+const parseIPv4Part = (part) => {
+    let digits = part;
+    let radix = 10;
+    if (/^0x/i.test(digits)) {
+        digits = digits.slice(2);
+        radix = 16;
+    } else if (digits.length > 1 && digits.charAt(0) === '0') {
+        digits = digits.slice(1);
+        radix = 8;
+    }
+    if (digits === '') {
+        return radix === 16 ? 0 : null;
+    }
+    const valid = radix === 16 ? /^[0-9a-f]+$/i : radix === 8 ? /^[0-7]+$/ : /^[0-9]+$/;
+    return valid.test(digits) ? parseInt(digits, radix) : null;
+};
+
+// The address (a number from 0 to 2^32 - 1) of a host written as 1 to 4 numbers, or null.
+const parseIPv4 = (host) => {
+    const parts = host.split('.');
+    if (parts.length > 1 && parts[parts.length - 1] === '') {
+        parts.pop();
+    }
+    if (parts.length > 4) {
+        return null;
+    }
+    const numbers = parts.map(parseIPv4Part);
+    if (numbers.some((number) => number === null)) {
+        return null;
+    }
+    const last = numbers.pop();
+    if (numbers.some((number) => number > 255) || last >= Math.pow(256, 5 - parts.length)) {
+        return null;
+    }
+    return numbers.reduce((address, number, index) => address + number * Math.pow(256, 3 - index), last);
+};
+
+const isLoopbackIPv4 = (address) => address === 0 || Math.floor(address / 16777216) === 127;
+
+// The eight 16-bit groups of an IPv6 address (without the brackets), or null.
+const parseIPv6 = (text) => {
+    let address = text.toLowerCase();
+    const dotted = address.match(/^(.*:)(\d+\.\d+\.\d+\.\d+)$/);
+    if (dotted) {
+        const v4 = parseIPv4(dotted[2]);
+        if (v4 === null) {
+            return null;
+        }
+        address = dotted[1] + Math.floor(v4 / 65536).toString(16) + ':' + (v4 % 65536).toString(16);
+    }
+    const halves = address.split('::');
+    if (halves.length > 2) {
+        return null;
+    }
+    const groups = (half) => (half === '' ? [] : half.split(':'));
+    const head = groups(halves[0]);
+    const tail = halves.length === 2 ? groups(halves[1]) : [];
+    const missing = 8 - head.length - tail.length;
+    if (halves.length === 1 ? missing !== 0 : missing < 1) {
+        return null;
+    }
+    const all = head.concat(new Array(halves.length === 2 ? missing : 0).fill('0'), tail);
+    const numbers = all.map((group) => (/^[0-9a-f]{1,4}$/.test(group) ? parseInt(group, 16) : NaN));
+    return numbers.some(isNaN) ? null : numbers;
+};
+
+const isLoopbackIPv6 = (groups) => {
+    const high = groups.slice(0, 6);
+    const v4 = groups[6] * 65536 + groups[7];
+    const zeros = (list) => list.every((group) => group === 0);
+    if (zeros(groups) || (zeros(groups.slice(0, 7)) && groups[7] === 1)) {
+        return true;
+    }
+    // ::ffff:127.0.0.1 (mapped) and ::127.0.0.1 (compatible): the IPv4 address inside.
+    return (zeros(high.slice(0, 5)) && high[5] === 0xffff && isLoopbackIPv4(v4)) || (zeros(high) && isLoopbackIPv4(v4));
+};
+
+const isLoopbackHost = (hostname) => {
+    const host = String(hostname).toLowerCase();
+    if (host.charAt(0) === '[' && host.charAt(host.length - 1) === ']') {
+        const groups = parseIPv6(host.slice(1, -1));
+        return groups !== null && isLoopbackIPv6(groups);
+    }
+    // A trailing dot is the same name.
+    const name = host.replace(/\.+$/, '');
+    if (name === 'localhost' || /\.localhost$/.test(name)) {
+        return true;
+    }
+    const address = parseIPv4(host);
+    return address !== null && isLoopbackIPv4(address);
+};
 
 // The upstream Platform.openExternal sends hosts outside its list through stremio.com/warning#<url>.
 const WARNING_PATH = '/warning';
@@ -181,6 +274,7 @@ const install = (win, store) => {
 
 module.exports = {
     classify,
+    isLoopbackHost,
     absoluteUrl,
     createStore,
     install,

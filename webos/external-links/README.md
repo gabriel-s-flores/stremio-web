@@ -18,7 +18,7 @@ Só entra no build webOS (`src/App/index.webos.js`); o desktop não muda.
 | `window.open(url)` com `http(s)` (`Platform.openExternal`: login social, reset de senha, "configure" de addon, exportar dados, legendas) | QR code do link |
 | Clique (OK) num `<a href>` `http(s)` (`target="_blank"` ou não): Help, Terms, Privacy, Share, IMDb, trailer, Settings | QR code do link (a navegação é cancelada) |
 | `magnet:`, `stremio:`, `mailto:`, `intent:` e qualquer outro esquema externo | **Desativado**: o clique é cancelado e nada acontece |
-| Links para a própria TV: `127.x.x.x`, `localhost`, `*.localhost`, `0.0.0.0`, `[::1]` (inclusive dentro de `stremio.com/warning#<url>`), como a URL do proxy de certificados da F3.7 (`http://127.0.0.1:<porta>/proxy?t=<token>…`) | **Desativado**: o celular não abriria e a URL leva o token. O link nunca é mostrado, guardado nem registrado em log |
+| Links para a própria TV: `127.x.x.x`, `localhost`, `*.localhost` (com ou sem ponto final), `0.0.0.0`, `[::1]` e as formas numéricas do mesmo endereço (`2130706433`, `0x7f000001`, `127.1`, `[::ffff:127.0.0.1]`, `user@127.0.0.1`…) (inclusive dentro de `stremio.com/warning#<url>`), como a URL do proxy de certificados da F3.7 (`http://127.0.0.1:<porta>/proxy?t=<token>…`) | **Desativado**: o celular não abriria e a URL leva o token. O link nunca é mostrado, guardado nem registrado em log |
 | `#/rota`, `file:`, `blob:`, `data:` | Intocado |
 
 - Links com `download` (o "Download subtitle" do menu de legendas) também são pegos na fase de captura: o menu de contexto do upstream
