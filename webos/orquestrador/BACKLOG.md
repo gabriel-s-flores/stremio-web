@@ -216,6 +216,16 @@ Modelos: **O** = `claude-opus-5-5`, **S** = `claude-sonnet-5-5`; effort entre pa
 - **Aceite:** sequência de Back via `remote.mjs` no emulador sem navegação dupla e com saída
   confirmada.
 
+### F3.2b · Back sem toques extras depois de Detalhes
+- **Depende de:** F3.2  · **Modelo:** O (high)
+- **Escopo:** achado da F4.1a: o Back de Detalhes com origem faz `navigate(origem, { replace: true })`
+  e deixa a origem duas vezes no histórico (2 Backs do Discover até o Board, 4 da Busca, onde o
+  `setSearchParams` do upstream também empilha). Voltar pelo histórico quando a entrada anterior já é
+  a origem, sem quebrar a saída na raiz, os overlays e o atalho de diagnóstico.
+- **Aceite:** no emulador, com `remote.mjs`, cada Back volta exatamente uma tela (Board → Discover →
+  Detalhes → Player e o caminho de volta; Busca → resultado → Detalhes), com o foco restaurado e a
+  saída confirmada na raiz.
+
 ### F3.3 · Ciclo de vida
 - **Depende de:** F1.6  · **Modelo:** S (high)
 - **Aceite:** `visibilitychange`/`webOSRelaunch` pausam e retomam; relaunch preserva o estado
