@@ -154,6 +154,17 @@ describe('holding the pointer button', () => {
         expect(target.dispatchEvent).not.toHaveBeenCalled();
     });
 
+    test('the pointer of the Magic Remote shakes a little: a drift within the tolerance keeps the press', () => {
+        page('<div id="item" tabindex="0"></div>');
+        const target = { dispatchEvent: jest.fn(() => false) };
+        document.elementFromPoint = () => target;
+        const item = document.getElementById('item');
+        item.dispatchEvent(trusted('mousedown', { clientX: 10, clientY: 10 }));
+        item.dispatchEvent(trusted('mousemove', { clientX: 18, clientY: 17 }));
+        jest.advanceTimersByTime(LONG_PRESS_MS + 10);
+        expect(target.dispatchEvent).toHaveBeenCalled();
+    });
+
     test('holding over a slider does not send a right click: it would end the drag', () => {
         page('<div class="slider-container-s1" id="slider"><div class="thumb-t1" id="thumb"></div></div>');
         const target = { dispatchEvent: jest.fn(() => false) };

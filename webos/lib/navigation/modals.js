@@ -22,9 +22,13 @@
 // each mutation with one selector (OVERLAY_HINT, scoped to the node) and only a hit schedules the
 // check, which is the expensive part: findTopOverlay scans the document several times (30 ms on the
 // c8 profile, measured: running it after every burst of the Board load added 1.2 s to the boot).
-// The key handlers use the overlay found by the last check, they never search.
+// The key handlers use the overlay found by the last check, they never search. Keys, focus and the
+// input mode come from the input hub of the navigation (./core/input.js), where the overlay's key
+// handler runs first.
 
 const { findTopOverlay, isOverlayOpen, OVERLAY_HINT } = require('../../back/overlays');
+const { isFocusable: isFocusableElement, isTextField } = require('./core/dom');
+const { PRIORITY, createInputHub, getInputHub } = require('./core/input');
 
 const DIRECTIONS = { 37: 'left', 38: 'up', 39: 'right', 40: 'down' };
 const ARROW_KEYS = Object.keys(DIRECTIONS).map(Number);
@@ -38,24 +42,20 @@ const ENTER_RETRIES = 20;
 const POINTER_FOCUS_WINDOW_MS = 150;
 
 const CANDIDATES = 'a[href], button, input, select, textarea, [tabindex]';
-const TEXT_FIELDS = /^(INPUT|TEXTAREA)$/;
 // ActionMenu moves the focus among its items on its own (and wraps around).
 const OWN_ARROWS = ['action-menu'];
 // The search history dropdown shows under the field that keeps the focus while typing.
 const PASSIVE_ROOT = '[class^="search-bar-container-"], [class*=" search-bar-container-"]';
 
+// Also not while the overlay positions itself (visibility: hidden).
 const isFocusable = (element) => (
-    element.tabIndex >= 0 &&
-    !element.disabled &&
-    !element.hasAttribute('disabled') &&
-    (element.offsetWidth > 0 || element.offsetHeight > 0) &&
-    element.ownerDocument.defaultView.getComputedStyle(element).visibility === 'visible'
+    isFocusableElement(element) && element.ownerDocument.defaultView.getComputedStyle(element).visibility === 'visible'
 );
 
 // Where the focus starts in an overlay: what asks for it, then what is selected, then the first.
 const findInitialTarget = (root) => {
     const focusables = Array.from(root.querySelectorAll(CANDIDATES)).filter(isFocusable);
-    const buttons = focusables.filter((element) => !TEXT_FIELDS.test(element.nodeName));
+    const buttons = focusables.filter((element) => !isTextField(element));
     const pool = buttons.length > 0 ? buttons : focusables;
     return pool.find((element) => element.hasAttribute('autofocus')) ||
         pool.find((element) => element.getAttribute('aria-selected') === 'true' || /(^|\s)selected(\s|$)/.test(String(element.className))) ||
@@ -63,9 +63,11 @@ const findInitialTarget = (root) => {
         null;
 };
 
-// `isTrusted` is a parameter for the tests: jsdom cannot make a trusted event.
+// `isTrusted` is a parameter for the tests (jsdom cannot make a trusted event): with it, the focus
+// gets an input hub of its own.
 const createModalFocus = (win, {
-    isTrusted = (event) => event.isTrusted,
+    isTrusted = null,
+    hub = isTrusted ? createInputHub(win, { isTrusted }) : getInputHub(win),
     setTimeout: timeout = win.setTimeout.bind(win),
     clearTimeout: clear = win.clearTimeout.bind(win),
 } = {}) => {
@@ -76,12 +78,13 @@ const createModalFocus = (win, {
     let currentOverlay = null;
     // An overlay that owns the remote is up (the QR dialog of F3.4): nothing here acts meanwhile.
     let ownerOpen = false;
-    let lastInput = 'key';
-    let lastPointerTime = -Infinity;
     let checkTimer = null;
     let retryTimer = null;
     let observer = null;
+    let removeKey = null;
+    let removeFocus = null;
     let started = false;
+    const isKeyInput = () => hub.isKeyInput();
     // The last elements that had the focus: an overlay may place the focus inside itself (autofocus)
     // before it is noticed, and then the element that opened it is the one before.
     const recentFocus = [];
@@ -110,7 +113,7 @@ const createModalFocus = (win, {
     // component) should handle the key: text fields keep the caret keys, ActionMenu has its own.
     const moveInside = (overlay, event) => {
         const active = doc.activeElement;
-        if (OWN_ARROWS.indexOf(overlay.name) !== -1 || TEXT_FIELDS.test(active.nodeName) || typeof active.spatialNavigationSearch !== 'function') {
+        if (OWN_ARROWS.indexOf(overlay.name) !== -1 || /^(INPUT|TEXTAREA)$/.test(active.nodeName) || typeof active.spatialNavigationSearch !== 'function') {
             return false;
         }
         const candidates = Array.from(overlay.root.querySelectorAll(CANDIDATES)).filter((element) => element !== active && isFocusable(element));
@@ -135,7 +138,7 @@ const createModalFocus = (win, {
         const record = records.get(root);
         const remembered = record && record.lastInside && root.contains(record.lastInside) && isFocusable(record.lastInside) ? record.lastInside : null;
         const target = remembered || findInitialTarget(root);
-        trace('enter', `attempt ${attempt}: ${target ? `${target.nodeName.toLowerCase()} ${String(target.className).slice(0, 30)}` : 'no target'}; input ${lastInput}`);
+        trace('enter', `attempt ${attempt}: ${target ? `${target.nodeName.toLowerCase()} ${String(target.className).slice(0, 30)}` : 'no target'}; input ${hub.lastInput || 'key'}`);
         // The overlay may still be rendering or positioning itself (no focusable yet, or visibility
         // hidden): try again shortly.
         if ((target === null || !focusElement(target)) && attempt < ENTER_RETRIES) {
@@ -172,7 +175,7 @@ const createModalFocus = (win, {
         const previous = current;
         currentOverlay = overlay;
         if (top === previous) {
-            if (top !== null && lastInput === 'key' && !isInside(top, doc.activeElement)) {
+            if (top !== null && isKeyInput() && !isInside(top, doc.activeElement)) {
                 enter(top);
             }
             return;
@@ -186,7 +189,7 @@ const createModalFocus = (win, {
                 records.delete(root);
                 // The overlay that closed gives the focus back to what opened it, unless the page
                 // already moved it somewhere else.
-                if (root === previous && lastInput === 'key') {
+                if (root === previous && isKeyInput()) {
                     const origin = record.origin;
                     if (top === null || isInside(top, origin)) {
                         restore(origin);
@@ -205,7 +208,7 @@ const createModalFocus = (win, {
             const origin = candidates.find((element) => !isLost(element) && !isInside(top, element)) || (isLost(active) ? null : active);
             records.set(top, { origin, lastInside: isInside(top, active) ? active : null, overlay: { name: overlay.name, element: overlay.element } });
         }
-        if (lastInput === 'key' && !isInside(top, doc.activeElement)) {
+        if (isKeyInput() && !isInside(top, doc.activeElement)) {
             enter(top);
         }
     };
@@ -234,7 +237,7 @@ const createModalFocus = (win, {
         }
         if (overlayChanged) {
             schedule();
-        } else if (contentChanged && lastInput === 'key' && !isInside(current, doc.activeElement)) {
+        } else if (contentChanged && isKeyInput() && !isInside(current, doc.activeElement)) {
             // Content that arrived late inside the open overlay: the focus may be able to enter now.
             enter(current);
         }
@@ -262,24 +265,24 @@ const createModalFocus = (win, {
             if (record) record.lastInside = event.target;
             return;
         }
-        const fromPointer = Date.now() - lastPointerTime < POINTER_FOCUS_WINDOW_MS;
-        if (lastInput === 'key' && !fromPointer && !isLost(event.target)) {
+        const fromPointer = Date.now() - hub.lastPointerDown < POINTER_FOCUS_WINDOW_MS;
+        if (isKeyInput() && !fromPointer && !isLost(event.target)) {
             // The spatial navigation reached something behind the overlay.
             trace('focus-outside', `${event.target.nodeName} ${String(event.target.className).slice(0, 30)}`);
             enter(current);
         }
     };
 
+    // True when the key must reach nothing else (the hub stops there too).
     const onKeyDown = (event) => {
-        lastInput = 'key';
         if (ownerOpen) {
-            return;
+            return false;
         }
         const overlay = currentOverlay;
         const top = current;
         if (top !== null && isInside(top, doc.activeElement) && ARROW_KEYS.indexOf(event.keyCode) !== -1) {
             moveInside(overlay, event);
-            return;
+            return false;
         }
         if (top !== null && !isInside(top, doc.activeElement) && (ARROW_KEYS.indexOf(event.keyCode) !== -1 || event.keyCode === ENTER_KEY)) {
             // Focus outside of the open overlay (it opened by pointer, or the page took the focus):
@@ -288,17 +291,9 @@ const createModalFocus = (win, {
             event.preventDefault();
             event.stopImmediatePropagation();
             enter(top);
+            return true;
         }
-    };
-
-    const onPointer = (event) => {
-        if (!isTrusted(event)) {
-            return;
-        }
-        lastInput = 'pointer';
-        if (event.type === 'mousedown') {
-            lastPointerTime = Date.now();
-        }
+        return false;
     };
 
     const start = () => {
@@ -306,10 +301,8 @@ const createModalFocus = (win, {
             return;
         }
         started = true;
-        doc.addEventListener('focusin', onFocusIn, true);
-        win.addEventListener('keydown', onKeyDown, true);
-        win.addEventListener('mousedown', onPointer, true);
-        win.addEventListener('mousemove', onPointer, true);
+        removeFocus = hub.onFocus(onFocusIn);
+        removeKey = hub.onKey(onKeyDown, PRIORITY.overlay);
         if (typeof win.MutationObserver === 'function') {
             observer = new win.MutationObserver(onMutations);
             observer.observe(doc.body, { childList: true, subtree: true });
@@ -326,10 +319,8 @@ const createModalFocus = (win, {
             return;
         }
         started = false;
-        doc.removeEventListener('focusin', onFocusIn, true);
-        win.removeEventListener('keydown', onKeyDown, true);
-        win.removeEventListener('mousedown', onPointer, true);
-        win.removeEventListener('mousemove', onPointer, true);
+        removeFocus();
+        removeKey();
         if (observer) observer.disconnect();
         observer = null;
         clear(checkTimer);
@@ -350,7 +341,7 @@ const createModalFocus = (win, {
             return current;
         },
         get lastInput() {
-            return lastInput;
+            return isKeyInput() ? 'key' : 'pointer';
         },
         history,
         stats,

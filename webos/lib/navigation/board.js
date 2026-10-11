@@ -1,4 +1,4 @@
-// Catalog rows of the Board and of Search (owner: F4.1a), on top of webos/lib/navigation/f4.1a.js.
+// Catalog rows of the Board and of Search: a screen of ./core/screenFocus.js.
 //
 // The list is a vertical scroller of rows (src/components/MetaRow); in the webOS build every row
 // shows its 10 items in a horizontal strip that scrolls (src/routes/Board/styles.webos.less,
@@ -7,20 +7,25 @@
 //   vertical nav bar), RIGHT on the last one stays.
 // - UP/DOWN go to the nearest row with items, to the item in the same column on screen. Message
 //   rows (an addon error) are skipped. A row still loading (a placeholder) is brought into view,
-//   which makes useVisibleCatalogs load it, and the focus waits where it is. UP from the first row
-//   is left to the spatial navigation (the top bar).
+//   which makes useVisibleCatalogs load it, and the focus waits where it is. With the TV zoom a
+//   focused row can be taller than the list: showing the loading row then takes the focused row's
+//   title out of sight, so once the loading row is done (items or an error) the focused row is
+//   aligned again. UP from the first row goes to the top bar (search, profile), by the spatial
+//   navigation's search among its buttons only: the side bar, focusable since F4.1b, is closer to the
+//   first poster than the search button and took that UP.
 // - The focused row is scrolled to the top of the list, title included, and the strip just enough
 //   to show the focused item. The polyfill's scrollIntoView() put the poster itself at the top, with
 //   the row title out of sight.
 // - DOWN from the top bar (search, profile) goes back to the content: the item the focus came from,
 //   or the first item of the first row on screen.
 
-const { firstFocusable, hasLocalName, isFocusable, isRendered, queryLocal } = require('./f4.1a');
+const { firstFocusable, focusablesIn, hasLocalName, isAttached, isFocusable, isRendered, queryLocal } = require('./core/dom');
+const { TOP_BAR } = require('./core/routes');
+const { scrollTopTo } = require('./core/scroll');
+const { getInputHub } = require('./core/input');
 
-// Local class names (CSS modules): the strip of MetaRow and of its placeholder, and the top bar of
-// src/components/NavBar/HorizontalNavBar.
+// Local class name (CSS modules) of the strip of MetaRow and of its placeholder.
 const STRIP = 'meta-items-container';
-const TOP_BAR = 'horizontal-nav-bar-container';
 
 // The row of the list holding the element (a direct child of the list), or null.
 const rowOf = (element, list) => {
@@ -57,8 +62,7 @@ const rows = (list) => Array.prototype.slice.call(list.children);
 // strip, both positioned in the webOS styles (getBoundingClientRect() is in screen pixels, F2.6).
 const scrollListTo = (list, row) => {
     const first = rows(list).find((child) => isRendered(child));
-    const top = row.offsetTop - (first ? first.offsetTop : 0);
-    list.scrollTop = Math.max(0, Math.min(top, list.scrollHeight - list.clientHeight));
+    scrollTopTo(list, row.offsetTop - (first ? first.offsetTop : 0));
 };
 
 const scrollStripTo = (strip, item) => {
@@ -77,6 +81,11 @@ const scrollStripTo = (strip, item) => {
 // the list scrolls by the least for its near edge to come in by PEEK pixels. Scrolling it to the top
 // took the focused row's title out of sight, and the loading row often turns into an addon error.
 const PEEK = 8;
+
+// The loading row each list peeked at, with the item that had the focus then: { row, element }. A
+// Map, so that a screen with nothing pending skips its mutations at once (they come in bursts while
+// the catalogs load); an entry goes with its realign, or once its list left the page.
+const peeks = new Map();
 
 const peekRow = (list, row) => {
     const below = row.offsetTop - list.clientHeight + PEEK;
@@ -107,10 +116,23 @@ const verticalTarget = (list, row, dir, from) => {
         if (items.length > 0) return sameColumn(items, from);
         if (isPlaceholderRow(all[index])) {
             peekRow(list, all[index]);
+            peeks.set(list, { row: all[index], element: from });
             return true;
         }
     }
     return null;
+};
+
+// The row peeked at is done loading (its placeholder replaced by the row, or by an addon error): the
+// item that still has the focus gets its row aligned again, title included.
+const realignAfterPeek = (list) => {
+    const peek = peeks.get(list);
+    if (!peek || (isAttached(peek.row) && hasLocalName(peek.row, 'meta-row-placeholder-container'))) return;
+    peeks.delete(list);
+    const doc = list.ownerDocument;
+    if (doc.activeElement === peek.element && list.contains(peek.element) && !getInputHub(doc.defaultView).pointerInUse()) {
+        align(peek.element, list);
+    }
 };
 
 // The first item of the first row on screen (the list scrolled down keeps its position).
@@ -164,6 +186,14 @@ const navigateRows = (target, dir, list) => {
     }
 };
 
+// UP from the first row: the closest button of the top bar, or null (the spatial navigation).
+const toTopBar = (target, container) => {
+    const bar = queryLocal(container, TOP_BAR);
+    const candidates = bar ? focusablesIn(bar) : [];
+    if (candidates.length === 0 || typeof target.spatialNavigationSearch !== 'function') return null;
+    return target.spatialNavigationSearch('up', { candidates, container: bar }) || null;
+};
+
 // DOWN from the top bar: back to the content.
 const fromTopBar = (target, dir, container, list, memory) => {
     if (dir !== 'down' || !list) return null;
@@ -173,11 +203,13 @@ const fromTopBar = (target, dir, container, list, memory) => {
     return firstVisibleItem(list) || null;
 };
 
-// The screen description for webos/lib/navigation/f4.1a.js, for the list with that local class name.
+// The screen description for ./core/screenFocus.js, for the list with that local class name.
 const rowsScreen = (listName) => {
     const listOf = (container) => queryLocal(container, listName);
     return {
         listOf,
+        // Back from Search lands on the search button it was opened from (F4.1a).
+        rememberTopBar: true,
         initial: (container) => {
             const list = listOf(container);
             return list ? firstItem(list) : null;
@@ -189,12 +221,22 @@ const rowsScreen = (listName) => {
         navigate: (target, dir, container, memory) => {
             const list = listOf(container);
             if (!list) return null;
-            if (list.contains(target)) return navigateRows(target, dir, list);
+            if (list.contains(target)) {
+                const result = navigateRows(target, dir, list);
+                return result === null && dir === 'up' && isRowItem(target, list) ? toTopBar(target, container) : result;
+            }
             return fromTopBar(target, dir, container, list, memory);
         },
         align: (element, container) => {
             const list = listOf(container);
             if (list && list.contains(element)) align(element, list);
+        },
+        onMutation: (container) => {
+            if (peeks.size === 0) return;
+            Array.from(peeks.keys()).forEach((list) => {
+                if (!isAttached(list)) peeks.delete(list);
+                else if (container.contains(list)) realignAfterPeek(list);
+            });
         },
     };
 };
@@ -211,9 +253,11 @@ module.exports = {
     firstVisibleItem,
     fromTopBar,
     isRowItem,
+    realignAfterPeek,
     itemsOf,
     navigateRows,
     rowOf,
     rowsScreen,
     sameColumn,
+    toTopBar,
 };

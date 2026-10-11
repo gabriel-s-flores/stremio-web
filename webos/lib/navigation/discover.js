@@ -1,4 +1,4 @@
-// The Discover grid (owner: F4.1a), on top of webos/lib/navigation/f4.1a.js.
+// The Discover grid: a screen of ./core/screenFocus.js.
 //
 // The catalog is a wrapping flex row in the webOS build (src/routes/Discover/styles.webos.less) in a
 // vertical scroller, with the filters above it and the preview panel on its right.
@@ -15,8 +15,10 @@
 // Opening a filter (its dropdown) and moving in it is the menus' navigation (F4.3): the keys of an
 // open dropdown are left alone.
 
-const { firstFocusable, hasLocalName, isFocusable, queryLocal } = require('./f4.1a');
-const { TOP_BAR, sameColumn } = require('./board');
+const { firstFocusable, hasLocalName, isFocusable, queryLocal } = require('./core/dom');
+const { TOP_BAR } = require('./core/routes');
+const { scrollTopTo } = require('./core/scroll');
+const { sameColumn } = require('./board');
 
 const GRID = 'meta-items-container';
 const FILTERS = 'selectable-inputs-container';
@@ -44,15 +46,11 @@ const filterControls = (container) => {
     ));
 };
 
-const scrollGridTo = (grid, top) => {
-    grid.scrollTop = Math.max(0, Math.min(top, grid.scrollHeight - grid.clientHeight));
-};
-
 const align = (element, grid) => {
     const cells = cellsOf(grid);
     const current = cells.find(({ cell }) => cell.contains(element));
     if (!current || cells.length === 0) return;
-    scrollGridTo(grid, current.cell.offsetTop - cells[0].cell.offsetTop);
+    scrollTopTo(grid, current.cell.offsetTop - cells[0].cell.offsetTop);
 };
 
 const firstVisibleCell = (grid) => {
@@ -78,7 +76,7 @@ const navigateGrid = (target, dir, grid, container) => {
                 return sameColumn(above.filter(({ cell }) => cell.offsetTop === lineTop).map(({ link }) => link), target);
             }
             const filter = sameColumn(filterControls(container), target);
-            if (filter) scrollGridTo(grid, 0);
+            if (filter) scrollTopTo(grid, 0);
             return filter;
         }
         case 'down': {
@@ -87,7 +85,7 @@ const navigateGrid = (target, dir, grid, container) => {
                 const lineTop = below[0].cell.offsetTop;
                 return sameColumn(below.filter(({ cell }) => cell.offsetTop === lineTop).map(({ link }) => link), target);
             }
-            scrollGridTo(grid, grid.scrollHeight);
+            scrollTopTo(grid, grid.scrollHeight);
             return true;
         }
         default:
@@ -96,6 +94,7 @@ const navigateGrid = (target, dir, grid, container) => {
 };
 
 const discoverScreen = {
+    rememberTopBar: true,
     initial: (container) => {
         const grid = gridOf(container);
         return grid ? firstVisibleCell(grid) : null;

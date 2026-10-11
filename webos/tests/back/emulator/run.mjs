@@ -558,23 +558,48 @@ const hideKeyboardIfUp = async (name) => {
 
 const screensScenario = async () => {
     const info = path.join(OUT, 'addon.json');
+    // A file left by an earlier run in the same folder would point to a server that is gone: the
+    // install then failed every time (the S00-test-addon-installed flake).
+    fs.rmSync(info, { force: true });
     const log = fs.openSync(path.join(OUT, 'addon-server.log'), 'w');
     const server = spawn('node', ['webos/tests/addon/server.mjs', '--host', '10.0.2.2', '--info', info], { cwd: REPO, stdio: ['ignore', log, log] });
     try {
-        for (let i = 0; i < 50 && !fs.existsSync(info); i++) await sleep(200);
-        const manifestUrl = fs.existsSync(info) ? JSON.parse(fs.readFileSync(info, 'utf8')).manifestUrl : null;
+        let manifestUrl = null;
+        for (let i = 0; i < 100 && manifestUrl === null; i++) {
+            try {
+                manifestUrl = JSON.parse(fs.readFileSync(info, 'utf8')).manifestUrl.replace('127.0.0.1', '10.0.2.2');
+            } catch {
+                // not written yet (or half written)
+                await sleep(200);
+            }
+        }
         record('S00-test-addon', { ok: manifestUrl !== null, note: manifestUrl });
         if (manifestUrl === null) return;
-        // Installed in the guest profile the way the Addons screen does (webos/tests/addon/README.md).
-        evaluate(`
-            fetch(${JSON.stringify(manifestUrl.replace('127.0.0.1', '10.0.2.2'))}).then(function (r) { return r.json(); }).then(function (manifest) {
-                window.core.dispatch({ action: 'Ctx', args: { action: 'InstallAddon', args: { transportUrl: ${JSON.stringify(manifestUrl.replace('127.0.0.1', '10.0.2.2'))}, manifest: manifest, flags: { official: false, protected: false } } } });
-                window.__f32.addon = manifest.id;
-            });
-            return true;
-        `);
-        const installedMs = await waitFor('return !!window.__f32.addon;', 15000);
-        record('S00-test-addon-installed', { ok: installedMs !== null });
+        // Installed in the guest profile the way the Addons screen does (webos/tests/addon/README.md),
+        // then looked for in the profile of the core: the dispatch does not answer. Three tries.
+        const url = JSON.stringify(manifestUrl);
+        let installedMs = null;
+        for (let attempt = 1; attempt <= 3 && installedMs === null; attempt++) {
+            evaluate(`
+                var install = { attempt: ${attempt}, error: null, installed: false };
+                window.__f32.addonInstall = install;
+                fetch(${url}).then(function (r) { return r.json(); }).then(function (manifest) {
+                    window.core.dispatch({ action: 'Ctx', args: { action: 'InstallAddon', args: { transportUrl: ${url}, manifest: manifest, flags: { official: false, protected: false } } } });
+                    window.__f32.addon = manifest.id;
+                }).catch(function (error) { install.error = String(error); });
+                return true;
+            `);
+            installedMs = await waitFor(`
+                var install = window.__f32.addonInstall;
+                if (window.__f32.addon && !install.installed) {
+                    window.core.getState('ctx').then(function (ctx) {
+                        install.installed = ctx.profile.addons.some(function (addon) { return addon.transportUrl === ${url}; });
+                    }, function (error) { install.error = String(error); });
+                }
+                return install.installed === true;
+            `, 15000, 1000);
+        }
+        record('S00-test-addon-installed', { ok: installedMs !== null, note: JSON.stringify(evaluate('return window.__f32.addonInstall;')) });
         const start = state();
         record('S00-start', { ok: onBoard(start.hash) && start.idx === 0, state: start });
 

@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-// The React wrapper of the F4.1a screens (webos/lib/navigation/f4.1a-screen.js), rendered with
+// The React wrapper of the F4.1a screens (webos/lib/navigation/withScreenNavigation.js), rendered with
 // react-dom: the focus is attached to the route content, the route going under another one takes the
 // snapshot (leave) and coming back restores it, after the screen's own effects (the SearchBar
 // focuses its field whenever the route comes back).
@@ -14,7 +14,7 @@ const { act } = React;
 let mockRouteActive = true;
 jest.mock('stremio/common/useRouteFocused', () => ({ useRouteActive: () => mockRouteActive }), { virtual: true });
 
-const withScreenNavigation = require('../../lib/navigation/f4.1a-screen');
+const withScreenNavigation = require('../../lib/navigation/withScreenNavigation');
 
 global.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -22,6 +22,9 @@ beforeAll(() => {
     // jsdom has no layout: everything not under [data-hidden] is shown.
     Element.prototype.getClientRects = function () {
         return this.closest('[data-hidden]') ? [] : [{}];
+    };
+    Element.prototype.getBoundingClientRect = function () {
+        return { top: 0, left: 0, width: 10, height: 10, right: 10, bottom: 10 };
     };
 });
 
@@ -101,4 +104,53 @@ test('unmounting removes the listeners', () => {
     const event = new KeyboardEvent('keydown', { keyCode: 40, bubbles: true, cancelable: true });
     content.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(false);
+});
+
+// A screen that does not focus anything itself, inside a router location (the views of
+// src/router/Routes.tsx each get their own).
+const { UNSAFE_LocationContext: LocationContext } = require('react-router');
+const { getInputHub } = require('../../lib/navigation/core/input');
+
+const Plain = () => React.createElement('div', null,
+    React.createElement('a', { href: '#/one', tabIndex: 0 }, 'one'),
+    React.createElement('a', { href: '#/two', tabIndex: 0 }, 'two'));
+const WrappedPlain = withScreenNavigation(Plain, screen);
+const renderAt = (search) => act(() => {
+    root.render(React.createElement(LocationContext.Provider, { value: { location: { pathname: '/library', search, hash: '', state: null, key: search }, navigationType: 'PUSH' } },
+        React.createElement('div', { className: 'route-content' }, React.createElement(WrappedPlain))));
+});
+
+test('mounted with nothing focused: the screen\'s initial element', () => {
+    renderAt('');
+    expect(document.activeElement.textContent).toBe('one');
+});
+
+test('unmounting removes its handlers from the input hub', () => {
+    const before = getInputHub(window).listeners;
+    renderAt('');
+    expect(getInputHub(window).listeners.keys).toBe(before.keys + 1);
+    act(() => root.unmount());
+    root = createRoot(host);
+    expect(getInputHub(window).listeners).toEqual(before);
+});
+
+test('another location on the same screen (a filter): the focus lost with the old list comes back', () => {
+    jest.useFakeTimers();
+    try {
+        renderAt('');
+        const [one] = host.querySelectorAll('a');
+        act(() => one.blur());
+        expect(document.activeElement).toBe(document.body);
+        renderAt('?sort=name');
+        act(() => jest.advanceTimersByTime(0));
+        expect(document.activeElement).toBe(one);
+        // Not while the route is under another one.
+        act(() => one.blur());
+        mockRouteActive = false;
+        renderAt('?sort=year');
+        act(() => jest.advanceTimersByTime(0));
+        expect(document.activeElement).toBe(document.body);
+    } finally {
+        jest.useRealTimers();
+    }
 });

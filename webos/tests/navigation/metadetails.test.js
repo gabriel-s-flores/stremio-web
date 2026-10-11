@@ -11,9 +11,17 @@ const {
 } = require('../../lib/navigation/metadetails');
 
 const nativeRect = Element.prototype.getBoundingClientRect;
+const nativeRects = Element.prototype.getClientRects;
 const rectOf = function rectOf() {
     const rect = this.__rect || { top: 0, left: 0, width: 10, height: 10 };
     return Object.assign({ right: rect.left + rect.width, bottom: rect.top + rect.height }, rect);
+};
+// A box for every element with a rect.
+const rectsOf = function rectsOf() {
+    // display: none on an ancestor (the route under another one).
+    if (this.closest('[data-hidden]')) return [];
+    const rect = this.getBoundingClientRect();
+    return rect.width > 0 || rect.height > 0 ? [rect] : [];
 };
 
 const STREAMS_PAGE = `
@@ -85,6 +93,7 @@ const open = (pathname = '/detail/movie/tt1/tt1', type = 'PUSH') => {
 
 beforeEach(() => {
     Element.prototype.getBoundingClientRect = rectOf;
+    Element.prototype.getClientRects = rectsOf;
     document.body.innerHTML = STREAMS_PAGE;
     document.documentElement.removeAttribute('data-webos-pointer');
     _setLastInput(null);
@@ -95,6 +104,7 @@ afterEach(() => {
     if (navigation) navigation.destroy();
     navigation = null;
     Element.prototype.getBoundingClientRect = nativeRect;
+    Element.prototype.getClientRects = nativeRects;
 });
 
 describe('keepInView', () => {
@@ -184,6 +194,23 @@ describe('initial focus', () => {
         $('list').innerHTML = '<div class="message-container-q1"><input class="search-q2" id="picker" tabindex="0" /><div>No streams</div></div>';
         open();
         expect(document.activeElement).toBe($('trailer'));
+    });
+
+    it('with no streams on a movie without a logo (its title in a logo-placeholder): the fallback all the same', () => {
+        $('list').innerHTML = '<div class="message-container-q1"><div>No addons</div><a class="install-button-container-x1" href="#/addons" tabindex="0" id="install">Install addons</a></div>';
+        $('info').insertAdjacentHTML('afterbegin', '<div class="logo-placeholder-q1">Title</div>');
+        open();
+        expect(document.activeElement).toBe($('install'));
+    });
+
+    it('with no streams yet but the list or the column still loading: waits', () => {
+        $('list').innerHTML = '<div class="stream-placeholder-container-z1"></div>';
+        open();
+        expect(document.activeElement).toBe(document.body);
+        $('list').innerHTML = '<div class="message-container-q1"><div>No streams</div></div>';
+        $('meta').className = 'meta-preview-placeholder-container-s1';
+        navigation.tick();
+        expect(document.activeElement).toBe(document.body);
     });
 });
 
@@ -564,3 +591,222 @@ describe('review c1: OK under the page, disabled toggles, the swap and the panel
         expect(document.activeElement).toBe($('list'));
     });
 });
+
+describe('F4.4: the low findings of the F4.1c review', () => {
+    it('B4: the title of a movie without a logo (logo-placeholder) does not hold a missing saved focus', () => {
+        open('/detail/movie/tt1/tt1');
+        $('library').focus();
+        navigation.destroy();
+        $('library').blur();
+        // Back: a loaded column with the name in place of the logo, and the toggle gone (not found by
+        // label nor by position: it was the 3rd focusable of the column, one is left).
+        $('cast').parentNode.removeChild($('cast'));
+        $('library').parentNode.removeChild($('library'));
+        $('info').insertAdjacentHTML('afterbegin', '<div class="logo-placeholder-q1">Title</div>');
+        open('/detail/movie/tt1/tt1', 'POP');
+        expect(document.activeElement).toBe($('list'));
+    });
+
+    it('B4: the column placeholder itself still holds it (MetaPreview.Placeholder)', () => {
+        open('/detail/movie/tt1/tt1');
+        $('cast').focus();
+        navigation.destroy();
+        $('cast').blur();
+        $('meta').className = 'meta-preview-placeholder-container-s1';
+        $('meta').innerHTML = '';
+        open('/detail/movie/tt1/tt1', 'POP');
+        expect(document.activeElement).toBe(document.body);
+    });
+
+    it('B5: UP on the streams panel with one addon (no filter above the list) stays, never "Install addons"', () => {
+        $('filter').parentNode.removeChild($('filter'));
+        $('list').insertAdjacentHTML('beforeend', '<a class="button-container-1 install-button-container-x1" href="#/addons" tabindex="0" id="install">Install addons</a>');
+        open();
+        expect(document.activeElement).toBe($('list'));
+        expect(key(KEY.UP).defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe($('list'));
+    });
+
+    it('B5: the back button of an episode\'s streams is the header too', () => {
+        $('filter').parentNode.insertAdjacentHTML('afterbegin', '<div class="button-container-1 back-button-container-y1" tabindex="0" id="episodes">back</div>');
+        open();
+        key(KEY.UP);
+        expect(document.activeElement).toBe($('episodes'));
+    });
+
+    const remountWithColumnLoading = (now) => {
+        now.mockReturnValue(1000);
+        open('/detail/movie/tt1/tt1');
+        $('cast').focus();
+        navigation.destroy();
+        $('cast').blur();
+        const meta = $('meta').innerHTML;
+        $('meta').innerHTML = '<div class="meta-preview-placeholder-container-s1"></div>';
+        open('/detail/movie/tt1/tt1', 'POP');
+        now.mockReturnValue(1000 + 15001);
+        navigation.tick();
+        expect(document.activeElement).toBe($('list'));
+        return () => { $('meta').innerHTML = meta; };
+    };
+
+    it('B6: a focus the pointer moved (no key) is not taken back by the late restore', () => {
+        const now = jest.spyOn(Date, 'now');
+        const loadColumn = remountWithColumnLoading(now);
+        // A click of the Magic Remote focuses a stream; the pointer then hides again.
+        $('s2').focus();
+        loadColumn();
+        navigation.tick();
+        expect(document.activeElement).toBe($('s2'));
+        now.mockRestore();
+    });
+
+    it('B6: nor anything while the pointer is in use, the late restore included', () => {
+        const now = jest.spyOn(Date, 'now');
+        const loadColumn = remountWithColumnLoading(now);
+        document.documentElement.setAttribute('data-webos-pointer', 'visible');
+        loadColumn();
+        navigation.tick();
+        expect(document.activeElement).toBe($('list'));
+        // Once the pointer hides, it does.
+        document.documentElement.setAttribute('data-webos-pointer', 'hidden');
+        navigation.tick();
+        expect(document.activeElement).toBe($('cast'));
+        now.mockRestore();
+    });
+
+    it('the keys and the focus come from the input hub: no listener of its own left after destroy', () => {
+        const { getInputHub } = require('../../lib/navigation/core/input');
+        const hub = getInputHub(window);
+        const before = hub.listeners;
+        open();
+        expect(hub.listeners.keys).toBe(before.keys + 1);
+        expect(hub.listeners.focus).toBe(before.focus + 1);
+        navigation.destroy();
+        navigation = null;
+        expect(hub.listeners.keys).toBe(before.keys);
+        expect(hub.listeners.focus).toBe(before.focus);
+    });
+});
+
+describe('F4.4: a series opened from a movie in the same page, and the bar on top', () => {
+    it('the panel focused under the new path while the old streams were on screen does not break the episodes', () => {
+        open('/detail/movie/tt1/tt1');
+        document.activeElement.blur();
+        // The location changes first (POP: the hash set by hand), the streams list is still there.
+        navigation.setLocation('/detail/series/tt2', 'POP');
+        navigation.tick();
+        expect(document.activeElement).toBe($('list'));
+        // Then the page renders the episodes, with nothing focused.
+        $('list').outerHTML = VIDEOS_LIST;
+        document.activeElement.blur();
+        expect(() => navigation.tick()).not.toThrow();
+        expect(document.activeElement).toBe($('v2'));
+    });
+
+    it('DOWN from the bar goes back to the column element focused before, not to the list', () => {
+        open();
+        $('cast').focus();
+        $('profile').focus();
+        expect(key(KEY.DOWN).defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe($('cast'));
+    });
+});
+
+describe('F4.4 c2: Back from the Player while its node is still held in place (F5.6)', () => {
+    // holdVideosInPlace keeps the Player's node as the last route for 1.5 s: the details route under
+    // it is display: none, and the node leaving is no mutation of the page.
+    const playerClosing = () => {
+        open();
+        $('s3').focus();
+        navigation.setRouteActive(false);
+        $('s3').blur();
+        const route = $('root').parentNode;
+        route.setAttribute('data-hidden', '');
+        navigation.setRouteActive(true);
+        return route;
+    };
+
+    it('A1: the stream played gets the focus back once the held node goes', () => {
+        jest.useFakeTimers();
+        try {
+            const route = playerClosing();
+            jest.advanceTimersByTime(100);
+            expect(document.activeElement).toBe(document.body);
+            jest.advanceTimersByTime(1400);
+            expect(document.activeElement).toBe(document.body);
+            route.removeAttribute('data-hidden');
+            jest.advanceTimersByTime(300);
+            expect(document.activeElement).toBe($('s3'));
+        } finally {
+            jest.useRealTimers();
+        }
+    });
+
+    it('A1 with F5.7: the Player put the focus back on the stream first, the restore leaves it there', () => {
+        jest.useFakeTimers();
+        try {
+            const route = playerClosing();
+            jest.advanceTimersByTime(800);
+            route.removeAttribute('data-hidden');
+            // usePlayerRemote (F5.7) focuses the entry element as soon as the page shows.
+            $('s3').focus();
+            const focusSpy = jest.spyOn(HTMLElement.prototype, 'focus');
+            jest.advanceTimersByTime(1000);
+            expect(document.activeElement).toBe($('s3'));
+            expect(focusSpy).not.toHaveBeenCalled();
+            focusSpy.mockRestore();
+        } finally {
+            jest.useRealTimers();
+        }
+    });
+
+    it('A1 with F5.7: the restore first, then the Player\'s own retry finds the focus in place (nothing to undo)', () => {
+        jest.useFakeTimers();
+        try {
+            const route = playerClosing();
+            route.removeAttribute('data-hidden');
+            jest.advanceTimersByTime(300);
+            expect(document.activeElement).toBe($('s3'));
+            // The same element again (the F5.7 retry acts only with the focus lost; even if it did):
+            $('s3').focus();
+            jest.advanceTimersByTime(1000);
+            expect(document.activeElement).toBe($('s3'));
+        } finally {
+            jest.useRealTimers();
+        }
+    });
+
+    it('A1: within the guard only (a page left hidden stops trying)', () => {
+        jest.useFakeTimers();
+        try {
+            const route = playerClosing();
+            jest.advanceTimersByTime(16000);
+            route.removeAttribute('data-hidden');
+            jest.advanceTimersByTime(1000);
+            expect(document.activeElement).toBe(document.body);
+            expect(jest.getTimerCount()).toBe(0);
+        } finally {
+            jest.useRealTimers();
+        }
+    });
+});
+
+
+describe('F4.4 c2: M2, the page keeps its own input tracking', () => {
+    it('a pointer move alone (Chromium sends trusted ones when the layout moves under a still cursor) does not keep the focus out', () => {
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: 5, clientY: 5 }));
+        open();
+        expect(document.activeElement).toBe($('list'));
+        expect($('list').hasAttribute('data-focus-visible-added')).toBe(true);
+    });
+
+    it('the cursor of the Magic Remote showing is pointer use until a key', () => {
+        document.dispatchEvent(new CustomEvent('cursorStateChange', { detail: { visibility: true } }));
+        open();
+        expect(document.activeElement).toBe(document.body);
+        key(KEY.DOWN, document.body);
+        navigation.tick();
+        expect(document.activeElement).not.toBe(document.body);
+    });
+});
+

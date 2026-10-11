@@ -12,6 +12,12 @@ let modalFocus;
 beforeAll(() => {
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, get() { return 10; } });
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get() { return 10; } });
+    Element.prototype.getClientRects = function () {
+        return [{}];
+    };
+    Element.prototype.getBoundingClientRect = function () {
+        return { top: 0, left: 0, width: 10, height: 10, right: 10, bottom: 10 };
+    };
 });
 
 beforeEach(() => {
@@ -358,6 +364,15 @@ describe('leaving an overlay', () => {
         expect(document.activeElement.id).toBe('behind-a');
     });
 
+    test('in pointer mode the focus is not moved back to the opener when the overlay closes', async () => {
+        page();
+        await openModal();
+        pointerPress();
+        document.querySelector('.modals-container').innerHTML = '';
+        await settle();
+        expect(document.activeElement).toBe(document.body);
+    });
+
     test('it is not stolen back from a page that already moved the focus', async () => {
         page();
         await openModal();
@@ -385,3 +400,34 @@ describe('leaving an overlay', () => {
         expect(document.activeElement.id).toBe('behind-b');
     });
 });
+
+describe('on the input hub (F4.4)', () => {
+    test('a key that only brings the focus into the overlay reaches nothing after it, the screens included', async () => {
+        const { createInputHub, PRIORITY } = require('../../lib/navigation/core/input');
+        modalFocus.stop();
+        const hub = createInputHub(window, { isTrusted: (event) => event.type === 'mousedown' && event.target === document.body });
+        modalFocus = createModalFocus(window, { hub });
+        const screen = jest.fn();
+        const removeScreen = hub.onKey(screen, PRIORITY.screen);
+        page();
+        modalFocus.start();
+        await settle();
+        // Opened by the pointer: the focus stays behind it.
+        document.getElementById('behind-a').focus();
+        pointerPress();
+        document.querySelector('.modals-container').innerHTML = MODAL;
+        await settle();
+        expect(document.activeElement.id).toBe('behind-a');
+        const event = press(40);
+        expect(event.defaultPrevented).toBe(true);
+        expect(screen).not.toHaveBeenCalled();
+        expect(document.activeElement.id).toBe('close');
+        removeScreen();
+    });
+
+    test('an element still hidden while the overlay positions itself is not a target', () => {
+        page('', '<div class="modal-container"><div tabindex="0" id="hidden" style="visibility: hidden"></div><div tabindex="0" id="shown"></div></div>');
+        expect(findInitialTarget(document.querySelector('.modal-container')).id).toBe('shown');
+    });
+});
+
