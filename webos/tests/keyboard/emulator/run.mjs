@@ -313,7 +313,8 @@ const linksScenario = async () => {
     if (!click('01-open-profile-menu', 'document.querySelector("[class*=menu-button-container]")')) {
         return;
     }
-    await sleep(1000);
+    // The menu content is behind the core suspender: wait for the link.
+    await waitFor('return !!document.querySelector("a[href=\\"https://www.stremio.com/tos\\"]");', 30000, 500);
     const focusResult = evaluate(FOCUS_LINK('https://www.stremio.com/tos'));
     record('02-terms-link-focused', { ok: focusResult !== 'not found', note: String(focusResult), screenshot: screenshot('02-profile-menu') });
     const before = state();
