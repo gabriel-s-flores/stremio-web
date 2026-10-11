@@ -487,24 +487,26 @@ const remoteTo = async (selector, maxKeys = 14) => {
         const direction = evaluate(`window.__e2e.direction(${JSON.stringify(selector)})`);
         if (direction === 'HERE') return true;
         const name = direction === 'null' ? 'DOWN' : direction;
-        const focused = await key(name, 700);
-        const now = `${focused.cls}|${focused.text}`;
+        await key(name, 700);
+        // The element itself: the Player's control bar buttons have no text (F5.7).
+        const now = evaluate('(function(){ var a = document.activeElement; if (!a) return "none"; if (!a.__e2eId) a.__e2eId = String(Math.random()); return a.__e2eId; })()');
         if (direction !== 'null' && now === last) return false;
         last = now;
     }
     return evaluate(`window.__e2e.direction(${JSON.stringify(selector)})`) === 'HERE';
 };
 
-// Opens a Player menu with the remote: the focus into the control bar (today the arrows are the
-// upstream shortcuts, LEFT/RIGHT seek and UP/DOWN volume, and no button takes the focus: OK, then
-// the arrows that do not seek), along the bar to the button of `icon`, OK, and the menu must be
-// open. Only when that fails, the click through CDP, recorded as a fallback (review c1, finding 2).
+// Opens a Player menu with the remote: the focus into the control bar, along the bar to the button
+// of `icon`, OK, and the menu must be open. Only when that fails, the click through CDP, recorded as
+// a fallback (review c1, finding 2). F5.7 (webos/lib/player-remote): DOWN shows the bar with the
+// focus on play/pause (OK with the bar hidden would pause); the bar hides 3 s after the last key, so
+// the button is marked before entering the bar and the walk starts right away.
 const openMenuWithRemote = async (label, icon, menuSelector) => {
     const inBar = '(function(){ var a = document.activeElement; return !!a && !!a.closest(\'[class*="control-bar-container"]\'); })()';
     let opened = false;
     let detail = null;
-    if (await remoteRoute(['OK', 'DOWN', 'UP'], inBar)) {
-        evaluate(`window.__e2e.markControl(${JSON.stringify(icon)}, 'menu-button')`);
+    evaluate(`window.__e2e.markControl(${JSON.stringify(icon)}, 'menu-button')`);
+    if (await remoteRoute(['DOWN', 'UP'], inBar)) {
         if (await remoteTo('[data-e2e-target=menu-button]')) {
             await key('OK', 1500);
             opened = await waitFor(`!!document.querySelector(${JSON.stringify(menuSelector)})`, 3 * SLOW);
@@ -625,6 +627,10 @@ const seek = async () => {
     const seekS = (settings.seek || 10000) / 1000;
     let state = playerState();
     if (!check('still in the Player with the video (it did not end or close)', state && state.video && /#\/player\//.test(state.hash), state && { hash: state.hash, video: state.video }, 'run')) return;
+    // F5.7: with the control bar on screen and the focus on a button, LEFT/RIGHT walk the buttons;
+    // the seek is on the seek bar (UP from the buttons) or with the bar hidden.
+    check('the remote reaches the seek bar', await remoteTo('[class*=seek-bar-container]', 4), active(), 'F5.7');
+    state = playerState();
     const before = state.video.currentTime;
     const started = Date.now();
     await key('RIGHT', 300);
@@ -648,6 +654,8 @@ const seek = async () => {
 
 const backToList = async (expectedHref, label) => {
     await key('BACK', 2500);
+    // F5.7: with the video playing and the control bar on screen, the first Back hides the bar.
+    if (/#\/player\//.test(evaluate('location.hash'))) await key('BACK', 2500);
     await waitFor('/#\\/detail\\//.test(location.hash)', 20 * SLOW);
     let focused = focus41();
     for (let i = 0; i < 20 && focused.kind !== 'stream'; i++) {

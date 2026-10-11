@@ -6,7 +6,8 @@
 // Encrypt certificate go through the tlsproxy (F5.5, webos/lib/subtitles); the errors the Player
 // receives (log, toast, error layer) have the token of those proxy URLs masked (F3.7b, webos/lib/redact),
 // and the state shows the add-on's own subtitle URLs, not the proxy ones.
-// The <video> stays in place until the pipeline guard releases it (F5.6, webos/lib/player/withPipelineGuard.js).
+// The <video> stays in place until the pipeline guard releases it (F5.6, webos/lib/player/withPipelineGuard.js),
+// and the stream being held or unloaded reports no time meanwhile (F5.7: the next episode started at the end).
 
 const React = require('react');
 // The explicit extension resolves to the upstream hook, not to this file.
@@ -23,10 +24,17 @@ const ignorePlaybackSpeed = () => { /* no-op */ };
 
 const useVideo = () => {
     const video = useUpstreamVideo();
-    // A layout effect cleanup runs before React takes the Player's nodes out of the page.
+    // The stream the Player is leaving (see `stale` below), and the current one for the callbacks.
+    const streamRef = React.useRef(video.state.stream);
+    streamRef.current = video.state.stream;
+    const [leavingStream, setLeavingStream] = React.useState(null);
+    // A layout effect cleanup runs before React takes the Player's nodes out of the page. It also runs
+    // when the Player suspends on the stream of the next episode (withCoreSuspender, decodeStream):
+    // the guard pauses the <video> right here, and the Player is not unloading it yet.
     React.useLayoutEffect(() => {
         const containerElement = video.containerRef ? video.containerRef.current : null;
         return () => {
+            setLeavingStream(streamRef.current);
             holdVideosInPlace(containerElement);
         };
     }, [video.containerRef]);
@@ -43,6 +51,19 @@ const useVideo = () => {
     const addExtraSubtitlesTracks = React.useCallback((tracks) => {
         upstreamAddExtraSubtitlesTracks(proxifySubtitlesTracks(tracks, tlsProxy.proxify));
     }, [upstreamAddExtraSubtitlesTracks]);
+    // The guard holds the <video> being left (paused) and unloads it about 1 s later (quiet release):
+    // until then the state still has its time and duration, and the Player reports them as the time
+    // of the next stream. On the next episode the core then keeps the 568 s of episode 1 as the
+    // position of episode 2, which starts at its end (F5.7, measured in the emulator: the pause of
+    // the hold sends one last timeupdate, and the Player's TimeChanged effect runs in the same commit
+    // as its unload). From the hold or the unload on, and as long as the state shows that same
+    // stream, it has no time, as right after an unload without the guard.
+    const upstreamUnload = video.unload;
+    const unload = React.useCallback(() => {
+        setLeavingStream(streamRef.current);
+        upstreamUnload();
+    }, [upstreamUnload]);
+    const stale = leavingStream !== null && video.state.stream === leavingStream;
     // The pipeline got the proxy URLs; the Player gets the ones the add-ons gave (F3.7b). Its own memo,
     // keyed on the tracks array only: the state changes at every timeupdate, the tracks do not.
     const extraSubtitlesTracks = React.useMemo(
@@ -54,8 +75,9 @@ const useVideo = () => {
             video.state
             :
             { ...video.state, playbackSpeed: null };
-        return extraSubtitlesTracks === base.extraSubtitlesTracks ? base : { ...base, extraSubtitlesTracks };
-    }, [video.state, extraSubtitlesTracks]);
+        const withTracks = extraSubtitlesTracks === base.extraSubtitlesTracks ? base : { ...base, extraSubtitlesTracks };
+        return stale ? { ...withTracks, time: null, duration: null } : withTracks;
+    }, [video.state, extraSubtitlesTracks, stale]);
 
     const events = React.useMemo(() => withRedactedErrors(video.events), [video.events]);
 
@@ -64,6 +86,7 @@ const useVideo = () => {
         events,
         state,
         load,
+        unload,
         addExtraSubtitlesTracks,
         setPlaybackSpeed: PLAYBACK_SPEED_SUPPORTED ? video.setPlaybackSpeed : ignorePlaybackSpeed,
     };
