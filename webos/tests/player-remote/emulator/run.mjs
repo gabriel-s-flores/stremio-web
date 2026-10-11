@@ -830,7 +830,48 @@ const seekProbe = async ({ manifestUrl, addonPort }) => {
     }
 };
 
-const SCENARIOS = { keys, next, watch, resume, menu, 'context-menu': contextMenu, 'seek-probe': seekProbe, 'resume-save': resumeSave, 'resume-check': resumeCheck, 'popup-probe': popupProbe };
+// Leaving the Player opened from the streams list: the focus must come back to the stream played
+// (F4.1c), as upstream where the Player never took it. The test add-on is installed, the episode's
+// streams page opened, the stream played with OK, the bar focused, then Back until the details page.
+const exitFocus = async ({ manifestUrl, addonPort }) => {
+    const manifest = await (await fetch(`http://127.0.0.1:${addonPort}/manifest.json`)).json();
+    await evaluate(`window.core.dispatch({ action: 'Ctx', args: { action: 'InstallAddon', args: { transportUrl: ${JSON.stringify(manifestUrl)}, manifest: ${JSON.stringify(manifest)}, flags: { official: false, protected: false } } } }); return true;`);
+    await sleep(2000);
+    const detailsHash = `#/detail/series/tt9100001/${encodeURIComponent('tt9100001:1:1')}`;
+    await evaluate(`
+        var idx = window.history.state && typeof window.history.state.idx === 'number' ? window.history.state.idx + 1 : 1;
+        var entry = { usr: null, key: 'f57d' + idx, idx: idx };
+        window.history.pushState(entry, '', ${JSON.stringify(detailsHash)});
+        window.dispatchEvent(new PopStateEvent('popstate', { state: entry }));
+        return idx;
+    `);
+    const listed = await waitFor('return document.querySelectorAll(\'[class*="stream-container"]\').length > 0;', 30000, 500);
+    record('E00-streams', { ok: listed !== null, note: (await state()).focused });
+    for (let i = 0; i < 3 && !/stream-container/.test(String((await state()).focused)); i++) {
+        remote('DOWN');
+        await sleep(1200);
+    }
+    const streamFocused = (await state()).focused;
+    const streamHref = await evaluate('return document.activeElement && document.activeElement.getAttribute("href");');
+    record('E01-stream-focused', { ok: /stream-container/.test(String(streamFocused)), note: `${streamFocused} ${streamHref}` });
+    remote('OK');
+    if (!await waitPlaying('E02-playing')) return;
+    await press('E03-down-bar', 'DOWN', (b, a) => ({ 'focus in the bar': /control-bar-button/.test(a.focused) }));
+    for (let i = 0; i < 3 && (await state()).hash.indexOf('#/player/') === 0; i++) {
+        remote('BACK');
+        await sleep(1500);
+    }
+    const samples = [];
+    for (let i = 0; i < 10; i++) {
+        samples.push({ ms: i * 400, focused: (await state()).focused, href: await evaluate('return document.activeElement && document.activeElement.getAttribute("href");') });
+        await sleep(400);
+    }
+    const exit = await evaluate('return window.__webosPlayerRemoteLast ? { entry: window.__webosPlayerRemoteLast.entry, exit: window.__webosPlayerRemoteLast.exit } : null;');
+    const last = samples[samples.length - 1];
+    record('E04-focus-back-on-stream', { ok: last.href === streamHref, note: `focus ${last.focused} (${last.href}); expected ${streamHref}; remote ${JSON.stringify(exit)}`, samples, exit, screenshot: await screenshot('E04-back') });
+};
+
+const SCENARIOS = { keys, next, watch, resume, menu, 'context-menu': contextMenu, 'seek-probe': seekProbe, 'exit-focus': exitFocus, 'resume-save': resumeSave, 'resume-check': resumeCheck, 'popup-probe': popupProbe };
 
 const main = async () => {
     if (!SCENARIOS[SCENARIO]) throw new Error(`unknown scenario ${SCENARIO}`);

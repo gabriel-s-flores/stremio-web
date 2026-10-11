@@ -392,7 +392,16 @@ const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => fa
     const ENTRY_FOCUS_RETRY_MS = 100;
     const ENTRY_FOCUS_TIMEOUT_MS = 3000;
     const restoreEntryFocus = (entry, playerRoot) => {
-        status.exit = { entry: describe(entry), active: describe(document.activeElement), restored: false, attempts: 0 };
+        status.exit = { entry: describe(entry), active: describe(document.activeElement), restored: false, attempts: 0, blurred: false };
+        // The focus is on the bar of a Player that is leaving (the guard keeps its node, hidden, in the
+        // routes for a while): the page below takes it for another route's focus and does not restore
+        // its own (F4.1c). Without it, the page restores as upstream, where the focus is on <body> by then
+        // (the route below went display: none when the Player opened).
+        const leaving = document.activeElement;
+        if (leaving && playerRoot !== null && playerRoot.contains(leaving) && typeof leaving.blur === 'function') {
+            leaving.blur();
+            status.exit.blurred = true;
+        }
         const started = Date.now();
         const isLost = () => {
             const active = document.activeElement;
@@ -400,7 +409,10 @@ const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => fa
                 (playerRoot !== null && playerRoot.contains(active));
         };
         const attempt = () => {
-            if (!entry || !document.body.contains(entry) || !isLost()) return;
+            if (!entry || !document.body.contains(entry) || !isLost()) {
+                status.exit.stopped = !entry ? 'no entry' : !document.body.contains(entry) ? 'entry gone' : 'focus elsewhere: ' + describe(document.activeElement);
+                return;
+            }
             status.exit.attempts++;
             entry.focus();
             if (document.activeElement === entry) {
@@ -413,6 +425,7 @@ const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => fa
                 return;
             }
             if (Date.now() - started < ENTRY_FOCUS_TIMEOUT_MS) window.setTimeout(attempt, ENTRY_FOCUS_RETRY_MS);
+            else status.exit.stopped = 'timeout';
         };
         attempt();
     };

@@ -421,13 +421,27 @@ describe('leaving the Player', () => {
             if (focusable) nativeFocus.call(this);
         };
         remove();
-        expect(document.activeElement).toBe($('play'));
+        expect(document.activeElement).toBe(document.body);
         jest.advanceTimersByTime(500);
-        expect(document.activeElement).toBe($('play'));
+        expect(document.activeElement).toBe(document.body);
         focusable = true;
         jest.advanceTimersByTime(100);
         expect(document.activeElement).toBe(stream);
         expect(created.status.exit.restored).toBe(true);
+    });
+
+    it('with nothing to give the focus back to, takes it off the leaving Player (the page below restores its own, F4.1c)', () => {
+        render({ hidden: true });
+        document.activeElement.blur();
+        const created = createPlayerRemote({ window, getBar: () => $('bar'), getProps: () => ({ paused: false, onPauseRequested: () => {} }), isOverlayOpen: () => false });
+        const remove = created.install();
+        press(KEYS.OK);
+        expect(document.activeElement).toBe($('play'));
+        // The guard keeps the Player node in the page, hidden.
+        remove();
+        expect(document.activeElement).toBe(document.body);
+        expect(created.status.exit.blurred).toBe(true);
+        expect(created.status.exit.stopped).toBe('no entry');
     });
 
     it('leaves the focus alone when it is already somewhere else, or when the element is gone', () => {
