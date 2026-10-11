@@ -50,11 +50,12 @@ const guest = (command) => {
     try {
         return run('ssh', [...SSH, command], { timeout: 20000 });
     } catch (error) {
-        return `ssh failed: ${String(error.stdout || error.message).slice(0, 300)}`;
+        // A grep that finds nothing ends with 1: its output is still the answer.
+        return error.stdout ? String(error.stdout) : `ssh failed: ${error.message.slice(0, 300)}`;
     }
 };
 const GUEST_MEMORY = 'grep MemAvailable /proc/meminfo; for s in /proc/[0-9]*/status; do n=$(sed -n "s/^Name:\\t//p" $s 2>/dev/null); case "$n" in WebAppMgr*|*render*|*starfish*) echo "$n $(sed -n "s/^VmRSS:\\t*//p" $s)";; esac; done';
-const SYSTEM_LOG = 'dmesg 2>/dev/null | grep -i -E "oom|kill|segfault" | tail -n 20; for f in /var/log/messages /tmp/var/log/messages; do [ -f $f ] && grep -i -E "oom|kill|crash|renderer|WebAppMgr.*(reload|exit|died)|sigsegv" $f | tail -n 40; done';
+const SYSTEM_LOG = 'dmesg 2>/dev/null | grep -i -E "oom|kill|segfault|out of memory" | tail -n 30; for f in /var/log/messages /tmp/var/log/messages; do [ -f $f ] && grep -i -E "oom|kill|crash|renderer|WebAppMgr.*(reload|exit|died)|sigsegv" $f | tail -n 40; done';
 
 // ----- CDP session -----
 let session = null;
@@ -154,6 +155,7 @@ const vmScreenshot = (name) => {
     }
 };
 
+const BOOT_SETTLE_UPTIME_S = Number(process.env.BOOT_SETTLE_UPTIME_S || 100);
 const steps = [];
 const record = (name, data) => {
     steps.push({ name, time: new Date().toISOString(), ...data });
@@ -227,8 +229,13 @@ const PAGE_HELPERS = `
         var title = element.getAttribute && element.getAttribute('title');
         return element.tagName.toLowerCase() + '.' + String(element.className).trim().split(/\\s+/).slice(0, 2).join('.') + (title ? ' [' + title + ']' : '');
     };
+    // The last <video>: during a switch the previous one may still be in the page (F5.6).
+    window.__f57.video = function () {
+        var videos = document.querySelectorAll('video');
+        return videos.length ? videos[videos.length - 1] : null;
+    };
     window.__f57.state = function () {
-        var video = document.querySelector('video');
+        var video = window.__f57.video();
         var container = document.querySelector(sel('player-container'));
         var bar = container && container.querySelector(sel('control-bar-container'));
         var seek = bar && bar.querySelector(sel('seek-bar-container'));
@@ -240,6 +247,8 @@ const PAGE_HELPERS = `
             d: video ? Math.round(video.duration * 10) / 10 : null,
             paused: video ? video.paused : null,
             readyState: video ? video.readyState : null,
+            src: video ? String(video.currentSrc || video.src).split('/').pop() : null,
+            videos: document.querySelectorAll('video').length,
             rate: video ? video.playbackRate : null,
             hidden: container ? /(^|\\s)overlayHidden-/.test(container.className) : null,
             focused: describe(document.activeElement),
@@ -290,6 +299,16 @@ const boot = async () => {
     run('webos/scripts/ares.sh', ['launch'], { env });
     await waitFor('return document.hasFocus();', 15000);
     await evaluate(PAGE_HELPERS);
+    // The memory peak of the boot is when the OOM killer of the 1 GB VM takes the page (F5.6, player
+    // README): the media starts after it.
+    let uptime = 0;
+    for (let i = 0; i < 40; i++) {
+        uptime = parseFloat(guest('cut -d" " -f1 /proc/uptime')) || 0;
+        if (uptime >= BOOT_SETTLE_UPTIME_S) break;
+        await sleep(3000);
+    }
+    record('boot-settled', { note: `guest uptime ${uptime} s; ${guest(GUEST_MEMORY).replace(/\n/g, ' | ')}` });
+    await state();
 };
 
 // Opens episode N of the test series in the Player, as the streams list would (navigate PUSH with a
@@ -309,8 +328,10 @@ const openEpisode = async (manifestUrl, addonPort, episode) => {
     return hash;
 };
 
-const waitPlaying = async (label, timeoutMs = 120000) => {
-    const elapsed = await waitFor('var v = document.querySelector("video"); return !!v && v.readyState >= 3 && v.currentTime > 0.5 && !v.paused;', timeoutMs, 1000);
+// `file`: the <video> playing must be that one (episode 2 after a switch).
+const waitPlaying = async (label, timeoutMs = 120000, file = null) => {
+    const elapsed = await waitFor(`var vs = document.querySelectorAll('video'); var v = vs[vs.length - 1];
+        return !!v && v.readyState >= 3 && v.currentTime > 0.5 && !v.paused${file ? ` && String(v.currentSrc || v.src).indexOf(${JSON.stringify(file)}) !== -1` : ''};`, timeoutMs, 1000);
     const now = await state();
     record(label, { ok: elapsed !== null, note: elapsed !== null ? `playing after ${elapsed} ms, t=${now.t}/${now.d}` : `did not play (readyState ${now.readyState}, t=${now.t})`, state: now, vm: vmScreenshot(label) });
     return elapsed !== null;
@@ -435,7 +456,7 @@ const toPopup = async ({ manifestUrl, addonPort }) => {
     await openEpisode(manifestUrl, addonPort, 1);
     if (!await waitPlaying('N00-playing')) return false;
     // 40 s before the end: the popup comes 35 s before it (nextVideoNotificationDuration).
-    await evaluate('var v = document.querySelector("video"); v.currentTime = v.duration - 40; return true;');
+    await evaluate('var v = window.__f57.video(); v.currentTime = v.duration - 40; return true;');
     const shown = await waitFor('return !!window.__f57 && window.__f57.state().popup === true;', 20000, 500);
     await sleep(1500);
     const now = await state();
@@ -454,28 +475,29 @@ const next = async (servers) => {
     const nextButton = await press('N08-right-next-button', 'RIGHT', (b, a) => ({ 'next video button': /\[.+\]/.test(a.focused) }), { shot: true });
     await press('N09-ok-next-episode', 'OK', (b, a) => ({ 'episode 2 route': a.hash.indexOf(encodeURIComponent('tt9100001:1:2')) !== -1 }), { settle: 3000 });
     record('N09b-next-button-title', { note: nextButton.focused });
-    await waitPlaying('N10-episode-2-playing', 60000);
+    await waitPlaying('N10-episode-2-playing', 90000, 'ep2_90s.mp4');
     await press('N11-stop-leaves', 'STOP', (b, a) => ({ 'left the Player': a.hash.indexOf('#/player/') !== 0, 'by the route layer': a.lastBack && a.lastBack.consumedBy === 'route' }), { settle: 2500, shot: true });
 };
 
 const watch = async (servers) => {
     if (!await toPopup(servers)) return;
     await press('W02-ok-watch', 'OK', (b, a) => ({ 'episode 2 route': a.hash.indexOf(encodeURIComponent('tt9100001:1:2')) !== -1 }), { settle: 3000 });
-    await waitPlaying('W03-episode-2-playing', 60000);
+    await waitPlaying('W03-episode-2-playing', 90000, 'ep2_90s.mp4');
 };
 
 const coreState = (field) => evaluate(`return Promise.resolve(window.core.getState(${JSON.stringify(field)})).then(function (s) { return JSON.parse(JSON.stringify(s)); });`);
 const continueWatching = async () => {
     const preview = await coreState('continue_watching_preview');
     const items = preview && preview.items ? preview.items : [];
-    const item = items.filter((entry) => entry.id === 'tt9100001')[0];
-    return item ? { id: item.id, videoId: item.state && item.state.video_id, timeOffset: item.state && item.state.timeOffset, duration: item.state && item.state.duration } : null;
+    // The item is the library item flattened: its id is serialized as `_id`.
+    const item = items.filter((entry) => (entry._id || entry.id) === 'tt9100001')[0];
+    return item ? { id: item._id || item.id, videoId: item.state && item.state.video_id, timeOffset: item.state && item.state.timeOffset, duration: item.state && item.state.duration } : null;
 };
 
 const resumeSave = async ({ manifestUrl, addonPort }) => {
     await openEpisode(manifestUrl, addonPort, 1);
     if (!await waitPlaying('R00-playing')) return;
-    await evaluate('document.querySelector("video").currentTime = 200; return true;');
+    await evaluate('window.__f57.video().currentTime = 200; return true;');
     await sleep(8000);
     const player = await coreState('player');
     record('R01-core-position', { ok: !!player.libraryItem && player.libraryItem.state.timeOffset > 190000, note: `libraryItem.state.timeOffset ${player.libraryItem && player.libraryItem.state.timeOffset}`, t: (await state()).t });
@@ -519,7 +541,7 @@ const popupProbe = async ({ manifestUrl, addonPort }) => {
     if (!await waitPlaying('P00-playing')) return;
     record('P01-guest-memory', { note: guest(GUEST_MEMORY) });
     const lead = Number(process.env.POPUP_PROBE_LEAD || 40);
-    await evaluate(`var v = document.querySelector("video"); v.currentTime = v.duration - ${lead}; return true;`);
+    await evaluate(`var v = window.__f57.video(); v.currentTime = v.duration - ${lead}; return true;`);
     const samples = [];
     for (let i = 0; i < 40; i++) {
         await sleep(1000);
