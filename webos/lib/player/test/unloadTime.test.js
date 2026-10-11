@@ -21,10 +21,13 @@ jest.mock('../../../../src/routes/Player/useVideo.js', () => {
         const [state, setState] = MockReact.useState({ stream: null, time: null, duration: null, playbackSpeed: 1 });
         // A stable ref, like the upstream hook's.
         const containerRef = MockReact.useRef(null);
+        // Stable like the upstream emitter (F3.7b wraps it to mask tokens in errors).
+        const events = MockReact.useRef({ on: () => {}, off: () => {}, emit: () => {} }).current;
         controls.setState = setState;
         return {
             state,
             containerRef,
+            events,
             load: controls.load,
             unload: controls.unload,
             addExtraSubtitlesTracks: () => {},
