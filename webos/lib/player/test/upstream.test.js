@@ -111,7 +111,7 @@ describe('upstream details the F5.6 pipeline guard depends on', () => {
 
     it('the webOS WebOsVideo is the guarded one, under the tracks decorator', () => {
         const composed = fs.readFileSync(path.join(ROOT, 'webos', 'lib', 'tracks', 'WebOsVideo.js'), 'utf8');
-        expect(composed).toMatch(/pipelineGuardEnabled\(storage\) \? withPipelineGuard\(WebOsVideo, /);
+        expect(composed).toMatch(/settings\.enabled \?\s*withPipelineGuard\(WebOsVideo, \{ log: console, dropExtraLoad: settings\.dropExtraLoad, watchdog: settings\.watchdog \}\)/);
         expect(composed).toMatch(/withC8Tracks\(Video, /);
     });
 });

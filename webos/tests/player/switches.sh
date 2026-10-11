@@ -99,6 +99,10 @@ if [[ "$GUARD" == off ]]; then
 fi
 cdp_eval "JSON.stringify({ guard: localStorage.getItem('webos.pipelineGuard'), webos: window.__webos || null })" > "$OUT/app-state.json"
 cdp_eval "$(cat "$ROOT/webos/tests/player/switches-page.js")" > /dev/null
+# The memory peak of the boot (WebAppMgr at 470-550 MB) is when the 1 GB VM kills the page (OOM): the
+# first load waits for it to pass (F5.6 review), which leaves fewer inconclusive runs.
+log "waiting ${BOOT_SETTLE_S:-90} s for the boot memory peak to pass"
+sleep "${BOOT_SETTLE_S:-90}"
 
 encode() { # <file> -> encoded stream for #/player/
     cdp_eval "window.core.encodeStream({ name: 'F5.6', description: '$1', url: 'http://10.0.2.2:$PORT/redirect/$1' })"

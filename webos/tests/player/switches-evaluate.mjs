@@ -108,8 +108,12 @@ const reloads = fs.existsSync(path.join(dir, 'reloads.jsonl')) ? read('reloads.j
 check('the page never reloaded during the test', reloads.length === 0, reloads);
 
 const ok = checks.every((c) => c.ok);
-// A failure with the emulator broken (wedged pipeline, uMediaServer down, page reloaded) says nothing about the app.
-const emulatorBroken = umsDownFrom !== null || oomFrom !== null || perLoad.some((load) => load.wedged) || reloads.length > 0;
+// "inconclusive (emulator)" only when the emulator broke first: an OOM kill, the uMediaServer down or
+// a page reload at or before the first load that failed. A wedged pipeline by itself is not one: with
+// the guard on and none of those, it is the app's failure (and, with the guard off, the very bug).
+const firstFailure = perLoad.filter((load) => !load.played || load.wedged).map((load) => load.i)[0];
+const firstBreak = [umsDownFrom, oomFrom].concat(reloads).filter((i) => i !== null && i !== undefined).sort((a, b) => a - b)[0];
+const emulatorBroken = !ok && firstBreak !== undefined && (firstFailure === undefined || firstBreak <= firstFailure);
 const verdict = ok ? 'pass' : emulatorBroken ? 'inconclusive (emulator)' : 'fail';
 console.log(JSON.stringify({ ok, verdict, guard, loads: perLoad, order, checks }, null, 2));
 process.exit(ok ? 0 : 1);

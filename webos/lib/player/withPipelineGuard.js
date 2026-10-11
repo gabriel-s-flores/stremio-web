@@ -26,13 +26,16 @@
 //    pipeline that is starting and creates another one (a second GET to the stream). load() while
 //    the element has a `src` is that call only (WebOsVideo's unload removes the `src` before its
 //    load()), so it is dropped.
-// 3. Start watchdog. No `loadedmetadata` START_TIMEOUT_MS after a load: one controlled reload of the
-//    same stream (quiet release, `src` set again; WebOsVideo keeps the stream and the start time),
-//    and after START_RETRIES of them a critical STREAM_FAILED_TO_LOAD error, which the Player shows
-//    like any other stream error. A pipeline already wedged in the emulator does not recover (the
-//    state outlives the app); the reload is for a start that hangs once, which only the TV can show.
-// The localStorage key `webos.pipelineGuard` = "off" leaves WebOsVideo as it is (A/B in the emulator,
-// and a way out if the TV disagrees in Phase 8); read once, when the app starts.
+// 3. Start watchdog. A load that shows no sign of life for START_TIMEOUT_MS (no loadstart, progress
+//    or durationchange, and no loadedmetadata) becomes a critical STREAM_FAILED_TO_LOAD error, which
+//    the Player shows like any other stream error (the F6.3 error layer adds the link diagnosis).
+//    Every sign of progress restarts the time, the time stops while the app is hidden, and nothing is
+//    aborted before the error: a slow link (a debrid resolve answering the 302 late) keeps its request.
+//    A wedged pipeline in the emulator does not recover anyway (the state outlives the app).
+// localStorage keys (read once, when the app starts; A/B in the emulator and a way out in Phase 8):
+//   webos.pipelineGuard = "off"            WebOsVideo as it is (all of the above off)
+//   webos.pipelineGuard.extraLoad = "keep" keep WebOsVideo's second load() (2 above)
+//   webos.pipelineGuard.watchdog = "off"   no start watchdog (3 above)
 
 const ERROR = require('@stremio/stremio-video/src/error');
 
@@ -40,10 +43,14 @@ const RELEASE_SETTLE_MS = 1000;
 const LOAD_GAP_MS = 0;
 // WebOsVideo's selectTrack delay (500 ms) and a margin.
 const SUBTITLE_SELECT_SETTLE_MS = 600;
-const START_TIMEOUT_MS = 20000;
-const START_RETRIES = 1;
+// Without any sign of progress for this long, a load is a failed one.
+const START_TIMEOUT_MS = 60000;
+// The element events that show a load is alive.
+const PROGRESS_EVENTS = ['loadstart', 'progress', 'durationchange'];
 
 const GUARD_KEY = 'webos.pipelineGuard';
+const EXTRA_LOAD_KEY = 'webos.pipelineGuard.extraLoad';
+const WATCHDOG_KEY = 'webos.pipelineGuard.watchdog';
 
 // A load waiting for another video's release checks again this often.
 const WAIT_STEP_MS = 50;
@@ -98,8 +105,9 @@ const holdVideosInPlace = (containerElement, deps) => {
 const PIPELINE_COMMANDS = ['load', 'unload', 'destroy'];
 const UNLOAD = Object.freeze({ type: 'command', commandName: 'unload' });
 
-// deps (all optional): log (console-like), now, setTimeout, clearTimeout, shared (state shared by the guarded videos),
-// releaseSettleMs, loadGapMs, startTimeoutMs, startRetries.
+// deps (all optional): log (console-like), now, setTimeout, clearTimeout, document (visibility),
+// shared (state shared by the guarded videos), releaseSettleMs, loadGapMs, startTimeoutMs,
+// dropExtraLoad (default true), watchdog (default true).
 const withPipelineGuard = (Video, deps) => {
     deps = deps || {};
     const log = deps.log || null;
@@ -110,7 +118,9 @@ const withPipelineGuard = (Video, deps) => {
     const releaseSettleMs = option('releaseSettleMs', RELEASE_SETTLE_MS);
     const loadGapMs = option('loadGapMs', LOAD_GAP_MS);
     const startTimeoutMs = option('startTimeoutMs', START_TIMEOUT_MS);
-    const startRetries = option('startRetries', START_RETRIES);
+    const dropExtraLoad = deps.dropExtraLoad !== false;
+    const useWatchdog = deps.watchdog !== false;
+    const doc = deps.document || (typeof document !== 'undefined' ? document : null);
     // Every guarded video of the page: releases in progress, when they are due, and when the last
     // pipeline was released.
     const shared = deps.shared || { releasing: 0, releasingUntil: -Infinity, releasedAt: -Infinity };
@@ -141,7 +151,8 @@ const withPipelineGuard = (Video, deps) => {
         let subtitlesSelectedAt = -Infinity;
         let stream = null;
         let loadedAt = 0;
-        let retries = 0;
+        // Between a load and its loadedmetadata.
+        let starting = false;
         let watchdog = null;
         let droppedLoads = 0;
 
@@ -157,25 +168,20 @@ const withPipelineGuard = (Video, deps) => {
         if (videoElement) {
             guardedElements.set(videoElement, options.containerElement);
             videoElement.load = function() {
-                if (this.hasAttribute('src')) {
+                if (dropExtraLoad && this.hasAttribute('src')) {
                     droppedLoads++;
                     return;
                 }
                 return nativeLoad.apply(this, arguments);
             };
         }
-        const play = () => {
-            const playing = videoElement.play();
-            // Chromium 53 returns a promise, rejected when the load is replaced in turn.
-            if (playing && typeof playing.catch === 'function') playing.catch(() => { /* superseded */ });
-        };
-
         const clearWatchdog = () => {
             if (watchdog !== null) cancel(watchdog);
             watchdog = null;
         };
         const armWatchdog = () => {
             clearWatchdog();
+            if (!useWatchdog || !starting || (doc && doc.hidden)) return;
             watchdog = schedule(onStartTimeout, startTimeoutMs);
         };
 
@@ -207,45 +213,32 @@ const withPipelineGuard = (Video, deps) => {
 
         function onStartTimeout() {
             watchdog = null;
-            if (innerDestroyed || stream === null || videoElement === null) return;
-            const seconds = Math.round((now() - loadedAt) / 1000);
-            if (retries >= startRetries) {
-                warn('no loadedmetadata ' + seconds + ' s after the load, after ' + retries + ' reload(s): stream failed to load');
-                const failed = stream;
-                stream = null;
-                const error = Object.assign({}, ERROR.STREAM_FAILED_TO_LOAD, { critical: true, stream: failed });
-                errorListeners.slice().forEach((listener) => listener(error));
-                if (!destroyed) dispatch(UNLOAD);
-                return;
-            }
-            retries++;
-            warn('no loadedmetadata ' + seconds + ' s after the load (readyState ' + videoElement.readyState + ', networkState ' +
-                videoElement.networkState + '): reloading the stream (' + retries + '/' + startRetries + ')');
-            const retried = stream;
-            const reload = () => {
-                if (innerDestroyed || stream !== retried) return;
-                videoElement.removeAttribute('src');
-                nativeLoad.call(videoElement);
-                shared.releasedAt = now();
-                const start = () => {
-                    if (innerDestroyed || stream !== retried) return;
-                    videoElement.src = retried.url;
-                    play();
-                    armWatchdog();
-                };
-                if (loadGapMs > 0) schedule(start, loadGapMs);
-                else start();
-            };
-            const delay = settle();
-            if (delay > 0) schedule(reload, delay);
-            else reload();
+            if (innerDestroyed || stream === null || videoElement === null || !starting) return;
+            warn('no sign of the load for ' + Math.round(startTimeoutMs / 1000) + ' s (readyState ' + videoElement.readyState +
+                ', networkState ' + videoElement.networkState + ', ' + Math.round((now() - loadedAt) / 1000) +
+                ' s after the load): stream failed to load');
+            const failed = stream;
+            stream = null;
+            starting = false;
+            const error = Object.assign({}, ERROR.STREAM_FAILED_TO_LOAD, { critical: true, stream: failed });
+            errorListeners.slice().forEach((listener) => listener(error));
+            if (!destroyed) dispatch(UNLOAD);
         }
 
         const onStarted = () => {
-            if (stream === null || watchdog === null) return;
+            if (stream === null || !starting) return;
+            starting = false;
             clearWatchdog();
-            info('loadedmetadata ' + (now() - loadedAt) + ' ms after the load' +
-                (retries ? ', after ' + retries + ' reload(s)' : '') + '; repeated load() calls dropped: ' + droppedLoads);
+            info('loadedmetadata ' + (now() - loadedAt) + ' ms after the load; repeated load() calls dropped: ' + droppedLoads);
+        };
+        // A sign of life: the time starts again.
+        const onProgress = () => {
+            if (starting && watchdog !== null) armWatchdog();
+        };
+        const onVisibility = () => {
+            if (!starting) return;
+            if (doc.hidden) clearWatchdog();
+            else armWatchdog();
         };
         const onQuiet = () => {
             if (quietSince === null) quietSince = now();
@@ -254,6 +247,7 @@ const withPipelineGuard = (Video, deps) => {
             quietSince = null;
         };
         const onElementError = () => {
+            starting = false;
             clearWatchdog();
         };
         const ELEMENT_LISTENERS = [
@@ -263,10 +257,11 @@ const withPipelineGuard = (Video, deps) => {
             ['play', onPlay],
             ['playing', onPlay],
             ['error', onElementError],
-        ];
+        ].concat(PROGRESS_EVENTS.map((eventName) => [eventName, onProgress]));
         if (videoElement) {
             ELEMENT_LISTENERS.forEach(([eventName, listener]) => videoElement.addEventListener(eventName, listener));
         }
+        if (doc && useWatchdog) doc.addEventListener('visibilitychange', onVisibility);
 
         // quiet: the pipeline was already paused long enough (or this is the release itself).
         function run(action, quiet) {
@@ -274,6 +269,7 @@ const withPipelineGuard = (Video, deps) => {
             if (PIPELINE_COMMANDS.indexOf(command) !== -1) {
                 clearWatchdog();
                 stream = null;
+                starting = false;
                 if (hasPipeline() && !quiet) {
                     const delay = settle();
                     if (delay > 0) {
@@ -310,6 +306,7 @@ const withPipelineGuard = (Video, deps) => {
                 if (videoElement) {
                     ELEMENT_LISTENERS.forEach(([eventName, listener]) => videoElement.removeEventListener(eventName, listener));
                 }
+                if (doc && useWatchdog) doc.removeEventListener('visibilitychange', onVisibility);
             }
             if (action && action.type === 'setProp' && action.propName === 'selectedSubtitlesTrackId') subtitlesSelectedAt = now();
             video.dispatch(action);
@@ -321,7 +318,7 @@ const withPipelineGuard = (Video, deps) => {
             if (args && args.stream && typeof args.stream.url === 'string' && hasPipeline()) {
                 stream = args.stream;
                 loadedAt = now();
-                retries = 0;
+                starting = true;
                 droppedLoads = 0;
                 quietSince = null;
                 armWatchdog();
@@ -355,13 +352,31 @@ const withPipelineGuard = (Video, deps) => {
     return VideoWithPipelineGuard;
 };
 
-// storage: localStorage-like, or null.
-const pipelineGuardEnabled = (storage) => {
+const readKey = (storage, key) => {
     try {
-        return !storage || storage.getItem(GUARD_KEY) !== 'off';
+        return storage ? storage.getItem(key) : null;
     } catch (_error) {
-        return true;
+        return null;
     }
 };
 
-module.exports = { withPipelineGuard, holdVideosInPlace, LEAVE_DELAY_MS, pipelineGuardEnabled, GUARD_KEY, SUBTITLE_SELECT_SETTLE_MS, RELEASE_SETTLE_MS, LOAD_GAP_MS, START_TIMEOUT_MS, START_RETRIES };
+// What the localStorage keys turn on. storage: localStorage-like, or null.
+const readGuardSettings = (storage) => ({
+    enabled: readKey(storage, GUARD_KEY) !== 'off',
+    dropExtraLoad: readKey(storage, EXTRA_LOAD_KEY) !== 'keep',
+    watchdog: readKey(storage, WATCHDOG_KEY) !== 'off',
+});
+
+module.exports = {
+    withPipelineGuard,
+    holdVideosInPlace,
+    readGuardSettings,
+    GUARD_KEY,
+    EXTRA_LOAD_KEY,
+    WATCHDOG_KEY,
+    LEAVE_DELAY_MS,
+    SUBTITLE_SELECT_SETTLE_MS,
+    RELEASE_SETTLE_MS,
+    LOAD_GAP_MS,
+    START_TIMEOUT_MS,
+};
