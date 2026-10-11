@@ -71,18 +71,15 @@ No emulador, dentro de uma reserva do pool:
   teclado em vez de enviar; o Enter do teclado envia e o fecha mantendo o foco no campo. O que se mediu no
   emulador e pode diferir da TV está no README da pasta. `webos/polyfills/clipboard.js`: `navigator.clipboard`
   para as ações de copiar não lançarem no Chromium 53.
-- `webos/lib/navigation/` (F4.1a: `f4.1a.js`, `f4.1a-screen.js`, `board.js`, `discover.js`, `search.js`):
-  navegação pelo controle no Board, no Discover e na Busca, ligada pelos `index.webos.js` das rotas.
-  Foco inicial no primeiro item, foco restaurado no item de onde se saiu quando o Back traz a tela de
-  volta, foco recuperado quando o elemento some, linhas do Board/Busca como faixas horizontais com os
-  10 itens (`webos/styles/strips.less`) e grade do Discover rolando com o foco; o resto das setas
-  segue no `spatial-navigation-polyfill`. Testes: `webos/tests/navigation/f4.1a.test.js`,
-  `f4.1a-screen.test.js` (o wrapper React) e, no emulador, `webos/tests/navigation/emulator/f4.1a.mjs`
-  (dentro do `emu-run`).
-- `webos/lib/navigation/f4.1b.js`: navegação por controle remoto de Library, Calendar, Addons e Settings
-  e da barra lateral em todas as telas (F4.1b), sobre o `spatial-navigation-polyfill`: foco inicial e
-  restauração ao voltar, foco nunca perdido, listas que rolam com o foco (uma fileira por tecla) e
-  RIGHT da barra lateral de volta ao item de onde se saiu. A barra e o botão do perfil ficam focáveis
-  (`NavTabButton.webos.js`, `NavMenu.webos.js`), os toggles de Settings também (`Option.webos.tsx`) e o
-  "Interface zoom" fica em 100/125 % com os botões de porcentagem (`Scale.webos.tsx`). Testes:
-  `webos/tests/navigation/f4.1b.test.js` e, no emulador, `webos/tests/navigation/f4.1b/run.mjs`.
+- `webos/lib/navigation/`: navegação pelo controle remoto (F4.1a, F4.1b, F4.1c e F4.3, consolidadas na F4.4
+  num núcleo comum, `core/`; veja o README da pasta). Cada tela recebe o mesmo motor de foco pelo seu
+  `index.webos.*` (`withScreenNavigation.js`): foco inicial no primeiro item, foco restaurado no item de onde
+  se saiu quando o Back traz a tela de volta (nunca na barra lateral), foco recuperado quando o elemento some
+  e as setas que a tela conhece melhor: faixas do Board/Busca (`board.js`, `search.js`, com
+  `webos/styles/strips.less`), grade do Discover (`discover.js`), listas roláveis de Library, Calendar, Addons
+  e Settings (`screens.js`); Detalhes (`metadetails.js`, F4.1c), overlays (`modals.js`), menus de contexto
+  (`contextMenu.js`) e a barra lateral (`sideBar.js`) completam. O resto das setas segue no
+  `spatial-navigation-polyfill`. Um só `keydown` e um só `focusin` de captura (`core/input.js`). A barra e o
+  botão do perfil ficam focáveis (`NavTabButton.webos.js`, `NavMenu.webos.js`), os toggles de Settings também
+  (`Option.webos.tsx`) e o "Interface zoom" fica em 100/125 % (`Scale.webos.tsx`). Testes:
+  `webos/tests/navigation/` e, no emulador, os roteiros listados no README da pasta.

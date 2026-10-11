@@ -16,8 +16,8 @@
 // - Initial focus and restoration. Opening the page focuses the selected episode (or the first
 //   one), or, for a streams list, the list panel itself: a stream item with the focus freezes the
 //   order of the C8 ranking (F6.2), whose probes may still reorder the top of the list until the
-//   first key. From the panel, DOWN, RIGHT or OK enters the first stream, UP the list header and
-//   LEFT the column. Coming back to the page (Back from a route above, the Player closing, the
+//   first key. From the panel, DOWN, RIGHT or OK enters the first stream, UP the list header (the
+//   addon filter; with one addon there is none and the focus stays) and LEFT the column. Coming back to the page (Back from a route above, the Player closing, the
 //   streams list going back to the episodes) focuses the element focused there last, waiting while
 //   its section is still loading (RESTORE_GUARD). Never while the Magic Remote pointer is in use
 //   (F4.2). An OK while the page opens is kept from the poster of the Board, which still has the
@@ -26,8 +26,15 @@
 //   element, so it could not be reached: it gets a tabindex while the column overflows, and the
 //   arrows scroll the column while it has the focus.
 // - OK on the library/watched toggles and ratings (ActionsGroup: a div with only onClick).
+// The generic parts (focusable elements, scrolling with a margin, finding an element again after a
+// remount, the keys, the focus events and the input mode) are the navigation core's (./core).
 
 'use strict';
+
+const { focusablesIn, firstFocusable, isFocusable } = require('./core/dom');
+const { createKeyedMemory, locate, resolve } = require('./core/memory');
+const { keepInView: keepInViewUpTo, offsetInto } = require('./core/scroll');
+const { PRIORITY, getInputHub } = require('./core/input');
 
 const KEYS = { 13: 'ok', 37: 'left', 38: 'up', 39: 'right', 40: 'down' };
 
@@ -42,14 +49,14 @@ const SELECTORS = {
     actions: '[class*="action-buttons-container"]',
     list: '[class*="streams-list"], [class*="videos-list"]',
     streamsList: '[class*="streams-list"]',
+    // The top of the streams list: the addon filter, and the back button of an episode's streams.
+    listHeader: '[class*="select-choices-wrapper"]',
     item: '[class*="stream-container"], [class*="video-container"]',
     selectedItem: '[class*="video-container"][class*="selected"]',
     actionsGroupItem: '[class*="group-container"] > [class*="icon-container"]',
     // Menus and popups inside a section handle their own arrows (F4.3).
     overlay: '[class*="dropdown"], [class*="menu-container"], [class*="popup-menu"], [class*="modal"]',
 };
-
-const FOCUSABLE = '[tabindex], a[href], button, input, select, textarea';
 
 // A focus to restore is waited for while its section is still loading (a placeholder): in the C8
 // profile the info column took 6.4 s to come back after Back from Discover, with the streams already
@@ -58,52 +65,16 @@ const FOCUSABLE = '[tabindex], a[href], button, input, select, textarea';
 const RESTORE_GUARD = 15000;
 const RESTORE_RETRY = 250;
 const PLACEHOLDER = '[class*="placeholder"]';
+// The info column still loading is MetaPreview.Placeholder. A loaded column may hold a placeholder
+// too: the title of a movie without a logo (MetaPreview's logo-placeholder).
+const META_PLACEHOLDER = '[class*="meta-preview-placeholder"]';
 
 // Last focused element of each page path, across mounts (Back from a route above remounts the page).
 const MEMORY_SIZE = 32;
-const memory = new Map();
-
-const remember = (key, value) => {
-    memory.delete(key);
-    memory.set(key, value);
-    if (memory.size > MEMORY_SIZE) {
-        memory.delete(memory.keys().next().value);
-    }
-};
-
-// Pointer or keys: the last input that came. The Magic Remote's cursorStateChange tells when the
-// pointer shows or hides (webos/magic-remote). Unknown (nothing yet) counts as keys.
-let lastInput = null;
-const installInputTracking = (win) => {
-    if (!win || win.__webosMetaDetailsInput) return;
-    win.__webosMetaDetailsInput = true;
-    win.addEventListener('keydown', () => { lastInput = 'keys'; }, true);
-    win.addEventListener('mousedown', (event) => { if (event.isTrusted !== false) lastInput = 'pointer'; }, true);
-    if (win.document) {
-        win.document.addEventListener('cursorStateChange', (event) => {
-            const visibility = event.detail && event.detail.visibility;
-            if (visibility === true) lastInput = 'pointer';
-            else if (visibility === false) lastInput = 'keys';
-        });
-    }
-};
-const pointerInUse = (doc) => {
-    const mode = doc.documentElement.getAttribute('data-webos-pointer');
-    return mode === 'visible' || (mode === null && lastInput === 'pointer');
-};
+const memory = createKeyedMemory(MEMORY_SIZE);
+const remember = (key, value) => memory.set(key, value);
 
 const matches = (element, selector) => !!element && element.nodeType === 1 && element.matches(selector);
-
-const isRendered = (element) => {
-    const rect = element.getBoundingClientRect();
-    return rect.width > 0 || rect.height > 0;
-};
-
-const isFocusable = (element) => element.tabIndex >= 0 && !element.disabled && isRendered(element);
-
-const focusablesIn = (root) => (root ? Array.prototype.filter.call(root.querySelectorAll(FOCUSABLE), isFocusable) : []);
-
-const firstFocusable = (root) => focusablesIn(root)[0] || null;
 
 const insideOverlay = (element, section) => {
     for (let node = element; node && node !== section; node = node.parentElement) {
@@ -112,75 +83,14 @@ const insideOverlay = (element, section) => {
     return false;
 };
 
-// The scrollable ancestors of an element, up to (not including) stop.
-const scrollParents = (element, stop, win) => {
-    const parents = [];
-    for (let node = element.parentElement; node && node !== stop; node = node.parentElement) {
-        const style = win.getComputedStyle(node);
-        const y = (style.overflowY === 'auto' || style.overflowY === 'scroll') && node.scrollHeight > node.clientHeight + 1;
-        const x = (style.overflowX === 'auto' || style.overflowX === 'scroll') && node.scrollWidth > node.clientWidth + 1;
-        if (x || y) parents.push({ node, x, y });
-    }
-    return parents;
-};
+// Keeps the element in view in each scrollable ancestor up to `stop`, with a margin so the next item
+// in each direction stays partly visible: the polyfill only moves the focus to visible elements (its
+// hitTest). See ./core/scroll.js.
+const keepInView = (element, stop) => keepInViewUpTo(element, stop);
 
-// Scroll offset that keeps [start, end] inside [min, max] with the margin, or 0.
-const offsetInto = (start, end, min, max, margin) => {
-    if (end - start > max - min - 2 * margin) {
-        return start - (min + margin);
-    }
-    if (start < min + margin) return start - (min + margin);
-    if (end > max - margin) return end - (max - margin);
-    return 0;
-};
-
-// Keeps the element in view in each scrollable ancestor (inner first), with a margin of half the
-// element, up to a quarter of the container, so the next item in each direction stays partly
-// visible: the polyfill only moves the focus to visible elements (its hitTest). Rects may be in
-// screen pixels (the F2.6 zoom, src/common/interfaceScale.webos.ts) while scrollTop is in CSS
-// pixels: the ratio of the container's rect to its offset size converts them.
-const keepInView = (element, stop, win) => {
-    scrollParents(element, stop, win).forEach(({ node, x, y }) => {
-        const box = node.getBoundingClientRect();
-        const rect = element.getBoundingClientRect();
-        if (y) {
-            const ratio = node.offsetHeight > 0 ? box.height / node.offsetHeight : 1;
-            const margin = Math.min(rect.height / 2, box.height / 4);
-            const delta = offsetInto(rect.top, rect.bottom, box.top, box.bottom, margin);
-            if (delta !== 0 && ratio > 0) node.scrollTop += delta / ratio;
-        }
-        if (x) {
-            const ratio = node.offsetWidth > 0 ? box.width / node.offsetWidth : 1;
-            const margin = Math.min(rect.width / 2, box.width / 4);
-            const delta = offsetInto(rect.left, rect.right, box.left, box.right, margin);
-            if (delta !== 0 && ratio > 0) node.scrollLeft += delta / ratio;
-        }
-    });
-};
-
-// Where an element is, to find it again after a remount: its link (streams), its title (episodes,
-// buttons) and its position among the focusable elements of its section.
-const locate = (element, section) => ({
-    href: element.getAttribute('href'),
-    title: element.getAttribute('title'),
-    text: (element.textContent || '').trim().slice(0, 80),
-    index: focusablesIn(section).indexOf(element),
-});
-
-const resolve = (locator, section) => {
-    const candidates = focusablesIn(section);
-    const byHref = locator.href ? candidates.filter((element) => element.getAttribute('href') === locator.href) : [];
-    if (byHref.length > 0) return byHref[0];
-    const byLabel = candidates.filter((element) => (
-        element.getAttribute('title') === locator.title && (element.textContent || '').trim().slice(0, 80) === locator.text
-    ));
-    if (byLabel.length > 0) return byLabel[0];
-    return locator.index >= 0 && locator.index < candidates.length ? candidates[locator.index] : null;
-};
-
-const createMetaDetailsNavigation = ({ root, window: win }) => {
+const createMetaDetailsNavigation = ({ root, window: win, hub = getInputHub(win) }) => {
     const doc = win.document;
-    installInputTracking(win);
+    const pointerInUse = () => hub.pointerInUse();
 
     let destroyed = false;
     let routeActive = true;
@@ -230,11 +140,11 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
         if (!element) return false;
         element.focus();
         if (doc.activeElement !== element) return false;
-        if (!pointerInUse(doc) && !element.hasAttribute('data-focus-visible-added')) {
+        if (!pointerInUse() && !element.hasAttribute('data-focus-visible-added')) {
             element.classList.add('focus-visible');
             element.setAttribute('data-focus-visible-added', '');
         }
-        keepInView(element, root, win);
+        keepInView(element, root);
         return true;
     };
 
@@ -301,7 +211,7 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
 
     // The section of a saved focus is still a placeholder (the column), or has no items yet (the list).
     const isLoading = (parts, section) => {
-        if (section === 'meta') return !parts.meta || matches(parts.meta, PLACEHOLDER) || parts.meta.querySelector(PLACEHOLDER) !== null;
+        if (section === 'meta') return !parts.meta || matches(parts.meta, META_PLACEHOLDER) || parts.meta.querySelector(META_PLACEHOLDER) !== null;
         if (section === 'list') return !parts.list || (listItems(parts).length === 0 && parts.list.querySelector(PLACEHOLDER) !== null);
         return false;
     };
@@ -364,8 +274,10 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
         const parts = sections();
         if (!parts) return;
         prepare(parts);
+        // Nothing moves the focus while the pointer is in use, a late restore included.
+        if (pointerInUse()) return;
         if (late !== null) restoreLate(parts);
-        if (hasFocusHere() || pointerInUse(doc)) return;
+        if (hasFocusHere()) return;
         placeFocus(parts);
     };
 
@@ -404,7 +316,7 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
         nativeScrollIntoView = native;
         win.Element.prototype.scrollIntoView = function scrollIntoView() {
             if (arguments.length === 0 && root.contains(this)) {
-                keepInView(this, root, win);
+                keepInView(this, root);
                 return undefined;
             }
             return native.apply(this, arguments);
@@ -419,7 +331,7 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
         event.preventDefault();
     };
 
-    // Before the polyfill (capture on window).
+    // Before the polyfill (the input hub: capture on window).
     const onKeyDownCapture = (event) => {
         const key = KEYS[event.keyCode];
         if (!key || destroyed || !routeActive || event.defaultPrevented) return;
@@ -454,7 +366,7 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
         if (active === parts.list) {
             let target = null;
             if (key === 'down' || key === 'right' || key === 'ok') target = listItems(parts)[0] || firstFocusable(parts.list);
-            else if (key === 'up') target = focusablesIn(parts.list).filter((element) => !matches(element, SELECTORS.item))[0] || firstFocusable(parts.navBar);
+            else if (key === 'up') target = firstFocusable(parts.list.querySelector(SELECTORS.listHeader));
             else if (key === 'left') target = metaTarget(parts);
             if (target) focus(target);
             consume(event);
@@ -549,8 +461,10 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
 
     const observer = new win.MutationObserver(schedule);
     observer.observe(root, { childList: true, subtree: true });
-    root.addEventListener('focusin', onFocusIn);
-    win.addEventListener('keydown', onKeyDownCapture, true);
+    const removeFocus = hub.onFocus((event) => {
+        if (root.contains(event.target)) onFocusIn(event);
+    });
+    const removeKey = hub.onKey(onKeyDownCapture, PRIORITY.screen);
     win.addEventListener('keydown', onKeyDown);
     win.addEventListener('navnotarget', onNavNoTarget);
 
@@ -582,8 +496,8 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
             destroyed = true;
             win.clearTimeout(tickTimer);
             observer.disconnect();
-            root.removeEventListener('focusin', onFocusIn);
-            win.removeEventListener('keydown', onKeyDownCapture, true);
+            removeFocus();
+            removeKey();
             win.removeEventListener('keydown', onKeyDown);
             win.removeEventListener('navnotarget', onNavNoTarget);
             restoreScrollIntoView();
@@ -601,5 +515,5 @@ module.exports = {
     resolve,
     offsetInto,
     _memory: memory,
-    _setLastInput: (value) => { lastInput = value; },
+    _setLastInput: (value) => getInputHub(window).setLastInput(value),
 };

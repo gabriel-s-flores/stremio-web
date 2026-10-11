@@ -12,6 +12,12 @@ let modalFocus;
 beforeAll(() => {
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, get() { return 10; } });
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get() { return 10; } });
+    Element.prototype.getClientRects = function () {
+        return [{}];
+    };
+    Element.prototype.getBoundingClientRect = function () {
+        return { top: 0, left: 0, width: 10, height: 10, right: 10, bottom: 10 };
+    };
 });
 
 beforeEach(() => {

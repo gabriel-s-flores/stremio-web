@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-// The React wrapper of the F4.1a screens (webos/lib/navigation/f4.1a-screen.js), rendered with
+// The React wrapper of the F4.1a screens (webos/lib/navigation/withScreenNavigation.js), rendered with
 // react-dom: the focus is attached to the route content, the route going under another one takes the
 // snapshot (leave) and coming back restores it, after the screen's own effects (the SearchBar
 // focuses its field whenever the route comes back).
@@ -14,7 +14,7 @@ const { act } = React;
 let mockRouteActive = true;
 jest.mock('stremio/common/useRouteFocused', () => ({ useRouteActive: () => mockRouteActive }), { virtual: true });
 
-const withScreenNavigation = require('../../lib/navigation/f4.1a-screen');
+const withScreenNavigation = require('../../lib/navigation/withScreenNavigation');
 
 global.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -22,6 +22,9 @@ beforeAll(() => {
     // jsdom has no layout: everything not under [data-hidden] is shown.
     Element.prototype.getClientRects = function () {
         return this.closest('[data-hidden]') ? [] : [{}];
+    };
+    Element.prototype.getBoundingClientRect = function () {
+        return { top: 0, left: 0, width: 10, height: 10, right: 10, bottom: 10 };
     };
 });
 

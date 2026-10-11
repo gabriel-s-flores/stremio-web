@@ -19,6 +19,8 @@
 // handlers do when they open a menu. In the Player, with nothing under the trigger that handles it,
 // the event goes to the video: its ContextMenu (stream options) opens.
 
+const { PRIORITY, getInputHub } = require('./core/input');
+
 const YELLOW_KEY = 405;
 const GREEN_KEY = 404;
 const DIAGNOSTICS_GAP_MS = 2500;
@@ -76,8 +78,9 @@ const openContextMenu = (win, target) => {
     return false;
 };
 
-// `isTrusted` is a parameter for the tests: jsdom cannot make a trusted event.
-const installContextMenuTrigger = (win, { longPressMs = LONG_PRESS_MS, now = Date.now, isTrusted = (event) => event.isTrusted, setTimeout: timeout = win.setTimeout.bind(win), clearTimeout: clear = win.clearTimeout.bind(win) } = {}) => {
+// `isTrusted` is a parameter for the tests: jsdom cannot make a trusted event. The keys come from the
+// input hub of the navigation (./core/input.js); the long press listens to the pointer itself.
+const installContextMenuTrigger = (win, { longPressMs = LONG_PRESS_MS, now = Date.now, isTrusted = (event) => event.isTrusted, hub = getInputHub(win), setTimeout: timeout = win.setTimeout.bind(win), clearTimeout: clear = win.clearTimeout.bind(win) } = {}) => {
     const doc = win.document;
     let lastGreen = -Infinity;
     let press = null;
@@ -138,7 +141,7 @@ const installContextMenuTrigger = (win, { longPressMs = LONG_PRESS_MS, now = Dat
         }
     };
 
-    win.addEventListener('keydown', onKeyDown, true);
+    const removeKey = hub.onKey(onKeyDown, PRIORITY.colorKeys);
     win.addEventListener('mousedown', onMouseDown, true);
     win.addEventListener('mousemove', onMouseMove, true);
     win.addEventListener('mouseup', cancel, true);
@@ -148,7 +151,7 @@ const installContextMenuTrigger = (win, { longPressMs = LONG_PRESS_MS, now = Dat
 
     return () => {
         cancel();
-        win.removeEventListener('keydown', onKeyDown, true);
+        removeKey();
         win.removeEventListener('mousedown', onMouseDown, true);
         win.removeEventListener('mousemove', onMouseMove, true);
         win.removeEventListener('mouseup', cancel, true);

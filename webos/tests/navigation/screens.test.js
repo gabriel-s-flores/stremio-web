@@ -1,15 +1,19 @@
 /**
  * @jest-environment jsdom
  */
-// webos/lib/navigation/f4.1b.js (F4.1b): initial focus and restoration, lost focus, lists that
-// scroll with the focus, the way back from the side navigation bar, and the upstream classes and
-// tab indexes it relies on. jsdom has no layout: every element gets the rect of its data-rect
-// attribute ("left,top,width,height", none = not rendered), and spatialNavigationSearch (from the
-// polyfill in the app) is a nearest-in-direction stand-in.
+// Library, Calendar, Addons and Settings (webos/lib/navigation/screens.js, first written as F4.1b) on
+// the screen focus of webos/lib/navigation/core: initial focus and restoration, lost focus, lists
+// that scroll with the focus, the way back from the side navigation bar (sideBar.js), and the
+// upstream classes and tab indexes it relies on. jsdom has no layout: every element gets the rect
+// of its data-rect attribute ("left,top,width,height", none = not rendered), and
+// spatialNavigationSearch (from the polyfill in the app) is a nearest-in-direction stand-in.
 
 const fs = require('fs');
 const path = require('path');
-const { createNavigation, hasLocalClass, queryLocal, screenForPath, SCREENS } = require('../../lib/navigation/f4.1b');
+const { createScreenFocus } = require('../../lib/navigation/core/screenFocus');
+const { hasLocalName, queryLocalAll } = require('../../lib/navigation/core/dom');
+const { installSideBar } = require('../../lib/navigation/sideBar');
+const { SPECS, libraryScreen, addonsScreen, settingsScreen } = require('../../lib/navigation/screens');
 
 const ROOT = path.resolve(__dirname, '..', '..', '..');
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
@@ -100,72 +104,63 @@ const LEFT = 37;
 
 const text = () => document.activeElement && document.activeElement.textContent.trim();
 
-let navigation;
-let uninstall;
-const start = (hash) => {
-    window.location.hash = hash;
-    navigation = createNavigation({ window });
-    uninstall = navigation.install();
+// The screen focus on the content of the route the screen is in (the first one by default), as its
+// index.webos.js mounts it.
+let focus = null;
+let removeSideBar = null;
+const mount = (screen, route = document.querySelector('.route-container')) => {
+    focus = createScreenFocus(route.querySelector('.route-content'), screen);
+    focus.ensureFocus();
+    return focus;
 };
+
+// The mutation observer of the screen focus runs on a microtask.
+const flush = () => Promise.resolve();
 
 beforeEach(() => {
     jest.useFakeTimers();
 });
 
 afterEach(() => {
-    if (uninstall) uninstall();
-    uninstall = null;
+    if (focus) focus.destroy();
+    focus = null;
+    if (removeSideBar) removeSideBar();
+    removeSideBar = null;
     jest.useRealTimers();
     document.body.innerHTML = '';
-    window.location.hash = '';
 });
 
 describe('local class names', () => {
     test('match the whole local part of a CSS module class', () => {
         const element = document.createElement('div');
         element.className = 'list-container-Ab1c2 item-x_-9Z';
-        expect(hasLocalClass(element, 'list-container')).toBe(true);
-        expect(hasLocalClass(element, 'list')).toBe(false);
-        expect(hasLocalClass(element, 'item')).toBe(true);
+        expect(hasLocalName(element, 'list-container')).toBe(true);
+        expect(hasLocalName(element, 'list')).toBe(false);
+        expect(hasLocalName(element, 'item')).toBe(true);
         document.body.innerHTML = '<div class="list-Ab1c2"></div><div class="list-container-Ab1c2"></div>';
-        expect(queryLocal(document.body, 'list')).toHaveLength(1);
-    });
-
-    test('the screens of this task, by the first segment of the route', () => {
-        expect(screenForPath('/library/movie').name).toBe('library');
-        expect(screenForPath('/continuewatching').name).toBe('library');
-        expect(screenForPath('/calendar/2026/10').name).toBe('calendar');
-        expect(screenForPath('/addons/movie/x/y').name).toBe('addons');
-        expect(screenForPath('/settings').name).toBe('settings');
-        expect(screenForPath('/')).toBeNull();
-        expect(screenForPath('/discover')).toBeNull();
+        expect(queryLocalAll(document.body, 'list')).toHaveLength(1);
     });
 });
 
 describe('initial focus', () => {
     test('the first item of the list, once the screen is shown', () => {
         render(libraryRoute());
-        start('#/library');
-        navigation.focusScreen();
-        jest.advanceTimersByTime(0);
+        mount(libraryScreen);
         expect(text()).toBe('item 0');
-        expect(navigation.status.last.reason).toBe('initial');
     });
 
     test('waits for the list a moment before taking the filters', () => {
         render(libraryRoute({ items: 0 }));
-        start('#/library');
-        navigation.focusScreen();
+        mount(libraryScreen);
         jest.advanceTimersByTime(1000);
         expect(document.activeElement).toBe(document.body);
         jest.advanceTimersByTime(1000);
         expect(text()).toBe('All');
     });
 
-    test('the filters taken while waiting give way to the list when it comes', () => {
+    test('the filters taken while waiting give way to the list when it comes', async () => {
         render(libraryRoute({ items: 0 }));
-        start('#/library');
-        navigation.focusScreen();
+        mount(libraryScreen);
         jest.advanceTimersByTime(1800);
         const filter = document.activeElement;
         expect(text()).toBe('All');
@@ -173,54 +168,57 @@ describe('initial focus', () => {
         document.querySelector('.library-content-Zz9_y').insertAdjacentHTML('beforeend',
             '<div class="meta-items-container-Mm3x4" data-rect="100,200,1800,800"><a class="meta-item-link-veMqr" href="#/detail/0" data-rect="120,200,250,380">item 0</a></div>');
         expect(filter.isConnected).toBe(true);
-        jest.advanceTimersByTime(600);
+        await flush();
         expect(text()).toBe('item 0');
     });
 
-    test('the fallback still gives way after a second location change (Library adding ?sort)', () => {
+    test('the fallback still gives way after a second location change (Library adding ?sort)', async () => {
         render(libraryRoute({ items: 0 }));
-        start('#/library');
-        navigation.focusScreen();
+        mount(libraryScreen);
         jest.advanceTimersByTime(1800);
         expect(text()).toBe('All');
-        window.location.hash = '#/library?sort=lastwatched';
-        navigation.focusScreen();
+        focus.onLocationChange();
         jest.advanceTimersByTime(3000);
         document.querySelector('.library-content-Zz9_y').insertAdjacentHTML('beforeend',
             '<div class="meta-items-container-Mm3x4" data-rect="100,200,1800,800"><a class="meta-item-link-veMqr" href="#/detail/0" data-rect="120,200,250,380">item 0</a></div>');
-        jest.advanceTimersByTime(600);
+        await flush();
         expect(text()).toBe('item 0');
     });
 
-    test('a list that comes later still gets the focus', () => {
+    test('a list that comes later still gets the focus', async () => {
         render(libraryRoute({ items: 0 }));
-        start('#/library');
-        navigation.focusScreen();
+        mount(libraryScreen);
         jest.advanceTimersByTime(400);
-        render(libraryRoute());
-        jest.advanceTimersByTime(400);
+        document.querySelector('.library-content-Zz9_y').insertAdjacentHTML('beforeend',
+            '<div class="meta-items-container-Mm3x4" data-rect="100,200,1800,800"><a class="meta-item-link-veMqr" href="#/detail/0" data-rect="120,200,250,380">item 0</a></div>');
+        await flush();
         expect(text()).toBe('item 0');
     });
 
-    test('a key pressed while waiting stops the search, and that key recovers the focus', () => {
+    test('a key pressed while waiting stops the search, and that key recovers the focus', async () => {
         render(libraryRoute({ items: 0 }));
-        start('#/library');
-        navigation.focusScreen();
+        mount(libraryScreen);
         const event = key(DOWN);
         expect(event.defaultPrevented).toBe(true);
         expect(text()).toBe('All');
+        // The list coming now does not take the focus from the filter the user is on.
+        document.querySelector('.library-content-Zz9_y').insertAdjacentHTML('beforeend',
+            '<div class="meta-items-container-Mm3x4" data-rect="100,200,1800,800"><a class="meta-item-link-veMqr" href="#/detail/0" data-rect="120,200,250,380">item 0</a></div>');
+        await flush();
         jest.advanceTimersByTime(10000);
         expect(text()).toBe('All');
     });
 
-    test('not on screens of other tasks', () => {
-        render(boardRoute());
-        start('#/');
-        navigation.focusScreen();
-        jest.advanceTimersByTime(10000);
-        expect(document.activeElement).toBe(document.body);
-        const event = key(DOWN);
-        expect(event.defaultPrevented).toBe(false);
+    test('the fallback gives up after the timeout', async () => {
+        render(libraryRoute({ items: 0 }));
+        mount(libraryScreen);
+        jest.advanceTimersByTime(13000);
+        expect(text()).toBe('All');
+        expect(focus.waiting).toBe(false);
+        document.querySelector('.library-content-Zz9_y').insertAdjacentHTML('beforeend',
+            '<div class="meta-items-container-Mm3x4" data-rect="100,200,1800,800"><a class="meta-item-link-veMqr" href="#/detail/0" data-rect="120,200,250,380">item 0</a></div>');
+        await flush();
+        expect(text()).toBe('All');
     });
 });
 
@@ -228,37 +226,15 @@ describe('guest placeholder', () => {
     test('Library shows only "log in" to a guest: focused at once', () => {
         render(`
             <div class="route-container" data-rect="0,0,1920,1080">
-                ${NAV_BAR}
-                <div class="placeholder-Pp1x2" data-rect="200,100,1600,900">
-                    <a class="button-GHZkA" href="#/intro?form=login" data-rect="800,850,300,100">Log in</a>
+                <div class="route-content" data-rect="0,0,1920,1080">
+                    ${NAV_BAR}
+                    <div class="placeholder-Pp1x2" data-rect="200,100,1600,900">
+                        <a class="button-GHZkA" href="#/intro?form=login" data-rect="800,850,300,100">Log in</a>
+                    </div>
                 </div>
             </div>`);
-        start('#/library');
-        navigation.focusScreen();
-        jest.advanceTimersByTime(0);
+        mount(libraryScreen);
         expect(text()).toBe('Log in');
-    });
-});
-
-describe('profile menu', () => {
-    test('OK on the profile button puts the focus on the first entry of the menu', () => {
-        render(`
-            <div class="route-container" data-rect="0,0,1920,1080">
-                <nav class="horizontal-nav-bar-container-Hh1x2" data-rect="0,0,1920,100">
-                    <div class="label-container-XOyzm nav-menu-popup-label-XmUBo" tabindex="0" data-rect="1760,10,80,80"></div>
-                </nav>
-            </div>`);
-        start('#/');
-        const label = document.querySelector('.nav-menu-popup-label-XmUBo');
-        label.focus();
-        key(13);
-        // The menu opens inside the label and the focus falls to body.
-        label.innerHTML = '<div class="nav-menu-container-Nn1x2" data-rect="1500,100,400,500"><a href="#/settings" data-rect="1500,120,400,60">Settings</a></div>';
-        label.blur();
-        expect(document.activeElement).toBe(document.body);
-        jest.advanceTimersByTime(200);
-        expect(document.activeElement).toBe(label.querySelector('a[href="#/settings"]'));
-        expect(navigation.status.last.reason).toBe('profile-menu');
     });
 });
 
@@ -267,24 +243,23 @@ describe('restoration', () => {
         render(libraryRoute(), boardRoute());
         // The Library below a newer route (display: none), as after opening a title.
         const [library] = document.querySelectorAll('.route-container');
-        start('#/library');
+        mount(libraryScreen, library);
         library.querySelectorAll('a.meta-item-link-veMqr')[4].focus();
+        focus.leave();
         library.hidden = true;
         document.activeElement.blur();
         // Back: the newer route goes away and the Library is shown again.
         document.querySelectorAll('.route-container')[1].remove();
         library.hidden = false;
-        navigation.focusScreen();
-        jest.advanceTimersByTime(0);
+        focus.restore();
         expect(text()).toBe('item 4');
-        expect(navigation.status.last.reason).toBe('restored');
     });
 
     test('a focus already in the screen is left alone', () => {
         render(libraryRoute());
-        start('#/library?sort=name');
+        mount(libraryScreen);
         document.querySelector('.button-teWrC').focus();
-        navigation.focusScreen();
+        focus.onLocationChange();
         jest.advanceTimersByTime(0);
         expect(text()).toBe('All');
     });
@@ -293,7 +268,7 @@ describe('restoration', () => {
 describe('lists', () => {
     test('DOWN goes to the item below, scrolled into the list with a margin', () => {
         render(libraryRoute());
-        start('#/library');
+        mount(libraryScreen);
         const list = document.querySelector('.meta-items-container-Mm3x4');
         Object.defineProperty(list, 'offsetHeight', { value: 800 });
         Object.defineProperty(list, 'clientHeight', { value: 800 });
@@ -309,7 +284,7 @@ describe('lists', () => {
 
     test('UP reaches the row above even when it is scrolled out of sight', () => {
         render(libraryRoute());
-        start('#/library');
+        mount(libraryScreen);
         const list = document.querySelector('.meta-items-container-Mm3x4');
         Object.defineProperty(list, 'offsetHeight', { value: 800 });
         Object.defineProperty(list, 'clientHeight', { value: 800 });
@@ -323,44 +298,70 @@ describe('lists', () => {
 
     test('at the end, DOWN stays and UP leaves the list', () => {
         render(libraryRoute({ items: 3 }));
-        start('#/library');
+        mount(libraryScreen);
         const list = document.querySelector('.meta-items-container-Mm3x4');
         Object.defineProperty(list, 'clientHeight', { value: 800 });
         Object.defineProperty(list, 'scrollHeight', { value: 800 });
         list.querySelector('a').focus();
         expect(key(DOWN).defaultPrevented).toBe(true);
         expect(text()).toBe('item 0');
-        expect(navigation.status.last.reason).toBe('list-end');
+        expect(list.scrollTop).toBe(0);
         // UP is the polyfill's (to the filters).
         expect(key(UP).defaultPrevented).toBe(false);
     });
 
     test('nothing focusable below: the list scrolls (content without controls)', () => {
         render(libraryRoute({ items: 3 }));
-        start('#/library');
+        mount(libraryScreen);
         const list = document.querySelector('.meta-items-container-Mm3x4');
         Object.defineProperty(list, 'clientHeight', { value: 800 });
         Object.defineProperty(list, 'scrollHeight', { value: 2000 });
         list.querySelector('a').focus();
         expect(key(DOWN).defaultPrevented).toBe(true);
         expect(list.scrollTop).toBe(480);
-        expect(navigation.status.last.reason).toBe('scroll');
+        expect(text()).toBe('item 0');
+        // And back up the same way.
+        expect(key(UP).defaultPrevented).toBe(true);
+        expect(list.scrollTop).toBe(0);
+    });
+
+    test('a text field keeps its arrows', () => {
+        render(libraryRoute());
+        document.querySelector('.meta-items-container-Mm3x4').insertAdjacentHTML('afterbegin', '<input id="field" data-rect="120,150,250,40">');
+        mount(libraryScreen);
+        document.getElementById('field').focus();
+        expect(key(DOWN).defaultPrevented).toBe(false);
+        expect(document.activeElement.id).toBe('field');
     });
 });
 
 describe('interface zoom', () => {
     test('after a resize the focused element is scrolled back into its list', () => {
         render(libraryRoute());
-        start('#/library');
+        mount(libraryScreen);
         const list = document.querySelector('.meta-items-container-Mm3x4');
         Object.defineProperty(list, 'offsetHeight', { value: 800 });
         list.querySelectorAll('a')[9].focus();
         // Item 9 (1400-1780) below the list (200-1000), as after a zoom change.
-        window.dispatchEvent(new Event('resize'));
-        jest.advanceTimersByTime(0);
+        focus.realign();
         const rect = document.activeElement.getBoundingClientRect();
         expect(rect.bottom).toBeLessThanOrEqual(1000 - 120);
         expect(rect.top).toBeGreaterThanOrEqual(200);
+    });
+
+    test('not while the Magic Remote pointer shows', () => {
+        render(libraryRoute());
+        mount(libraryScreen);
+        const list = document.querySelector('.meta-items-container-Mm3x4');
+        Object.defineProperty(list, 'offsetHeight', { value: 800 });
+        list.querySelectorAll('a')[9].focus();
+        document.documentElement.setAttribute('data-webos-pointer', 'visible');
+        try {
+            focus.realign();
+            expect(list.scrollTop).toBe(0);
+        } finally {
+            document.documentElement.removeAttribute('data-webos-pointer');
+        }
     });
 });
 
@@ -392,18 +393,23 @@ const settingsRoute = ({ menu = true, scrollTop = 600 } = {}) => `
 
 const startSettings = (options) => {
     render(settingsRoute(options));
-    start('#/settings');
     const list = document.querySelector('.sections-container-Ss1x2');
     Object.defineProperty(list, 'offsetHeight', { value: 940 });
     Object.defineProperty(list, 'clientHeight', { value: 940 });
     Object.defineProperty(list, 'scrollHeight', { value: 3000 });
     list.scrollTop = Number(list.getAttribute('data-scroll'));
+    mount(settingsScreen);
     return list;
 };
 
 const byText = (value) => Array.prototype.find.call(document.querySelectorAll('[tabindex], a, button'), (element) => element.textContent.trim() === value);
 
 describe('Settings, two columns', () => {
+    test('initial focus: the selected entry of the menu', () => {
+        startSettings();
+        expect(document.activeElement).toBe(byText('Interface'));
+    });
+
     test.each(['English', '100%', 'toggle'])('LEFT from "%s" goes to the menu, the list stays where it is', (from) => {
         const list = startSettings();
         byText(from).focus();
@@ -428,8 +434,16 @@ describe('Settings, two columns', () => {
         expect(document.activeElement).toBe(byText('Interface'));
         key(RIGHT);
         expect(document.activeElement).toBe(byText('toggle'));
-        expect(navigation.status.last.reason).toBe('menu-return');
         expect(list.scrollTop).toBe(600);
+    });
+
+    test('RIGHT from the menu with no row on screen any more is the spatial navigation\'s', () => {
+        const list = startSettings();
+        byText('toggle').focus();
+        key(LEFT);
+        list.scrollTop = 0;
+        expect(key(RIGHT).defaultPrevented).toBe(false);
+        expect(document.activeElement).toBe(byText('Interface'));
     });
 
     test('LEFT/RIGHT between the zoom steps of the same row', () => {
@@ -447,7 +461,6 @@ describe('Settings, two columns', () => {
         const event = key(RIGHT);
         expect(event.defaultPrevented).toBe(true);
         expect(document.activeElement).toBe(byText('125%'));
-        expect(navigation.status.last.reason).toBe('row-end');
     });
 
     test('UP and DOWN still search the whole list', () => {
@@ -456,6 +469,19 @@ describe('Settings, two columns', () => {
         key(UP);
         expect(document.activeElement).toBe(byText('Contact support'));
         expect(list.scrollTop).toBeLessThan(600);
+    });
+
+    test('an open dropdown is a list of its own for UP and DOWN; its LEFT/RIGHT are the spatial navigation\'s', () => {
+        const list = startSettings();
+        byText('English').insertAdjacentHTML('beforeend', `<div role="listbox" data-rect="1140,1520,430,400">
+            <div class="option-Oo1x2" tabindex="0" data-rect="1140,1520,430,60">Deutsch</div>
+            <div class="option-Oo1x2" tabindex="0" data-rect="1140,1590,430,60">Español</div></div>`);
+        byText('Deutsch').focus();
+        expect(key(DOWN).defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(byText('Español'));
+        // The list of the screen around it keeps the option showing too.
+        expect(list.scrollTop).toBeGreaterThan(600);
+        expect(key(LEFT).defaultPrevented).toBe(false);
     });
 });
 
@@ -480,7 +506,7 @@ const addonsRoute = (modal = false) => `
 describe('modal inside the route', () => {
     test('closing the addon details goes back to the opened addon', () => {
         render(addonsRoute(true));
-        start('#/addons');
+        mount(addonsScreen);
         // The addon was opened with OK...
         byText('WatchHub').focus();
         // ...and the modal focused its close button.
@@ -491,41 +517,51 @@ describe('modal inside the route', () => {
         expect(document.activeElement).toBe(document.body);
         // Back closes it: the modal goes away and the location changes (?addon= removed).
         document.querySelector('.modals-container').innerHTML = '';
-        navigation.focusScreen();
+        focus.onLocationChange();
         jest.advanceTimersByTime(0);
         expect(document.activeElement).toBe(byText('WatchHub'));
-        expect(navigation.status.last.reason).toBe('restored');
     });
 
     test('no screen focus while a modal is opening', () => {
         render(addonsRoute(true));
-        start('#/addons?addon=x');
-        navigation.focusScreen();
+        mount(addonsScreen);
         jest.advanceTimersByTime(1000);
         expect(document.activeElement).toBe(document.body);
     });
 });
 
 describe('a list replaced after the initial focus', () => {
-    test('the new list gets the focus (Addons: Installed to Community)', () => {
+    test('the new list gets the focus (Addons: Installed to Community)', async () => {
         render(addonsRoute());
-        start('#/addons/community');
-        navigation.focusScreen();
-        jest.advanceTimersByTime(0);
+        mount(addonsScreen);
         expect(document.activeElement).toBe(byText('Cinemeta'));
         // The remote catalog replaces the list: the focused element goes away with the focus.
         document.querySelector('.addons-list-container-Aa1x2').innerHTML =
             '<div class="addon-whmdO" tabindex="0" data-rect="230,300,1590,270">Torrentio</div>';
         expect(document.activeElement).toBe(document.body);
-        jest.advanceTimersByTime(600);
+        await flush();
         expect(document.activeElement).toBe(byText('Torrentio'));
+    });
+
+    test('not while the Magic Remote pointer is in use: nothing moves under it', async () => {
+        render(addonsRoute());
+        mount(addonsScreen);
+        document.documentElement.setAttribute('data-webos-pointer', 'visible');
+        try {
+            document.querySelector('.addons-list-container-Aa1x2').innerHTML =
+                '<div class="addon-whmdO" tabindex="0" data-rect="230,300,1590,270">Torrentio</div>';
+            await flush();
+            expect(document.activeElement).toBe(document.body);
+        } finally {
+            document.documentElement.removeAttribute('data-webos-pointer');
+        }
     });
 });
 
 describe('lost focus', () => {
     test('an arrow with the focus on body goes back to the screen', () => {
         render(libraryRoute());
-        start('#/library');
+        mount(libraryScreen);
         const items = document.querySelectorAll('a.meta-item-link-veMqr');
         items[2].focus();
         // The item is removed (a list reloaded): the focus falls to body.
@@ -534,25 +570,24 @@ describe('lost focus', () => {
         const event = key(DOWN);
         expect(event.defaultPrevented).toBe(true);
         expect(text()).toBe('item 0');
-        expect(navigation.status.last.reason).toBe('recovered');
     });
 });
 
 describe('side navigation bar', () => {
     test('RIGHT goes back to the item the bar was entered from, on any screen', () => {
         render(boardRoute());
-        start('#/');
+        mount({ initial: () => null });
+        removeSideBar = installSideBar(window);
         document.querySelector('a[href="#/detail/b"]').focus();
         document.querySelectorAll('.nav-tab-button-Ab1c2')[1].focus();
         const event = key(RIGHT);
         expect(event.defaultPrevented).toBe(true);
         expect(text()).toBe('board item');
-        expect(navigation.status.last.reason).toBe('nav-bar-return');
     });
 
     test('without a known item, RIGHT goes into the content, not to the top bar', () => {
         render(`
-            <div class="route-container" data-rect="0,0,1920,1080">
+            <div class="routes-container"><div class="route-container" data-rect="0,0,1920,1080">
                 <div class="route-content" data-rect="0,0,1920,1080">
                     <nav class="horizontal-nav-bar-container-Hh1x2" data-rect="0,0,1920,100">
                         <div class="submit-button-container-MImNa" tabindex="0" data-rect="1200,10,100,80">search</div>
@@ -560,29 +595,40 @@ describe('side navigation bar', () => {
                     ${NAV_BAR}
                     <a class="meta-item-link-veMqr" href="#/detail/b" data-rect="300,200,250,380">board item</a>
                 </div>
-            </div>`);
-        start('#/');
+            </div></div>`);
+        removeSideBar = installSideBar(window);
         document.querySelector('.nav-tab-button-Ab1c2').focus();
         const event = key(RIGHT);
         expect(event.defaultPrevented).toBe(true);
         expect(text()).toBe('board item');
-        expect(navigation.status.last.reason).toBe('nav-bar-enter');
+    });
+
+    test('LEFT and the other keys on the bar are the spatial navigation\'s; a modal over it keeps its keys', () => {
+        render(addonsRoute(true));
+        removeSideBar = installSideBar(window);
+        document.querySelector('.nav-tab-button-Ab1c2').focus();
+        expect(key(RIGHT).defaultPrevented).toBe(false);
+        document.querySelector('.modals-container').innerHTML = '';
+        expect(key(LEFT).defaultPrevented).toBe(false);
+        expect(key(DOWN).defaultPrevented).toBe(false);
+        expect(key(RIGHT).defaultPrevented).toBe(true);
     });
 
     test('the bar is not where the screen restores to', () => {
         render(libraryRoute());
-        start('#/library');
+        mount(libraryScreen);
         document.querySelectorAll('a.meta-item-link-veMqr')[1].focus();
         document.querySelector('.nav-tab-button-Ab1c2').focus();
+        expect(focus.memory.last.textContent).toBe('item 1');
         document.activeElement.blur();
-        navigation.focusScreen();
+        focus.onLocationChange();
         jest.advanceTimersByTime(0);
         expect(text()).toBe('item 1');
     });
 });
 
-// The upstream code this task relies on: if one of these changes, the selectors of f4.1b.js or the
-// reason for an override is gone.
+// The upstream code these screens rely on: if one of these changes, the selectors of screens.js or
+// the reason for an override is gone.
 describe('upstream contract', () => {
     const lessHasClass = (file, name) => new RegExp(`\\.${name}\\s*\\{`).test(read(file));
 
@@ -603,12 +649,27 @@ describe('upstream contract', () => {
         classes.forEach(([file, names]) => names.forEach((name) => {
             expect([file, name, lessHasClass(file, name)]).toEqual([file, name, true]);
         }));
-        const names = SCREENS.reduce((all, screen) => all.concat(screen.lists, ...screen.initial.filter(Array.isArray)), []);
+        const names = Object.values(SPECS).reduce((all, spec) => all.concat(spec.lists, ...spec.initial.filter(Array.isArray)), []);
         expect(names.sort()).toEqual(['addons-list-container', 'addons-list-container', 'grid', 'list', 'menu', 'meta-items-container', 'meta-items-container', 'placeholder', 'placeholder', 'sections-container', 'sections-container', 'selectable-inputs-container', 'selectable-inputs-container', 'table']);
     });
 
     test('the CSS module class format', () => {
         expect(read('webpack.config.js')).toContain("localIdentName: '[local]-[hash:base64:5]'");
+    });
+
+    test('every screen gets its navigation from its index.webos file', () => {
+        [
+            ['src/routes/Board/index.webos.js', 'boardScreen'],
+            ['src/routes/Discover/index.webos.js', 'discoverScreen'],
+            ['src/routes/Search/index.webos.js', 'searchScreen'],
+            ['src/routes/Library/index.webos.js', 'libraryScreen'],
+            ['src/routes/Addons/index.webos.js', 'addonsScreen'],
+            ['src/routes/Calendar/index.webos.ts', 'calendarScreen'],
+            ['src/routes/Settings/index.webos.ts', 'settingsScreen'],
+        ].forEach(([file, screen]) => {
+            const source = read(file);
+            expect([file, source.includes('withScreenNavigation'), source.includes(screen)]).toEqual([file, true, true]);
+        });
     });
 
     test('what the overrides change is still there upstream', () => {
@@ -621,7 +682,8 @@ describe('upstream contract', () => {
         ['General/General.tsx', 'Interface/Interface.tsx', 'Player/Player.tsx'].forEach((file) => {
             expect(read(`src/routes/Settings/${file}`)).toMatch(/tabIndex=\{-1\}/);
         });
-        // Scale.webos.tsx: tabIndex goes to the range input, the ticks are buttons.
+        // Scale.webos.tsx: tabIndex goes to the range input, the ticks are buttons. The range input
+        // stops the arrows' propagation: the lists take them in the capture phase.
         const scale = read('src/components/Scale/Scale.tsx');
         expect(scale).toMatch(/type=\{'range'\}\s+tabIndex=\{tabIndex\}/);
         expect(scale).toMatch(/<button\s+type=\{'button'\}/);
@@ -633,5 +695,7 @@ describe('upstream contract', () => {
         expect(read('src/components/NavBar/HorizontalNavBar/NavMenu/NavMenu.webos.js')).toContain("require('./NavMenu.js')");
         expect(read('src/routes/Settings/components/Option/Option.webos.tsx')).toContain("from './Option.tsx'");
         expect(read('src/components/Scale/Scale.webos.tsx')).toContain("from './Scale.tsx'");
+        expect(read('src/routes/Settings/index.webos.ts')).toContain("from './Settings'");
+        expect(read('src/routes/Calendar/index.webos.ts')).toContain("from './Calendar'");
     });
 });

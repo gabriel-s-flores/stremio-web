@@ -1,11 +1,14 @@
 /**
  * @jest-environment jsdom
  */
-// Remote navigation of the Board, Discover and Search (F4.1a): webos/lib/navigation/f4.1a.js and the
-// screens. jsdom has no layout, so the geometry comes from data attributes (see `layout` below); the
-// real thing runs in the emulator (webos/tests/navigation/emulator/f4.1a.mjs).
+// Remote navigation of the Board, Discover and Search (first written as F4.1a): the screen focus of
+// webos/lib/navigation/core/screenFocus.js and the screens. jsdom has no layout, so the geometry comes
+// from data attributes (see `layout` below); the real thing runs in the emulator
+// (webos/tests/navigation/emulator/f4.1a.mjs).
 
-const { createScreenFocus, pathOf, resolvePath, queryLocal, hasLocalName } = require('../../lib/navigation/f4.1a');
+const { createScreenFocus } = require('../../lib/navigation/core/screenFocus');
+const { pathOf, resolvePath } = require('../../lib/navigation/core/memory');
+const { queryLocal, hasLocalName } = require('../../lib/navigation/core/dom');
 const { boardScreen, fromTopBar, navigateRows } = require('../../lib/navigation/board');
 const { discoverScreen } = require('../../lib/navigation/discover');
 const { searchScreen } = require('../../lib/navigation/search');
@@ -221,28 +224,20 @@ describe('screen focus', () => {
         outside.remove();
     });
 
-    test('the wait for the initial focus ends (its observer disconnected) as soon as the user moves', () => {
-        const disconnected = [];
-        class SpyObserver extends MutationObserver {
-            disconnect() {
-                disconnected.push(this);
-                super.disconnect();
-            }
+    test('the wait for the initial focus ends as soon as the user moves, and its timer with it', () => {
+        jest.useFakeTimers();
+        try {
+            const container = board([placeholderRow(0)]);
+            focus = createScreenFocus(container, boardScreen);
+            focus.ensureFocus();
+            expect(focus.waiting).toBe(true);
+            expect(jest.getTimerCount()).toBe(1);
+            container.querySelector('[class*="submit-button-container"]').focus();
+            expect(focus.waiting).toBe(false);
+            expect(jest.getTimerCount()).toBe(0);
+        } finally {
+            jest.useRealTimers();
         }
-        const win = {
-            document,
-            MutationObserver: SpyObserver,
-            setTimeout: (...args) => window.setTimeout(...args),
-            clearTimeout: (id) => window.clearTimeout(id),
-            addEventListener: (...args) => window.addEventListener(...args),
-            removeEventListener: (...args) => window.removeEventListener(...args),
-        };
-        const container = board([placeholderRow(0)]);
-        focus = createScreenFocus(container, boardScreen, { window: win });
-        focus.ensureFocus();
-        expect(disconnected.length).toBe(0);
-        container.querySelector('[class*="submit-button-container"]').focus();
-        expect(disconnected.length).toBe(1);
     });
 
     test('arrows inside the rows are taken; the first item\'s left goes on to the spatial navigation', () => {

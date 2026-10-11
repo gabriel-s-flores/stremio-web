@@ -11,9 +11,15 @@ const {
 } = require('../../lib/navigation/metadetails');
 
 const nativeRect = Element.prototype.getBoundingClientRect;
+const nativeRects = Element.prototype.getClientRects;
 const rectOf = function rectOf() {
     const rect = this.__rect || { top: 0, left: 0, width: 10, height: 10 };
     return Object.assign({ right: rect.left + rect.width, bottom: rect.top + rect.height }, rect);
+};
+// A box for every element with a rect.
+const rectsOf = function rectsOf() {
+    const rect = this.getBoundingClientRect();
+    return rect.width > 0 || rect.height > 0 ? [rect] : [];
 };
 
 const STREAMS_PAGE = `
@@ -85,6 +91,7 @@ const open = (pathname = '/detail/movie/tt1/tt1', type = 'PUSH') => {
 
 beforeEach(() => {
     Element.prototype.getBoundingClientRect = rectOf;
+    Element.prototype.getClientRects = rectsOf;
     document.body.innerHTML = STREAMS_PAGE;
     document.documentElement.removeAttribute('data-webos-pointer');
     _setLastInput(null);
@@ -95,6 +102,7 @@ afterEach(() => {
     if (navigation) navigation.destroy();
     navigation = null;
     Element.prototype.getBoundingClientRect = nativeRect;
+    Element.prototype.getClientRects = nativeRects;
 });
 
 describe('keepInView', () => {
