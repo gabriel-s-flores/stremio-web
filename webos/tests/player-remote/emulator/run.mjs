@@ -237,6 +237,25 @@ const PAGE_HELPERS = `
                 return srcProperty.set.call(this, value);
             },
         });
+        // Player actions sent to the core, with the route and how many Players are mounted.
+        window.__f57.core = [];
+        if (window.core && !window.core.__f57) {
+            var dispatchCore = window.core.dispatch;
+            window.core.dispatch = function (action, field) {
+                if (action && action.action === 'Player' && action.args) {
+                    window.__f57.core.push({
+                        time: Date.now(),
+                        action: action.args.action,
+                        args: action.args.args && typeof action.args.args.time === 'number' ? action.args.args.time : (action.args.action === 'Load' ? JSON.stringify(action.args.args).slice(-60) : null),
+                        hash: location.hash.slice(-14),
+                        players: document.querySelectorAll('[class*="player-container"]').length,
+                        stack: String(new Error().stack).split('\\n').slice(2, 6).join(' | ').slice(0, 300),
+                    });
+                }
+                return dispatchCore.apply(this, arguments);
+            };
+            window.core.__f57 = true;
+        }
         // The pipeline guard's log (F5.6): releases, dropped load() calls, watchdog.
         window.__f57.guard = [];
         var originalInfo = console.info;
@@ -533,12 +552,13 @@ const traceSwitch = async (name) => {
         await sleep(300);
     }
     const media = await evaluate('return window.__f57.media;');
-    record(name, { note: `${trace.length} samples, ${media.length} media calls`, trace, media });
+    const core = await evaluate('return window.__f57.core.filter(function (e) { return e.action !== "TimeChanged" || e.time > Date.now() - 12000; });');
+    record(name, { note: `${trace.length} samples, ${media.length} media calls, ${core.length} core actions`, trace, media, core });
 };
 
 const watch = async (servers) => {
     if (!await toPopup(servers)) return;
-    await evaluate('window.__f57.media = []; return true;');
+    await evaluate('window.__f57.media = []; window.__f57.core = []; return true;');
     remote('OK');
     await traceSwitch('W02a-switch-trace');
     await press('W02-ok-watch', null, (b, a) => ({ 'episode 2 route': a.hash.indexOf(encodeURIComponent('tt9100001:1:2')) !== -1 }), { settle: 500 });

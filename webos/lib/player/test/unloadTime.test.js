@@ -1,9 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-// useVideo.webos.js (F5.7): after unload() the pipeline guard keeps the old stream in the state for
-// about a second (quiet release). Its time must not reach the Player meanwhile: the Player reports
-// it as the time of the next video, and the core keeps it as the position of the next episode.
+// useVideo.webos.js (F5.7): the pipeline guard holds the <video> being left (when the Player suspends
+// on the next episode's stream, or unmounts) and unloads it about a second later (quiet release). Its
+// time must not reach the Player meanwhile: the Player reports it as the time of the next video, and
+// the core keeps it as the position of the next episode.
 
 const path = require('path');
 const React = require('react');
@@ -18,10 +19,12 @@ jest.mock('../../../../src/routes/Player/useVideo.js', () => {
     const controls = { setState: null, unload: jest.fn(), load: jest.fn() };
     const useVideo = () => {
         const [state, setState] = MockReact.useState({ stream: null, time: null, duration: null, playbackSpeed: 1 });
+        // A stable ref, like the upstream hook's.
+        const containerRef = MockReact.useRef(null);
         controls.setState = setState;
         return {
             state,
-            containerRef: { current: null },
+            containerRef,
             load: controls.load,
             unload: controls.unload,
             addExtraSubtitlesTracks: () => {},
@@ -39,16 +42,24 @@ const useVideo = require(path.join(PLAYER_DIR, 'useVideo.webos.js'));
 
 let video;
 let root;
+let suspended = null;
 const Probe = () => {
     video = useVideo();
     return null;
 };
+// Throws while `suspended` is a pending promise: the boundary hides Probe (its layout effects clean up).
+const Suspender = () => {
+    if (suspended !== null && !suspended.done) throw suspended.promise;
+    return null;
+};
+const App = () => React.createElement(React.Suspense, { fallback: null }, React.createElement(Probe), React.createElement(Suspender));
 const set = (patch) => act(() => controls.setState((state) => ({ ...state, ...patch })));
 
 beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     root = createRoot(document.createElement('div'));
-    act(() => root.render(React.createElement(Probe)));
+    suspended = null;
+    act(() => root.render(React.createElement(App)));
     controls.unload.mockClear();
 });
 
@@ -76,6 +87,26 @@ describe('useVideo.webos unload', () => {
         set({ stream: episode2, time: 0, duration: 90000 });
         expect(video.state.time).toBe(0);
         expect(video.state.duration).toBe(90000);
+    });
+
+    it('the stream held while the Player suspends on the next one has no time (the hold pauses it: one more timeupdate)', async () => {
+        set({ stream: episode1, time: 567600, duration: 600000 });
+        let resolve;
+        suspended = { done: false, promise: new Promise((r) => { resolve = r; }) };
+        act(() => root.render(React.createElement(App)));
+        set({ time: 567768, paused: true });
+        expect(video.state.time).toBeNull();
+        await act(async () => {
+            suspended.done = true;
+            resolve();
+        });
+        // Shown again on the next episode: the Player unloads and loads; still no time of episode 1.
+        expect(video.state.time).toBeNull();
+        act(() => video.unload());
+        expect(video.state.time).toBeNull();
+        set({ stream: null, time: null, duration: null });
+        set({ stream: episode2, time: 0, duration: 90000 });
+        expect(video.state.time).toBe(0);
     });
 
     it('an unload with nothing loaded hides nothing afterwards', () => {
