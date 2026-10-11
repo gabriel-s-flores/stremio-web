@@ -156,7 +156,11 @@ cdp_eval "(function(){
     return JSON.stringify({ clipboard: typeof navigator.clipboard, visibleText: document.body.innerText.length, tokenInVisibleText: document.body.innerText.indexOf(token) !== -1, attributesWithToken: attributes, localStorageKeysWithToken: storage });
 })()" > "$OUT/page-audit-player.json"
 
-# The diagnostics screen (F3.6): shown report, then Save (localStorage + console.info).
+# The diagnostics screen (F3.6): shown report, then Save (localStorage + console.info). Opened from the
+# Board: from the Player, with the media still playing, the page stopped answering in 3 of 5 runs of the
+# emulator, on this build and on the one without the F3.7b changes alike.
+cdp_eval "location.hash = '#/'" > /dev/null
+sleep 5
 cdp_eval "location.hash = '#/webos-diagnostics'" > /dev/null
 ready=false
 for _ in $(seq 1 30); do
