@@ -122,6 +122,8 @@ for _ in $(seq 1 120); do
         break
     fi
 done
+# The clip is 20 s: looping keeps the Player from ending (and going back a screen) before the steps below are done.
+cdp_eval "(function(){ var v = document.querySelector('video'); if (v) v.loop = true; return !!v; })()" > /dev/null || true
 sleep 3
 
 # Choose the English subtitles: the fetch goes through the proxy, answers 404, and the Player logs the error.
