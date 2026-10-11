@@ -189,7 +189,9 @@ audit "$OUT/page-audit-dialog.json"
 # The diagnostics screen (F3.6): shown report, then Save (localStorage + console.info). Opened from the
 # Board: from the Player, with the media still playing, the page stopped answering in 3 of 5 runs of the
 # emulator, on this build and on the one without the F3.7b changes alike.
-cdp_eval "location.hash = '#/'" > /dev/null
+cdp_eval "(function(){ var v = document.querySelector('video'); if (v) { v.loop = false; v.pause(); } return !!v; })()" > /dev/null || true
+sleep 1
+cdp_eval "location.hash = '#/'" > /dev/null || log "leaving the Player: the page did not answer (known emulator media hang)"
 sleep 5
 cdp_eval "location.hash = '#/webos-diagnostics'" > /dev/null
 ready=false
