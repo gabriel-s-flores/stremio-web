@@ -35,6 +35,7 @@ const { probe } = require('../../lib/header-probe');
 const { bufferReadRange } = require('../../lib/header-probe/test/replay');
 const { buildAudioTracks, chooseAudioTrack, trackIndex } = require('../../lib/tracks');
 const { E2E_STREAMS, fileNameOf } = require('../addon/catalog.js');
+const { PICTURE, comparePictures } = require('./picture.js');
 
 const OUT = path.resolve(process.argv[2] || 'e2e-out');
 const { EMU_CDP_PORT, EMU_REMOTE_PORT, EMU_DEVICE, EMU_INSTANCE, EMU_SSH_PORT } = process.env;
@@ -109,6 +110,21 @@ const fallback = (what, why) => {
     log(`FALLBACK (CDP) [${currentStep}] ${what}: ${why}`);
 };
 
+// The checks of each step when everything is reached: the total is fixed (F7.3). A check that depends
+// on something that did not happen (the media never plays, the menu never opens, a step throws) fails
+// in place; it never goes missing, so "N/TOTAL" means the same in every run. When a step ends with
+// fewer checks than this, `fillMissing` records the rest as failed. Adding a check = raising its
+// number here (webos/tests/e2e/README.md).
+const EXPECTED_CHECKS = { setup: 1, boot: 2, board: 2, details: 7, play: 4, audio: 8, subtitles: 6, seek: 4, switch: 5, expired: 3, 'back-to-board': 1, end: 3 };
+const EXPECTED_TOTAL = Object.values(EXPECTED_CHECKS).reduce((sum, count) => sum + count, 0);
+
+const fillMissing = (name, error) => {
+    const own = results.filter((result) => result.step === name).length;
+    for (let n = own + 1; n <= (EXPECTED_CHECKS[name] || 0); n++) {
+        check(`check ${n} of ${EXPECTED_CHECKS[name]} of the step did not run`, false, { notRun: true, error: error ? error.split('\n')[0] : null }, 'run');
+    }
+};
+
 const steps = [];
 const step = async (name, run) => {
     currentStep = name;
@@ -119,8 +135,9 @@ const step = async (name, run) => {
         await run();
     } catch (caught) {
         error = String(caught && caught.stack || caught);
-        check('no exception in the step', false, error);
+        log(`ERROR [${name}] ${error.split('\n')[0]}`);
     }
+    fillMissing(name, error);
     const memory = json('window.__e2e ? window.__e2e.memory() : "null"');
     steps.push({ name, startMs: started, endMs: since(), ms: since() - started, jsHeap: memory, error });
     writeJson('steps.json', steps);
@@ -414,44 +431,19 @@ const waitPlaying = async (okAt, seconds) => {
 };
 
 // The video plane only shows in the VM screen (the page capture is transparent there). Two captures
-// 2 s apart, reduced to 480x270 like the visual regression (ImageMagick): the middle band of the
-// screen (no title, no control bar, no subtitles) must not be dark and must change between them
-// (the test media move: testsrc2 and a clock). A black or still screen with a moving element clock
-// is a picture that never reached the screen (review c1, finding 1).
-// The toasts ("Subtitles loaded", top right, x 1193-1804 and y 196-494 of 1920x1080) are left out with a
-// margin: a frozen frame whose toast goes away between the captures would pass (F6.4 review c2, F5.6b).
-const PICTURE = { width: 480, height: 270, top: 0.25, bottom: 0.7, minBrightness: 20, minChanged: 0.01, pixel: 32,
-    toast: { left: 0.6, right: 0.96, top: 0.16, bottom: 0.48 } };
-const inToast = (x, y) => x >= PICTURE.width * PICTURE.toast.left && x < PICTURE.width * PICTURE.toast.right &&
-    y >= PICTURE.height * PICTURE.toast.top && y < PICTURE.height * PICTURE.toast.bottom;
+// 2 s apart, reduced to 480x270 like the visual regression (ImageMagick) and compared by
+// ./picture.js (unit tested): the middle band of the screen (no title, no control bar, no subtitles)
+// must not be dark and must change between them, in more than one column of the band and outside the
+// toasts corner (the test media move: testsrc2 and a clock). A black or still screen with a moving
+// element clock is a picture that never reached the screen (review c1, finding 1); a frozen frame
+// whose toast or spinner goes away between the captures must not pass (review c2, F5.6b, F7.3).
 const rawOf = (file) => spawnSync('magick', [file, '-filter', 'Box', '-resize', `${PICTURE.width}x${PICTURE.height}!`, '-alpha', 'off', '-depth', '8', 'rgb:-'], { maxBuffer: 16 * 1024 * 1024 }).stdout;
 const pictureOf = async (name) => {
     vmShot(`${name}-a`);
     await sleep(2000);
     vmShot(`${name}-b`);
-    const a = rawOf(path.join(OUT, `vm-${name}-a.png`));
-    const b = rawOf(path.join(OUT, `vm-${name}-b.png`));
-    if (!a || !b || a.length !== b.length || a.length === 0) return { ok: false, error: 'no capture' };
-    const rows = [Math.floor(PICTURE.height * PICTURE.top), Math.floor(PICTURE.height * PICTURE.bottom)];
-    let sum = 0;
-    let sumA = 0;
-    let changed = 0;
-    let count = 0;
-    for (let y = rows[0]; y < rows[1]; y++) {
-        for (let x = 0; x < PICTURE.width; x++) {
-            if (inToast(x, y)) continue;
-            const i = (y * PICTURE.width + x) * 3;
-            sum += (b[i] + b[i + 1] + b[i + 2]) / 3;
-            sumA += (a[i] + a[i + 1] + a[i + 2]) / 3;
-            if (Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2])) > PICTURE.pixel) changed++;
-            count++;
-        }
-    }
-    const brightness = Math.round(sum / count);
-    // Both captures lit: a dark first one (the loading screen) against a still frame changes 100 %.
-    const brightnessA = Math.round(sumA / count);
-    const changedRatio = Math.round((changed / count) * 10000) / 10000;
-    return { ok: Math.min(brightness, brightnessA) >= PICTURE.minBrightness && changedRatio >= PICTURE.minChanged, brightness, brightnessA, changedRatio, captures: [`vm-${name}-a.png`, `vm-${name}-b.png`] };
+    const picture = comparePictures(rawOf(path.join(OUT, `vm-${name}-a.png`)), rawOf(path.join(OUT, `vm-${name}-b.png`)));
+    return Object.assign(picture, { captures: [`vm-${name}-a.png`, `vm-${name}-b.png`] });
 };
 // The playback checks: the element plays (clock moving) and the picture is on the VM screen. A
 // picture missing with the clock moving counts for the emulator (its pipeline draws nothing:
@@ -459,7 +451,11 @@ const pictureOf = async (name) => {
 const checkPlayback = async (label, result, name, area) => {
     check(`${label}: the element plays (currentTime moves 2 s within 3 s)`, result.ok,
         { msFromOk: result.ms, startTime: result.startTime, advanced: result.advanced, last: result.samples[result.samples.length - 1], errorLayer: result.errorLayer || null, pipelines: pipelines() }, area);
-    if (!result.ok) return;
+    if (!result.ok) {
+        // Nothing plays: there is no picture to compare, and the check fails instead of going missing.
+        check(`${label}: the picture shows on the VM screen (not dark, moving)`, false, { notRun: 'the element does not play' }, area);
+        return;
+    }
     const picture = await pictureOf(name);
     const state = playerState();
     check(`${label}: the picture shows on the VM screen (not dark, moving)`, picture.ok,
@@ -640,6 +636,7 @@ const seek = async () => {
     const settings = json('window.core.getState("ctx").then(function(ctx){ return JSON.stringify({ seek: ctx.profile.settings.seekTimeDuration, short: ctx.profile.settings.seekShortTimeDuration }); })') || {};
     const seekS = (settings.seek || 10000) / 1000;
     let state = playerState();
+    // Without the video the other 3 checks of the step cannot run: fillMissing fails them.
     if (!check('still in the Player with the video (it did not end or close)', state && state.video && /#\/player\//.test(state.hash), state && { hash: state.hash, video: state.video }, 'run')) return;
     // F5.7: with the control bar on screen and the focus on a button, LEFT/RIGHT walk the buttons;
     // the seek is on the seek bar (UP from the buttons) or with the bar hidden.
@@ -728,6 +725,14 @@ const backToBoard = async () => {
 };
 
 const finish = () => {
+    try {
+        finishChecks();
+    } finally {
+        fillMissing('end');
+    }
+};
+
+const finishChecks = () => {
     const consoleLog = json('JSON.stringify(window.__f51 ? window.__f51.console : [])') || [];
     const luna = json('JSON.stringify(window.__f51 ? { luna: window.__f51.luna, errors: window.__f51.errors } : null)');
     fs.writeFileSync(path.join(OUT, 'console.json'), JSON.stringify(consoleLog, null, 1));
@@ -749,10 +754,14 @@ const summary = () => {
     });
     writeJson('steps.json', steps);
     const failed = results.filter((result) => !result.ok);
+    const errored = steps.filter((entry) => entry.error);
+    // The total is fixed (EXPECTED_CHECKS): another count means a check was added or removed here
+    // without updating the table, and the run says so.
+    const wrongTotal = results.length !== EXPECTED_TOTAL;
     const lines = [
         `# Ponta a ponta (F6.4) — perfil ${PROFILE}`,
         '',
-        `${results.length - failed.length}/${results.length} checagens passaram; ${keys} teclas do controle; ${fallbacks.length} ações por CDP (fallback); título: ${chosenTitle || '-'}`,
+        `${results.length - failed.length}/${results.length} checagens passaram (total esperado: ${EXPECTED_TOTAL}); ${keys} teclas do controle; ${fallbacks.length} ações por CDP (fallback); título: ${chosenTitle || '-'}`,
         '',
         '| Etapa | Duração (s) | Heap JS (MB) | WebAppMgr máx. (MB) | MemAvailable mín. (MB) | Checagens |',
         '|---|---|---|---|---|---|',
@@ -764,6 +773,8 @@ const summary = () => {
         '## Falhas',
         '',
         ...(failed.length ? failed.map((result) => `- [${result.step}] ${result.name} (${result.area || '-'})`) : ['- nenhuma']),
+        ...errored.map((entry) => `- [${entry.name}] exceção na etapa: ${entry.error.split('\n')[0]}`),
+        ...(wrongTotal ? [`- o total de checagens (${results.length}) não é o esperado (${EXPECTED_TOTAL}): atualize EXPECTED_CHECKS`] : []),
         '',
         '## Ações por CDP fora da preparação',
         '',
@@ -775,7 +786,7 @@ const summary = () => {
         '',
     ];
     fs.writeFileSync(path.join(OUT, 'summary.md'), lines.join('\n'));
-    return failed.length;
+    return failed.length + (failed.length === 0 ? errored.length + (wrongTotal ? 1 : 0) : 0);
 };
 
 (async () => {
@@ -799,7 +810,7 @@ const summary = () => {
         if (memorySampler) memorySampler.kill();
         if (addonServer) addonServer.kill('SIGTERM');
         fs.copyFileSync(path.join(OUT, 'addon-server.log'), path.join(OUT, 'addon-server.log.txt'));
-        log(`${results.length - failed}/${results.length} passed`);
+        log(`${results.filter((result) => result.ok).length}/${results.length} passed (expected total ${EXPECTED_TOTAL})`);
     }
     process.exit(failed > 0 ? 1 : 0);
 })();
