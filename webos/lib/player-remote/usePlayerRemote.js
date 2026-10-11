@@ -42,6 +42,8 @@ const usePlayerRemote = (props, barRef) => {
         const uninstall = remote.install();
         return () => {
             uninstall();
+            // What the last Player did on the way out (focus given back: diagnostics, tests).
+            window.__webosPlayerRemoteLast = remote.status;
             remoteRef.current = null;
             if (window.__webosPlayerRemote === remote) delete window.__webosPlayerRemote;
         };

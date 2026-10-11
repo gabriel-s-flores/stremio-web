@@ -381,25 +381,47 @@ const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => fa
     // of the details page, a poster of the Board) in the route below, and the pages restore from there
     // when the Player closes (F4.1a, F4.1c). The remote moves the focus into the Player, which would
     // leave it on <body> once the Player is gone: on the way out it goes back to that element.
+    const describe = (element) => {
+        if (!element) return null;
+        if (element === document.body) return 'body';
+        return element.tagName.toLowerCase() + '.' + String(element.className).split(/\s+/).slice(0, 2).join('.');
+    };
+    // Tried again for a while: on the way out the pipeline guard (F5.6) keeps the Player's node in the
+    // page (hidden) until it released the pipeline, and while it is there the route below stays
+    // `display: none` (src/router/styles.css), where focus() does nothing.
+    const ENTRY_FOCUS_RETRY_MS = 100;
+    const ENTRY_FOCUS_TIMEOUT_MS = 3000;
     const restoreEntryFocus = (entry, playerRoot) => {
-        if (!entry || !document.body.contains(entry)) return;
-        const active = document.activeElement;
-        const lost = !active || active === document.body || !document.body.contains(active) ||
-            (playerRoot !== null && playerRoot.contains(active));
-        if (!lost) return;
-        entry.focus();
-        // The ring of a remote focus, unless the Magic Remote pointer is in use (webos/magic-remote).
-        if (document.activeElement === entry && document.documentElement.getAttribute('data-webos-pointer') !== 'visible' &&
-            !entry.hasAttribute('data-focus-visible-added')) {
-            entry.classList.add('focus-visible');
-            entry.setAttribute('data-focus-visible-added', '');
-        }
+        status.exit = { entry: describe(entry), active: describe(document.activeElement), restored: false, attempts: 0 };
+        const started = Date.now();
+        const isLost = () => {
+            const active = document.activeElement;
+            return !active || active === document.body || !document.body.contains(active) ||
+                (playerRoot !== null && playerRoot.contains(active));
+        };
+        const attempt = () => {
+            if (!entry || !document.body.contains(entry) || !isLost()) return;
+            status.exit.attempts++;
+            entry.focus();
+            if (document.activeElement === entry) {
+                status.exit.restored = true;
+                // The ring of a remote focus, unless the Magic Remote pointer is in use (webos/magic-remote).
+                if (document.documentElement.getAttribute('data-webos-pointer') !== 'visible' && !entry.hasAttribute('data-focus-visible-added')) {
+                    entry.classList.add('focus-visible');
+                    entry.setAttribute('data-focus-visible-added', '');
+                }
+                return;
+            }
+            if (Date.now() - started < ENTRY_FOCUS_TIMEOUT_MS) window.setTimeout(attempt, ENTRY_FOCUS_RETRY_MS);
+        };
+        attempt();
     };
 
     const install = () => {
         const playerRoot = container();
         const active = document.activeElement;
         const entry = active && active !== document.body && (playerRoot === null || !playerRoot.contains(active)) ? active : null;
+        status.entry = describe(entry);
         window.addEventListener('keydown', onKeyDown, true);
         window.addEventListener('keyup', onKeyUp, true);
         return () => {

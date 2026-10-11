@@ -404,6 +404,32 @@ describe('leaving the Player', () => {
         expect(stream.hasAttribute('data-focus-visible-added')).toBe(true);
     });
 
+    it('tries again while the route below is still hidden (the guard holds the Player node), then gives up', () => {
+        jest.useFakeTimers();
+        render({ hidden: true });
+        const stream = document.createElement('a');
+        stream.tabIndex = 0;
+        document.querySelector('.route-container').appendChild(stream);
+        stream.focus();
+        const created = createPlayerRemote({ window, getBar: () => $('bar'), getProps: () => ({ paused: false, onPauseRequested: () => {} }), isOverlayOpen: () => false });
+        const remove = created.install();
+        press(KEYS.OK);
+        // display: none for a while: focus() does nothing.
+        let focusable = false;
+        const nativeFocus = HTMLElement.prototype.focus;
+        stream.focus = function() {
+            if (focusable) nativeFocus.call(this);
+        };
+        remove();
+        expect(document.activeElement).toBe($('play'));
+        jest.advanceTimersByTime(500);
+        expect(document.activeElement).toBe($('play'));
+        focusable = true;
+        jest.advanceTimersByTime(100);
+        expect(document.activeElement).toBe(stream);
+        expect(created.status.exit.restored).toBe(true);
+    });
+
     it('leaves the focus alone when it is already somewhere else, or when the element is gone', () => {
         render({ hidden: true });
         const stream = document.createElement('a');
