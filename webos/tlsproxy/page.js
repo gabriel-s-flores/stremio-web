@@ -3,6 +3,9 @@
 // overrides that show images (src/components/Image/Image.webos.tsx). The core worker reaches it
 // through the page Bridge as window.__webosTlsProxy (webos/tlsproxy/worker.js).
 
+// The console filter first (F3.7b): the proxy token never reaches a log.
+import '../lib/redact/install';
+import { addSecret } from '../lib/redact';
 import { createTlsProxy } from './client';
 
 // The detection is kept per firmware: platform version and model from PalmSystem, plus the UA.
@@ -22,6 +25,7 @@ const tlsProxy = createTlsProxy({
     getWebOS: () => window.webOS,
     firmware: firmwareId(),
     online: () => navigator.onLine !== false,
+    onToken: addSecret,
 });
 
 window.__webosTlsProxy = tlsProxy.bridge;

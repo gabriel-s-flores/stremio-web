@@ -12,6 +12,7 @@ const { useTranslation } = require('react-i18next');
 const UpstreamError = require('./Error.js');
 const styles = require('./styles');
 const debridLink = require('../../../../webos/lib/debrid-link');
+const { redactString } = require('../../../../webos/lib/redact');
 
 const useLinkProblem = (stream, code) => {
     const [problem, setProblem] = React.useState(null);
@@ -41,7 +42,9 @@ const Error = React.forwardRef((props, ref) => {
     const { t } = useTranslation();
     const problem = useLinkProblem(props.stream, props.code);
     if (problem === null) {
-        return UpstreamError.render(props, ref);
+        // A message with the certificate proxy URL (F3.7b) would show its token.
+        const safe = redactString(props.message);
+        return UpstreamError.render(safe === props.message ? props : Object.assign({}, props, { message: safe }), ref);
     }
 
     const message = t(problem.key, Object.assign({ defaultValue: problem.message }, problem.values));

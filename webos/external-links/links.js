@@ -112,7 +112,8 @@ const findAnchor = (target) => {
 
 // `click` in the bubble phase on window: the React handlers of the link ran before (a handler that
 // dealt with the click by itself calls preventDefault, and then it is not ours), and the default
-// action, the navigation, is still ahead of us. The Back/Enter keys of a focused link end here too:
+// action, the navigation, is still ahead of us. Download links are also caught in the capture phase
+// (see onCaptureClick); whichever comes first handles the click and the other sees it prevented. The Back/Enter keys of a focused link end here too:
 // Button turns Enter into a click.
 const install = (win, store) => {
     const originalOpen = win.open;
@@ -125,6 +126,26 @@ const install = (win, store) => {
         if (anchor === null) {
             return;
         }
+        handle(event, anchor);
+    };
+
+    // The context menu of the upstream (the "Download subtitle" of the Player's subtitles menu)
+    // stops the propagation of the clicks inside it, so they never reach `window` in the bubble
+    // phase. A download link has no handler of its own to wait for: it is caught on the way down.
+    // On `document`, not `window`: the capture listener of the long press of the Magic Remote
+    // (F4.3, webos/lib/navigation/contextMenu.js) is on `window` and runs first, and its
+    // stopImmediatePropagation on the release that follows a long press also stops this one.
+    const onCaptureClick = (event) => {
+        if (event.defaultPrevented) {
+            return;
+        }
+        const anchor = findAnchor(event.target);
+        if (anchor !== null && anchor.hasAttribute('download')) {
+            handle(event, anchor);
+        }
+    };
+
+    const handle = (event, anchor) => {
         const kind = classify(anchor.href, win);
         if (kind === 'local') {
             return;
@@ -150,8 +171,10 @@ const install = (win, store) => {
     };
 
     win.addEventListener('click', onClick);
+    win.document.addEventListener('click', onCaptureClick, true);
     return () => {
         win.removeEventListener('click', onClick);
+        win.document.removeEventListener('click', onCaptureClick, true);
         win.open = originalOpen;
     };
 };

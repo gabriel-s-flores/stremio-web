@@ -16,6 +16,7 @@
 // The configuration comes from the page (window.__webosTlsProxy, webos/tlsproxy/page.js) through
 // the Bridge protocol; requests made before it is decided wait for it up to 3 s, then go direct.
 
+import { addSecret } from '../lib/redact';
 import { hostOf, isLetsEncrypt, proxyUrlFor, ISSUER_HEADER } from './client';
 
 const ERROR_HEADER = 'X-Proxy-Error';
@@ -68,6 +69,8 @@ export const install = (scope) => {
     const setConfig = (value) => {
         if (value && typeof value === 'object') {
             config = value;
+            // For the log redaction (webos/lib/redact): the worker's console masks this token too.
+            addSecret(value.token);
             (value.hosts || []).forEach((host) => hosts.add(host));
         }
         return config;

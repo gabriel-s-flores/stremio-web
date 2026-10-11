@@ -85,11 +85,22 @@ acima de 2 MB e qualquer corpo acima de 16 MB.
 - Cliente que desiste cancela o upstream; `HEAD`/`204`/`304` sem corpo juntado; imagens juntadas
   numa escrita só (o `<img>` do Chromium 53 falhava com o corpo em pedaços); `tlsErrors` por código.
 
+## Token fora dos logs (F3.7b)
+
+A URL do proxy leva o token (`/proxy?t=<token>&url=…`), e o upstream registra o que o pipeline de vídeo
+reporta: `console.error('Player', error)` imprime a legenda de addon que falhou, cuja `url` é a do proxy.
+`webos/lib/redact` mascara o token (`t=***`) em tudo o que o app mostra ou registra: um filtro de
+`console.*` (página e worker), os erros que o Player recebe (log, toast, camada de erro) e o relatório
+da tela de diagnóstico, inclusive o que ela salva. A página e o worker registram o token que o serviço
+devolve (`onToken`), e o formato `…/proxy?t=` é mascarado para qualquer token. O protocolo do proxy e as
+URLs que o pipeline e o `fetch` usam não mudam. Detalhes e limites: `webos/lib/redact/README.md`.
+
 ## Testes
 
 ```bash
 pnpm test                                    # webos/tests/tlsproxy: proxy com upstreams HTTPS locais
-                                             # (CA de teste), cliente da página e wrapper do worker
+                                             # (CA de teste), cliente da página e wrapper do worker;
+                                             # token-leak.test.js: o token não aparece em log, erro nem relatório
 pnpm webos:package                           # inclui check-service.js
 webos/tools/emu-run --timeout 20 -- webos/tlsproxy/emulator/run.sh <pasta>   # aceite no emulador
 ```

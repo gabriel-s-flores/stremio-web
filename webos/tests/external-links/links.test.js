@@ -175,6 +175,30 @@ describe('install', () => {
             expect(store.getState().url).toBe('https://example.com/export.json');
         });
 
+        test('a download link inside a container that stops the clicks (the context menu) still opens the dialog, once', () => {
+            const menu = document.createElement('div');
+            menu.addEventListener('click', (event) => event.stopPropagation());
+            document.body.appendChild(menu);
+            const opened = [];
+            store.subscribe((state) => opened.push(state.url));
+            const anchor = link({ href: 'https://example.com/sub.srt', target: '_blank', download: 'sub' }, menu);
+            expect(click(anchor)).toBe(false);
+            expect(opened).toEqual(['https://example.com/sub.srt']);
+            // a loopback download (the proxy URL) is disabled, and not shown
+            store.close();
+            const proxy = link({ href: 'http://127.0.0.1:47443/proxy?t=SECRET&url=x', target: '_blank', download: 'sub' }, menu);
+            expect(click(proxy)).toBe(false);
+            expect(store.getState().url).toBeNull();
+        });
+
+        test('a link without download in such a container is not touched (its own handler decides)', () => {
+            const menu = document.createElement('div');
+            menu.addEventListener('click', (event) => event.stopPropagation());
+            document.body.appendChild(menu);
+            expect(click(link({ href: 'https://example.com/page', target: '_blank' }, menu))).toBe(true);
+            expect(store.getState().url).toBeNull();
+        });
+
         test('other external schemes are disabled, with no dialog', () => {
             expect(click(link({ href: 'magnet:?xt=urn:btih:abc' }))).toBe(false);
             expect(click(link({ href: 'stremio:///detail/movie/tt1' }))).toBe(false);

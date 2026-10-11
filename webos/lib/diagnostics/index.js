@@ -6,6 +6,7 @@
 const { callLuna, defaultRequest, isWebOS, readCapabilities: readDefaultCapabilities } = require('../platform');
 const defaultRegistry = require('./registry');
 const { MEDIA_TYPES } = require('./canplay');
+const { redactString, redactValue } = require('../redact');
 
 // localStorage key of the core variant the loader reads (webos/core/loader.js PREFER_KEY; a test
 // keeps the two equal, since importing the loader here would load worker code in the page).
@@ -16,6 +17,8 @@ const MEMORY_MANAGER_SERVICE = 'luna://com.webos.memorymanager';
 // The certificate proxy service (F3.7, webos/tlsproxy/service/services.json; a test keeps the id in sync).
 const TLSPROXY_SERVICE = 'luna://io.github.gabrielsflores.stremio.tlsproxy';
 const DEFAULT_TIMEOUT_MS = 3000;
+// A report is plain data of a few hundred values: redact all of it.
+const REPORT_LIMITS = { maxDepth: 40, maxNodes: 100000 };
 const MB = 1048576;
 
 const EMPTY_WASM_MODULE = [0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
@@ -476,7 +479,8 @@ const collectDiagnostics = (options) => {
             registered
                 .filter((extension) => SECTION_ORDER.indexOf(extension.id) === -1)
                 .forEach((extension) => sections.push(fromRegistry(extension)));
-            return { generatedAt: generatedAt.toISOString(), sections };
+            // The report is shown, copied and saved: no certificate proxy token in it (F3.7b), whatever the section says.
+            return redactValue({ generatedAt: generatedAt.toISOString(), sections }, REPORT_LIMITS);
         });
     });
 };
@@ -488,7 +492,7 @@ const formatReport = (report) => {
         lines.push('', '[' + section.title + ']');
         section.rows.forEach((row) => lines.push(row[0] + ': ' + row[1]));
     });
-    return lines.join('\n') + '\n';
+    return redactString(lines.join('\n') + '\n');
 };
 
 // The data of one section by id, for tests and probes.
