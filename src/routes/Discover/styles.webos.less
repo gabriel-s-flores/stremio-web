@@ -17,6 +17,9 @@
                 flex-wrap: wrap;
                 align-content: flex-start;
                 padding: 0 1.25rem;
+                // The remote navigation (F4.1a, webos/lib/navigation/discover.js) scrolls the grid
+                // by the offsetTop of its items, measured against it.
+                position: relative;
 
                 > * {
                     flex: none;
