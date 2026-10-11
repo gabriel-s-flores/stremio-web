@@ -45,7 +45,7 @@ Player do app no webOS (F5.1): o que o `Player` manda para o `stremio-video` na 
 
 **A correção (`withPipelineGuard.js`, parte 4):** no 1º `playing` de cada carga, o guarda estreita o `<video>` em 2 px por 250 ms e devolve a largura. Isso faz o lugar do elemento chegar de novo ao pipeline que está tocando. Não aparece na tela (2 px por um quarto de segundo, atrás da barra do Player) e não muda nada na 1ª carga. Com o guarda ligado e o empurrão, o `switches.sh` passa com as 6 cargas com imagem. Chave para o A/B e para a Fase 8: `webos.pipelineGuard.displayNudge = off`.
 
-**c8.** No perfil c8 a imagem falta já na 1ª mídia, e o que aparece no buraco do vídeo é o fundo do sistema ("WELCOME TO THE WEBOS TV EMULATOR"): o plano de vídeo não desenha nada. É outro sintoma, que o empurrão não resolve.
+**c8.** No perfil c8 (CPU a 40 % de um núcleo) o plano de vídeo falha de forma intermitente desde a 1ª mídia, **com e sem o guarda**: ou não desenha nada (no buraco do vídeo aparece o fundo do sistema, "WELCOME TO THE WEBOS TV EMULATOR"), ou congela num quadro com o relógio andando e volta com uma mudança de geometria. Com o guarda desligado, a 1ª mídia do `e2e` c8 congelou no 1º quadro. É limitação do perfil (decodificação em software com pouca CPU), não do app; a imagem no c8 fica fora do critério e vai para a Fase 8.
 
 **O `<video>` da troca.** Durante a liberação silenciosa, o `<video>` do stream anterior ainda pode estar na página quando o novo é criado: quem procura o elemento no contêiner pega o último (`withC8Tracks` e o guarda fazem isso). O `Player.js` do upstream usa `querySelector('video')` só para a tela cheia, que não se aplica à TV.
 
