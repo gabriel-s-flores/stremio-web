@@ -164,6 +164,7 @@ const PAGE_HELPERS = `
             rect: rect ? [Math.round(rect.left), Math.round(rect.top), Math.round(rect.width), Math.round(rect.height)] : null,
             lost: !active || active === document.body || !shown || !(route && route.contains(active)) && !inPortal,
             inNavBar: !!(active && h.closest(active, 'vertical-nav-bar-container')),
+            inSettingsMenu: !!(active && h.closest(active, 'menu')),
             inPortal: !!inPortal,
             inViewport: !!(rect && rect.top >= 0 && rect.bottom <= window.innerHeight + 1 && rect.left >= 0 && rect.right <= window.innerWidth + 1),
             listScroll: list ? Math.round(list.scrollTop) : null,
@@ -371,6 +372,18 @@ const walk = async (name, key, count, { stopWhen } = {}) => {
     return { current, visited };
 };
 
+// LEFT from a row of the Settings sections: to the menu (or, with no menu at 125%, the side bar),
+// with the list where it was. RIGHT goes back into the sections.
+const settingsLeft = async (name, { menu = true } = {}) => {
+    const before = await state();
+    const after = await press('LEFT', name);
+    const target = menu ? after.inSettingsMenu : after.inNavBar;
+    check(name, target && after.listScroll === before.listScroll, {
+        note: `from "${before.text}" (${before.focused}) to "${after.text || after.title}" (${after.focused}); scrollTop ${before.listScroll} -> ${after.listScroll}`,
+    });
+    return after;
+};
+
 const guestScenario = async () => {
     await navBarOnBoard();
     await profileMenu();
@@ -396,11 +409,40 @@ const guestScenario = async () => {
         check('addons-up-reaches-filters', !/addon-/.test(up.current.focused || '') && !up.current.lost, { note: `${up.current.focused} "${up.current.text}"` });
         const back = await press('DOWN', 'addons');
         check('addons-down-back-to-first', back.text === first.text, { note: back.text });
+        // An addon further down (WatchHub, the third): OK opens its details, Back comes back to it.
+        let current = back;
+        for (let index = 0; index < 4 && !/^WatchHub/.test(current.text || ''); index++) current = await press('DOWN', 'addons');
+        const opened = current;
+        check('addons-watchhub-focused', /^WatchHub/.test(opened.text || ''), { note: opened.text });
         await press('OK', 'addons-modal');
         const modal = await waitFor('return document.querySelectorAll("[class*=modal-dialog-container]").length > 0;', 10000);
         check('addons-details-opens', modal !== null, { screenshot: await screenshot('addons-modal') });
-        const closed = await press('BACK', 'addons-modal');
-        check('addons-details-back-restores-focus', closed.text === first.text && !closed.lost, { note: `${closed.focused} "${closed.text}"` });
+        await sleep(1000);
+        await press('BACK', 'addons-modal');
+        await sleep(1000);
+        const closed = await state();
+        check('addons-details-back-restores-focus', closed.text === opened.text && closed.listScroll === opened.listScroll && !closed.lost, {
+            note: `opened "${opened.text}" (scroll ${opened.listScroll}), back on ${closed.focused} "${closed.text}" (scroll ${closed.listScroll})`,
+            screenshot: await screenshot('addons-modal-closed'),
+        });
+        // The catalog filter: Installed -> Community replaces the list; the focus goes to the new one.
+        current = await state();
+        for (let index = 0; index < 8 && /addon-/.test(current.focused || ''); index++) current = await press('UP', 'addons-filter');
+        for (let index = 0; index < 4 && !/Installed/.test(current.text || ''); index++) current = await press('LEFT', 'addons-filter');
+        if (/Installed/.test(current.text || '')) {
+            await press('OK', 'addons-filter');
+            for (let index = 0; index < 6 && !/^Community/.test(current.text || ''); index++) current = await press('DOWN', 'addons-filter');
+            await press('OK', 'addons-filter');
+            await waitFor('return location.hash.indexOf("community") !== -1;', 10000);
+            await sleep(6000);
+            const switched = await state();
+            check('addons-filter-switch-keeps-focus', !switched.lost && /addon-/.test(switched.focused || ''), {
+                note: `${switched.hash} ${switched.focused} "${switched.text}"`,
+                screenshot: await screenshot('addons-community'),
+            });
+        } else {
+            check('addons-filter-reachable', false, { note: `${current.focused} "${current.text}"` });
+        }
     }
 
     // Settings: menu, every row down to the end, toggles, zoom steps, the language list.
@@ -437,6 +479,17 @@ const guestScenario = async () => {
         // Zoom: the steps with LEFT/RIGHT and OK.
         let current = await press('DOWN', 'settings-zoom');
         for (let index = 0; index < 20 && !/^100%$/.test(current.text || ''); index++) current = await press('DOWN', 'settings-zoom');
+        // LEFT from several rows goes to the menu, at 100%.
+        await settingsLeft('settings-left-from-zoom-row-goes-to-menu');
+        current = await press('RIGHT', 'settings-left');
+        current = await pressAll(['DOWN', 'DOWN'], 'settings-left');
+        await settingsLeft('settings-left-from-lower-row-goes-to-menu');
+        current = await press('RIGHT', 'settings-left');
+        current = await pressAll(['DOWN', 'DOWN', 'DOWN', 'DOWN', 'DOWN'], 'settings-left');
+        await settingsLeft('settings-left-from-player-row-goes-to-menu');
+        current = await press('RIGHT', 'settings-left');
+        // Back to the zoom steps (above).
+        for (let index = 0; index < 30 && !/^100%$/.test(current.text || ''); index++) current = await press('UP', 'settings-zoom');
         current = await press('RIGHT', 'settings-zoom');
         await press('OK', 'settings-zoom');
         await sleep(1500);
@@ -444,7 +497,16 @@ const guestScenario = async () => {
         check('settings-zoom-125-with-ok', zoomed.interfaceScale === '2.1875' && !zoomed.lost && zoomed.inViewport && zoomed.text === '125%', { note: `${zoomed.interfaceScale} focus "${zoomed.text}" ${zoomed.rect}`, screenshot: await screenshot('settings-zoom-125') });
         const navBar125 = await evaluate('return Array.prototype.map.call(window.__f41b.route().querySelectorAll("[class*=nav-tab-button-container]"), function (a) { var r = a.getBoundingClientRect(); return r.bottom <= window.innerHeight; });');
         check('settings-zoom-125-nav-bar-on-screen', navBar125.length === 6 && navBar125.every(Boolean), { note: JSON.stringify(navBar125) });
-        current = await pressAll(['LEFT', 'OK'], 'settings-zoom');
+        // At 125%: RIGHT at the end of the row stays (not the profile button); LEFT goes to 100%, and
+        // from there (no Settings menu at this width) to the side bar.
+        const right125 = await press('RIGHT', 'settings-zoom-125');
+        check('settings-zoom-125-right-stays', right125.text === '125%', { note: `${right125.focused} "${right125.text}"` });
+        current = await press('LEFT', 'settings-zoom-125');
+        check('settings-zoom-125-left-to-100', current.text === '100%', { note: current.text });
+        await settingsLeft('settings-left-at-125-goes-to-side-bar', { menu: false });
+        current = await press('RIGHT', 'settings-zoom-125');
+        check('settings-zoom-125-right-back-to-100', current.text === '100%', { note: current.text });
+        await press('OK', 'settings-zoom');
         await sleep(1500);
         const restored = await state();
         check('settings-zoom-back-to-100', restored.interfaceScale === '1.75' && !restored.lost, { note: `${restored.interfaceScale} focus "${restored.text}"` });

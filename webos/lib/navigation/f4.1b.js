@@ -8,9 +8,11 @@
 //   the search is retried for a few seconds, and stops at the first key the user presses.
 // - Focus never gets lost: an arrow with the focus on <body> (an item removed, a list reloaded)
 //   puts it back on the screen's element instead of letting the polyfill start from the corner.
-// - Scrolling lists: inside the vertical lists of these screens the next item is searched among all
-//   items of the list, not only the visible ones, and the list scrolls just enough to show it with a
-//   margin. The polyfill only sees visible items (the row above a scrolled grid is hidden, so it
+// - Scrolling lists: inside the vertical lists of these screens the next item UP or DOWN is searched
+//   among all items of the list, not only the visible ones, and the list scrolls just enough to show
+//   it with a margin. LEFT/RIGHT stay in the visible items of the same row; with none, they leave the
+//   list for the closest visible element outside it (Settings: LEFT to the selected menu entry),
+//   never for the bar at the top (RIGHT at the end of a row stays). The polyfill only sees visible items (the row above a scrolled grid is hidden, so it
 //   scrolled 40px per press) and scrolls every focused item to the top of the list
 //   (scrollIntoView() runs unconditionally in focusingController). With no item in that direction
 //   the list scrolls by most of its height, which also reaches non-focusable content (Settings'
@@ -19,6 +21,8 @@
 //   from (with none, into the screen's content, never to the top bar). LEFT from the first column
 //   already reaches it through the polyfill, once its buttons are focusable (NavTabButton.webos.js).
 //   OK on the profile button (NavMenu.webos.js) puts the focus on the first entry of its menu.
+// - Modals inside the route (the addon details of Addons): left to the modal (F4.3); what is focused
+//   inside one is not where the screen restores to, so closing it goes back to the opened item.
 // - Interface zoom: after the zoom changes (a resize event), the focused element is scrolled back
 //   into its list.
 //
@@ -34,6 +38,9 @@ const ARROWS = { 37: 'left', 38: 'up', 39: 'right', 40: 'down' };
 const INITIAL_FOCUS_RETRY_MS = 200;
 const INITIAL_FOCUS_PREFERRED_MS = 1500;
 const INITIAL_FOCUS_TIMEOUT_MS = 6000;
+// After the initial focus, a list replaced right after (a filter of Addons) is focused again.
+const INITIAL_FOCUS_VERIFY_MS = 500;
+const INITIAL_FOCUS_VERIFICATIONS = 4;
 // Part of the list height kept visible beyond the focused item, and scrolled when there is none.
 const REVEAL_MARGIN = 0.15;
 const PAGE_SCROLL = 0.6;
@@ -98,6 +105,8 @@ const SCREENS = [
             ['sections-container'],
         ],
         lists: ['sections-container'],
+        // LEFT out of the sections: the entry of the section on screen.
+        leftExit: (route) => queryLocal(route, 'menu').map((menu) => queryLocal(menu, 'selected')[0]).filter(Boolean)[0],
     },
 ];
 
@@ -158,6 +167,10 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
 
     const currentScreen = () => screenForPath(pathFromLocation(window.location), screens);
 
+    // Modals of the route (ModalDialog renders into the route's .modals-container).
+    const inModal = (element) => !!(element && element.closest && element.closest('.modals-container'));
+    const modalOpen = (route) => !!route.querySelector('.modals-container > *');
+
     const inNavBars = (element, route) => !!closestLocal(element, [NAV_BAR, HORIZONTAL_NAV_BAR], route);
 
     const usable = (element, route) => !!element && element !== document.body && route.contains(element) &&
@@ -217,22 +230,41 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
         cancelInitial();
         const screen = currentScreen();
         if (screen === null) return;
-        const started = Date.now();
+        let started = Date.now();
+        let verifications = 0;
         const attempt = () => {
             pendingInitial = null;
             if (currentScreen() !== screen) return;
             const route = visibleRoute();
+            // A modal is open (or opening): its focus is the modal's.
+            if (route !== null && modalOpen(route)) return;
             if (route !== null && focusHasPlace(route)) return;
             const preferredOnly = Date.now() - started < INITIAL_FOCUS_PREFERRED_MS;
             const target = route !== null ? screenTarget(screen, route, preferredOnly) : null;
             if (target !== null) {
                 target.element.focus();
                 record(target.reason, target.element);
+                if (verifications < INITIAL_FOCUS_VERIFICATIONS) {
+                    pendingInitial = window.setTimeout(() => verify(target.element), INITIAL_FOCUS_VERIFY_MS);
+                }
                 return;
             }
             if (Date.now() - started < INITIAL_FOCUS_TIMEOUT_MS) {
                 pendingInitial = window.setTimeout(attempt, INITIAL_FOCUS_RETRY_MS);
             }
+        };
+        // The focused element went away with its list (and the focus with it): search again.
+        const verify = (element) => {
+            pendingInitial = null;
+            verifications++;
+            if (document.body.contains(element)) {
+                if (verifications < INITIAL_FOCUS_VERIFICATIONS) {
+                    pendingInitial = window.setTimeout(() => verify(element), INITIAL_FOCUS_VERIFY_MS);
+                }
+                return;
+            }
+            started = Date.now();
+            attempt();
         };
         // After the route is painted (lower routes become display: none in the same commit).
         pendingInitial = window.setTimeout(attempt, 0);
@@ -264,8 +296,52 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
         element !== active && isFocusable(element) && isShown(element) && !element.contains(active)
     ));
 
-    // Moves the focus inside a list. True when the key was used. `outer` is the list of the screen
-    // around it (an open dropdown inside Settings), kept showing the focused element too.
+    const search = (active, dir, container, candidates) => (
+        candidates.length > 0 && typeof active.spatialNavigationSearch === 'function' ?
+            active.spatialNavigationSearch(dir, { container, candidates }) :
+            null
+    );
+
+    const insideRect = (rect, box) => rect.bottom > box.top && rect.top < box.bottom && rect.right > box.left && rect.left < box.right;
+
+    // LEFT/RIGHT in a list: the visible items of the same row; with none, the closest visible element
+    // outside the list in that direction (the screen's `leftExit` first), never the bar at the top.
+    // True when the key was used.
+    const moveAcross = (screen, route, list, active, dir) => {
+        const from = active.getBoundingClientRect();
+        const listRect = list.getBoundingClientRect();
+        const row = listCandidates(list, active).filter((element) => {
+            const rect = element.getBoundingClientRect();
+            return rect.top < from.bottom && rect.bottom > from.top && insideRect(rect, listRect) && inViewport(element);
+        });
+        const inRow = search(active, dir, list, row);
+        if (inRow) {
+            inRow.focus();
+            record('row', inRow);
+            return true;
+        }
+        const preferred = dir === 'left' && screen.leftExit ? screen.leftExit(route) : null;
+        const outside = preferred && isFocusable(preferred) && isShown(preferred) && inViewport(preferred) ?
+            preferred :
+            search(active, dir, route, Array.prototype.filter.call(route.querySelectorAll('*'), (element) => (
+                !list.contains(element) && isFocusable(element) && isShown(element) && inViewport(element) &&
+                !closestLocal(element, [HORIZONTAL_NAV_BAR], route) && !inModal(element)
+            )));
+        if (outside) {
+            outside.focus();
+            record('list-exit', outside);
+            return true;
+        }
+        // The end of a row: RIGHT stays; LEFT is the polyfill's.
+        if (dir === 'right') {
+            record('row-end', active);
+            return true;
+        }
+        return false;
+    };
+
+    // Moves the focus inside a list, UP and DOWN. True when the key was used. `outer` is the list of
+    // the screen around it (an open dropdown inside Settings), kept showing the focused element too.
     const moveInList = (list, active, dir, outer = null) => {
         const candidates = listCandidates(list, active);
         const best = candidates.length > 0 && typeof active.spatialNavigationSearch === 'function' ?
@@ -283,8 +359,8 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
             record('scroll', active);
             return true;
         }
-        // The end of a list: DOWN stays (the next page of the Library comes in on its own); the other
-        // directions leave the list through the polyfill (filters above, menu or bar to the left).
+        // The end of a list: DOWN stays (the next page of the Library comes in on its own); UP leaves
+        // it through the polyfill (filters or bar above).
         if (dir === 'down') {
             record('list-end', active);
             return true;
@@ -332,6 +408,8 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
         if (route === null) return;
         const screen = currentScreen();
         const active = document.activeElement;
+        // A modal of the route is open: the keys are the modal's (F4.3), even with the focus lost.
+        if (modalOpen(route)) return;
 
         // Lost focus on a screen of this task: back to its element.
         if (screen !== null && !focusHasPlace(route)) {
@@ -371,11 +449,16 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
 
         if (screen === null || isTextInput(active)) return;
         // Open dropdowns (role="listbox") are lists of their own: the language list of Settings.
+        // LEFT/RIGHT in an open dropdown are the polyfill's (F4.3).
         const listbox = active.closest ? active.closest('[role="listbox"]') : null;
         const screenList = closestLocal(active, screen.lists, route);
-        const moved = listbox && route.contains(listbox) ?
-            moveInList(listbox, active, dir, screenList) :
-            screenList !== null && moveInList(screenList, active, dir);
+        const vertical = dir === 'up' || dir === 'down';
+        let moved = false;
+        if (listbox && route.contains(listbox)) {
+            moved = vertical && moveInList(listbox, active, dir, screenList);
+        } else if (screenList !== null) {
+            moved = vertical ? moveInList(screenList, active, dir) : moveAcross(screen, route, screenList, active, dir);
+        }
         if (moved) event.preventDefault();
     };
 
@@ -398,7 +481,7 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
         const target = event.target;
         if (!target || target.nodeType !== 1) return;
         const route = target.closest ? target.closest('.route-container') : null;
-        if (route && !inNavBars(target, route)) lastContent.set(route, target);
+        if (route && !inNavBars(target, route) && !inModal(target)) lastContent.set(route, target);
     };
 
     const install = () => {
@@ -415,7 +498,7 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
         };
     };
 
-    return { install, focusScreen, status, reveal, moveInList, findInitial, visibleRoute };
+    return { install, focusScreen, status, reveal, moveInList, moveAcross, findInitial, visibleRoute };
 };
 
 function describe(element) {

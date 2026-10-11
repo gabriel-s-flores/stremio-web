@@ -27,6 +27,9 @@ const rectOf = (element) => {
 const ZERO = { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 };
 
 beforeAll(() => {
+    // The TV page: 1920x1080 screen pixels.
+    Object.defineProperty(window, 'innerWidth', { value: 1920, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 1080, configurable: true });
     Element.prototype.getBoundingClientRect = function() {
         return rectOf(this) || ZERO;
     };
@@ -93,6 +96,7 @@ const key = (keyCode) => {
 const DOWN = 40;
 const UP = 38;
 const RIGHT = 39;
+const LEFT = 37;
 
 const text = () => document.activeElement && document.activeElement.textContent.trim();
 
@@ -221,8 +225,9 @@ describe('profile menu', () => {
         // The menu opens inside the label and the focus falls to body.
         label.innerHTML = '<div class="nav-menu-container-Nn1x2" data-rect="1500,100,400,500"><a href="#/settings" data-rect="1500,120,400,60">Settings</a></div>';
         label.blur();
+        expect(document.activeElement).toBe(document.body);
         jest.advanceTimersByTime(200);
-        expect(text()).toBe('Settings');
+        expect(document.activeElement).toBe(label.querySelector('a[href="#/settings"]'));
         expect(navigation.status.last.reason).toBe('profile-menu');
     });
 });
@@ -326,6 +331,153 @@ describe('interface zoom', () => {
         const rect = document.activeElement.getBoundingClientRect();
         expect(rect.bottom).toBeLessThanOrEqual(1000 - 120);
         expect(rect.top).toBeGreaterThanOrEqual(200);
+    });
+});
+
+// Settings as on the TV at 100%: the side bar, the menu of sections, and the sections in two columns
+// (labels on the left, controls on the right), scrolled to the Interface section: the General links
+// at the top of the list are above the screen.
+const settingsRoute = ({ menu = true, scrollTop = 600 } = {}) => `
+    <div class="route-container" data-rect="0,0,1920,1080">
+        <div class="route-content" data-rect="0,0,1920,1080">
+            <nav class="horizontal-nav-bar-container-Hh1x2" data-rect="0,0,1920,140">
+                <div class="label-container-XOyzm nav-menu-popup-label-XmUBo" tabindex="0" data-rect="1760,50,90,90">profile</div>
+            </nav>
+            ${NAV_BAR}
+            ${menu ? `<div class="menu-Mm1x2" data-rect="230,200,370,700">
+                <div class="button-DNmYL" tabindex="0" data-rect="230,240,370,100">General</div>
+                <div class="button-DNmYL selected-S7SeK" tabindex="0" data-rect="230,350,370,100">Interface</div>
+                <div class="button-DNmYL" tabindex="0" data-rect="230,680,370,100">Diagnostics</div>
+            </div>` : ''}
+            <div class="sections-container-Ss1x2" data-rect="700,140,900,940" data-scroll="${scrollTop}">
+                <a class="link-FrL1t" href="#" data-rect="710,768,860,50">Log in / Sign up</a>
+                <a class="link-FrL1t" href="#" data-rect="710,868,860,50">Contact support</a>
+                <div class="button-teWrC" tabindex="0" data-rect="1140,1440,430,74">English</div>
+                <button class="label-Sbsoe" data-rect="1150,1490,140,24">100%</button>
+                <button class="label-Sbsoe" data-rect="1290,1490,140,24">125%</button>
+                <div class="toggle-container-lZfHP" tabindex="0" data-rect="1320,1560,80,42">toggle</div>
+            </div>
+        </div>
+    </div>`;
+
+const startSettings = (options) => {
+    render(settingsRoute(options));
+    start('#/settings');
+    const list = document.querySelector('.sections-container-Ss1x2');
+    Object.defineProperty(list, 'offsetHeight', { value: 940 });
+    Object.defineProperty(list, 'clientHeight', { value: 940 });
+    Object.defineProperty(list, 'scrollHeight', { value: 3000 });
+    list.scrollTop = Number(list.getAttribute('data-scroll'));
+    return list;
+};
+
+const byText = (value) => Array.prototype.find.call(document.querySelectorAll('[tabindex], a, button'), (element) => element.textContent.trim() === value);
+
+describe('Settings, two columns', () => {
+    test.each(['English', '100%', 'toggle'])('LEFT from "%s" goes to the menu, the list stays where it is', (from) => {
+        const list = startSettings();
+        byText(from).focus();
+        const event = key(LEFT);
+        expect(event.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(byText('Interface'));
+        expect(list.scrollTop).toBe(600);
+    });
+
+    test('without the menu (125% zoom), LEFT goes to the side bar, not to the links above the screen', () => {
+        const list = startSettings({ menu: false });
+        byText('toggle').focus();
+        key(LEFT);
+        expect(document.activeElement.className).toContain('nav-tab-button');
+        expect(list.scrollTop).toBe(600);
+    });
+
+    test('LEFT/RIGHT between the zoom steps of the same row', () => {
+        startSettings();
+        byText('100%').focus();
+        key(RIGHT);
+        expect(document.activeElement).toBe(byText('125%'));
+        key(LEFT);
+        expect(document.activeElement).toBe(byText('100%'));
+    });
+
+    test('RIGHT at the end of a row stays, never to the profile button at the top', () => {
+        startSettings();
+        byText('125%').focus();
+        const event = key(RIGHT);
+        expect(event.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(byText('125%'));
+        expect(navigation.status.last.reason).toBe('row-end');
+    });
+
+    test('UP and DOWN still search the whole list', () => {
+        const list = startSettings();
+        byText('English').focus();
+        key(UP);
+        expect(document.activeElement).toBe(byText('Contact support'));
+        expect(list.scrollTop).toBeLessThan(600);
+    });
+});
+
+// Addons: the details modal is rendered inside the route (.modals-container).
+const addonsRoute = (modal = false) => `
+    <div class="route-container" data-rect="0,0,1920,1080">
+        <div class="route-content" data-rect="0,0,1920,1080">
+            ${NAV_BAR}
+            <div class="addons-list-container-Aa1x2" data-rect="200,300,1600,780">
+                <div class="addon-whmdO" tabindex="0" data-rect="230,300,1590,270">Cinemeta</div>
+                <div class="addon-whmdO" tabindex="0" data-rect="230,580,1590,270">YouTube</div>
+                <div class="addon-whmdO" tabindex="0" data-rect="230,860,1590,270">WatchHub</div>
+            </div>
+        </div>
+        <div class="modals-container">${modal ? `
+            <div class="modal-container" data-rect="0,0,1920,1080">
+                <div class="close-button-container-Cc1x2" tabindex="0" data-rect="1500,100,80,80">Close</div>
+                <div class="action-button-Ab1x2" tabindex="0" data-rect="800,800,300,80">Install</div>
+            </div>` : ''}</div>
+    </div>`;
+
+describe('modal inside the route', () => {
+    test('closing the addon details goes back to the opened addon', () => {
+        render(addonsRoute(true));
+        start('#/addons');
+        // The addon was opened with OK...
+        byText('WatchHub').focus();
+        // ...and the modal focused its close button.
+        byText('Close').focus();
+        // Keys inside the modal are the modal's, even with the focus lost.
+        byText('Close').blur();
+        expect(key(DOWN).defaultPrevented).toBe(false);
+        expect(document.activeElement).toBe(document.body);
+        // Back closes it: the modal goes away and the location changes (?addon= removed).
+        document.querySelector('.modals-container').innerHTML = '';
+        navigation.focusScreen();
+        jest.advanceTimersByTime(0);
+        expect(document.activeElement).toBe(byText('WatchHub'));
+        expect(navigation.status.last.reason).toBe('restored');
+    });
+
+    test('no screen focus while a modal is opening', () => {
+        render(addonsRoute(true));
+        start('#/addons?addon=x');
+        navigation.focusScreen();
+        jest.advanceTimersByTime(1000);
+        expect(document.activeElement).toBe(document.body);
+    });
+});
+
+describe('a list replaced after the initial focus', () => {
+    test('the new list gets the focus (Addons: Installed to Community)', () => {
+        render(addonsRoute());
+        start('#/addons/community');
+        navigation.focusScreen();
+        jest.advanceTimersByTime(0);
+        expect(document.activeElement).toBe(byText('Cinemeta'));
+        // The remote catalog replaces the list: the focused element goes away with the focus.
+        document.querySelector('.addons-list-container-Aa1x2').innerHTML =
+            '<div class="addon-whmdO" tabindex="0" data-rect="230,300,1590,270">Torrentio</div>';
+        expect(document.activeElement).toBe(document.body);
+        jest.advanceTimersByTime(600);
+        expect(document.activeElement).toBe(byText('Torrentio'));
     });
 });
 
