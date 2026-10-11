@@ -1,0 +1,105 @@
+/**
+ * @jest-environment jsdom
+ */
+/* global describe, it, expect, jest, beforeAll, afterEach */
+// F6.3: the Player error layer override (Error.webos.js) over a stand-in of the upstream Error with
+// the same render shape: the message of the dead link and its hint replace the upstream message, a
+// link that answers leaves the upstream one, and the layer asks the check once per stream.
+
+const React = require('react');
+const { createRoot } = require('react-dom/client');
+const { act } = React;
+const path = require('path');
+
+const ERROR_DIR = path.join(__dirname, '..', '..', '..', '..', 'src', 'routes', 'Player', 'Error');
+
+jest.mock('../../../../src/routes/Player/Error/Error.js', () => {
+    const MockReact = require('react');
+    const h = MockReact.createElement;
+    const Upstream = MockReact.forwardRef(({ className, code, message }, ref) => h('div', { ref, className },
+        h('div', { className: 'error-label' }, message),
+        code === 2 ? h('div', { className: 'error-sub' }, 'external player hint') : null));
+    Upstream.propTypes = {};
+    return Upstream;
+});
+jest.mock('../../../../src/routes/Player/Error/styles', () => ({ 'error-sub': 'error-sub' }), { virtual: true });
+jest.mock('react-i18next', () => ({
+    useTranslation: () => ({ t: (key, options) => `${key}|${options.defaultValue}` }),
+}));
+jest.mock('../index', () => {
+    const actual = jest.requireActual('../index');
+    return Object.assign({}, actual, { diagnose: jest.fn() });
+});
+
+const debridLink = require('../index');
+
+beforeAll(() => jest.spyOn(console, 'warn').mockImplementation(() => null));
+const Error = require(path.join(ERROR_DIR, 'Error.webos.js'));
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
+let root = null;
+let container = null;
+
+const render = async (props) => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    await act(async () => {
+        root.render(React.createElement(Error, props));
+    });
+};
+
+afterEach(async () => {
+    await act(async () => root.unmount());
+    container.remove();
+    debridLink.diagnose.mockReset();
+    debridLink.rememberStream(undefined);
+});
+
+const stream = { url: 'https://resolver.example/resolve/KEY/file.mkv' };
+
+describe('Error.webos', () => {
+    it('shows the upstream message while nothing is known about the link', async () => {
+        debridLink.diagnose.mockReturnValue(new Promise(() => null));
+        await render({ code: 83, message: 'Video is not supported', stream });
+        expect(container.querySelector('.error-label').textContent).toBe('Video is not supported');
+        expect(container.querySelector('.error-sub')).toBeNull();
+    });
+
+    it('replaces it with the message and the hint of an expired link', async () => {
+        debridLink.diagnose.mockResolvedValue({ kind: 'expired', status: 403, source: 'request', host: 'cdn.example' });
+        await render({ code: 83, message: 'Video is not supported', stream });
+        expect(debridLink.diagnose).toHaveBeenCalledWith(stream, 83);
+        expect(container.querySelector('.error-label').textContent).toContain('WEBOS_LINK_EXPIRED|This link has expired');
+        expect(container.querySelector('.error-sub').textContent).toContain('WEBOS_LINK_EXPIRED_HINT|Go back');
+        expect(container.firstChild.getAttribute('data-link-problem')).toBe('expired');
+    });
+
+    it('drops the external player hint of code 2 when the link is the problem', async () => {
+        debridLink.diagnose.mockResolvedValue({ kind: 'not-found', status: 404, source: 'probe', host: 'cdn.example' });
+        await render({ code: 2, message: 'Stream is not supported', stream });
+        expect(container.querySelectorAll('.error-sub')).toHaveLength(1);
+        expect(container.querySelector('.error-sub').textContent).toContain('WEBOS_LINK_NOT_FOUND_HINT');
+    });
+
+    it('keeps the upstream message when the link answers', async () => {
+        debridLink.diagnose.mockResolvedValue({ kind: 'ok', status: 206, source: 'request', host: 'cdn.example' });
+        await render({ code: 83, message: 'Video is not supported', stream });
+        expect(container.querySelector('.error-label').textContent).toBe('Video is not supported');
+        expect(container.firstChild.getAttribute('data-link-problem')).toBeNull();
+    });
+
+    it('reads the stream the Player loaded when the state no longer has it', async () => {
+        debridLink.rememberStream(stream);
+        debridLink.diagnose.mockResolvedValue({ kind: 'network', status: null, source: 'request', host: 'cdn.example' });
+        await render({ code: 81, message: 'Error occurred when downloading', stream: null });
+        expect(debridLink.diagnose).toHaveBeenCalledWith(stream, 81);
+        expect(container.querySelector('.error-label').textContent).toContain('WEBOS_LINK_NETWORK|Could not reach');
+    });
+
+    it('checks nothing for a stream without an HTTP URL', async () => {
+        await render({ code: 83, message: 'Video is not supported', stream: { ytId: 'abc' } });
+        expect(debridLink.diagnose).not.toHaveBeenCalled();
+    });
+});

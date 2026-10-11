@@ -79,7 +79,10 @@ const createFetchReadRange = (url, options) => {
                 return { data: new Uint8Array(0), size: parseTotal(response) };
             }
             if (response.status !== 206 && response.status !== 200) {
-                throw new ProbeError('HTTP', 'HTTP ' + response.status + ' for ' + currentUrl);
+                const failure = new ProbeError('HTTP', 'HTTP ' + response.status + ' for ' + currentUrl);
+                // The status lets the app explain a dead debrid link (webos/lib/debrid-link).
+                failure.httpStatus = response.status;
+                throw failure;
             }
             // Later reads go straight to the final URL instead of repeating the debrid redirect.
             if (response.url && response.redirected !== false) currentUrl = response.url;
