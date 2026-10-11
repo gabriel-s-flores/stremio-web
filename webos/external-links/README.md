@@ -34,7 +34,7 @@ Só entra no build webOS (`src/App/index.webos.js`); o desktop não muda.
 
 - Texto: `LOGIN_SCAN_QR_CODE` ("Scan the QR code or go to") e `BUTTON_CLOSE`, traduzidos pelo i18next do app.
 - O QR code é um SVG (um `<path>` com uma barra por sequência de módulos escuros, zona silenciosa de 4
-  módulos, 20 rem de lado, 26 rem a partir da versão 14, `shape-rendering: crispEdges`; os módulos não são um número
+  módulos, 20 rem de lado, 26 rem a partir da versão 14 (aí o código fica ao lado do link e do Fechar, não acima: em coluna o diálogo teria 1120 px numa tela de 1080, medido no emulador com o zoom 1,75), `shape-rendering: crispEdges`; os módulos não são um número
   inteiro de pixels). Só é calculado quando um link é aberto, num chunk carregado nessa hora: nada roda no boot
   além de dois listeners.
 - O foco vai para **Fechar** e fica lá. Enquanto o diálogo está aberto ele é dono do controle: setas e
@@ -64,5 +64,5 @@ que a do `qrencode`: o código é igualmente válido, só não é sempre o mesmo
 - `pnpm exec jest webos/tests/external-links`: gerador (80 vetores do `qrencode`, versões 1 a 40 em M e L e as 8
   máscaras, em `qr-fixtures.json`; `gen-qr-fixtures.js` os regenera), classificação e interceptação,
   diálogo renderizado em jsdom com o despachante real.
-- Emulador: `webos/tests/keyboard/emulator/run.mjs <pasta> links` (dentro do `emu-run`, depois de
+- Emulador: `webos/tests/keyboard/emulator/run.mjs <pasta> links` (ou `qr`: o diálogo para links de 27 a 2900 bytes, com a geometria medida em px de tela; dentro do `emu-run`, depois de
   `pnpm webos:package`).
