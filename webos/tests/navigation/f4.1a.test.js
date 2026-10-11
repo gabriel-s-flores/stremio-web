@@ -6,7 +6,7 @@
 // real thing runs in the emulator (webos/tests/navigation/emulator/f4.1a.mjs).
 
 const { createScreenFocus, pathOf, resolvePath, queryLocal, hasLocalName } = require('../../lib/navigation/f4.1a');
-const { boardScreen, navigateRows } = require('../../lib/navigation/board');
+const { boardScreen, fromTopBar, navigateRows } = require('../../lib/navigation/board');
 const { discoverScreen } = require('../../lib/navigation/discover');
 const { searchScreen } = require('../../lib/navigation/search');
 
@@ -47,7 +47,10 @@ const placeholderRow = (top) => `<div class="board-row-DDDDD meta-row-placeholde
 
 const messageRow = (top) => `<div class="board-row-DDDDD meta-row-container-EEEEE" data-top="${top}" data-height="40"><div class="message-container-HHHHH">Addon error</div></div>`;
 
-const topBar = '<nav class="horizontal-nav-bar-container-IIIII"><div class="search-bar-container-JJJJJ"><input tabindex="-1"><div class="submit-button-container-KKKKK" tabindex="0"></div></div></nav>';
+const searchMenu = '<div class="menu-container-OOOOO"><div class="items-PPPPP"><div class="title-QQQQQ"><div>History</div><button class="search-history-clear">Clear history</button></div>' +
+    '<div class="item-RRRRR" tabindex="0">superman</div></div><div class="items-PPPPP"><div class="item-RRRRR" tabindex="0">supergirl</div></div></div>';
+
+const topBar = (menu = '') => `<nav class="horizontal-nav-bar-container-IIIII"><div class="search-bar-container-JJJJJ"><input tabindex="-1"><div class="submit-button-container-KKKKK" tabindex="0"></div>${menu}</div></nav>`;
 
 const mount = (html) => {
     document.body.innerHTML = `<div class="routes-container"><div class="route-container"><div class="route-content">${html}</div></div></div>`;
@@ -59,7 +62,7 @@ const mount = (html) => {
     return container;
 };
 
-const board = (rows) => mount(`<div class="board-container-LLLLL">${topBar}<div class="board-content-container-MMMMM"><div class="board-content-NNNNN" data-height="200" data-scroll-height="1000">${rows.join('')}</div></div></div>`);
+const board = (rows) => mount(`<div class="board-container-LLLLL">${topBar()}<div class="board-content-container-MMMMM"><div class="board-content-NNNNN" data-height="200" data-scroll-height="1000">${rows.join('')}</div></div></div>`);
 
 const text = (element) => (element && element !== true ? element.textContent : element);
 
@@ -128,11 +131,37 @@ describe('Board rows', () => {
         expect(navigateRows(links[2], 'down', list())).toBe(true);
     });
 
-    test('a row still loading is scrolled into view and the focus waits', () => {
+    test('a row still loading below comes into view by the least, and the focus waits', () => {
         board([row('a', 2, 0), placeholderRow(300)]);
         const links = document.querySelectorAll('a');
         expect(navigateRows(links[0], 'down', list())).toBe(true);
-        expect(list().scrollTop).toBe(300);
+        // Its top 8px into the 200px list: the focused row keeps its place (and its title).
+        expect(list().scrollTop).toBe(108);
+        // Already showing: no scroll.
+        expect(navigateRows(links[0], 'down', list())).toBe(true);
+        expect(list().scrollTop).toBe(108);
+    });
+
+    test('a row still loading above comes into view by its bottom edge', () => {
+        board([placeholderRow(0), row('a', 2, 300)]);
+        list().scrollTop = 300;
+        expect(navigateRows(document.querySelectorAll('a')[0], 'up', list())).toBe(true);
+        expect(list().scrollTop).toBe(92);
+    });
+
+    test('the rows are aligned against the first one, wherever the list starts it', () => {
+        const container = board([row('a', 3, 20), row('b', 3, 120), row('c', 3, 220)]);
+        boardScreen.align(container.querySelectorAll('a')[3], container);
+        expect(list().scrollTop).toBe(100);
+    });
+
+    test('down from the top bar with nothing left: the first item of the first row on screen', () => {
+        const container = board([row('a', 3, 0), row('b', 3, 100), row('c', 3, 200)]);
+        list().scrollTop = 150;
+        const button = container.querySelector('[class*="submit-button-container"]');
+        expect(text(fromTopBar(button, 'down', container, list(), {}))).toBe('b0');
+        list().scrollTop = 0;
+        expect(text(fromTopBar(button, 'down', container, list(), {}))).toBe('a0');
     });
 
     test('the initial focus waits for the first row, even when a row below loaded first', () => {
@@ -179,6 +208,43 @@ describe('screen focus', () => {
         expect(document.activeElement.className).toMatch(/submit-button-container/);
     });
 
+    test('the initial focus does not steal the focus from outside the screen either (a dialog of the app)', async () => {
+        const container = board([placeholderRow(0)]);
+        focus = createScreenFocus(container, boardScreen);
+        focus.ensureFocus();
+        const outside = document.createElement('button');
+        document.body.appendChild(outside);
+        outside.focus();
+        queryLocal(container, 'board-content').innerHTML = row('a', 3, 0);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(document.activeElement).toBe(outside);
+        outside.remove();
+    });
+
+    test('the wait for the initial focus ends (its observer disconnected) as soon as the user moves', () => {
+        const disconnected = [];
+        class SpyObserver extends MutationObserver {
+            disconnect() {
+                disconnected.push(this);
+                super.disconnect();
+            }
+        }
+        const win = {
+            document,
+            MutationObserver: SpyObserver,
+            setTimeout: (...args) => window.setTimeout(...args),
+            clearTimeout: (id) => window.clearTimeout(id),
+            addEventListener: (...args) => window.addEventListener(...args),
+            removeEventListener: (...args) => window.removeEventListener(...args),
+        };
+        const container = board([placeholderRow(0)]);
+        focus = createScreenFocus(container, boardScreen, { window: win });
+        focus.ensureFocus();
+        expect(disconnected.length).toBe(0);
+        container.querySelector('[class*="submit-button-container"]').focus();
+        expect(disconnected.length).toBe(1);
+    });
+
     test('arrows inside the rows are taken; the first item\'s left goes on to the spatial navigation', () => {
         const container = board([row('a', 3, 0), row('b', 3, 100)]);
         focus = createScreenFocus(container, boardScreen);
@@ -213,6 +279,63 @@ describe('screen focus', () => {
         container.querySelector('[class*="submit-button-container"]').focus();
         expect(focus.restore()).toBe(true);
         expect(document.activeElement.textContent).toBe('b1');
+    });
+
+    test('an arrow another handler already took (the quit dialog, the nav bar of F4.1b) is left alone', () => {
+        const container = board([row('a', 3, 0)]);
+        focus = createScreenFocus(container, boardScreen);
+        const links = container.querySelectorAll('a');
+        links[0].focus();
+        links[0].addEventListener('keydown', (event) => event.preventDefault(), { once: true });
+        press(RIGHT);
+        expect(document.activeElement.textContent).toBe('a0');
+    });
+
+    test('restore scrolls the lists back to the element', () => {
+        const container = board([row('a', 6, 0), row('b', 6, 100), row('c', 6, 200)]);
+        focus = createScreenFocus(container, boardScreen);
+        container.querySelectorAll('a')[9].focus();
+        focus.leave();
+        const content = queryLocal(container, 'board-content');
+        // Still focused (no focusin to align it): restore itself scrolls.
+        content.scrollTop = 0;
+        expect(focus.restore()).toBe(true);
+        expect(document.activeElement.textContent).toBe('b3');
+        expect(content.scrollTop).toBe(100);
+    });
+
+    test('restore does nothing while the route is hidden or a dialog is open', () => {
+        const container = board([row('a', 3, 0)]);
+        focus = createScreenFocus(container, boardScreen);
+        container.querySelectorAll('a')[2].focus();
+        focus.leave();
+        const button = container.querySelector('[class*="submit-button-container"]');
+        button.focus();
+        container.parentElement.setAttribute('data-hidden', '');
+        expect(focus.restore()).toBe(false);
+        container.parentElement.removeAttribute('data-hidden');
+        const dialog = document.createElement('div');
+        dialog.setAttribute('role', 'dialog');
+        document.body.appendChild(dialog);
+        expect(focus.restore()).toBe(false);
+        expect(document.activeElement).toBe(button);
+        dialog.remove();
+    });
+
+    test('the initial focus stops waiting after its timeout', () => {
+        jest.useFakeTimers();
+        try {
+            const container = board([placeholderRow(0)]);
+            focus = createScreenFocus(container, boardScreen, { timeout: 1000 });
+            focus.ensureFocus();
+            jest.advanceTimersByTime(1001);
+            queryLocal(container, 'board-content').innerHTML = row('a', 3, 0);
+            return Promise.resolve().then(() => {
+                expect(document.activeElement).toBe(document.body);
+            });
+        } finally {
+            jest.useRealTimers();
+        }
     });
 
     test('nothing happens while the route is hidden or a dialog is open', () => {
@@ -293,7 +416,7 @@ describe('Discover grid', () => {
         '<div class="multiselect-menu-RRRRR" data-left="200"><div tabindex="0" aria-haspopup="listbox" aria-expanded="false">Catalog</div></div>' +
         '<div class="filter-container-SSSSS" data-left="400"><div class="filter-button-TTTTT" tabindex="0">All</div></div>' +
         '</div></div>';
-    const discover = (cells) => mount(`<div class="discover-container-UUUUU">${topBar}<div class="catalog-container-VVVVV">${filters}<div class="meta-items-container-WWWWW" data-height="150" data-scroll-height="400">${cells.join('')}</div></div></div>`);
+    const discover = (cells) => mount(`<div class="discover-container-UUUUU">${topBar()}<div class="catalog-container-VVVVV">${filters}<div class="meta-items-container-WWWWW" data-height="150" data-scroll-height="400">${cells.join('')}</div></div></div>`);
     const grid = () => queryLocal(document, 'meta-items-container');
     const grid3x2 = () => discover([cell('0', 0, 0), cell('1', 0, 200), cell('2', 0, 400), cell('3', 120, 0), cell('4', 120, 200)]);
     const link = (name) => Array.prototype.find.call(document.querySelectorAll('a'), (element) => element.textContent === name);
@@ -366,6 +489,13 @@ describe('Discover grid', () => {
         focus.destroy();
     });
 
+    test('down from a filter with nothing left: the first item on screen of the scrolled grid', () => {
+        const container = grid3x2();
+        grid().scrollTop = 110;
+        const type = container.querySelector('[aria-haspopup]');
+        expect(text(discoverScreen.navigate(type, 'down', container, {}))).toBe('3');
+    });
+
     test('the focused line goes to the top of the grid', () => {
         const container = grid3x2();
         discoverScreen.align(link('4'), container);
@@ -374,7 +504,7 @@ describe('Discover grid', () => {
 });
 
 describe('Search', () => {
-    const search = (rows) => mount(`<div class="search-container-YYYYY">${topBar}<div class="search-content-ZZZZZ" data-height="200" data-scroll-height="1000">${rows.join('')}</div></div>`);
+    const search = (rows) => mount(`<div class="search-container-YYYYY">${topBar()}<div class="search-content-ZZZZZ" data-height="200" data-scroll-height="1000">${rows.join('')}</div></div>`);
 
     test('up from the first row goes to the search field, down from the field back to the results', () => {
         const container = search([row('a', 3, 0), row('b', 3, 100)]);
@@ -385,6 +515,31 @@ describe('Search', () => {
         expect(text(searchScreen.navigate(field, 'down', container, {}))).toBe('a0');
         expect(text(searchScreen.navigate(field, 'down', container, { content: links[5] }))).toBe('b2');
         expect(searchScreen.navigate(field, 'up', container, {})).toBe(null);
+    });
+
+    test('with the history menu open, down goes into it; down on its last entry goes to the results and closes it', () => {
+        const container = mount(`<div class="search-container-YYYYY">${topBar(searchMenu)}<div class="search-content-ZZZZZ" data-height="200" data-scroll-height="1000">${row('a', 3, 0)}</div></div>`);
+        const field = container.querySelector('input');
+        const entries = container.querySelectorAll('[class*="menu-container"] [tabindex], [class*="menu-container"] button');
+        const pressed = [];
+        document.addEventListener('mousedown', (event) => pressed.push(event.target), { once: true });
+        expect(searchScreen.navigate(field, 'down', container, {})).toBe(null);
+        expect(searchScreen.navigate(entries[0], 'down', container, {})).toBe(null);
+        expect(pressed).toEqual([]);
+        const last = Array.prototype.find.call(entries, (element) => element.textContent === 'supergirl');
+        const links = container.querySelectorAll('a');
+        expect(text(searchScreen.navigate(last, 'down', container, { content: links[2] }))).toBe('a2');
+        // A press outside the search bar: the SearchBar closes its menu.
+        expect(pressed).toEqual([document.body]);
+    });
+
+    test('recovering the focus: the search button, not the field (it opens the system keyboard)', () => {
+        const container = search([]);
+        expect(searchScreen.initial(container, { recovering: true })).toBe(container.querySelector('[class*="submit-button-container"]'));
+        const focus = createScreenFocus(container, searchScreen);
+        press(DOWN, document.body);
+        expect(document.activeElement.className).toMatch(/submit-button-container/);
+        focus.destroy();
     });
 
     test('initial focus: the first result, else the search field', () => {

@@ -1,5 +1,6 @@
 // React side of webos/lib/navigation/f4.1a.js (owner: F4.1a): wraps the Board, Discover and Search
-// route components (their index.webos.js). Kept apart so the DOM logic is unit tested without JSX.
+// route components (their index.webos.js). No JSX: the root jest config does not transform it, and
+// webos/tests/navigation/f4.1a-screen.test.js renders this with react-dom.
 
 const React = require('react');
 const { useRouteActive } = require('stremio/common/useRouteFocused');
@@ -33,11 +34,11 @@ const withScreenNavigation = (Component, screen) => {
             else focusRef.current.leave();
         }, [active]);
 
-        return (
-            <React.Fragment>
-                <Component {...props} />
-                <span ref={markerRef} hidden={true} />
-            </React.Fragment>
+        return React.createElement(
+            React.Fragment,
+            null,
+            React.createElement(Component, props),
+            React.createElement('span', { ref: markerRef, hidden: true }),
         );
     };
     ScreenWithNavigation.displayName = `WithScreenNavigation(${Component.displayName || Component.name || 'Screen'})`;

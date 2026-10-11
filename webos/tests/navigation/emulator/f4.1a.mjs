@@ -86,6 +86,8 @@ const HELPERS = `
             gridIndex: grid && !list && active && grid.contains(active) ? Array.prototype.indexOf.call(grid.children, active.parentElement) : null,
             keyboard: window.__f41a.keyboard.length ? window.__f41a.keyboard[window.__f41a.keyboard.length - 1] : null,
             keyboardVisible: !!(window.PalmSystem && window.PalmSystem.isKeyboardVisible),
+            menuOpen: !!(route && local(route, 'menu-container')),
+            inMenu: !!(route && local(route, 'menu-container') && local(route, 'menu-container').contains(active)),
             errors: (window.__f41aErrors || []).length,
         };
     };
@@ -142,7 +144,9 @@ const backToBoard = async (name, checkFn, max = 4) => {
     let presses = 0;
     while (presses < max && !(s.hash === '#/' || s.hash === '')) {
         presses++;
-        s = await key(`${name}-${presses}`, 'BACK', () => ({}), { settleMs: 2500 });
+        s = await key(`${name}-${presses}`, 'BACK', (b, a) => ({
+            'Back does not open the system keyboard': a.keyboard !== true || b.keyboard === true,
+        }), { settleMs: 2500 });
     }
     return record(name, s, {
         'Board': s.hash === '#/' || s.hash === '',
@@ -318,6 +322,26 @@ const search = async () => {
         await sleep(1500);
     }
     s = await key('down-from-field', 'DOWN', (b, a) => ({ 'back to the result it came from': a.row === 0 }));
+    // The history and suggestions menu of the SearchBar (cycle 1, A1): typing in the field opens it
+    // under the field, over the first row. DOWN goes into it, and DOWN on its last entry goes on to
+    // the results and closes it.
+    s = await key('up-to-field-again', 'UP', (b, a) => ({ 'search field': a.focused.indexOf('input') === 0 }), { settleMs: 2000 });
+    evaluate('var input = document.activeElement; var set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set; set.call(input, "sta"); input.dispatchEvent(new Event("input", { bubbles: true })); return true;');
+    await sleep(2000);
+    if (state().keyboardVisible || state().keyboard === true) {
+        run('node', ['webos/tools/remote.mjs', '--port', REMOTE_PORT, '--delay', '0', 'BACK']);
+        await sleep(1500);
+    }
+    s = state();
+    s = record('menu-open', s, { 'menu open under the field, field focused': s.menuOpen && s.focused.indexOf('input') === 0 }, { screenshot: shot('menu-open') });
+    s = await key('down-into-menu', 'DOWN', (b, a) => ({ 'an entry of the menu': a.inMenu }), { screenshot: true });
+    for (let index = 1; index <= 10 && s.inMenu; index++) {
+        s = await key(`down-in-menu-${index}`, 'DOWN', (b, a) => (a.inMenu ? { 'next entry of the menu': a.title !== b.title } : {
+            'out of the menu, to the results': a.row !== null,
+            'menu closed': !a.menuOpen,
+        }));
+    }
+    record('menu-left', s, { 'left the menu to the results, menu closed': s.row !== null && !s.menuOpen }, { screenshot: shot('menu-left') });
     s = await backToBoard('back-to-board', (a) => ({ 'focus back on the search button': /submit-button-container/.test(a.focused) }));
 };
 

@@ -6,7 +6,7 @@
 // - LEFT/RIGHT move along the row; LEFT on the first item is left to the spatial navigation (the
 //   vertical nav bar), RIGHT on the last one stays.
 // - UP/DOWN go to the nearest row with items, to the item in the same column on screen. Message
-//   rows (an addon error) are skipped. A row still loading (a placeholder) is scrolled into view,
+//   rows (an addon error) are skipped. A row still loading (a placeholder) is brought into view,
 //   which makes useVisibleCatalogs load it, and the focus waits where it is. UP from the first row
 //   is left to the spatial navigation (the top bar).
 // - The focused row is scrolled to the top of the list, title included, and the strip just enough
@@ -73,6 +73,21 @@ const scrollStripTo = (strip, item) => {
     }
 };
 
+// A row still loading only has to show for useVisibleCatalogs to load it (a part of it is enough):
+// the list scrolls by the least for its near edge to come in by PEEK pixels. Scrolling it to the top
+// took the focused row's title out of sight, and the loading row often turns into an addon error.
+const PEEK = 8;
+
+const peekRow = (list, row) => {
+    const below = row.offsetTop - list.clientHeight + PEEK;
+    const above = row.offsetTop + row.offsetHeight - PEEK;
+    if (below > list.scrollTop) {
+        list.scrollTop = Math.min(below, list.scrollHeight - list.clientHeight);
+    } else if (above < list.scrollTop) {
+        list.scrollTop = Math.max(0, above);
+    }
+};
+
 const align = (element, list) => {
     const row = rowOf(element, list);
     if (!row) return;
@@ -83,7 +98,7 @@ const align = (element, list) => {
 };
 
 // Going up or down from `row`: the next row with items in that direction (an element to focus), a
-// loading row (scrolled into view, `true`), or null at the end of the list.
+// loading row (brought into view, `true`), or null at the end of the list.
 const verticalTarget = (list, row, dir, from) => {
     const all = rows(list);
     const step = dir === 'down' ? 1 : -1;
@@ -91,7 +106,7 @@ const verticalTarget = (list, row, dir, from) => {
         const items = itemsOf(all[index]);
         if (items.length > 0) return sameColumn(items, from);
         if (isPlaceholderRow(all[index])) {
-            scrollListTo(list, all[index]);
+            peekRow(list, all[index]);
             return true;
         }
     }

@@ -88,7 +88,8 @@ const isPointerVisible = (document) => document.documentElement.getAttribute('da
 const hasOverlay = (document) => document.querySelector('[class*="modal-container"], [role="dialog"]') !== null;
 
 // The behaviour shared by the three screens, on the screen's route content element. `screen`:
-// - initial(container): the element for the initial focus, or null while there is none yet;
+// - initial(container, { recovering }): the element for the initial focus, or null while there is
+//   none yet; `recovering` when it is for focus lost later (Search avoids its text field then);
 // - fallback(container): an element to focus meanwhile (optional); the initial one replaces it when
 //   it shows up, if the user did not move;
 // - navigate(target, dir, container, memory): an element to focus, `true` to swallow the press, or
@@ -108,9 +109,9 @@ const createScreenFocus = (container, screen, { window: win = window, timeout = 
     };
 
     // `from`: { last, path }, the memory or what it held when the route was left.
-    const target = (from = memory) => {
+    const target = (from, recovering) => {
         if (isFocusable(from.last) && container.contains(from.last)) return from.last;
-        return resolvePath(from.path, container) || screen.initial(container);
+        return resolvePath(from.path, container) || screen.initial(container, { recovering });
     };
 
     const stopWaiting = () => {
@@ -124,9 +125,10 @@ const createScreenFocus = (container, screen, { window: win = window, timeout = 
     // Focus for a screen with nothing focused; when the content is not there yet, waits for it
     // (DOM mutations under the screen), as long as nothing else took the focus in between: the
     // focus still lost, or still on the screen's fallback element.
-    const ensureFocus = () => {
+    // `recovering`: the focus was lost after the screen had it (not the initial focus).
+    const ensureFocus = ({ recovering = false } = {}) => {
         if (!isVisibleRoute(container) || !isFocusLost(document) || hasOverlay(document)) return false;
-        const element = target();
+        const element = target(memory, recovering);
         if (element) {
             stopWaiting();
             return focus(element);
@@ -140,7 +142,7 @@ const createScreenFocus = (container, screen, { window: win = window, timeout = 
                     stopWaiting();
                     return;
                 }
-                const next = fallback ? screen.initial(container) : target();
+                const next = fallback ? screen.initial(container, { recovering }) : target(memory, recovering);
                 if (next && isVisibleRoute(container)) {
                     stopWaiting();
                     focus(next);
@@ -162,9 +164,9 @@ const createScreenFocus = (container, screen, { window: win = window, timeout = 
     // own meanwhile (the search field of Search takes the focus whenever the route comes back).
     const restore = () => {
         if (!isVisibleRoute(container) || hasOverlay(document)) return false;
-        const element = target(left || memory);
+        const element = target(left || memory, true);
         left = null;
-        if (!element) return ensureFocus();
+        if (!element) return ensureFocus({ recovering: true });
         if (document.activeElement !== element) focus(element);
         if (screen.align && !isPointerVisible(document)) screen.align(element, container);
         return true;
@@ -185,14 +187,13 @@ const createScreenFocus = (container, screen, { window: win = window, timeout = 
     // the focus would stay on the body, where the arrows start over from the top of the page.
     // A blur with the element still shown (a click on the background in pointer mode) is left alone.
     // Chromium may also drop the focus of a removed element without any event: the next arrow
-    // (onWindowKeyDown) brings it back then.
+    // (onWindowKeyDown) brings it back then. The focus moving to another element is no loss: the
+    // check runs once it landed.
     const onFocusOut = (event) => {
         const element = event.target;
-        // The focus going to another element (relatedTarget) is a move, not a loss.
-        const next = event.relatedTarget;
-        if ((next && next.nodeType === 1) || element !== memory.last) return;
+        if (element !== memory.last) return;
         win.setTimeout(() => {
-            if (!isFocusable(element) && isFocusLost(document)) ensureFocus();
+            if (!isFocusable(element) && isFocusLost(document)) ensureFocus({ recovering: true });
         }, 0);
     };
 
@@ -209,7 +210,7 @@ const createScreenFocus = (container, screen, { window: win = window, timeout = 
     // starts from the top of the page (capture, so it runs before the polyfill's window listener).
     const onWindowKeyDown = (event) => {
         if (!ARROWS[event.keyCode] || event.defaultPrevented || !isFocusLost(document)) return;
-        if (ensureFocus()) event.preventDefault();
+        if (ensureFocus({ recovering: true })) event.preventDefault();
     };
 
     container.addEventListener('focusin', onFocusIn);
