@@ -12,7 +12,7 @@
 //   - the host state before and after (context.sh) and a phase mark per launch for the memory analysis.
 //
 //   webos/tools/emu-run --profile c8 --timeout 40 -- node webos/tests/perf/boot.mjs --ipk <ipk> --out <dir> \
-//       [--launches 5] [--warmup 0] [--variant default|wasm|wasm2js] [--quiet 25] [--no-diag]
+//       [--launches 5] [--warmup 1] [--variant default|wasm|wasm2js] [--quiet 25] [--no-diag]
 // --warmup N: N extra launches first, recorded with warmup:true and left out of the medians (the first launch
 // after an install runs without the Chromium code cache; see BASELINE-C8.md).
 // Writes <dir>/boot.jsonl (one line per launch) and <dir>/phases.jsonl (for mem-analyze.mjs).
@@ -27,7 +27,8 @@ const OUT = path.resolve(args.out || 'perf-boot');
 const LAUNCHES = Number(args.launches || 5);
 const VARIANT = args.variant || 'default';
 const QUIET_S = Number(args.quiet || 25);
-const WARMUP = Number(args.warmup || 0);
+// The first launch after an install runs without the Chromium code cache: it is recorded but never counted.
+const WARMUP = Number(args.warmup ?? 1);
 const { EMU_DEVICE: DEVICE, EMU_CDP_PORT: CDP_PORT } = process.env;
 if (!DEVICE || !CDP_PORT) {
     console.error('run inside webos/tools/emu-run');
@@ -38,6 +39,8 @@ if (!fs.existsSync(IPK)) {
     process.exit(2);
 }
 fs.mkdirSync(OUT, { recursive: true });
+fs.writeFileSync(path.join(OUT, 'boot.jsonl'), ''); // a fresh round, not the lines of an earlier one
+process.on('SIGTERM', () => process.exit(143));
 const phase = phaseWriter(path.join(OUT, 'phases.jsonl'));
 const ares = (...a) => { try { return execFileSync('ares-launch', ['-d', DEVICE, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); } catch (e) { return String(e.stderr || e.message); } };
 const context = (ref) => JSON.parse(execFileSync(path.join(REPO, 'webos/tests/perf/context.sh'), ref ? [] : ['--no-ref'], { encoding: 'utf8' }));
@@ -95,10 +98,12 @@ async function oneLaunch(k) {
     const session = await connect(CDP_PORT, APP_ID, 90000);
     const deadline = Date.now() + 240000;
     let state = null;
+    let firstRowSeenMs = null;
     while (Date.now() < deadline) {
         try {
             await session.evaluate(HOOKS, 15000);
             state = JSON.parse(await session.evaluate(STATE, 15000));
+            if (firstRowSeenMs === null && state.hooks && state.hooks.firstRowAt !== null) firstRowSeenMs = Date.now() - launchedAt;
             if (state.hooks && state.hooks.screenFullAt !== null) break;
         } catch (e) { /* the document is being replaced */ }
         await sleep(500);
@@ -110,6 +115,8 @@ async function oneLaunch(k) {
     record.firstRowAt = round(hooks.firstRowAt);
     record.screenFullAt = round(hooks.screenFullAt);
     record.hostLaunchToScreenFullMs = Date.now() - launchedAt;
+    // Host wall time from the ares-launch call to the first Board item (polled every 0.5 s, so up to ~0.5 s late).
+    record.hostLaunchToFirstRowMs = firstRowSeenMs;
     // Quiet window on the Board: the steady memory of this launch.
     phase(`idle-${k}`, { k });
     await sleep(QUIET_S * 1000);

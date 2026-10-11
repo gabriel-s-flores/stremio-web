@@ -189,6 +189,8 @@ export async function waitResult(session, name, timeoutMs = 180000) {
 // Appends one phase mark (host clock, ms) for the memory analysis.
 export function phaseWriter(file) {
     fs.mkdirSync(path.dirname(file), { recursive: true });
+    // A fresh file: reusing an output folder must not mix the phases of two rounds.
+    fs.writeFileSync(file, '');
     return (name, extra = {}) => fs.appendFileSync(file, `${JSON.stringify({ name, t: Date.now(), ...extra })}\n`);
 }
 

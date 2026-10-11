@@ -5,7 +5,7 @@ Este documento tem duas partes:
 1. **Medições do app no perfil C8 (F7.1)**: boot até o Board, navegação, memória (e o estouro de memória que mata o renderer), trocas de stream, o core em wasm2js × WASM e o tamanho do build. É a linha de base da F7.2 (otimizações), da F7.3 (resistência) e do G7.
 2. **O perfil C8 (F0.9)**: como a cota de CPU do emulador é aplicada, por que 40 %, e o baseline de CPU do próprio emulador.
 
-Base medida: `origin/webos` em `99936d365` (F4.1c; sem a F4.3 e sem a F5.6 mergeadas), IPK do `pnpm webos:package`, emulador webOS TV 4.0 com `--profile c8` (2 vCPUs, 1 GB, CPU limitada a 40 % de um núcleo do host). **O perfil estima, não reproduz a C8** (parte 2): trate todo tempo daqui como um limite inferior do que a TV vai mostrar; a calibração é da Fase 8. A rede é a de verdade (Cinemeta pela internet), então os tempos que esperam catálogo carregam a variância dela.
+Base medida: `origin/webos` em `99936d365` (F4.1c; sem a F4.3 e sem a F5.6 mergeadas), IPK do `pnpm webos:package`; as rodadas do ciclo 1 da revisão (A/B de variantes do core e a hipótese do OOM) são da base `608aee79c` (com F4.3, F5.6 e F3.7b mergeadas), emulador webOS TV 4.0 com `--profile c8` (2 vCPUs, 1 GB, CPU limitada a 40 % de um núcleo do host). **O perfil estima, não reproduz a C8** (parte 2): trate todo tempo daqui como um limite inferior do que a TV vai mostrar; a calibração é da Fase 8. A rede é a de verdade (Cinemeta pela internet), então os tempos que esperam catálogo carregam a variância dela.
 
 # Parte 1: medições do app (F7.1)
 
@@ -17,12 +17,12 @@ Base medida: `origin/webos` em `99936d365` (F4.1c; sem a F4.3 e sem a F5.6 merge
 | Memória do processo do app, estável no Board | ≤ 250 MB | **201–222 MB** (média 209 MB) | sim, com folga pequena |
 | Memória depois de passar por todas as telas | ≤ 250 MB | 245–255 MB (pico 262 MB) | no limite |
 | Memória no boot (pico) | – | 240–293 MB (mediana 272 MB) | acima de 250 MB por alguns segundos |
-| Memória com a lista de streams, a reprodução e as trocas | ≤ 250 MB, sem OOM | **salta para 500–580 MB e o kernel mata o renderer** em cerca de metade das rodadas com wasm2js (ver "O estouro de memória") | **não** |
+| Memória com a lista de streams, a reprodução e as trocas | ≤ 250 MB, sem OOM | com wasm2js **salta para 450–580 MB e o kernel mata o renderer**: **5 de 5** no A/B intercalado da base atual (WASM: 0 de 5) e 12 de 20 em todas as rodadas (ver "O estouro de memória") | **não** |
 
 O que mais importa para a F7.2, em ordem:
 
-1. **O estouro de memória** (+250–300 MB em segundos, OOM do kernel, o app reinicia): aconteceu em 6 de 12 rodadas com Detalhes + streams + reprodução em wasm2js, e em 0 de 6 com o core em WASM. Nada do que o app mede (heap JS, DOM, imagens, camadas, memória do core) cresce junto: é memória nativa do processo, com a thread do worker do core ocupada.
-2. **O core em wasm2js é o gargalo de CPU depois do boot**: abrir a lista de streams leva 7–15 s (WASM: 1,2–3,6 s) e o 1º play 33–47 s (WASM: 18–28 s). O WASM, por outro lado, gasta ~21 s compilando e só deixa o core pronto aos 28 s. No boot os dois empatam (Board em ~32 × ~35 s).
+1. **O estouro de memória** (+250–300 MB em segundos, OOM do kernel, o app reinicia): aconteceu em 5 de 5 rodadas de Detalhes + streams + 5 trocas com wasm2js na base atual (A/B intercalado com o WASM: 0 de 5, p = 0,008) e em 12 de 20 no total das condições; com o WASM, 0 de 11. Nada do que o app mede (heap JS, DOM, imagens, camadas, memória do core) cresce junto: é memória nativa do processo, e cada salto coincide com uma rajada das threads `DedicatedWorker` (o core) e `WorkerPool` (tarefas de fundo do V8), 2 a 8 vezes mais ocupadas nos saltos do que fora deles.
+2. **O core em wasm2js é o gargalo de CPU depois do boot**: abrir a lista de streams leva 7–15 s (WASM: 1,2–3,6 s) e o 1º play 33–47 s (WASM: 18–28 s). O WASM, por outro lado, gasta ~21 s compilando e só deixa o core pronto aos 29 s: no boot ele é **mais lento** (Board em 38 × 33 s no A/B intercalado, n = 8 × 8, p ≈ 0,05). Ver "wasm2js × WASM: o que muda".
 3. **O que enche o boot**: 5,7 s para carregar e interpretar o `main.js` (9 MB, antes do core começar), 4 s para o wasm2js (9 MB de JS no worker), ~16 s do Board montado ao 1º item no DOM (catálogos pela rede e o core em JS processando) mais ~4 s até o 1º quadro com item visível, e o resto em montar o Board.
 4. A tela de Detalhes leva 2,6 s para abrir na primeira vez (0,5 s nas seguintes) e 5,5 s para a prévia completa; Discover leva 6–8 s para mostrar itens.
 
@@ -45,7 +45,7 @@ Os números absolutos valem **para o perfil c8 deste host**; a C8 real pode ser 
 
 Cada lançamento a frio: `ares-launch --close`, 8 s de espera, `ares-launch`; sonda por CDP com as mesmas definições da F1.6/F3.6 (`coreReadyAt` = `window.core` atribuído; `firstRowAt` = 1º quadro com um item de catálogo do Board dentro da tela). `--warmup 1`: o 1º lançamento depois de instalar roda sem o cache de código do Chromium e é descartado. Linha do tempo na página (`performance.now()`, desde a criação da página):
 
-| Marco (mediana, faixa; rodadas calmas, n = 8) | wasm2js (padrão) | WASM (`webos.coreVariant=wasm`, n = 6) |
+| Marco (mediana, faixa; rodadas calmas, n = 8; reservas diferentes para as duas colunas, **sem A/B intercalado**: o A/B está na seção "O core") | wasm2js (padrão) | WASM (`webos.coreVariant=wasm`, n = 6) |
 |---|---|---|
 | `DOMContentLoaded` (parse do `main.js`, 9 MB) | 5,7 s (5,3–7,2) | 6,0 s (3,6–6,6) |
 | início do init do core | 5,9 s (5,5–7,4) | 6,3 s (4,0–6,9) |
@@ -53,7 +53,7 @@ Cada lançamento a frio: `ares-launch --close`, 8 s de espera, `ares-launch`; so
 | Board montado | 16,0 s (14,5–20,6) | 29,7 s (28,5–34,1) |
 | 1º item do Board no DOM (marca do app) | 28,6 s (22,6–34,0) | 35,0 s (32,0–38,4) |
 | **1º item do Board visível** (sonda) | **32,4 s** (26,6–37,1) | **35,2 s** (33,3–42,5) |
-| tempo de relógio do host, `ares-launch` → Board | 33,5 s (28,2–43,9) | 36,6 s (34,9–43,8) |
+| tempo de relógio do host, `ares-launch` → Board com 2 linhas com item (não o 1º item: esse tempo só passou a ser gravado depois, `hostLaunchToFirstRowMs`) | 33,5 s (28,2–43,9) | 36,6 s (34,9–43,8) |
 
 Do core pronto ao 1º item visível passam ~20 s com wasm2js e ~6 s com WASM: depois do init, o resto do boot (catálogos do Cinemeta, `getState` a cada evento, renderização) é CPU do core, e o wasm2js é bem mais lento que o WASM nisso. O 1º item do DOM (marca do app) aparece ~4 s antes do 1º quadro com item visível da sonda.
 
@@ -65,7 +65,7 @@ Comparação com as medições anteriores: F1.6 (c8, final): core 9,9–13,9 s, 
 
 **Conclusão: carga do host, não regressão de merge.** Três evidências:
 
-1. **A/B de dois builds, F1.6 (`1ea7951b3`) × base atual (`99936d365`), ordem alternada (ABBA) em 2 reservas, 8 lançamentos de cada** (carga do host 2,2–8,6; pool com 3 instâncias de outros): core pronto **12,7 s** (10,1–16,2) × **13,4 s** (12,6–16,1); 1º item do Board **30,3 s** (26,4–37,7) × **32,4 s** (29,5–41,8). A base atual leva ~2 s a mais na mediana, com as faixas se cobrindo por inteiro: **dentro do ruído** (± 4–5 s), e longe dos 7–15 s que separam os 41 s da F4.2 dos 26–34 s da F1.6. (`evidencias/ab/abba-7`, `abba-8`; os A/B anteriores da mesma dupla, de 5 rodadas em ordem fixa, deram 30,4 × 32,4 s nas 2 rodadas calmas de cada.)
+1. **A/B de dois builds, F1.6 (`1ea7951b3`) × base (`99936d365`), ordem alternada (ABBA) em 2 reservas, 8 lançamentos de cada** (carga do host 2,2–8,6): com o critério padrão de rodada calma, F1.6 8 de 8 calmos e base 7 de 8 (um lançamento terminou com carga 10,9): core pronto **12,7 s** (10,1–16,2) × **13,3 s** (12,6–16,1); 1º item do Board **30,3 s** (26,4–37,7) × **32,3 s** (29,5–41,8). (Com todos os lançamentos, `--include-busy`: 13,4 s e 32,4 s.) A base leva **~2 s (7 %) a mais** na mediana nos dois A/B (este e o de 5 rodadas em ordem fixa, 30,4 × 32,4 s), com as faixas se cobrindo por inteiro. **O que o teste exclui e o que não:** exclui um degrau de 7–15 s (que é o que separa os 41 s da F4.2 dos 26–34 s da F1.6: apareceria com folga neste ruído de ± 4–5 s); **não exclui uma diferença de ~2 s**, que pode ser real (os dois A/B a mostram) ou ruído. (`evidencias/ab/abba-7`, `abba-8`.)
 2. **Bisect pelos 7 merges intermediários: inconclusivo por merge, sem degrau visível.** IPKs de F3.5 (`8a56cc115`), F4.2 (`30822e777`), F5.4 (`02230c019`), F3.6 (`d09004acd`), F6.3 (`17ed8e57a`), F4.1a (`fb0528387`) e da base, todos construídos do commit e rodados na mesma sequência em 4 reservas (2 rodadas de 8 builds cada). Medianas do 1º item do Board nos lançamentos da 1ª metade de cada reserva (4 por build; a carga do host caía ao longo da sequência por causa de testes de outros agentes, então a posição está confundida com a carga): F1.6 45,9 s, F3.5 44,4 s, F4.2 42,0 s, F5.4 41,0 s, F3.6 38,7 s, F6.3 35,3 s, F4.1a 40,3 s, base 35,9 s, com 0 a 3 lançamentos calmos por build (os calmos: 26–38 s). Os números **diminuem** com a posição em vez de crescer com os merges, ou seja, o que se vê é a carga, não código. Como a sequência se repetiu igual nas 4 reservas, também não dá para separar a posição do build (ver o envelhecimento da VM abaixo). O ABBA acima é a prova limpa; o bisect fino por merge só vale a pena se o ABBA mostrar diferença, e não mostrou.
 3. **A carga explica os 41 s.** O mesmo IPK, na mesma máquina, em rodadas calmas e ocupadas: Board 32 s (calmas) × 39 s (carga 10–18) × 43–48 s (carga > 15, ver `boot-default-3`). As rodadas do A/B feitas com carga 15–21 deram 40–62 s para builds que, calmos, dão 29–35 s. A medição da F4.2 disse 33–47 s de ruído pelo mesmo motivo.
 
@@ -83,10 +83,31 @@ Tempos do carregador do core (`getCoreLoaderStatus()`, lidos na tela de diagnós
 | memória do core (buffer) | 7,2 MB | 6,8–7,3 MB |
 | core pronto na página | 12,8 s | 28,2 s |
 
-- **O wasm2js compila 5× mais depressa** (a compilação de WASM no V8 do Chromium 53 é lenta e não é guardada em cache), por isso o core fica pronto 15 s antes. **O WASM executa o core bem mais depressa**: lista de streams em 1,2–3,6 s (wasm2js: 7–15 s), 1º play em 18–28 s (33–47 s), e o ~6 s do core pronto ao Board (wasm2js: ~20 s). No boot, os dois empatam.
+- **O wasm2js fica pronto 15 s antes** (a compilação de WASM no V8 do Chromium 53 é lenta e não é guardada em cache). **O WASM executa o core bem mais depressa** depois: lista de streams em 1,2–3,6 s (wasm2js: 7–15 s), 1º play em 18–28 s (33–47 s), e ~6 s do core pronto ao Board (wasm2js: ~20 s). Somando as duas coisas, **no boot o WASM é ~3–6 s mais lento** (A/B intercalado abaixo).
 - O WASM **não** usa menos memória nesta medida: nos 25 s depois do Board o processo do app fica em média em 249 MB (wasm2js: 209 MB; `RssAnon` 170 × 125 MB: o código compilado e a compilação ainda não devolvida) e, 60 s depois, em 207–209 MB nos dois; na navegação completa termina em 244–265 MB (wasm2js: 238–248 MB). A F0.6 esperava o contrário (wasm2js com 2× a memória do WASM); o buffer do core, que seria onde está o 2×, é igual aqui (7 MB).
-- **O WASM não teve nenhum estouro de memória** nas 6 rodadas com Detalhes + streams + reprodução (duas delas com 5 trocas); o wasm2js teve em 6 de 12. Ver a seção seguinte.
+- **O WASM não teve nenhum estouro de memória** em 11 rodadas com Detalhes + streams + reprodução; o wasm2js, 12 de 20. Ver "O estouro de memória" e o quadro de decisão abaixo.
 - Compilação isolada do core MVP (`baseline-c8.sh`, perfil c8, host com carga alta nas duas rodadas): 28,1 s numa; a outra caiu no "timeout" já documentado na parte 2 (a compilação a 40 % de cota às vezes fica ociosa até o limite de 180 s).
+
+### wasm2js × WASM: o que muda, com n e condição (quadro de decisão para o G0)
+
+Todos os números são deste documento; as medidas de variante a variante, quando intercaladas, vêm de A/B com a mesma reserva ou com pares de reservas simultâneas (ABBA).
+
+| | wasm2js (padrão) | WASM | n e condição |
+|---|---|---|---|
+| **Boot: core pronto** | 13,4 s (11,2–18,2) | 29,4 s (25,8–31,2) | A/B intercalado (ABBA, 2 reservas, 8 lançamentos de cada, todos calmos, base `608aee79c`) |
+| **Boot: 1º item do Board** | 32,7 s (28,8–44,8) | **38,3 s (32,7–51,2)**: **+5,6 s (+17 %)** | o mesmo A/B; Mann-Whitney exato p = 0,050. (Reservas separadas, sem intercalar: 32,4 × 35,2 s, n = 8 × 6.) |
+| Compilação/carga do core | 3,9 s | 21,5 s | n = 8 e 6, calmos |
+| **OOM na reprodução com 5 trocas** (base atual, guarda da F5.6 mergeada) | **5 de 5** rodadas (todas calmas) | **0 de 5** (4 calmas) | 5 pares ABBA (pares de reservas, a ordem de início alternada; o pool às vezes atrasou uma do par, as cargas estão em `evidencias/c1/`): Fisher exato p = 0,008 |
+| OOM, condição anterior: base `99936d365`, guarda da F5.6 (branch) | 4 de 4 (2 calmas) | 0 de 2 (nenhuma calma: carga 9–29) | sem intercalar |
+| OOM, base `99936d365`, sem o guarda | 2 de 8 (4 calmas, 0 com OOM) | 0 de 4 (2 calmas) | sem intercalar; sem o guarda só toca 1 mídia |
+| **Todas as condições juntas** | **12 de 20** | **0 de 11** | Fisher p = 0,0014 (somar condições diferentes superestima; vale a direção, não o p) |
+| Latência das telas que dependem do core | 2,6 s (Detalhes), 7,4 s (Discover), 7–15 s (lista de streams) | 1,1 s, 5,3 s, 1,2–3,6 s | n = 3 × 2 (nav), 8 × 4 (lista de streams); sem intercalar |
+| Memória depois de 60 s no Board | 207–209 MB | 207–209 MB | nav (3 × 2); logo depois do boot o WASM tem +40 MB (compilação) |
+
+**Recomendação: padrão WASM? — ainda não (inconclusivo para trocar; a decisão é de custo-benefício).**
+- **A favor do WASM (confiança alta):** o OOM some (0 de 11 contra 12 de 20; 0 de 5 contra 5 de 5 no A/B), e as interações que dependem do core ficam 1,5–3× mais rápidas.
+- **Contra (confiança média):** o boot fica ~5,6 s mais lento (p ≈ 0,05, n = 8 × 8), e o core só fica pronto aos 29 s (13 s no wasm2js), 21 s deles em compilação sem cache.
+- **O que falta para decidir:** (a) rodadas do WASM com o host calmo na condição do OOM (as de guarda anteriores estavam em carga 9–29); (b) uma medida do que o usuário sente (Board em 38 s contra 33 s pesa menos do que um app que reinicia, mas só a TV diz se o OOM existe lá); (c) a causa do OOM no wasm2js: se for corrigível, o wasm2js (boot 5,6 s mais rápido) pode continuar o padrão. O boot de 38 s do WASM só é aceitável se a F7.2 não achar um jeito de compilar em segundo plano.
 
 ## Navegação
 
@@ -149,11 +170,11 @@ Reproduzido nas rodadas de Detalhes + streams + reprodução (addon de teste loc
 [  261.877023] Killed process 1245 (WebAppMgr) total-vm:1090832kB, anon-rss:522936kB, file-rss:0kB, shmem-rss:23532kB
 ```
 
-O app é relançado pelo sistema (RSS volta a ~170 MB, `core` indisponível por alguns segundos, o inspetor perde a página). Isso explica os "reinícios do app" e parte das travas do emulador vistas nas outras tarefas.
+O app é relançado pelo sistema (RSS volta a ~170 MB, `core` indisponível por alguns segundos, o inspetor perde a página). Isso pode explicar os "reinícios do app" e parte das travas do emulador vistas nas outras tarefas (não medi nas outras tarefas).
 
 ![Detalhes com a lista de streams, base 99936d365](baseline-c8/mem-play-head-1.svg)
 
-Frequência e momento, todas as rodadas com a lista de streams (addon de teste) e reprodução, perfil c8:
+Rodadas da base `99936d365` (as 18 do implementador; carga, calma e ABBA: ver o quadro de decisão acima, que traz o n por condição e a carga):
 
 | Rodada | Core | Guarda da F5.6 | Reproduções que tocaram | Pico do app | OOM matou o renderer | Salto passou de 400 MB na fase |
 |---|---|---|---|---|---|---|
@@ -176,16 +197,48 @@ Frequência e momento, todas as rodadas com a lista de streams (addon de teste) 
 | play-wasm-3 | WASM | não | 1 | 326 MB | não | – |
 | play-wasm-4 | WASM | não | 1 | 263 MB | não | – |
 
-Em resumo: **wasm2js 6 de 12 rodadas com OOM** (sem o guarda: 2 de 8, e `play-head-5` chegou a 371 MB sem ser morta; com o guarda: 4 de 4), **WASM 0 de 6**. As rodadas de depuração do início (`dbg1`…`dbg5`, mesma base) tiveram o mesmo padrão: 3 de 5 com salto acima de 490 MB.
+Em resumo (base `99936d365`): wasm2js 6 de 12 rodadas com OOM (sem o guarda: 2 de 8, e `play-head-5` chegou a 371 MB sem ser morta; com o guarda: 4 de 4), WASM 0 de 6. As rodadas de depuração do início (`dbg1`…`dbg5`) tiveram o mesmo padrão: 3 de 5 com salto acima de 490 MB.
 
-- Com o **wasm2js sem o guarda da F5.6** (base `99936d365`), o salto veio **4 a 8 s depois da 1ª requisição `/stream/…` do addon**, na 1ª abertura de Detalhes (rodadas `play-head-1` e `-4`; também `dbg3` e, ao voltar a Detalhes depois da reprodução, `dbg1` e `dbg5`).
-- Com o **guarda da F5.6** (que faz as 5 trocas funcionarem), o salto veio **depois da 4ª ou 5ª reprodução** (a ~290–380 s da 1ª requisição de streams), nas 4 rodadas: a memória fica estável em 235–255 MB durante as trocas e então dispara (`mem-play-f56-1.svg`).
+**A/B intercalado do ciclo 1 (base `608aee79c`, com o guarda da F5.6 mergeado, `evidencias/c1/oom-w*`).** Cinco pares de reservas wasm2js × WASM, a ordem de início alternando de um par para o outro, a reprodução com 5 trocas e o amostrador de threads ligado:
+
+| Rodada | Reproduções que tocaram | Pico do app (MB) | OOM matou o renderer | Fase do salto (> 400 MB) | Host no início → fim (carga / laço de CPU / pressão de CPU) | Calma |
+|---|---|---|---|---|---|---|
+| par 1: wasm | 6 | 326 | não | – | load 11/ref 585 ms/psi 27.4/pool 3 → load 2,9/ref 587 ms/psi 28.88/pool 3 | não |
+| par 1: wasm2js | 0 | 564 | **sim** | details | load 3/ref 584 ms/psi 50.99/pool 3 → load 4,2/ref 574 ms/psi 12.2/pool 3 | sim |
+| par 2: wasm | 6 | 293 | não | – | load 3,9/ref 586 ms/psi 17.72/pool 3 → load 4,1/ref 581 ms/psi 23.5/pool 3 | sim |
+| par 2: wasm2js | 6 | 511 | **sim** | after-playback-leave | load 5,3/ref 588 ms/psi 39.04/pool 3 → load 4,7/ref 572 ms/psi 41.31/pool 3 | sim |
+| par 3: wasm | 6 | 291 | não | – | load 2/ref 588 ms/psi 59.26/pool 3 → load 1,8/ref 582 ms/psi 41.54/pool 3 | sim |
+| par 3: wasm2js | 6 | 517 | **sim** | after-playback-leave | load 5,6/ref 582 ms/psi 40.31/pool 3 → load 3,9/ref 578 ms/psi 61.99/pool 3 | sim |
+| par 4: wasm | 6 | 320 | não | – | load 2,9/ref 592 ms/psi 64.76/pool 3 → load 5,4/ref 583 ms/psi 28.59/pool 3 | sim |
+| par 4: wasm2js | 5 | 449 | **sim** | switch-4-back | load 3,2/ref 640 ms/psi 64.83/pool 3 → load 6,9/ref 583 ms/psi 49.6/pool 3 | sim |
+| par 5: wasm | 6 | 274 | não | – | load 3,1/ref 587 ms/psi 56.9/pool 3 → load 1,3/ref 588 ms/psi 48.86/pool 3 | sim |
+| par 5: wasm2js | 6 | 527 | **sim** | after-playback-leave | load 5,2/ref 586 ms/psi 55.58/pool 3 → load 3,1/ref 576 ms/psi 42.13/pool 3 | sim |
+
+**wasm2js: 5 de 5 com OOM; WASM: 0 de 5** (Fisher exato p = 0,008). O momento do salto varia (`details` na 1ª abertura de Detalhes, `after-playback-leave`, `switch-4-back`), o que combina com um efeito acumulado de trabalho do core e não com um passo específico da UI. As 3 rodadas soltas do mesmo IPK com wasm2js (as da prova do `perf.mjs`, `evidencias/c1/perf-oom-proof*/`) deram **1 morte** (`switch-5-start`, pico de 480 MB) e 2 rodadas sem morte mas com saltos transitórios a 410–415 MB: 6 mortes em 8 rodadas wasm2js dessa base. Os números da tabela e das conclusões usam só o A/B pareado; as soltas ficam como confirmação.
 
 ![5 trocas de stream com o guarda e o OOM no fim](baseline-c8/mem-play-f56-1.svg)
 
-**O que cresce.** Medido no momento do salto (`snapshots` das rodadas `play-head-4`/`play-f56-*`): `RssAnon` de 117 → 417 MB (+300 MB), `RssFile` e `RssShmem` estáveis; **heap do V8 da página 33–43 MB (não muda)**, **memória do core (buffer wasm) 7,1 MB (não muda)**, DOM 735–860 nós e 55–59 imagens (~45 MB estimados decodificados) **(não mudam)**, **camadas do compositor: 10, uma só com conteúdo (1920×1080, 8 MB) (não muda)**. Os ticks de CPU por thread do renderer durante o salto (rodada `play-head-4`, entre o Board parado e a lista de streams): o `DedicatedWorker` (o worker do core, wasm2js) +14,7 s de CPU, a thread principal +6,4 s, o `WorkerPool` (raster/decodificação) +7,5 s. O OOM é disparado pelo `WorkerPool`, que pede páginas ao kernel.
+### Os saltos são transitórios, e coincidem com rajadas de threads do V8
 
-Ou seja: **o crescimento é memória nativa fora do heap da página, do core e do compositor**. Sobram o heap do V8 **do próprio worker do core** (um isolate à parte: o Chromium 53 não expõe o `performance.memory` do worker) e caches nativos de decodificação/raster. Dois fatos apontam para o worker do wasm2js: (1) com o core em **WASM, 0 estouros em 6 rodadas** (duas com as 5 trocas), contra 6 em 12 com wasm2js, e (2) o `DedicatedWorker` é a thread que mais gasta CPU durante o salto. **Não está provado**; o experimento para a F7.2 é instrumentar o worker (por exemplo, medir o heap dele com um `HeapProfiler` pela porta de inspeção do worker, que `Worker.sendMessageToWorker` alcança) ou comparar wasm2js com WASM com a mesma instrumentação.
+- **Os saltos são transitórios**: em `play-head-5` o app foi a 371 MB (`RssAnon` 260 MB) no `play-1-start` e voltou a 243 MB no mesmo processo, sem ser morto; em `perf-oom-proof` foi a 415 e 411 MB (`switch-2-hold`, `switch-4-hold`) e voltou a 220 MB. O kernel só mata quando o salto passa do que o convidado de 1 GB aguenta naquele instante. Isso **não** é um vazamento contínuo do heap de alguém: é memória alocada e devolvida em segundos.
+- **Quem trabalha durante os saltos** (`webos/tests/perf/thread-bursts.mjs`, ticks de CPU por thread do renderer amostrados a cada 2 s junto com o RSS, `mem.threads.log`): nas 5 rodadas wasm2js do A/B, o `DedicatedWorker` (o worker do core) gasta 0,35–0,62 s de CPU por segundo dentro dos saltos contra 0,07–0,21 fora, e o **`WorkerPool` 0,13–0,49 contra 0,03–0,07 (2 a 8 vezes; 6 a 8 vezes em 3 das 5 rodadas)**; a thread de raster (`CompositorTileW`) fica em 0,00–0,01 nos dois. Nos saltos de **boot** do wasm2js (carregar os 9 MB de JS do core) e nos do **WASM no boot** (compilar o `.wasm`), a assinatura é a mesma: `DedicatedWorker` + `WorkerPool` ocupados enquanto o RSS sobe 40–100 MB em 2 s.
+- **Quando** (rodadas da base `99936d365`): sem o guarda da F5.6, o salto veio **4 a 8 s depois da 1ª requisição `/stream/…` do addon**, na 1ª abertura de Detalhes (`play-head-1` e `-4`; também `dbg3` e, ao voltar a Detalhes depois da reprodução, `dbg1` e `dbg5`); com o guarda, **depois da 4ª ou 5ª reprodução** (a ~290–380 s da 1ª requisição), nas 4 rodadas, com a memória estável em 235–255 MB nas trocas antes disso (`mem-play-f56-1.svg`). No A/B da base atual, o salto veio em `details`, `after-playback-leave` (três vezes) e `switch-4-back`.
+- **O que é o `WorkerPool`.** O texto anterior o chamava de "raster/decodificação": estava errado. Os dados separam as duas coisas: o raster roda nas threads `CompositorTileW` (que ficam quase paradas nos saltos), e o `WorkerPool` é, no Chromium dessa época, onde o V8 posta as **tarefas de fundo de todos os isolates** (recompilação otimizadora concorrente, varredura e compactação do GC), inclusive o do worker do core. (Isso último é o que sei do código do Chromium 53, não medi; o que os dados mostram é a coincidência e a separação das threads.) "O OOM é disparado pelo `WorkerPool`" também não prova nada: quem pede a página na hora do kill não é necessariamente quem gastou a memória (em outra rodada foi o `connmand`).
+- **O que cresce, no momento do salto** (`snapshots` das rodadas `play-head-4` e `play-f56-*`): `RssAnon` +300 MB; `RssFile`, `RssShmem`, o heap do V8 **da página** (33–43 MB), a memória do core (buffer wasm, 7,1 MB), o DOM, as imagens e as camadas do compositor (10, uma com conteúdo, 8 MB) **não mudam**.
+
+### Hipóteses (de peso igual) e o experimento para a F7.2
+
+Nenhuma está provada. As três que cabem nos dados:
+
+1. **Memória de compilação e de GC do V8 nas threads `WorkerPool`, provocada pelo código do wasm2js.** O arquivo do core tem 9 MB numa linha só e ~4.600 funções, algumas enormes: a recompilação otimizadora concorrente (zona de compilação) e a varredura/compactação do GC alocam memória nativa em picos e a devolvem depois, o que casa com saltos transitórios que só matam quando coincidem com o resto. O WASM é compilado uma vez (os 21 s do boot) e não é recompilado, o que casa com **0 de 11**.
+2. **Crescimento do heap JS do próprio worker do core** (um isolate à parte; o Chromium 53 não expõe o `performance.memory` do worker): casa pior com saltos que voltam, mas não está descartada.
+3. **Caches nativos de decodificação** (imagens, mídia): casa pior (o `CompositorTileW`, o raster, fica parado; as imagens estimadas não mudam).
+
+Experimento, de forma que **enxergue memória nativa** (um `HeapProfiler` só vê o heap JS e poderia inocentar o worker por engano):
+- (a) o que já está pronto: `PERF_THREADS=1` no `run.sh` + `thread-bursts.mjs` (ticks por thread e RSS a cada 2 s). Resultado acima: os saltos coincidem com `DedicatedWorker` + `WorkerPool`.
+- (b) o próximo passo barato: repetir o mesmo cenário com o V8 do worker sem recompilação concorrente (as flags do V8 `--no-concurrent-recompilation` ou `--max-old-space-size` pela linha de comando do renderer, que o WAM aceita em `--js-flags`) e ver se o salto some; se sumir, é a hipótese 1.
+- (c) comparar com o `HeapProfiler` do worker (`Worker.sendMessageToWorker`, que o inspetor alcança): se o heap JS **não** cresce e o RSS sim, a memória é nativa (hipótese 1 ou 3); se cresce, hipótese 2.
+- (d) se der, uma página de teste só com o core wasm2js repetindo a sequência de chamadas da lista de streams, para tirar a UI da conta.
 
 Não reproduziu (e vale como controle): 8 ciclos de Detalhes ↔ Board com o addon por `location.hash`, sem reprodução (`streams-cycle`, wasm2js e WASM), 4 ciclos sem addon, e as 3 passagens de navegação completa sem addon.
 
@@ -228,7 +281,7 @@ O IPK leva os dois cores (wasm2js e WASM: 13,7 MB descomprimidos); trocar a vari
 
 ## O que a F7.2 deve atacar (ordem sugerida)
 
-1. **O estouro de memória** (impede a meta e a F7.3): instrumentar o heap do worker do core, comparar wasm2js × WASM com a mesma instrumentação, e procurar o que dispara 4–8 s depois da 1ª resposta de `/stream/…`. Se o WASM resolve de fato, o problema é só chegar nele sem os 21 s de compilação (carregar o wasm2js primeiro e trocar por WASM compilado em segundo plano, ou reduzir o `.wasm`).
+1. **O estouro de memória** (impede a meta e a F7.3): o experimento (b) da seção "Hipóteses" (V8 do worker sem recompilação concorrente) e o `HeapProfiler` do worker (c); depois decidir o padrão do core com o quadro "wasm2js × WASM" na mão. Se o WASM for o caminho, o problema é só chegar nele sem os 21 s de compilação sem cache (carregar o wasm2js primeiro e trocar por WASM compilado em segundo plano, ou reduzir o `.wasm`).
 2. **O boot de ~32 s** (meta 10 s): 5,7 s de parse do `main.js` (9 MB; dividir em chunks e adiar o que o Board não usa), 4 s do wasm2js, ~20 s do core pronto até o 1º item (o core em JS processando catálogos), mais a rede. Qualquer ganho no core em JS aparece dobrado: boot e todas as interações.
 3. **`shmem`** crescendo ~36 MB por passeio de navegação (F7.3).
 4. Conferir na Fase 8 se a decodificação por hardware e a CPU real mudam a ordem.

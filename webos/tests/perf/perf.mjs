@@ -13,7 +13,10 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { REPO, parseArgs, sleep } from './lib.mjs';
+
+const { isCalm: isCalmWith, roundVerdict } = createRequire(import.meta.url)('./rounds.js');
 
 const args = parseArgs(process.argv.slice(2));
 if (!args.ipk || !args.out) {
@@ -34,7 +37,8 @@ const SCENARIOS = (args.scenarios || 'boot,boot-wasm,boot-wasm2js,nav,play').spl
 fs.mkdirSync(OUT, { recursive: true });
 const log = (...a) => console.log(`[${new Date().toTimeString().slice(0, 8)}]`, ...a);
 const context = (ref = true) => JSON.parse(execFileSync(path.join(REPO, 'webos/tests/perf/context.sh'), ref ? [] : ['--no-ref'], { encoding: 'utf8' }));
-const isCalm = (c) => c.load1 <= MAX_LOAD && !(c.psiCpu > MAX_PSI) && (c.hostRefMs === null || c.hostRefMs <= MAX_REF);
+const LIMITS = { maxLoad: MAX_LOAD, maxRef: MAX_REF, maxPsi: MAX_PSI };
+const isCalm = (c) => isCalmWith(c, LIMITS);
 
 async function waitCalm() {
     const deadline = Date.now() + WAIT_CALM_MIN * 60000;
@@ -46,30 +50,23 @@ async function waitCalm() {
     }
 }
 
+// The boot scenarios drop the first launch after an install (--warmup 1: no Chromium code cache yet).
 function scenarioCommand(name, dir) {
     const run = path.join(REPO, 'webos/tests/perf/run.sh');
-    if (name === 'boot') return { timeout: 45, cmd: [run, dir, 'boot', '--ipk', IPK, '--launches', String(LAUNCHES)] };
-    if (name === 'boot-wasm') return { timeout: 45, cmd: [run, dir, 'boot', '--ipk', IPK, '--launches', String(LAUNCHES), '--variant', 'wasm'] };
-    if (name === 'boot-wasm2js') return { timeout: 45, cmd: [run, dir, 'boot', '--ipk', IPK, '--launches', String(LAUNCHES), '--variant', 'wasm2js'] };
+    const boot = (...extra) => ({ timeout: 45, cmd: [run, dir, 'boot', '--ipk', IPK, '--launches', String(LAUNCHES), '--warmup', '1', ...extra] });
+    if (name === 'boot') return boot();
+    if (name === 'boot-wasm') return boot('--variant', 'wasm');
+    if (name === 'boot-wasm2js') return boot('--variant', 'wasm2js');
     if (name === 'nav') return { timeout: 50, cmd: [run, dir, 'nav', '--ipk', IPK] };
     if (name === 'play') return { timeout: 50, cmd: [run, dir, 'play', '--ipk', IPK, '--switches', '5'] };
     throw new Error(`unknown scenario ${name}`);
 }
 
-// Is a finished round calm (host state before and after) and complete?
+// Is a finished round usable (calm host at both ends; for boot, enough good launches)? A play/nav round that
+// died because the kernel killed the renderer (OOM) is a RESULT, not a failure: it is kept and flagged.
 function verdict(name, dir) {
-    const read = (f) => (fs.existsSync(path.join(dir, f)) ? JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) : null);
-    if (name.startsWith('boot')) {
-        const f = path.join(dir, 'boot.jsonl');
-        if (!fs.existsSync(f)) return { ok: false, why: 'no boot.jsonl' };
-        const rows = fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
-        const bad = rows.filter((r) => !r.ok || !isCalm(r.ctxBefore) || !isCalm(r.ctxAfter));
-        return { ok: rows.length >= LAUNCHES && bad.length === 0, why: `${rows.length - bad.length}/${rows.length} calm launches` };
-    }
-    const doc = read(name === 'nav' ? 'nav.json' : 'play.json');
-    if (!doc) return { ok: false, why: 'no result file' };
-    const calm = isCalm(doc.ctxStart) && isCalm(doc.ctxEnd);
-    return { ok: calm, why: `load ${doc.ctxStart.load1} -> ${doc.ctxEnd.load1}` };
+    const kind = name.startsWith('boot') ? 'boot' : name;
+    return roundVerdict(kind, dir, { limits: LIMITS, launches: LAUNCHES });
 }
 
 const rounds = [];
@@ -81,14 +78,21 @@ for (let round = 1; round <= ROUNDS; round++) {
             log(`${name} round ${round} attempt ${attempt + 1}: load ${before.load1}, ref ${before.hostRefMs} ms, pool ${before.poolBusy}`);
             const { timeout, cmd } = scenarioCommand(name, dir);
             const res = spawnSync(path.join(REPO, 'webos/tools/emu-run'), ['--profile', PROFILE, '--timeout', String(timeout), '--', ...cmd], { stdio: ['ignore', 'inherit', 'inherit'] });
-            const v = fs.existsSync(dir) ? verdict(name, dir) : { ok: false, why: 'no output' };
+            let v;
+            try {
+                v = fs.existsSync(dir) ? verdict(name, dir) : { ok: false, calm: false, why: 'no output' };
+            } catch (e) {
+                v = { ok: false, calm: false, why: `verdict failed: ${e.message}` };
+            }
             rounds.push({ name, round, attempt, dir, exit: res.status, ...v });
-            log(`${name} round ${round}: exit ${res.status}, ${v.ok ? 'CALM' : 'DISQUALIFIED'} (${v.why})`);
+            log(`${name} round ${round}: exit ${res.status}, ${v.ok ? (v.oom ? 'KEPT, the renderer was OOM-killed' : 'CALM') : 'DISQUALIFIED'} (${v.why})`);
             if (v.ok) break;
         }
     }
 }
 fs.writeFileSync(path.join(OUT, 'rounds.json'), `${JSON.stringify(rounds, null, 2)}\n`);
+const killed = rounds.filter((r) => r.oom);
+log(`rounds: ${rounds.length} run, ${rounds.filter((r) => r.ok).length} kept, ${rounds.filter((r) => !r.ok).length} disqualified, ${killed.length} with the renderer OOM-killed${killed.length ? ` (${killed.map((r) => `${path.basename(r.dir)}: jump in ${r.oomPhase || '?'}, peak ${r.peakMB} MB, host ${r.calm ? 'calm' : 'busy'}`).join('; ')})` : ''}`);
 const dirs = rounds.map((r) => r.dir).filter((d) => fs.existsSync(d));
 const summary = spawnSync('node', [path.join(REPO, 'webos/tests/perf/summarize.mjs'), '--max-load', String(MAX_LOAD), '--max-ref', String(MAX_REF), ...(MAX_PSI === Infinity ? [] : ['--max-psi', String(MAX_PSI)]), '--json', path.join(OUT, 'summary.json'), ...dirs], { encoding: 'utf8' });
 fs.writeFileSync(path.join(OUT, 'summary.md'), summary.stdout);

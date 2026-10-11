@@ -31,7 +31,8 @@ if (!DEVICE || !CDP_PORT) {
 }
 fs.mkdirSync(OUT, { recursive: true });
 const phase = phaseWriter(path.join(OUT, 'phases.jsonl'));
-const context = () => JSON.parse(execFileSync(path.join(REPO, 'webos/tests/perf/context.sh'), ['--no-ref'], { encoding: 'utf8' }));
+// ref: with the CPU reference loop (2 s of one host core: only between steps); without it a state is not "calm".
+const context = (ref = false) => JSON.parse(execFileSync(path.join(REPO, 'webos/tests/perf/context.sh'), ref ? [] : ['--no-ref'], { encoding: 'utf8' }));
 const log = (...a) => console.log(`[${new Date().toTimeString().slice(0, 8)}]`, ...a);
 
 // The streams of the movie, as the list shows them (file name = first line of the description).
@@ -50,6 +51,7 @@ const HEAP = `(function(){ return performance.memory ? Math.round(performance.me
 
 const events = [];
 const snapshots = [];
+process.on('SIGTERM', () => process.exit(143)); // the emu-run timeout: the exit handler below still writes what was measured
 // If the run dies half way (the renderer killed by the OOM, a CDP timeout), what was measured so far is kept.
 let finished = false;
 process.on('exit', (code) => {
@@ -115,7 +117,7 @@ for (let i = 0; i < 100 && !fs.existsSync(info); i++) await sleep(200);
 if (!fs.existsSync(info)) throw new Error('the test addon did not start');
 const { manifestUrl } = JSON.parse(fs.readFileSync(info, 'utf8'));
 
-const ctxStart = context();
+const ctxStart = context(true);
 await sleep(6000);
 async function boot() {
     execFileSync('ares-launch', ['-d', DEVICE, APP_ID], { stdio: 'ignore' });
@@ -222,7 +224,7 @@ await sleep(30000);
 await snap('leave-2-board+38s');
 phase('end');
 const final = JSON.parse(await evaluate('JSON.stringify({ hash: location.hash, errors: window.__f71.errors })'));
-const ctxEnd = context();
+const ctxEnd = context(true);
 fs.writeFileSync(path.join(OUT, 'play.json'), `${JSON.stringify({ ipk: path.basename(IPK), profile: process.env.EMU_PROFILE || null, instance: INSTANCE, switches: SWITCHES, holdS: HOLD_S, variant: VARIANT, streamsList: listShown, ctxStart, ctxEnd, events, snapshots, timeline: JSON.parse(await evaluate('JSON.stringify(window.__f71.timeline)')), clockOffsetMs, final }, null, 2)}\n`);
 finished = true;
 session.close();

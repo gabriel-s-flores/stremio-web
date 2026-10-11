@@ -1,24 +1,31 @@
 # perf: medições do app no perfil C8 (F7.1)
 
-Refaz, no emulador com `--profile c8`, as medições de [`docs/BASELINE-C8.md`](../../docs/BASELINE-C8.md): boot até o Board, navegação, memória, trocas de stream e compilação do core. Serve à F7.2 (otimizações), à F7.3 (resistência) e ao G7. Tudo roda **dentro de uma reserva do pool** (`webos/tools/emu-run`), uma reserva por cenário, com o app empacotado (`pnpm webos:package`).
+Refaz, no emulador com `--profile c8`, as medições de [`docs/BASELINE-C8.md`](../../docs/BASELINE-C8.md): boot até o Board, navegação, memória e trocas de stream (`perf.mjs`), mais o A/B de builds e de variantes do core, os ciclos de Detalhes e o tamanho do build (scripts à parte, abaixo). A compilação isolada do core MVP é a `webos/tools/baseline-c8.sh` (F0.9), fora do `perf.mjs`; os tempos do carregador do core (wasm2js × WASM) saem do `boot`. Serve à F7.2 (otimizações), à F7.3 (resistência) e ao G7. Tudo roda **dentro de uma reserva do pool** (`webos/tools/emu-run`), uma reserva por cenário, com o app empacotado (`pnpm webos:package`).
 
 ```bash
-# Tudo, com repetição das rodadas em host ocupado e resumo no fim (uma reserva por cenário):
+# boot (as 2 variantes do core), nav e play, com repetição das rodadas em host ocupado e resumo no fim (uma reserva por cenário).
+# Uma rodada de reprodução cujo renderer o kernel mata (OOM) é um RESULTADO: fica no resumo, com a fase do salto e o pico.
 node webos/tests/perf/perf.mjs --ipk dist-webos/<id>_<versão>_all.ipk --out ~/webos-tv-sdk/run/perf-1 --rounds 3
 
 # Um cenário só (reserva à mão):
-webos/tools/emu-run --profile c8 --timeout 45 -- webos/tests/perf/run.sh <saída> boot --ipk <ipk> --launches 4 --warmup 1
-webos/tools/emu-run --profile c8 --timeout 45 -- webos/tests/perf/run.sh <saída> boot --ipk <ipk> --launches 3 --warmup 1 --variant wasm
+webos/tools/emu-run --profile c8 --timeout 45 -- webos/tests/perf/run.sh <saída> boot --ipk <ipk> --launches 4          # --warmup 1 é o padrão: o 1º lançamento depois de instalar não conta
+webos/tools/emu-run --profile c8 --timeout 45 -- webos/tests/perf/run.sh <saída> boot --ipk <ipk> --launches 3 --variant wasm
 webos/tools/emu-run --profile c8 --timeout 40 -- webos/tests/perf/run.sh <saída> nav  --ipk <ipk>
 webos/tools/emu-run --profile c8 --timeout 50 -- webos/tests/perf/run.sh <saída> play --ipk <ipk> --switches 5
 webos/tools/emu-run --profile c8 --timeout 45 -- webos/tests/perf/run.sh <saída> streams-cycle --ipk <ipk> [--no-addon] [--variant wasm]
 
 # A/B (ou bisect) de dois ou mais IPKs, intercalados NA MESMA reserva (a única comparação justa num host compartilhado):
-webos/tests/perf/build-ipk.sh <commit> <saída.ipk>             # IPK de qualquer commit, numa worktree descartável
-webos/tools/emu-run --profile c8 --timeout 58 -- env AB_WARMUP=1 webos/tests/perf/ab-boot.sh <saída> <rodadas> <a.ipk> <b.ipk> ...
+webos/tests/perf/build-ipk.sh [--keep] <commit> <saída.ipk>    # IPK de qualquer commit; a worktree é removida no fim
+webos/tools/emu-run --profile c8 --timeout 58 -- webos/tests/perf/ab-boot.sh <saída> <rodadas> <a.ipk> <b.ipk> ...
+#   a entrada pode ser <ipk>:<variante> (wasm | wasm2js): o mesmo IPK com as duas variantes do core.
+#   As rodadas pares percorrem a lista ao contrário (ABBA); avisa acima de 8 instalações por reserva.
+
+# Quem move a memória? Amostra os ticks de CPU das threads do renderer junto com o RSS (PERF_THREADS=1 no run.sh) e procura os saltos:
+PERF_THREADS=1 webos/tools/emu-run --profile c8 --timeout 50 -- webos/tests/perf/run.sh <saída> play --ipk <ipk> --switches 5
+node webos/tests/perf/thread-bursts.mjs <saída>/mem.log <saída>/mem.threads.log <saída>/phases.jsonl
 
 # Tabelas (mediana, faixa, rodadas descartadas por carga) e tamanhos:
-node webos/tests/perf/summarize.mjs [--max-load 8] [--max-ref 850] <pasta>...
+node webos/tests/perf/summarize.mjs [--max-load 8] [--max-ref 850] [--max-psi 60] <pasta>...   # boot (com os marcos do app e do core), nav, play (uma linha por rodada, OOM por condição), streams-cycle
 node webos/tests/perf/size.mjs --dir build-webos --ipk <ipk> --compare build
 node webos/tests/perf/mem-chart.mjs <pasta>/mem.log <pasta>/phases.jsonl <saída>.svg "<título>"
 ```
@@ -49,3 +56,7 @@ Para comparar duas versões, use `ab-boot.sh` (mesma reserva, intercalado), nunc
 - **O primeiro lançamento depois de instalar é mais lento** (sem o cache de código do Chromium): por isso `--warmup`.
 - **Instalar por cima de outro build às vezes falha (255)**: `boot.mjs` remove o app antes de instalar.
 - `/proc/<pid>/smaps` não é legível pelo usuário `developer`: a composição do RSS vem de `/proc/<pid>/status` (kernel 4.8: `RssAnon`, `RssFile`, `RssShmem`).
+
+## O que está preso a esta máquina
+
+`$HOME/webos-tv-sdk/run/ares_webos_emul` (a chave SSH do emulador) e `~/webos-tv-sdk/run/` (pool, travas, IPKs e saídas) são fixos nos scripts; o caminho do cgroup da cota (`context.sh`) é o do flatpak do GNOME Boxes sob o systemd do usuário; `--max-load 8` é o número de CPUs deste host (use o `nproc` de outro); o laço de referência de CPU (`hostRefMs`, ≈ 580 ms) é deste i7-7700HQ. Outra máquina precisa recalibrar essas quatro coisas antes de reaproveitar os limiares.

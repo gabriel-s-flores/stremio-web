@@ -4,8 +4,16 @@
 #   webos/tests/emu-run/tools-fixes.sh
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-TOOLS="$HERE/../../tools"
+TOOLS="${TOOLS_DIR:-$HERE/../../tools}"   # TOOLS_DIR: another copy of webos/tools (the negative control uses the old scripts)
 fail=0
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"; kill $(jobs -p) 2>/dev/null' EXIT
+# A flatpak that only records that it was called: the checks below must never reach a real QEMU (an old
+# build of the check could start one on instance 9, outside the pool locks, when the validation regressed).
+mkdir -p "$TMP/bin"
+printf '#!/bin/sh\necho "$@" >> "%s/flatpak-calls"\nexit 1\n' "$TMP" > "$TMP/bin/flatpak"
+chmod +x "$TMP/bin/flatpak"
+export PATH="$TMP/bin:$PATH"
 check() { if [[ "$2" == ok ]]; then echo "ok    $1"; else echo "FAIL  $1: $2"; fail=1; fi; }
 
 # 1. The help prints the whole comment header (it used to be cut by a fixed `sed 2,Np`).
@@ -16,13 +24,12 @@ help="$("$TOOLS/emulator-qemu.sh" -i 9 not-a-command 2>&1 || true)"
 # 2. Quota 0 is refused before QEMU starts (systemd would refuse it only after the VM was up).
 for q in 0 00 abc -5 ''; do
     [[ -z "$q" ]] && continue
+    rm -f "$TMP/flatpak-calls"
     out="$(EMU_CPU_QUOTA=$q "$TOOLS/emulator-qemu.sh" -i 9 start headless --profile c8 2>&1)"; rc=$?
-    if [[ $rc -ne 0 && "$out" == *'inteiro maior que zero'* ]] && [[ "$("$TOOLS/emulator-qemu.sh" -i 9 status 2>&1)" == *parada* ]]; then check "quota '$q' refused, no QEMU" ok; else check "quota '$q' refused, no QEMU" "rc=$rc out=$out"; fi
+    if [[ $rc -ne 0 && "$out" == *'inteiro maior que zero'* && ! -e "$TMP/flatpak-calls" ]]; then check "quota '$q' refused before any flatpak/QEMU call" ok; else check "quota '$q' refused before any flatpak/QEMU call" "rc=$rc out=$out calls=$(cat "$TMP/flatpak-calls" 2>/dev/null)"; fi
 done
 
 # 3. qmp.py removes its .ppm.tmp even when the conversion fails (fake QMP server, bad and good PPM).
-TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"; kill $(jobs -p) 2>/dev/null' EXIT
 for mode in bad good; do
     rm -f "$TMP/s.sock" "$TMP/out.png"
     python3 -I - "$mode" "$TMP/s.sock" > /dev/null <<'PY' &

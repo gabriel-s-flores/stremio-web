@@ -86,6 +86,7 @@ const HELPERS = `(function () {
 
 const steps = [];
 const snapshots = [];
+process.on('SIGTERM', () => process.exit(143)); // the emu-run timeout: the exit handler below still writes what was measured
 // If the run dies half way (the renderer killed by the OOM, a CDP timeout), what was measured so far is kept.
 let finished = false;
 process.on('exit', (code) => {
