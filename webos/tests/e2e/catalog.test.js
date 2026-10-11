@@ -81,7 +81,7 @@ describe('e2e set: the addon answer', () => {
 });
 
 describe('e2e set: C8 order and labels', () => {
-    it('names only: the REMUX with DV P5 + TrueHD goes from first to last, the rest keeps the addon order', () => {
+    it('names only: the REMUX with DV P5 + TrueHD goes from first to last, the unnamed REMUX stays near the top', () => {
         playable.forEach((stream) => {
             const [tier, ...codes] = entryOf(stream).expect.name;
             const result = rules.evaluate({ stream });
@@ -89,12 +89,12 @@ describe('e2e set: C8 order and labels', () => {
             expect(codesOf(result)).toEqual(expect.arrayContaining(codes));
         });
         const ranked = ranking.createRanker({ rules }).rank(playable);
-        expect(idsOf(ranked)).toEqual(['e2e-uhd-hdr10', 'e2e-fhd-h264-aac', 'e2e-multi-subs', 'e2e-expired', 'e2e-remux-dv-p5-truehd']);
+        expect(idsOf(ranked)).toEqual(['e2e-uhd-hdr10', 'e2e-remux-unnamed', 'e2e-fhd-h264-aac', 'e2e-multi-subs', 'e2e-expired', 'e2e-remux-dv-p5-truehd']);
         expect(ranking.describe(ranked[0]).labels.map((label) => label.text)).toEqual(['HDR10']);
-        expect(ranking.describe(ranked[4]).warnings.map((warning) => warning.text)).toEqual(['DV P5: cores erradas', 'TrueHD: pode ficar sem som']);
+        expect(ranking.describe(ranked[5]).warnings.map((warning) => warning.text)).toEqual(['DV P5: cores erradas', 'TrueHD: pode ficar sem som']);
     });
 
-    it('with the probe: same order, the REMUX warning confirmed by the file', () => {
+    it('with the probe: the unnamed REMUX goes down (DV P5 + TrueHD found in the file), the named one confirmed', () => {
         expect(probes.size).toBeGreaterThan(0);
         playable.forEach((stream) => {
             if (!probes.has(stream.url)) return;
@@ -105,14 +105,18 @@ describe('e2e set: C8 order and labels', () => {
             expect(codesOf(result)).toEqual(expect.arrayContaining(codes));
         });
         const ranked = ranking.createRanker({ rules }).rank(playable, { probeOf: (stream) => probes.get(stream.url) || null });
-        expect(idsOf(ranked)).toEqual(['e2e-uhd-hdr10', 'e2e-fhd-h264-aac', 'e2e-multi-subs', 'e2e-expired', 'e2e-remux-dv-p5-truehd']);
-        const remux = ranked.filter((entry) => entryOf(entry.stream).id === 'e2e-remux-dv-p5-truehd')[0];
-        expect(ranking.describe(remux).warnings.map((warning) => warning.text)).toEqual(['DV P5: cores erradas', 'TrueHD: sem som nesta TV']);
+        const ids = idsOf(ranked);
+        expect(ids.slice(0, 4)).toEqual(['e2e-uhd-hdr10', 'e2e-fhd-h264-aac', 'e2e-multi-subs', 'e2e-expired']);
+        expect(ids.indexOf('e2e-remux-unnamed')).toBeGreaterThan(ids.indexOf('e2e-expired'));
+        ['e2e-remux-dv-p5-truehd', 'e2e-remux-unnamed'].forEach((id) => {
+            const remux = ranked.filter((entry) => entryOf(entry.stream).id === id)[0];
+            expect(ranking.describe(remux).warnings.map((warning) => warning.text)).toEqual(['DV P5: cores erradas', 'TrueHD: sem som nesta TV']);
+        });
     });
 
-    it('the first probes of the list go to the top 4 (the expired one included: its failure is what F6.3 shows)', () => {
+    it('the first probes of the list go to the top 4 (the unnamed REMUX among them)', () => {
         const ranked = ranking.createRanker({ rules }).rank(playable);
         expect(ranking.pickProbeTargets(ranked, ranking.LIST_SETTINGS.initialProbes).map((stream) => entryOf(stream).id))
-            .toEqual(['e2e-uhd-hdr10', 'e2e-fhd-h264-aac', 'e2e-multi-subs', 'e2e-expired']);
+            .toEqual(['e2e-uhd-hdr10', 'e2e-remux-unnamed', 'e2e-fhd-h264-aac', 'e2e-multi-subs']);
     });
 });

@@ -44,6 +44,9 @@ const BOOT_SETTLE_S = Number(process.env.BOOT_SETTLE_S || (PROFILE === 'c8' ? 60
 const PLAY_WAIT_S = Number(process.env.PLAY_WAIT_S || 75);
 const RIGHT_STEPS = Number(process.env.RIGHT_STEPS || 1);
 const SLOW = PROFILE === 'c8' ? 2 : 1;
+// GUARD=off: the same run with the pipeline guard of F5.6 turned off (localStorage
+// webos.pipelineGuard = "off", read at load), for the A/B of the picture of the second media.
+const GUARD = process.env.GUARD === 'off' ? 'off' : 'on';
 if (!EMU_CDP_PORT || !EMU_REMOTE_PORT || !EMU_DEVICE) {
     console.error('run inside webos/tools/emu-run');
     process.exit(2);
@@ -284,6 +287,13 @@ const boot = async () => {
     const board = await waitFor('!!window.core && document.querySelectorAll("[class*=meta-item-container]").length > 0', 180 * SLOW);
     const ms = since() - launched;
     check('the Board shows Cinemeta catalogs (guest, no account)', board, { msFromLaunch: ms }, 'boot');
+    if (GUARD === 'off') {
+        // Read once when the app starts: set, then reload (as webos/tests/player/switches.sh).
+        evaluate('(function(){ localStorage.setItem("webos.pipelineGuard", "off"); location.reload(); return true; })()');
+        await sleep(5000);
+        await waitFor('!!window.core && document.querySelectorAll("[class*=meta-item-container]").length > 0', 180 * SLOW);
+        log(`pipeline guard: ${evaluate('localStorage.getItem("webos.pipelineGuard")')}`);
+    }
     ensureHelpers();
     // Setup through CDP, as the Addons screen does with the URL (no account): recorded here.
     evaluate(`window.__f62.install('${addonInfo.manifestUrl}')`);
@@ -334,10 +344,19 @@ const streamsList = async () => {
     check('the torrent (infoHash) is hidden (F6.1)', !listShown.some((item) => /👤/.test(item.file || '') || /P2P/.test(item.name || '')), listShown.map((item) => item.name), 'F6.1');
     const byId = (id) => listShown.filter((item) => item.file === fileOf(id))[0] || {};
     const remux = byId('e2e-remux-dv-p5-truehd');
-    check('labels: HDR10 on the 4K HEVC; the DV P5 + TrueHD REMUX warned and moved from 1st to last',
-        (byId('e2e-uhd-hdr10').labels || []).join() === 'HDR10' && /DV P5: cores erradas/.test((remux.labels || []).join()) && /TrueHD/.test((remux.labels || []).join()) &&
-        ids(listShown)[ids(listShown).length - 1] === 'e2e-remux-dv-p5-truehd',
-        listShown.filter(isTestItem).map((item) => ({ id: idOfFile(item.file), tier: item.tier, source: item.source, labels: item.labels })), 'F6.2');
+    const summaryOfList = listShown.filter(isTestItem).map((item) => ({ id: idOfFile(item.file), tier: item.tier, source: item.source, labels: item.labels }));
+    check('labels: HDR10 on the 4K HEVC; the named DV P5 + TrueHD REMUX warned by its name and moved from 1st to the bottom',
+        (byId('e2e-uhd-hdr10').labels || []).join() === 'HDR10' && (remux.labels || []).join() === 'DV P5: cores erradas,TrueHD: pode ficar sem som' &&
+        ids(listShown).indexOf('e2e-remux-dv-p5-truehd') >= ids(listShown).length - 2,
+        summaryOfList, 'F6.2');
+    // The probe at work (review c1, finding 5): the unnamed REMUX opens 2nd by its name; its probe
+    // (among the first 4) finds DV P5 + TrueHD and the untouched list moves it below the expired link.
+    const unnamed = byId('e2e-remux-unnamed');
+    const nameOrder = await expectedOrder(addonInfo, []);
+    check('the probe moves the unnamed REMUX down: probed, "DV P5: cores erradas" + "TrueHD: sem som nesta TV", below the place its name gave it',
+        unnamed.source === 'probe' && (unnamed.labels || []).join() === 'DV P5: cores erradas,TrueHD: sem som nesta TV' &&
+        ids(listShown).indexOf('e2e-remux-unnamed') > nameOrder.indexOf('e2e-remux-unnamed') && ids(listShown).indexOf('e2e-remux-unnamed') > ids(listShown).indexOf('e2e-expired'),
+        { byName: nameOrder, shown: ids(listShown), unnamed: summaryOfList.filter((item) => item.id === 'e2e-remux-unnamed')[0] }, 'F6.2');
     const layout = json('window.__e2e.layout("[class*=streams-container] [class*=stream-container], [class*=c8-labels] span")') || [];
     writeJson('layout-lista.json', layout);
     const items = layout.filter((entry) => /stream-container/.test(entry.cls));
@@ -364,20 +383,74 @@ const focusStream = async (file) => {
     return false;
 };
 
-const waitPlaying = async (seconds) => {
-    const started = since();
+// Waits for the video to play: from the OK at `okAt` (ms of the run), a sample that plays and then
+// the element clock moving at least 2 s within 3 s (in the c8 profile, twice as long) from that
+// sample. One playing sample is not enough: a switch resumes at the saved position, so the first
+// sample after the OK already has currentTime > 0 (review c1, finding 1).
+const waitPlaying = async (okAt, seconds) => {
     const samples = [];
-    while (since() - started < seconds * 1000) {
+    let first = null;
+    while (since() - okAt < seconds * 1000) {
         const sample = playerState();
-        if (sample) samples.push({ ms: since() - started, video: sample.video, error: sample.errorLayer });
-        if (sample && sample.video && sample.video.readyState >= 3 && sample.video.currentTime > 0.5 && !sample.video.paused) {
-            return { ok: true, ms: since() - started, samples };
+        const ms = since() - okAt;
+        if (sample) samples.push({ ms, video: sample.video, error: sample.errorLayer });
+        if (sample && sample.errorLayer) return { ok: false, ms, samples, errorLayer: sample.errorLayer };
+        const video = sample && sample.video;
+        const playing = video && video.readyState >= 3 && !video.paused && video.error === null;
+        if (playing && first === null) first = { ms, currentTime: video.currentTime };
+        if (playing && first !== null && video.currentTime - first.currentTime >= 2) {
+            return { ok: true, ms: first.ms, confirmedMs: ms, startTime: first.currentTime, advanced: video.currentTime - first.currentTime, samples };
         }
-        if (sample && sample.errorLayer) return { ok: false, ms: since() - started, samples, errorLayer: sample.errorLayer };
-        await sleep(1000);
+        // Not playing, or not moving within the window: start over from the next playing sample.
+        if (!playing || (first !== null && ms - first.ms > 3000 * SLOW)) first = null;
+        await sleep(500);
     }
-    return { ok: false, ms: since() - started, samples };
+    return { ok: false, ms: since() - okAt, samples };
 };
+
+// The video plane only shows in the VM screen (the page capture is transparent there). Two captures
+// 2 s apart, reduced to 480x270 like the visual regression (ImageMagick): the middle band of the
+// screen (no title, no control bar, no subtitles) must not be dark and must change between them
+// (the test media move: testsrc2 and a clock). A black or still screen with a moving element clock
+// is a picture that never reached the screen (review c1, finding 1).
+const PICTURE = { width: 480, height: 270, top: 0.25, bottom: 0.7, minBrightness: 20, minChanged: 0.01, pixel: 32 };
+const rawOf = (file) => spawnSync('magick', [file, '-filter', 'Box', '-resize', `${PICTURE.width}x${PICTURE.height}!`, '-alpha', 'off', '-depth', '8', 'rgb:-'], { maxBuffer: 16 * 1024 * 1024 }).stdout;
+const pictureOf = async (name) => {
+    vmShot(`${name}-a`);
+    await sleep(2000);
+    vmShot(`${name}-b`);
+    const a = rawOf(path.join(OUT, `vm-${name}-a.png`));
+    const b = rawOf(path.join(OUT, `vm-${name}-b.png`));
+    if (!a || !b || a.length !== b.length || a.length === 0) return { ok: false, error: 'no capture' };
+    const rows = [Math.floor(PICTURE.height * PICTURE.top), Math.floor(PICTURE.height * PICTURE.bottom)];
+    let sum = 0;
+    let changed = 0;
+    let count = 0;
+    for (let y = rows[0]; y < rows[1]; y++) {
+        for (let x = 0; x < PICTURE.width; x++) {
+            const i = (y * PICTURE.width + x) * 3;
+            sum += (b[i] + b[i + 1] + b[i + 2]) / 3;
+            if (Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2])) > PICTURE.pixel) changed++;
+            count++;
+        }
+    }
+    const brightness = Math.round(sum / count);
+    const changedRatio = Math.round((changed / count) * 10000) / 10000;
+    return { ok: brightness >= PICTURE.minBrightness && changedRatio >= PICTURE.minChanged, brightness, changedRatio, captures: [`vm-${name}-a.png`, `vm-${name}-b.png`] };
+};
+// The playback checks: the element plays (clock moving) and the picture is on the VM screen. A
+// picture missing with the clock moving counts for the emulator (its pipeline draws nothing:
+// docs/PESQUISA.md §7) unless the A/B with the guard off (GUARD=off) shows otherwise.
+const checkPlayback = async (label, result, name, area) => {
+    check(`${label}: the element plays (currentTime moves 2 s within 3 s)`, result.ok,
+        { msFromOk: result.ms, startTime: result.startTime, advanced: result.advanced, last: result.samples[result.samples.length - 1], errorLayer: result.errorLayer || null, pipelines: pipelines() }, area);
+    if (!result.ok) return;
+    const picture = await pictureOf(name);
+    const state = playerState();
+    check(`${label}: the picture shows on the VM screen (not dark, moving)`, picture.ok,
+        Object.assign({ currentTime: state && state.video ? state.video.currentTime : null, guard: GUARD }, picture), GUARD === 'off' ? 'emulator (guard off)' : 'emulator/F5.6');
+};
+
 const pipelines = () => ssh('echo $(pgrep starfish-media)').split(/\s+/).filter(Boolean).length;
 
 let played = null;
@@ -388,12 +461,11 @@ const play = async () => {
     check('the remote reaches the MKV with several audio tracks and subtitles', reached, active(), 'F4.1c');
     played = evaluate('document.activeElement && document.activeElement.getAttribute("href")');
     shot('03-stream-focused');
+    const okAt = since();
     await key('OK', 1500);
-    const result = await waitPlaying(PLAY_WAIT_S);
+    const result = await waitPlaying(okAt, PLAY_WAIT_S);
     writeJson('play-1.json', result);
-    check('OK plays the stream (first media of the boot)', result.ok, { msToPlay: result.ms, last: result.samples[result.samples.length - 1], pipelines: pipelines() }, 'F5.1/emulator');
-    vmShot('04-playing');
-    await sleep(2000);
+    await checkPlayback('OK plays the stream (first media of the boot)', result, '04-playing', 'F5.1/emulator');
 };
 
 // Tries a remote route to an element: the keys in order until `reachedExpression` is true.
@@ -422,15 +494,36 @@ const remoteTo = async (selector, maxKeys = 14) => {
     return evaluate(`window.__e2e.direction(${JSON.stringify(selector)})`) === 'HERE';
 };
 
+// Opens a Player menu with the remote: the focus into the control bar (today the arrows are the
+// upstream shortcuts, LEFT/RIGHT seek and UP/DOWN volume, and no button takes the focus: OK, then
+// the arrows that do not seek), along the bar to the button of `icon`, OK, and the menu must be
+// open. Only when that fails, the click through CDP, recorded as a fallback (review c1, finding 2).
+const openMenuWithRemote = async (label, icon, menuSelector) => {
+    const inBar = '(function(){ var a = document.activeElement; return !!a && !!a.closest(\'[class*="control-bar-container"]\'); })()';
+    let opened = false;
+    let detail = null;
+    if (await remoteRoute(['OK', 'DOWN', 'UP'], inBar)) {
+        evaluate(`window.__e2e.markControl(${JSON.stringify(icon)}, 'menu-button')`);
+        if (await remoteTo('[data-e2e-target=menu-button]')) {
+            await key('OK', 1500);
+            opened = await waitFor(`!!document.querySelector(${JSON.stringify(menuSelector)})`, 3 * SLOW);
+        }
+        detail = { reachedBar: true, focused: active() };
+    } else {
+        detail = { reachedBar: false, focused: active() };
+    }
+    check(`the remote opens the ${label} menu (control bar button, OK)`, opened, detail, 'F5.7');
+    if (!opened) {
+        fallback(`open the ${label} menu with a click`, detail.reachedBar ? 'the remote reached the control bar but did not open the menu' : 'the Player controls take no focus from the remote (F5.7)');
+        evaluate(`window.__e2e.clickControl(${JSON.stringify(icon)})`);
+        await sleep(1500);
+    }
+    return opened;
+};
+
 const audioTrack = async () => {
     const before = playerState();
-    // The remote in the Player: the arrows are the upstream shortcuts (LEFT/RIGHT seek, UP/DOWN
-    // volume) and nothing gives a control bar button the focus: OK, then the arrows that do not seek.
-    const reached = await remoteRoute(['OK', 'DOWN', 'UP'], '(function(){ var a = document.activeElement; return !!a && !!a.closest(\'[class*="control-bar-container"]\'); })()');
-    check('the remote reaches the Player control bar (audio button)', reached, active(), 'F5.7');
-    if (!reached) fallback('open the audio menu with a click', 'the Player controls take no focus from the remote (F5.7)');
-    evaluate(`window.__e2e.clickControl(${JSON.stringify(AUDIO_ICON)})`);
-    await sleep(1500);
+    await openMenuWithRemote('audio', AUDIO_ICON, '[class*=audio-menu]');
     let state = playerState();
     check('the audio menu lists the 3 tracks of the file with language (probe, F5.4)', state.audioMenu && state.audioMenu.length === 3, state.audioMenu, 'F5.4');
     const initial = (state.audioTracks || []).map((track, index) => (track.enabled ? index : -1)).filter((index) => index !== -1);
@@ -472,9 +565,7 @@ const audioTrack = async () => {
 };
 
 const subtitles = async () => {
-    fallback('open the subtitles menu with a click', 'the Player controls take no focus from the remote (F5.7)');
-    evaluate(`window.__e2e.clickControl(${JSON.stringify(SUBTITLES_ICON)})`);
-    await sleep(1500);
+    await openMenuWithRemote('subtitles', SUBTITLES_ICON, '[class*=subtitles-menu-container]');
     let state = playerState();
     const menu = state.subtitlesMenu || { languages: [], variants: [] };
     const lunaCalls = json('JSON.stringify(window.__f51.luna.filter(function(c){ return /ubtitle|selectTrack/.test(c.method || ""); }).map(function(c){ return { method: c.method, parameters: c.parameters }; }))') || [];
@@ -575,14 +666,12 @@ const switchStream = async () => {
     check('the remote reaches the 1080p H.264 AAC stream', reached, active(), 'F4.1c');
     const href = evaluate('document.activeElement && document.activeElement.getAttribute("href")');
     const before = pipelines();
+    const okAt = since();
     await key('OK', 1500);
-    const result = await waitPlaying(PLAY_WAIT_S);
+    const result = await waitPlaying(okAt, PLAY_WAIT_S);
+    result.pipelinesBefore = before;
     writeJson('play-2.json', result);
-    const after = pipelines();
-    check('another stream plays after the first one (switch, F5.6)', result.ok,
-        { msToPlay: result.ms, last: result.samples[result.samples.length - 1], errorLayer: result.errorLayer || null, pipelinesBefore: before, pipelinesAfter: after }, 'F5.6/emulator');
-    vmShot('10-second-stream');
-    await sleep(2000);
+    await checkPlayback('another stream plays after the first one (switch, F5.6)', result, '10-second-stream', 'F5.6/emulator');
     await backToList(href, 'second stream');
 };
 

@@ -104,6 +104,12 @@
         if (button) button.click();
         return !!button;
     };
+    // Marks the control bar button of the icon `d` (data-e2e-target=<name>), for the remote walk.
+    state.markControl = function(d, name) {
+        var button = buttonOf(d);
+        if (button) button.setAttribute('data-e2e-target', name);
+        return !!button;
+    };
     state.clickSelector = function(selector) {
         var element = document.querySelector(selector);
         if (element) element.click();

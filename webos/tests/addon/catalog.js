@@ -118,7 +118,8 @@ const STREAMS = [
 
 // The `e2e` set (F6.4, `server.mjs --set e2e`): what a debrid addon answers for a movie, with files
 // that play in the emulator (webos/tests/e2e/make-media.sh, under e2e/) and the variations of a
-// real list: a DV P5 + TrueHD REMUX on top (the C8 rules move it down), 1080p H.264 AAC, 4K HEVC
+// real list: a DV P5 + TrueHD REMUX on top (the C8 rules move it down), an unnamed REMUX that only
+// the probe moves down, 1080p H.264 AAC, 4K HEVC
 // HDR10, an MKV with several audio tracks, embedded subtitles and
 // add-on subtitles, a link that expired (the resolver redirects to a host that answers 410) and a
 // torrent (hidden by F6.1). `subtitles` are add-on subtitles (files under e2e/, like an
@@ -132,6 +133,15 @@ const E2E_STREAMS = [
         description: `${TITLE}.2160p.BluRay.REMUX.DV.P5.HEVC.TrueHD.7.1.Atmos-GRP.mkv\n💾 58.4 GB ⚙️ Teste`,
         media: 'fixtures/dv-p5-truehd-atmos-mkv.mkv',
         expect: { name: ['demoted', 'DV_WRONG_COLORS', 'AUDIO_UNSUPPORTED_POSSIBLE'], probe: ['demoted', 'DV_WRONG_COLORS', 'AUDIO_UNSUPPORTED'] },
+    },
+    {
+        // Nothing in the name: next to the top by the name, among the first probes, and only the probe
+        // (DV P5 + TrueHD) moves it down. The list order then depends on the probe (review c1, finding 5).
+        id: 'e2e-remux-unnamed',
+        name: '[RD+] Teste\n4k',
+        description: `${TITLE}.2160p.UHD.BluRay.REMUX-GRP.mkv\n💾 61.2 GB ⚙️ Teste`,
+        media: 'fixtures/dv-p5-nobam-mkv.mkv',
+        expect: { name: ['ok'], probe: ['demoted', 'DV_WRONG_COLORS', 'AUDIO_UNSUPPORTED'] },
     },
     {
         id: 'e2e-uhd-hdr10',

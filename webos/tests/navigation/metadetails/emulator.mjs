@@ -223,8 +223,9 @@ const walk = async () => {
     }
     check('movie: the summary is reached with UP from the buttons and scrolled into view', summary !== null && summary.inView, summary);
     // The top of the column depends on the live title: with an IMDb button (an external link, F3.4)
-    // UP stays on it; without one, UP from the first link goes on to the page header (F6.4 run).
-    check('movie: UP to the top of the column never leaves it for the list', !visited.includes('stream') && focused.section !== 'list', visited);
+    // UP stays on it; without one, UP from the first link goes on to the page header and this check
+    // fails (F6.4 run, kept as is: the focus leaves the column).
+    check('movie: UP to the top of the column never leaves it for the list', !visited.includes('stream') && focused.section === 'meta', visited);
     if (focused.section !== 'meta') {
         // Back into the column from the header: DOWN, and LEFT if that landed in the list.
         focused = await key('DOWN');
