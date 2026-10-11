@@ -5,10 +5,12 @@
 // The probe starts right after WebOsVideo's load and does not hold it, and is cancelled when the
 // stream goes away. Nothing touches the pipeline before the video plays: an audio switch asked
 // earlier waits for the first `playing`, and the embedded subtitles are listed only then.
-// Embedded subtitles are listed only, until F5.5: selecting one (the Player does it on its own for
-// the subtitles language of the settings) is dropped here, so WebOsVideo does not turn them on
-// through Luna while the menu says OFF. null and the add-on subtitles pass through.
-// TODO(F5.5): remove the EMBEDDED_ subtitle interception when the embedded subtitles are shown.
+// Embedded subtitles (F5.5): choosing one goes to WebOsVideo, which turns the pipeline subtitles
+// on through Luna (setSubtitleEnable, the setSubtitle* style calls, selectTrack type 'text'), with
+// the Luna index of the track (`lunaIndex`) instead of its file position; the decorator publishes
+// the selection (WebOsVideo only does it for the tracks of its own list, empty without the
+// server) and emits subtitlesTrackLoaded. The subtitle colors of the settings become the nearest
+// ones the pipeline has (webos/lib/subtitles).
 
 const {
     trackId,
@@ -19,8 +21,11 @@ const {
     buildSubtitleTracks,
 } = require('./index');
 const { evaluate } = require('../c8-rules');
+const { toWebOsTextColor, toWebOsBackgroundColor } = require('../subtitles');
 
-const OWN_PROPS = ['audioTracks', 'selectedAudioTrackId', 'subtitlesTracks'];
+const OWN_PROPS = ['audioTracks', 'selectedAudioTrackId', 'subtitlesTracks', 'selectedSubtitlesTrackId'];
+const OWN_EVENTS = ['propValue', 'propChanged', 'audioTrackLoaded', 'subtitlesTrackLoaded'];
+const COLOR_PROPS = { subtitlesTextColor: toWebOsTextColor, subtitlesBackgroundColor: toWebOsBackgroundColor };
 const EMBEDDED_PREFIX = 'EMBEDDED_';
 const ELEMENT_TRACK_EVENTS = ['addtrack', 'removetrack', 'change'];
 
@@ -48,7 +53,7 @@ const withC8Tracks = (Video, deps) => {
         const videoElement = containerElement.querySelector('video');
         const listeners = {};
         const observed = {};
-        const values = { audioTracks: [], selectedAudioTrackId: null, subtitlesTracks: [] };
+        const values = { audioTracks: [], selectedAudioTrackId: null, subtitlesTracks: [], selectedSubtitlesTrackId: null };
         const sent = {};
         let destroyed = false;
         let stream = null;
@@ -81,6 +86,7 @@ const withC8Tracks = (Video, deps) => {
                 values.audioTracks = [];
                 values.selectedAudioTrackId = null;
                 values.subtitlesTracks = [];
+                values.selectedSubtitlesTrackId = null;
             } else {
                 let element = readElementTracks(videoElement);
                 if (pendingIndex !== null && started && enableOnly(videoElement, pendingIndex)) {
@@ -92,7 +98,10 @@ const withC8Tracks = (Video, deps) => {
                 values.audioTracks = buildAudioTracks({ probe, rules, elementTracks: element, selectedIndex });
                 values.selectedAudioTrackId = values.audioTracks.some((track) => track.index === selectedIndex) ?
                     trackId(selectedIndex) : null;
-                values.subtitlesTracks = started ? buildSubtitleTracks({ probe, rules }) : [];
+                values.subtitlesTracks = started ? buildSubtitleTracks({ probe, selectedId: values.selectedSubtitlesTrackId }) : [];
+                if (!values.subtitlesTracks.some((track) => track.id === values.selectedSubtitlesTrackId)) {
+                    values.selectedSubtitlesTrackId = null;
+                }
             }
             OWN_PROPS.forEach(publish);
             // Playing, and the element still has no such track (no video.audioTracks on this TV?).
@@ -152,6 +161,31 @@ const withC8Tracks = (Video, deps) => {
             if (selected) emit('audioTrackLoaded', selected);
         };
 
+        // An embedded track goes to WebOsVideo with its Luna index (it needs the mediaId, there once
+        // the video played; the tracks are only listed then). Anything else (null, an add-on
+        // subtitle chosen through withHTMLSubtitles) turns the pipeline subtitles off.
+        const selectSubtitlesTrack = (action) => {
+            const id = action.propValue;
+            const track = values.subtitlesTracks.filter((candidate) => candidate.id === id)[0];
+            if (typeof id === 'string' && id.indexOf(EMBEDDED_PREFIX) === 0) {
+                if (!track) {
+                    if (log) log.warn('[webos] subtitles: ' + id + ' is not listed, not turned on');
+                    return;
+                }
+                video.dispatch({ type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: trackId(track.lunaIndex) });
+                values.selectedSubtitlesTrackId = id;
+                refresh();
+                if (log) log.info('[webos] subtitles: embedded ' + id + ' (' + (track.lang || '?') + ', ' + track.codec + ') through Luna, index ' + track.lunaIndex);
+                emit('subtitlesTrackLoaded', values.subtitlesTracks.filter((candidate) => candidate.id === id)[0]);
+                return;
+            }
+            video.dispatch(action);
+            if (values.selectedSubtitlesTrackId !== null) {
+                values.selectedSubtitlesTrackId = null;
+                refresh();
+            }
+        };
+
         const reset = () => {
             if (stream !== null && probe === null && typeof probeCache.cancel === 'function') probeCache.cancel(stream.url);
             loadId++;
@@ -161,6 +195,7 @@ const withC8Tracks = (Video, deps) => {
             started = false;
             pendingIndex = null;
             pendingWarned = false;
+            values.selectedSubtitlesTrackId = null;
         };
 
         video.on('propValue', (propName, propValue) => {
@@ -176,7 +211,7 @@ const withC8Tracks = (Video, deps) => {
             emit('propChanged', propName, propValue);
         });
         Video.manifest.events
-            .filter((eventName) => ['propValue', 'propChanged', 'audioTrackLoaded'].indexOf(eventName) === -1)
+            .filter((eventName) => OWN_EVENTS.indexOf(eventName) === -1)
             .forEach((eventName) => {
                 video.on(eventName, function() {
                     emit.apply(null, [eventName].concat(Array.prototype.slice.call(arguments)));
@@ -200,9 +235,12 @@ const withC8Tracks = (Video, deps) => {
                 selectAudioTrack(action.propValue);
                 return;
             }
-            if (action && action.type === 'setProp' && action.propName === 'selectedSubtitlesTrackId' &&
-                typeof action.propValue === 'string' && action.propValue.indexOf(EMBEDDED_PREFIX) === 0) {
-                if (log) log.info('[webos] tracks: embedded subtitles ' + action.propValue + ' listed only (F5.5), not turned on');
+            if (action && action.type === 'setProp' && action.propName === 'selectedSubtitlesTrackId') {
+                selectSubtitlesTrack(action);
+                return;
+            }
+            if (action && action.type === 'setProp' && Object.prototype.hasOwnProperty.call(COLOR_PROPS, action.propName)) {
+                video.dispatch(Object.assign({}, action, { propValue: COLOR_PROPS[action.propName](action.propValue) }));
                 return;
             }
             if (action && action.type === 'command' && action.commandName === 'destroy') {

@@ -145,26 +145,44 @@ const buildAudioTracks = ({ probe, rules, elementTracks, selectedIndex }) => {
     }, track));
 };
 
-// Embedded text subtitles, listed only (showing them is F5.5). `EMBEDDED_<n>` counts every
-// subtitle track of the file, so n stays the file position; bitmap ones (PGS, VobSub) are hidden.
-const buildSubtitleTracks = ({ probe }) => {
+// Whether the index of Luna `selectTrack` (type 'text') counts the bitmap subtitles (PGS, VobSub)
+// of the file. The emulator does not draw pipeline subtitles, so this could not be measured (F5.5):
+// it follows the stremio-video WebOsVideo, which numbers only the subtitles it does not hide
+// (PGS, VobSub) and sends that number to Luna. To confirm on the TV (Phase 8).
+const LUNA_TEXT_INDEX_COUNTS_BITMAP = false;
+
+const isTextSubtitle = (track) => !track.subtitle || track.subtitle.text !== false;
+
+// Embedded text subtitles (F5.4 list, shown through Luna since F5.5). `EMBEDDED_<n>` counts every
+// subtitle track of the file, so n stays the file position (`index`); `lunaIndex` is the index
+// sent to Luna. Bitmap ones (PGS, VobSub) are hidden. Forced tracks come after the full ones: the
+// Player picks the first track of the preferred language on its own. `selectedId`: the shown one.
+const buildSubtitleTracks = ({ probe, selectedId }) => {
     if (!probe) return [];
-    return probe.tracks
+    let textCount = 0;
+    const tracks = probe.tracks
         .filter((track) => track.type === 'subtitle')
-        .map((track, index) => ({ track, index }))
-        .filter(({ track }) => !track.subtitle || track.subtitle.text !== false)
-        .map(({ track, index }) => ({
+        .map((track, index) => {
+            const text = isTextSubtitle(track);
+            const lunaIndex = LUNA_TEXT_INDEX_COUNTS_BITMAP ? index : textCount;
+            if (text) textCount++;
+            return { track, index, lunaIndex, text };
+        })
+        .filter(({ text }) => text)
+        .map(({ track, index, lunaIndex }) => ({
             id: trackId(index),
             lang: track.language || '',
             label: joinLabel(track.name, codecText(track.codec)) + (track.forced ? ' · forced' : ''),
             origin: 'EMBEDDED',
             embedded: true,
-            mode: 'disabled',
+            mode: trackId(index) === selectedId ? 'showing' : 'disabled',
             index,
+            lunaIndex,
             probeId: track.id,
             codec: track.codec,
             forced: track.forced === true,
         }));
+    return tracks.filter((track) => !track.forced).concat(tracks.filter((track) => track.forced));
 };
 
 // The track to select on its own: with the probe, the C8 rules (a track that plays, in the first
@@ -187,6 +205,7 @@ const chooseAudioTrack = ({ tracks, probe, stream, languages, selectedId }) => {
 
 module.exports = {
     TRACK_ID_PREFIX,
+    LUNA_TEXT_INDEX_COUNTS_BITMAP,
     languageCode,
     trackId,
     trackIndex,

@@ -2,12 +2,15 @@
 // Same hook, with the TV's load arguments (no transcoding, every audio channel: see
 // webos/lib/player) and without playback speed: the state reports `playbackSpeed: null`, which the
 // Player already reads as "no speed control" (speed menu, shortcuts), and speed changes are ignored
-// (the C8 plays without sound at rates other than 1x).
+// (the C8 plays without sound at rates other than 1x). Add-on subtitles from hosts with a Let's
+// Encrypt certificate go through the tlsproxy (F5.5, webos/lib/subtitles).
 
 const React = require('react');
 // The explicit extension resolves to the upstream hook, not to this file.
 const useUpstreamVideo = require('./useVideo.js');
 const { PLAYBACK_SPEED_SUPPORTED, toWebOsLoadArgs } = require('../../../webos/lib/player');
+const { proxifySubtitlesTracks } = require('../../../webos/lib/subtitles');
+const tlsProxy = require('../../../webos/tlsproxy/page').default;
 
 // Keeps the native rate: setPlaybackSpeed(2) from the "hold for 2x" gesture does nothing.
 const ignorePlaybackSpeed = () => { /* no-op */ };
@@ -16,8 +19,15 @@ const useVideo = () => {
     const video = useUpstreamVideo();
     const upstreamLoad = video.load;
     const load = React.useCallback((args, options) => {
-        upstreamLoad(toWebOsLoadArgs(args), options);
+        const subtitles = args && args.stream ? args.stream.subtitles : undefined;
+        const proxied = proxifySubtitlesTracks(subtitles, tlsProxy.proxify);
+        const webOsArgs = proxied !== subtitles ? { ...args, stream: { ...args.stream, subtitles: proxied } } : args;
+        upstreamLoad(toWebOsLoadArgs(webOsArgs), options);
     }, [upstreamLoad]);
+    const upstreamAddExtraSubtitlesTracks = video.addExtraSubtitlesTracks;
+    const addExtraSubtitlesTracks = React.useCallback((tracks) => {
+        upstreamAddExtraSubtitlesTracks(proxifySubtitlesTracks(tracks, tlsProxy.proxify));
+    }, [upstreamAddExtraSubtitlesTracks]);
     const state = React.useMemo(() => {
         return PLAYBACK_SPEED_SUPPORTED || video.state.playbackSpeed === null ?
             video.state
@@ -29,6 +39,7 @@ const useVideo = () => {
         ...video,
         state,
         load,
+        addExtraSubtitlesTracks,
         setPlaybackSpeed: PLAYBACK_SPEED_SUPPORTED ? video.setPlaybackSpeed : ignorePlaybackSpeed,
     };
 };

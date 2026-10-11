@@ -14,6 +14,7 @@ const {
     buildAudioTracks,
     buildSubtitleTracks,
     chooseAudioTrack,
+    LUNA_TEXT_INDEX_COUNTS_BITMAP,
 } = require('../index');
 
 // What video.audioTracks lists for t2_multi.mkv in the emulator (ISO 639-1, empty labels).
@@ -112,7 +113,7 @@ describe('audio menu', () => {
     });
 });
 
-describe('subtitle menu (listing only)', () => {
+describe('subtitle menu', () => {
     it('t2_multi.mkv: both SRT tracks with language', () => {
         expect(buildSubtitleTracks({ probe: kit }).map((track) => [track.id, track.lang, track.label, track.mode, track.embedded])).toEqual([
             ['EMBEDDED_0', 'eng', 'SRT', 'disabled', true],
@@ -130,6 +131,24 @@ describe('subtitle menu (listing only)', () => {
 
     it('no probe, no embedded subtitles', () => {
         expect(buildSubtitleTracks({ probe: null })).toEqual([]);
+    });
+
+    it('the Luna index counts the text subtitles only (a bitmap one before shifts it)', () => {
+        expect(LUNA_TEXT_INDEX_COUNTS_BITMAP).toBe(false);
+        expect(buildSubtitleTracks({ probe: kit }).map((track) => [track.id, track.index, track.lunaIndex])).toEqual([['EMBEDDED_0', 0, 0], ['EMBEDDED_1', 1, 1]]);
+        const mixed = JSON.parse(JSON.stringify(kit));
+        mixed.tracks.filter((track) => track.id === 5)[0].subtitle.text = false;
+        expect(buildSubtitleTracks({ probe: mixed }).map((track) => [track.id, track.index, track.lunaIndex])).toEqual([['EMBEDDED_1', 1, 0]]);
+    });
+
+    it('the selected track is showing; forced tracks come after the full ones (the Player picks the first of a language)', () => {
+        const forced = JSON.parse(JSON.stringify(kit));
+        forced.tracks.filter((track) => track.id === 5)[0].forced = true;
+        forced.tracks.filter((track) => track.id === 6)[0].language = 'eng';
+        expect(buildSubtitleTracks({ probe: forced, selectedId: 'EMBEDDED_0' }).map((track) => [track.id, track.lang, track.forced, track.mode, track.lunaIndex])).toEqual([
+            ['EMBEDDED_1', 'eng', false, 'disabled', 1],
+            ['EMBEDDED_0', 'eng', true, 'showing', 0],
+        ]);
     });
 });
 
