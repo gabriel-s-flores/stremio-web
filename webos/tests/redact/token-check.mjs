@@ -80,7 +80,7 @@ const saved = fs.readFileSync(path.join(dir, 'diagnostics-saved.txt'), 'utf8');
 check('Save report stored the report', saved.includes('Stremio webOS diagnostics'), `${saved.length} chars`);
 
 const toasts = readJson('toasts.json', []);
-check('the toast of the failed subtitle shows no token', !JSON.stringify(toasts).includes(token), JSON.stringify(toasts));
+check('the toast of the failed subtitle was on screen (captured while it showed) and has no token', toasts.length > 0 && JSON.stringify(toasts).includes('Failed to load external subtitles') && !JSON.stringify(toasts).includes(token), JSON.stringify(toasts));
 
 const missing = process.env.MISSING_SUBTITLE_URL || 'https://debrid-link.com/zz-f37b-missing-subtitle.srt';
 const dialog = readJson('external-link-dialog.json', {});

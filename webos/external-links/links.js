@@ -132,6 +132,9 @@ const install = (win, store) => {
     // The context menu of the upstream (the "Download subtitle" of the Player's subtitles menu)
     // stops the propagation of the clicks inside it, so they never reach `window` in the bubble
     // phase. A download link has no handler of its own to wait for: it is caught on the way down.
+    // On `document`, not `window`: the capture listener of the long press of the Magic Remote
+    // (F4.3, webos/lib/navigation/contextMenu.js) is on `window` and runs first, and its
+    // stopImmediatePropagation on the release that follows a long press also stops this one.
     const onCaptureClick = (event) => {
         if (event.defaultPrevented) {
             return;
@@ -168,10 +171,10 @@ const install = (win, store) => {
     };
 
     win.addEventListener('click', onClick);
-    win.addEventListener('click', onCaptureClick, true);
+    win.document.addEventListener('click', onCaptureClick, true);
     return () => {
         win.removeEventListener('click', onClick);
-        win.removeEventListener('click', onCaptureClick, true);
+        win.document.removeEventListener('click', onCaptureClick, true);
         win.open = originalOpen;
     };
 };

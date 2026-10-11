@@ -43,15 +43,19 @@ const useVideo = () => {
     const addExtraSubtitlesTracks = React.useCallback((tracks) => {
         upstreamAddExtraSubtitlesTracks(proxifySubtitlesTracks(tracks, tlsProxy.proxify));
     }, [upstreamAddExtraSubtitlesTracks]);
+    // The pipeline got the proxy URLs; the Player gets the ones the add-ons gave (F3.7b). Its own memo,
+    // keyed on the tracks array only: the state changes at every timeupdate, the tracks do not.
+    const extraSubtitlesTracks = React.useMemo(
+        () => restoreSubtitlesTracksUrls(video.state.extraSubtitlesTracks),
+        [video.state.extraSubtitlesTracks]
+    );
     const state = React.useMemo(() => {
         const base = PLAYBACK_SPEED_SUPPORTED || video.state.playbackSpeed === null ?
             video.state
             :
             { ...video.state, playbackSpeed: null };
-        // The pipeline got the proxy URLs; the Player gets the ones the add-ons gave (F3.7b).
-        const extraSubtitlesTracks = restoreSubtitlesTracksUrls(base.extraSubtitlesTracks);
         return extraSubtitlesTracks === base.extraSubtitlesTracks ? base : { ...base, extraSubtitlesTracks };
-    }, [video.state]);
+    }, [video.state, extraSubtitlesTracks]);
 
     const events = React.useMemo(() => withRedactedErrors(video.events), [video.events]);
 

@@ -130,9 +130,16 @@ sleep 3
 menu_open || log "open subtitles menu: $(toggle_subtitles_menu)"
 sleep 1
 log "choose language eng: $(cdp_eval "(function(){ var b = document.querySelector('[class*=\"subtitles-menu-container\"] [data-lang=\"eng\"]'); if (b) b.click(); return !!b; })()")"
-sleep 4
-shot "$OUT/tela-legenda-falhou.png" || true
-cdp_eval "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[class*=\"toast\"]'), function(e) { return e.textContent; }))" > "$OUT/toasts.json" || true
+# The toast of the failed subtitle lasts 3 s: poll for its text while it is on screen (and take the capture then).
+: > "$OUT/toasts.json"
+for _ in $(seq 1 24); do
+    sleep 0.25
+    toasts="$(cdp_eval "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[class*=\"toast\"]'), function(e) { return e.textContent; }).filter(function(t) { return t; }))" 2>/dev/null || echo '[]')"
+    if [[ "$toasts" != '[]' && -n "$toasts" ]]; then echo "$toasts" > "$OUT/toasts.json"; shot "$OUT/tela-legenda-falhou.png" || true; break; fi
+done
+[[ -s "$OUT/toasts.json" ]] || echo '[]' > "$OUT/toasts.json"
+sleep 2
+[[ -f "$OUT/tela-legenda-falhou.png" ]] || shot "$OUT/tela-legenda-falhou.png" || true
 
 # The context menu of the add-on subtitle (F3.7b): the Player has the URL the add-on gave, not the proxy
 # one. "Copy subtitle URL" copies it, "Download subtitles" opens the external link dialog (F3.4) with it.
