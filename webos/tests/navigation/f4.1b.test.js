@@ -190,6 +190,43 @@ describe('initial focus', () => {
     });
 });
 
+describe('guest placeholder', () => {
+    test('Library shows only "log in" to a guest: focused at once', () => {
+        render(`
+            <div class="route-container" data-rect="0,0,1920,1080">
+                ${NAV_BAR}
+                <div class="placeholder-Pp1x2" data-rect="200,100,1600,900">
+                    <a class="button-GHZkA" href="#/intro?form=login" data-rect="800,850,300,100">Log in</a>
+                </div>
+            </div>`);
+        start('#/library');
+        navigation.focusScreen();
+        jest.advanceTimersByTime(0);
+        expect(text()).toBe('Log in');
+    });
+});
+
+describe('profile menu', () => {
+    test('OK on the profile button puts the focus on the first entry of the menu', () => {
+        render(`
+            <div class="route-container" data-rect="0,0,1920,1080">
+                <nav class="horizontal-nav-bar-container-Hh1x2" data-rect="0,0,1920,100">
+                    <div class="label-container-XOyzm nav-menu-popup-label-XmUBo" tabindex="0" data-rect="1760,10,80,80"></div>
+                </nav>
+            </div>`);
+        start('#/');
+        const label = document.querySelector('.nav-menu-popup-label-XmUBo');
+        label.focus();
+        key(13);
+        // The menu opens inside the label and the focus falls to body.
+        label.innerHTML = '<div class="nav-menu-container-Nn1x2" data-rect="1500,100,400,500"><a href="#/settings" data-rect="1500,120,400,60">Settings</a></div>';
+        label.blur();
+        jest.advanceTimersByTime(200);
+        expect(text()).toBe('Settings');
+        expect(navigation.status.last.reason).toBe('profile-menu');
+    });
+});
+
 describe('restoration', () => {
     test('back on a screen, the element it was left on', () => {
         render(libraryRoute(), boardRoute());
@@ -356,6 +393,7 @@ describe('upstream contract', () => {
             ['src/routes/Settings/Settings.less', ['sections-container']],
             ['src/components/NavBar/VerticalNavBar/styles.less', ['vertical-nav-bar-container']],
             ['src/components/NavBar/HorizontalNavBar/styles.less', ['horizontal-nav-bar-container']],
+            ['src/components/NavBar/HorizontalNavBar/NavMenu/styles.less', ['nav-menu-popup-label', 'nav-menu-container']],
         ];
         classes.forEach(([file, names]) => names.forEach((name) => {
             expect([file, name, lessHasClass(file, name)]).toEqual([file, name, true]);

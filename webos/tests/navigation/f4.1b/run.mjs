@@ -308,12 +308,21 @@ const applyFixture = async () => {
 
 // The side bar from a screen of another task (Board): LEFT reaches it, RIGHT comes back.
 const navBarOnBoard = async () => {
-    let current = await pressAll(['DOWN', 'RIGHT'], 'board');
+    // A poster of the Board first (its initial focus is F4.1a's): DOWN until one has the focus.
+    let current = await state();
+    for (let attempt = 0; attempt < 6 && !/meta-item/.test(current.focused || ''); attempt++) current = await press('DOWN', 'board');
+    for (let attempt = 0; attempt < 2 && /meta-item/.test(current.focused || ''); attempt++) current = await press('RIGHT', 'board');
     const content = current;
-    for (let attempt = 0; attempt < 10 && !current.inNavBar; attempt++) current = await press('LEFT', 'board-nav');
+    check('board-poster-focused', /meta-item/.test(content.focused || ''), { note: `${content.focused} "${content.text}"` });
+    // LEFT along the row (the first column is the last poster before the bar).
+    let leftFrom = content;
+    for (let attempt = 0; attempt < 10 && !current.inNavBar; attempt++) {
+        leftFrom = current;
+        current = await press('LEFT', 'board-nav');
+    }
     check('board-left-reaches-nav-bar', current.inNavBar, { note: `${current.title}`, screenshot: await screenshot('board-nav-bar') });
     const back = await press('RIGHT', 'board-nav');
-    check('board-right-returns-to-content', !back.inNavBar && !back.lost && back.hash === content.hash, { note: `${back.focused} "${back.text}" (left from "${current.title}")` });
+    check('board-right-returns-to-content', back.text === leftFrom.text && !back.lost, { note: `${back.focused} "${back.text}" (bar entered from "${leftFrom.text}")` });
 };
 
 const profileMenu = async () => {
@@ -325,8 +334,11 @@ const profileMenu = async () => {
     for (let attempt = 0; attempt < 4 && !/nav-menu-popup-label/.test(current.focused || ''); attempt++) current = await press('RIGHT', 'profile');
     check('profile-button-reachable', /nav-menu-popup-label/.test(current.focused || ''), { note: current.focused });
     const opened = await press('OK', 'profile');
+    await sleep(500);
     const menu = await evaluate('return document.querySelectorAll("[class*=nav-menu-container]").length;');
+    const inMenu = await evaluate('var a = document.activeElement; return !!(a && window.__f41b.closest(a, "nav-menu-container"));');
     check('profile-menu-opens-with-ok', menu > 0, { note: `menus: ${menu}`, screenshot: await screenshot('profile-menu-open') });
+    check('profile-menu-focus-on-first-entry', inMenu, { note: JSON.stringify((await state()).text) });
     const closed = await press('BACK', 'profile');
     const menuAfter = await evaluate('return document.querySelectorAll("[class*=nav-menu-container]").length;');
     check('profile-menu-closes-with-back', menuAfter === 0 && !closed.lost, { note: `menus: ${menuAfter}; focus ${closed.focused}; opened focus ${opened.focused}` });
@@ -417,7 +429,7 @@ const guestScenario = async () => {
         await sleep(1500);
         const zoomed = await state();
         check('settings-zoom-125-with-ok', zoomed.interfaceScale === '2.1875' && !zoomed.lost && zoomed.inViewport && zoomed.text === '125%', { note: `${zoomed.interfaceScale} focus "${zoomed.text}" ${zoomed.rect}`, screenshot: await screenshot('settings-zoom-125') });
-        const navBar125 = await evaluate('return Array.prototype.map.call(document.querySelectorAll("[class*=nav-tab-button-container]"), function (a) { var r = a.getBoundingClientRect(); return r.bottom <= window.innerHeight; });');
+        const navBar125 = await evaluate('return Array.prototype.map.call(window.__f41b.route().querySelectorAll("[class*=nav-tab-button-container]"), function (a) { var r = a.getBoundingClientRect(); return r.bottom <= window.innerHeight; });');
         check('settings-zoom-125-nav-bar-on-screen', navBar125.length === 6 && navBar125.every(Boolean), { note: JSON.stringify(navBar125) });
         current = await pressAll(['LEFT', 'OK'], 'settings-zoom');
         await sleep(1500);
@@ -469,24 +481,43 @@ const libraryScenario = async () => {
     if (await openFromNavBar('Calendar', '#/calendar')) {
         const today = await initialFocus('calendar', (s) => /cell-/.test(s.focused || ''), 20000);
         await waitFor('return document.querySelectorAll("[class*=episode-]").length > 0;', 20000);
-        const grid = await pressAll(['RIGHT', 'DOWN', 'LEFT', 'UP'], 'calendar-grid');
+        const grid = await pressAll(['UP', 'DOWN'], 'calendar-grid');
         check('calendar-grid-arrows', /cell-/.test(grid.focused || '') && grid.text === today.text, { note: `${today.text} -> ${grid.text}` });
-        // A day with episodes: OK selects it and the list on the right shows it.
-        const withEpisode = await evaluate(`
-            var cells = Array.prototype.filter.call(document.querySelectorAll('[class*="cell-"]'), function (c) { return window.__f41b.local(c, 'cell') && c.querySelector('img, [class*="poster-"]'); });
-            return cells.map(function (c) { return c.textContent.trim().split(/\\s+/)[0]; });
+        // A day with episodes other than today: reached with the arrows, OK selects it and the list
+        // on the right (the upstream episode preview) scrolls to it.
+        const target = await evaluate(`
+            var h = window.__f41b;
+            var cells = Array.prototype.filter.call(document.querySelectorAll('[class*="cell-"]'), function (c) { return h.local(c, 'cell'); });
+            var withItems = cells.filter(function (c) {
+                return Array.prototype.some.call(c.querySelectorAll('[class*="item-"]'), function (i) { return h.local(i, 'item'); }) && !h.local(c, 'today');
+            });
+            return withItems.map(function (c) { return c.textContent.trim(); });
         `);
-        record('calendar-days-with-episodes', { note: JSON.stringify(withEpisode) });
+        record('calendar-days-with-episodes', { note: JSON.stringify(target) });
+        const day = target && target.length ? target[Math.floor(target.length / 2)] : null;
         let current = await state();
-        const target = withEpisode && withEpisode[0];
-        for (let index = 0; index < 40 && target && current.text.split(/\s+/)[0] !== target; index++) {
-            const diff = Number(target) - Number(current.text.split(/\s+/)[0]);
-            current = await press(Math.abs(diff) >= 7 ? (diff > 0 ? 'DOWN' : 'UP') : (diff > 0 ? 'RIGHT' : 'LEFT'), 'calendar-grid');
+        for (let index = 0; index < 20 && day && current.text !== day; index++) {
+            const move = await evaluate(`
+                var h = window.__f41b;
+                var cells = Array.prototype.filter.call(document.querySelectorAll('[class*="cell-"]'), function (c) { return h.local(c, 'cell'); });
+                var to = cells.filter(function (c) { return c.textContent.trim() === ${JSON.stringify(day)}; })[0].getBoundingClientRect();
+                var from = document.activeElement.getBoundingClientRect();
+                if (to.top >= from.bottom - 1) return 'DOWN';
+                if (to.bottom <= from.top + 1) return 'UP';
+                return to.left > from.left ? 'RIGHT' : 'LEFT';
+            `);
+            current = await press(move, 'calendar-grid');
+            if (!/cell-/.test(current.focused || '')) break;
         }
+        check('calendar-grid-reaches-day', day !== null && current.text === day, { note: `day ${day}: ${current.focused} "${current.text}"` });
         await press('OK', 'calendar-select');
-        await sleep(1500);
-        const selected = await evaluate('return Array.prototype.filter.call(document.querySelectorAll("[class*=active-]"), function (e) { return window.__f41b.local(e, "item"); }).map(function (e) { return e.textContent.trim().slice(0, 30); });');
-        check('calendar-ok-selects-day-in-list', target && selected.length === 1, { note: `day ${target}: ${JSON.stringify(selected)}`, screenshot: await screenshot('calendar-selected') });
+        await sleep(2000);
+        const selected = await evaluate(`
+            var h = window.__f41b;
+            return Array.prototype.filter.call(document.querySelectorAll('[class*="item-"]'), function (e) { return h.local(e, 'item') && h.local(e, 'active'); })
+                .map(function (e) { var r = e.getBoundingClientRect(); return { text: e.textContent.trim().slice(0, 30), top: Math.round(r.top) }; });
+        `);
+        check('calendar-ok-selects-day-in-list', selected.length === 1 && selected[0].top >= 0 && selected[0].top < 1080, { note: `day ${day}: ${JSON.stringify(selected)}`, screenshot: await screenshot('calendar-selected') });
         current = await state();
         for (let index = 0; index < 8 && !/episode-/.test(current.focused || ''); index++) current = await press('RIGHT', 'calendar-list');
         check('calendar-right-into-episode-list', /episode-/.test(current.focused || ''), { note: `${current.focused} "${current.text}"` });

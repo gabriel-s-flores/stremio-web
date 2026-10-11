@@ -17,7 +17,8 @@
 //   shortcuts and info) and the end of the Library grid, where the next page loads.
 // - Side navigation bar (every screen): RIGHT goes back to the item of the screen the user left it
 //   from. LEFT from the first column already reaches it through the polyfill, once its buttons are
-//   focusable (NavTabButton.webos.js).
+//   focusable (NavTabButton.webos.js). OK on the profile button (NavMenu.webos.js) puts the focus
+//   on the first entry of its menu.
 // - Interface zoom: after the zoom changes (a resize event), the focused element is scrolled back
 //   into its list.
 //
@@ -60,22 +61,26 @@ const closestLocal = (element, names, root) => {
 
 // What the screens of this task need. `paths` are the first segment of the route; `initial` is
 // tried in order (a list of local classes, the first focusable inside the last one wins, or a
-// function of the route container); `lists` are the scrolling containers handled here.
+// function of the route container), the first `preferred` of them (default 1) right away and the
+// others only after a moment; `lists` are the scrolling containers handled here. Library and
+// Calendar show only a "log in" placeholder to a guest.
 const SCREENS = [
     {
         name: 'library',
         paths: ['library', 'continuewatching'],
-        initial: [['meta-items-container'], ['selectable-inputs-container'], ['placeholder']],
+        initial: [['placeholder'], ['meta-items-container'], ['selectable-inputs-container']],
+        preferred: 2,
         lists: ['meta-items-container'],
     },
     {
         name: 'calendar',
         paths: ['calendar'],
         initial: [
+            ['placeholder'],
             (route) => queryLocal(route, 'cell').filter((cell) => hasLocalClass(cell, 'today'))[0],
             ['table', 'grid'],
-            ['placeholder'],
         ],
+        preferred: 2,
         lists: ['list'],
     },
     {
@@ -98,6 +103,11 @@ const SCREENS = [
 
 const NAV_BAR = 'vertical-nav-bar-container';
 const HORIZONTAL_NAV_BAR = 'horizontal-nav-bar-container';
+const PROFILE_BUTTON = 'nav-menu-popup-label';
+const PROFILE_MENU = 'nav-menu-container';
+// The profile menu renders a moment after OK, and its focus lock takes the focus off the button.
+const PROFILE_MENU_RETRY_MS = 100;
+const PROFILE_MENU_TIMEOUT_MS = 1000;
 
 // The hash router keeps the path in location.hash.
 const pathFromLocation = (location) => String(location.hash || '').replace(/^#/, '').split('?')[0];
@@ -147,7 +157,7 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
         isFocusable(element) && isShown(element);
 
     const findInitial = (screen, route, preferredOnly = false) => {
-        for (const entry of preferredOnly ? screen.initial.slice(0, 1) : screen.initial) {
+        for (const entry of preferredOnly ? screen.initial.slice(0, screen.preferred || 1) : screen.initial) {
             let target = null;
             if (typeof entry === 'function') {
                 target = entry(route);
@@ -275,9 +285,32 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
         return false;
     };
 
+    // OK on the profile button opens its menu with nothing focused (its focus lock takes the focus
+    // off the button, to body): the first entry of the menu gets it. Keeping the focus inside the
+    // menu is F4.3's.
+    const focusProfileMenu = (route) => {
+        const started = Date.now();
+        const attempt = () => {
+            const menu = queryLocal(route, PROFILE_MENU)[0];
+            const first = menu ? firstFocusable(menu) : null;
+            if (first && !menu.contains(document.activeElement)) {
+                first.focus();
+                record('profile-menu', first);
+            } else if (!first && Date.now() - started < PROFILE_MENU_TIMEOUT_MS) {
+                window.setTimeout(attempt, PROFILE_MENU_RETRY_MS);
+            }
+        };
+        window.setTimeout(attempt, PROFILE_MENU_RETRY_MS);
+    };
+
     const onKeyDown = (event) => {
         const dir = ARROWS[event.keyCode];
         if (pendingInitial !== null) cancelInitial();
+        if (event.keyCode === 13 && document.activeElement && closestLocal(document.activeElement, [PROFILE_BUTTON], null)) {
+            const route = visibleRoute();
+            if (route !== null) focusProfileMenu(route);
+            return;
+        }
         if (!dir || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
         const route = visibleRoute();
         if (route === null) return;
