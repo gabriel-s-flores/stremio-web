@@ -19,7 +19,7 @@ engolidos sem disparar nada: segurar o Back não desmonta a pilha inteira.
 | `KEYBOARD` (400) | `platform.js` | Teclado virtual aberto: tira o foco do campo, o que fecha o teclado (ver abaixo) |
 | `HANDLER` (300) | `useBackHandler` | Handlers dos componentes (diálogo de saída; F4.3 e F4.1x daqui em diante) |
 | `OVERLAY` (200) | `overlays.js` | Ponte para os overlays do upstream: fecha o de cima, um por toque |
-| `ROUTE` (100) | `BackNavigation.js` + `routes.js` | Volta da página/rota; no Board, abre o diálogo de saída |
+| `ROUTE` (100) | `BackNavigation.js` + `useRouteBack.js` + `routes.js` | Volta da página/rota, uma tela por toque; no Board, abre o diálogo de saída |
 
 ### Teclado virtual
 
@@ -57,14 +57,34 @@ formato das classes (`localIdentName`). O `overlays.test.js` (jsdom) confere o q
 qual overlay fecha, a ordem, o filtro da rota visível e do `-exit`, o alvo de cada evento
 (`window` × `document` × elemento) e que nenhuma pressão fica aberta.
 
-### Camada de rota (`routes.js`, `BackNavigation.js`)
+### Camada de rota (`routes.js`, `useRouteBack.js`, `BackNavigation.js`)
+
+Cada Back sai de **uma tela** (F3.2b). A camada (`useRouteBack.js`) guarda as entradas do histórico
+por que o router passou, pelo `history.state.idx` (`createHistoryStack`: um PUSH descarta as entradas
+depois dele), e volta **pelo histórico** (`navigate(-n)`) sempre que a entrada de destino é conhecida.
+Assim nada é empilhado no caminho de volta.
 
 1. Lista de streams de um episódio: clica no botão de voltar da própria lista (volta para os episódios).
 2. `/` (Board) e `/intro`: abrem o diálogo de saída, qualquer que seja o histórico.
-3. MetaDetails com origem guardada (`location.state.from`): volta para a origem com `replace`, como o
-   botão de voltar da barra.
-4. Demais rotas: `navigate(-1)` se `history.state.idx > 0`; senão, `getBackFallback()` com `replace`
-   (o mesmo que `useGoBack`, e o que o Escape do Player faz).
+3. MetaDetails com origem guardada (`location.state.from`): volta pelo histórico até a entrada mais
+   próxima da origem (a anterior, ou antes de outros títulos abertos dele, porque o
+   `useNavigateWithOrigin` mantém a primeira origem). Se a origem não está no histórico conhecido,
+   vai para ela com `replace`, como o botão de voltar da barra.
+4. Demais rotas: volta até a entrada mais próxima de **outra tela**. Entradas seguidas da mesma tela
+   contam como uma: as consultas da Busca (o `setSearchParams` da barra e os itens de histórico e
+   sugestão empilham uma entrada por consulta), catálogos e filtros do Discover, tipos da Library,
+   meses do Calendar. A tela é o 1º segmento do caminho; em MetaDetails, o título
+   (`/metadetails/:type/:id`): dois títulos são duas telas. Uma entrada desconhecida conta como outra
+   tela (um passo, como antes). Sem entrada anterior (`idx` 0 ou desconhecido), ou com todas as
+   anteriores da mesma tela, `getBackFallback()` com `replace` (o mesmo que `useGoBack`).
+
+Por que pular entradas no Back em vez de trocar a entrada da consulta (`replace`) num override do
+`SearchBar`: o override substituiria o arquivo inteiro do upstream (a chamada fica dentro do
+componente), e os itens de histórico e sugestão da busca (`href` → `Link`) empilhariam do mesmo jeito.
+
+Um Board aberto de novo pela barra (Board → Discover → Board) continua sendo raiz: o Back abre o
+diálogo de saída. O histórico rastreado não sobrevive a um reload da página; sem ele, as regras
+caem no comportamento da F3.2 (origem com `replace`, `navigate(-1)`).
 
 Depois de navegar, novos Back na mesma localização são consumidos sem navegar de novo até a rota
 mudar (no máximo 1 s): um `navigate(-1)` calculado com a localização antiga pularia uma tela.
@@ -124,8 +144,11 @@ diagnóstico (F3.6).
   - `dispatcher.test.js`: prioridade, LIFO, consumo, `keyup`/repeat;
   - `capture.test.js` (jsdom): o 461 é tomado na captura de `window`, antes de qualquer listener da
     página, inclusive os de `window` registrados antes;
-  - `routes.test.js` e `routeHandler.test.js`: regras de rota e o guarda contra navegação dupla
-    (`createRouteBackHandler`, que o `BackNavigation` registra);
+  - `routes.test.js` e `routeHandler.test.js`: regras de rota, a pilha do histórico e o guarda contra
+    navegação dupla (`createRouteBackHandler`, que o `useRouteBack` registra);
+  - `history.test.js` (jsdom): o `useRouteBack` num `HashRouter` de verdade, com teclas 461; cada
+    Back sai de uma tela e o `history.state.idx` só diminui (Board → Discover → Detalhes → Player e
+    volta, Busca com consultas → Detalhes e volta, diagnóstico);
   - `overlays.test.js` (jsdom): a ponte;
   - `platform.test.js`: teclado e saída;
   - `upstream.test.js`: o contrato com o upstream.
