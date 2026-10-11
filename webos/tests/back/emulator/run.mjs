@@ -576,8 +576,13 @@ const screensScenario = async () => {
         record('S00-test-addon', { ok: manifestUrl !== null, note: manifestUrl });
         if (manifestUrl === null) return;
         // Installed in the guest profile the way the Addons screen does (webos/tests/addon/README.md),
-        // then looked for in the profile of the core: the dispatch does not answer. Three tries.
+        // then looked for in the profile of the core: the dispatch does not answer. The core must be
+        // answering first (a fixed 15 s was too short on a busy host: the worker answers late, not
+        // never), then each try waits up to 45 s for the profile to show the addon. Three tries.
         const url = JSON.stringify(manifestUrl);
+        evaluate('window.__f32.coreReady = false; window.core.getState("ctx").then(function () { window.__f32.coreReady = true; }); return true;');
+        const coreMs = await waitFor('return window.__f32.coreReady === true;', 90000, 1000);
+        record('S00-core-answers', { ok: coreMs !== null, note: `${coreMs} ms` });
         let installedMs = null;
         for (let attempt = 1; attempt <= 3 && installedMs === null; attempt++) {
             evaluate(`
@@ -597,9 +602,9 @@ const screensScenario = async () => {
                     }, function (error) { install.error = String(error); });
                 }
                 return install.installed === true;
-            `, 15000, 1000);
+            `, 45000, 1000);
         }
-        record('S00-test-addon-installed', { ok: installedMs !== null, note: JSON.stringify(evaluate('return window.__f32.addonInstall;')) });
+        record('S00-test-addon-installed', { ok: installedMs !== null, note: `${installedMs} ms ${JSON.stringify(evaluate('return window.__f32.addonInstall;'))}` });
         const start = state();
         record('S00-start', { ok: onBoard(start.hash) && start.idx === 0, state: start });
 
