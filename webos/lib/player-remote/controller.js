@@ -377,13 +377,36 @@ const createPlayerRemote = ({ window, getBar, getProps, isOverlayOpen = () => fa
         if (seek && !seek.hasAttribute('tabindex')) seek.tabIndex = 0;
     };
 
+    // Upstream, the Player never takes the focus: it stays on the element that opened it (the stream
+    // of the details page, a poster of the Board) in the route below, and the pages restore from there
+    // when the Player closes (F4.1a, F4.1c). The remote moves the focus into the Player, which would
+    // leave it on <body> once the Player is gone: on the way out it goes back to that element.
+    const restoreEntryFocus = (entry, playerRoot) => {
+        if (!entry || !document.body.contains(entry)) return;
+        const active = document.activeElement;
+        const lost = !active || active === document.body || !document.body.contains(active) ||
+            (playerRoot !== null && playerRoot.contains(active));
+        if (!lost) return;
+        entry.focus();
+        // The ring of a remote focus, unless the Magic Remote pointer is in use (webos/magic-remote).
+        if (document.activeElement === entry && document.documentElement.getAttribute('data-webos-pointer') !== 'visible' &&
+            !entry.hasAttribute('data-focus-visible-added')) {
+            entry.classList.add('focus-visible');
+            entry.setAttribute('data-focus-visible-added', '');
+        }
+    };
+
     const install = () => {
+        const playerRoot = container();
+        const active = document.activeElement;
+        const entry = active && active !== document.body && (playerRoot === null || !playerRoot.contains(active)) ? active : null;
         window.addEventListener('keydown', onKeyDown, true);
         window.addEventListener('keyup', onKeyUp, true);
         return () => {
             releaseSeek();
             window.removeEventListener('keydown', onKeyDown, true);
             window.removeEventListener('keyup', onKeyUp, true);
+            restoreEntryFocus(entry, playerRoot);
         };
     };
 

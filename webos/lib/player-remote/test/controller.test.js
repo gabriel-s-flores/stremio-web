@@ -385,6 +385,45 @@ describe('Back', () => {
     });
 });
 
+describe('leaving the Player', () => {
+    it('gives the focus back to the element that opened the Player (the stream below), with the ring', () => {
+        render({ hidden: true, lowerRoute: false });
+        const stream = document.createElement('a');
+        stream.setAttribute('href', '#/player/x');
+        stream.tabIndex = 0;
+        document.querySelector('.route-container').appendChild(stream);
+        stream.focus();
+        const created = createPlayerRemote({ window, getBar: () => $('bar'), getProps: () => ({ paused: false, onPauseRequested: () => {} }), isOverlayOpen: () => false });
+        const remove = created.install();
+        press(KEYS.OK);
+        expect(document.activeElement).toBe($('play'));
+        // The Player goes away.
+        $('player').parentNode.removeChild($('player'));
+        remove();
+        expect(document.activeElement).toBe(stream);
+        expect(stream.hasAttribute('data-focus-visible-added')).toBe(true);
+    });
+
+    it('leaves the focus alone when it is already somewhere else, or when the element is gone', () => {
+        render({ hidden: true });
+        const stream = document.createElement('a');
+        stream.tabIndex = 0;
+        document.querySelector('.route-container').appendChild(stream);
+        stream.focus();
+        let created = createPlayerRemote({ window, getBar: () => $('bar'), getProps: () => ({}), isOverlayOpen: () => false });
+        let remove = created.install();
+        $('board').focus();
+        remove();
+        expect(document.activeElement).toBe($('board'));
+        stream.focus();
+        created = createPlayerRemote({ window, getBar: () => $('bar'), getProps: () => ({}), isOverlayOpen: () => false });
+        remove = created.install();
+        stream.parentNode.removeChild(stream);
+        remove();
+        expect(document.activeElement).toBe(document.body);
+    });
+});
+
 describe('route', () => {
     it('does nothing while the Player is not the visible route', () => {
         setup({ hidden: true, lowerRoute: true });
