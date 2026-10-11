@@ -105,6 +105,19 @@ const PAGE_HELPERS = `
         document.addEventListener('keyboardStateChange', function (event) {
             window.__f32.keyboardEvents.push({ time: Date.now(), visibility: event.detail && event.detail.visibility });
         });
+        // Console errors and warnings, and uncaught errors, from here on (the scenarios record them).
+        window.__f32.console = [];
+        ['error', 'warn'].forEach(function (level) {
+            var original = console[level];
+            console[level] = function () {
+                var text = Array.prototype.map.call(arguments, function (value) { return value instanceof Error ? String(value.stack || value) : String(value); }).join(' ');
+                window.__f32.console.push({ time: Date.now(), level: level, text: text.slice(0, 500) });
+                return original.apply(console, arguments);
+            };
+        });
+        window.addEventListener('error', function (event) {
+            window.__f32.console.push({ time: Date.now(), level: 'uncaught', text: String(event.message) + ' ' + event.filename + ':' + event.lineno });
+        });
     }
     window.__f32.sel = function (prefix) { return '[class^="' + prefix + '-"], [class*=" ' + prefix + '-"]'; };
     window.__f32.describe = function (element) {
@@ -638,6 +651,11 @@ const screensScenario = async () => {
         if (diagnosticsMs !== null) {
             await backToScreen('S15-diagnostics-back-to-board', start.idx, onBoard, { settleMs: 2000 });
         }
+
+        // Console of the page during the scenario: nothing from the Back layers (webos/back).
+        const consoleLog = evaluate('return window.__f32.console;');
+        const backErrors = consoleLog.filter((entry) => /webos\/back/.test(entry.text));
+        record('S16-console', { ok: backErrors.length === 0, note: `${consoleLog.length} entries, ${backErrors.length} from webos/back`, console: consoleLog });
 
         // D. Quit from the Board: the dialog, RIGHT + OK, the app closes.
         await back('S16-board-back-opens-exit-dialog', (b, a) => ({ 'dialog open': a.exitDialog, 'on Board': onBoard(a.hash) }));
