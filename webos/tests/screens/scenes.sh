@@ -3,6 +3,8 @@
 #   action: empty, click:<selectors> (opens a menu) or key:<remote key of cdp.mjs> (Back opens the exit dialog)
 #   selectors: CSS lists separated by ||, the first one with a visible match wins. Classes are CSS
 #   modules hashes: match them by the name prefix ([class*=name]).
+# @ADDON@ in a route: the url-encoded manifest url of the addon the capture shows (the fixture addon of
+# run when FIXTURE_URL is set, Cinemeta otherwise).
 # Guest mode (no account): Library and Calendar show their "log in" placeholder. The Player is the
 # last capture of run (one media scenario per boot) and needs STREAM_URL.
 SCENES=(
@@ -16,10 +18,11 @@ SCENES=(
     "library|#/library||[class*=placeholder] [class*=button]||[class*=library] [tabindex]"
     "calendar|#/calendar||[class*=placeholder] [class*=button]||[class*=calendar] [tabindex]"
     "addons|#/addons||[class*=addon-container] [class*=install-button]||[class*=addon-container]"
-    "addon-details|#/addons?addon=https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json||[class*=modal-dialog-container] [class*=action-button]||[class*=modal-dialog-container] [tabindex]"
+    "addon-details|#/addons?addon=@ADDON@||[class*=modal-dialog-container] [class*=action-button]||[class*=modal-dialog-container] [tabindex]"
     "settings|#/settings||[class*=settings-content] [class*=option] [tabindex]||[class*=menu] [class*=button]"
     "nav-menu|#/|click:[class*=nav-menu-popup-label]|[class*=nav-menu-container] [class*=nav-menu-option-container]||[class*=nav-menu-container] [tabindex]"
     "exit-dialog|#/|key:BACK|[class*=exit-dialog] button"
+    "diagnostics|#/webos-diagnostics||[class*=diagnostics-content] [class*=action]"
 )
 # The Player: control bar button focused (the bar shows on pointer movement).
 PLAYER_FOCUS="[class*=control-bar-container] [class*=control-bar-button]"

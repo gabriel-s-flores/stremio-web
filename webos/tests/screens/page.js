@@ -6,6 +6,10 @@
 //   focus(selectors)        focuses that element with the keyboard modality, as a remote key would
 //                           (the focus-visible polyfill marks it; :focus-within follows)
 //   click(selectors)        clicks it
+//   seed(manifestUrl)       fixture mode (F2.7): writes the guest profile with only the fixture addon (and the
+//                           streaming server warning dismissed) to localStorage, for a reload; Promise
+//   css(text)               adds a style sheet (INJECT_CSS of run: a deliberate change, to see the regression fail)
+//   settled()               true when every image of the page has loaded (or failed)
 //   probe()                 JSON with the viewport, the interface scale and the focused element: box in
 //                           screen pixels and the focus styles of it and of the descendant that draws them
 
@@ -21,6 +25,11 @@
         errors.push(Array.prototype.map.call(arguments, String).join(' ').slice(0, 500));
         return consoleError.apply(console, arguments);
     };
+
+    // No transition or animation: a capture taken a moment too early would catch one half way.
+    var freeze = document.createElement('style');
+    freeze.textContent = '*, *:before, *:after { transition: none !important; animation: none !important; caret-color: transparent !important; }';
+    document.head.appendChild(freeze);
 
     var visible = function(element) {
         var rect = element.getBoundingClientRect();
@@ -109,6 +118,28 @@
             if (!element) return false;
             element.click();
             return true;
+        },
+        seed: function(manifestUrl) {
+            return fetch(manifestUrl).then(function(response) { return response.json(); }).then(function(manifest) {
+                return window.core.getState('ctx').then(function(ctx) {
+                    var profile = ctx.profile;
+                    profile.addons = [{ manifest: manifest, transportUrl: manifestUrl, flags: { official: false, protected: false } }];
+                    profile.settings.streamingServerWarningDismissed = '2099-01-01T00:00:00.000Z';
+                    localStorage.setItem('profile', JSON.stringify(profile));
+                    return 'seeded';
+                });
+            });
+        },
+        css: function(text) {
+            var style = document.createElement('style');
+            style.textContent = text;
+            document.head.appendChild(style);
+            return 'css added';
+        },
+        settled: function() {
+            return Array.prototype.every.call(document.images, function(image) {
+                return image.complete;
+            });
         },
         probe: function() {
             var active = document.activeElement;

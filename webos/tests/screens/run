@@ -7,6 +7,11 @@
 #   CDP_PORT=<port> webos/tests/screens/run <output folder> [scene...]
 # Environment: SCALE=<interface scale setting, e.g. 100> sets it through the core before the scenes;
 # STREAM_URL=<http url> adds the Player at the end (one media scenario per emulator boot);
+# FIXTURE_URL=<manifest url of fixture/server.mjs> (F2.7) makes the captures independent of the network:
+# the guest profile is rewritten with that addon alone (catalogs, details, streams and images that never
+# change) and the app reloaded; adds the Player error screen at the end (a stream that answers 404).
+# INJECT_CSS=<css> adds that style sheet to every scene: a deliberate change to the app, to check the
+# regression catches it (e.g. INJECT_CSS='[data-focus-visible-added] { outline: none !important; }').
 # CDP_TARGET=<part of the page url> picks the page; WAIT=<s> caps the wait for each scene (30).
 # Output: <folder>/<scene>.png, <folder>/<scene>.json and <folder>/run.log.
 set -uo pipefail
@@ -38,24 +43,46 @@ go() { # <hash>: opens the route, through another one when it is already open (c
     fi
     cdp_eval "(location.hash = '$1', 1)" > /dev/null
 }
+settle() { # waits (up to 15 s) for every image of the page, then a little for the paint
+    local i
+    for i in $(seq 1 15); do
+        [[ "$(cdp_eval 'window.__screens.settled()')" == true ]] && break
+        sleep 1
+    done
+    sleep 1
+}
 shoot() { # <name> <focus selectors> [JS run in the same call, before the focus]
     local focused
     focused="$(cdp_eval "(function() { ${3:-} return window.__screens.focus('$2'); })()")"
-    sleep 1
+    settle
     "${CDP[@]}" screenshot "$OUT/$1.png" > /dev/null 2>&1
     cdp_eval 'window.__screens.probe()' > "$OUT/$1.json"
     log "$1: focus=${focused:-none} $(head -c 300 "$OUT/$1.json")"
 }
 
 : > "$OUT/run.log"
+ADDON="$(node -e "console.log(encodeURIComponent(process.argv[1]))" "${FIXTURE_URL:-https://v3-cinemeta.strem.io/manifest.json}")"
 # The app is up when the core answers and the Board has catalogs.
-for _ in $(seq 1 120); do
-    n="$(cdp_eval 'window.core ? document.querySelectorAll("[class*=meta-item-container]").length : 0')"
-    [[ "${n:-0}" =~ ^[0-9]+$ && "$n" -gt 0 ]] && break
-    sleep 2
-done
-log "board: ${n:-0} items"
+wait_board() {
+    local _
+    n=0
+    for _ in $(seq 1 120); do
+        n="$(cdp_eval 'window.core ? document.querySelectorAll("[class*=meta-item-container]").length : 0')"
+        [[ "${n:-0}" =~ ^[0-9]+$ && "$n" -gt 0 ]] && break
+        sleep 2
+    done
+    log "board: ${n:-0} items"
+}
+wait_board
 cdp_eval "$(cat "$HERE/page.js")" > /dev/null
+if [[ -n "${FIXTURE_URL:-}" ]]; then
+    log "fixture: $(cdp_eval "window.__screens.seed('$FIXTURE_URL')")"
+    "${CDP[@]}" reload > /dev/null 2>&1
+    sleep 3
+    wait_board
+    cdp_eval "$(cat "$HERE/page.js")" > /dev/null
+fi
+[[ -n "${INJECT_CSS:-}" ]] && log "css: $(cdp_eval "window.__screens.css($(node -e 'console.log(JSON.stringify(process.argv[1]))' "$INJECT_CSS"))")"
 if [[ -n "${SCALE:-}" ]]; then
     cdp_eval "window.core.getState('ctx').then(function(ctx) { return window.core.dispatch({ action: 'Ctx', args: { action: 'UpdateSettings', args: Object.assign({}, ctx.profile.settings, { interfaceScale: $SCALE }) } }); }).then(function() { return 'ok'; })" > /dev/null
     sleep 3
@@ -65,6 +92,7 @@ fi
 for entry in "${SCENES[@]}"; do
     IFS='|' read -r name hash action focus <<< "$entry"
     [[ "$ONLY" == '  ' || "$ONLY" == *" $name "* ]] || continue
+    hash="${hash//@ADDON@/$ADDON}"
     go "$hash"
     wait_for "${focus//\'/\\\'}" > /dev/null || [[ -n "$action" ]] || log "$name: nothing to focus after ${WAIT}s"
     sleep 2
@@ -86,6 +114,14 @@ if [[ -n "${STREAM_URL:-}" && ( "$ONLY" == '  ' || "$ONLY" == *' player '* ) ]];
     done
     # The control bar shows on pointer movement and hides a few seconds later: moved in the same call.
     shoot player "$PLAYER_FOCUS" 'var c = document.querySelector("[class*=player-container]"); if (c) c.dispatchEvent(new MouseEvent("mousemove", { bubbles: true, clientX: 960, clientY: 900 }));'
+fi
+if [[ -n "${FIXTURE_URL:-}" && ( "$ONLY" == '  ' || "$ONLY" == *' player-error '* ) ]]; then
+    encoded="$(cdp_eval "window.core.encodeStream({ name: 'fixture', description: 'fixture', url: '${FIXTURE_URL%/*}/status/404/fixture.mkv' })")"
+    cdp_eval "(location.hash = '#/player/' + encodeURIComponent('$encoded'), 1)" > /dev/null
+    # The error screen shows once the link was checked (F6.3): a few seconds after the video fails.
+    wait_for "[class*=error-label]" 40 > /dev/null || log "player-error: no error screen after 40s"
+    sleep 3
+    shoot player-error "[class*=nav-bar-container] [tabindex]"
 fi
 cdp_eval 'JSON.stringify(window.__screens ? window.__screens.errors : null)' > "$OUT/errors.json"
 log "errors: $(cat "$OUT/errors.json")"

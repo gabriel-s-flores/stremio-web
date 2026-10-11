@@ -4,7 +4,8 @@
 #   webos/tools/emu-run --timeout 15 -- webos/tests/screens/emulator.sh <output folder> [scene...]
 # Serves $MEDIA_DIR (default ~/webos-tv-sdk/media-tests/suite) through webos/tools/media-server.mjs
 # for the Player scene (/redirect/t1_h264_aac.mp4, like a debrid link; MEDIA_FILE= picks another,
-# MEDIA_FILE=none skips the Player). SCALE= and WAIT= go to run.
+# MEDIA_FILE=none skips the Player). SCALE= and WAIT= go to run. The fixture addon (fixture/server.mjs)
+# replaces Cinemeta, as the visual regression needs; FIXTURE=0 keeps the live catalogs.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
@@ -16,12 +17,15 @@ IPK="${IPK:-$(ls "$ROOT"/dist-webos/*.ipk | head -1)}"
 MEDIA_DIR="${MEDIA_DIR:-$HOME/webos-tv-sdk/media-tests/suite}"
 MEDIA_FILE="${MEDIA_FILE:-t1_h264_aac.mp4}"
 mkdir -p "$OUT"
+. "$HERE/fixture.sh"
+start_fixture 10.0.2.2 "$OUT/fixture-server.log"
+trap 'kill "${FIXTURE_PID:-}" 2>/dev/null || true' EXIT
 
 if [[ "$MEDIA_FILE" != none && -f "$MEDIA_DIR/$MEDIA_FILE" ]]; then
     PORT="$(node -e "const s=require('net').createServer().listen(0,'127.0.0.1',()=>{console.log(s.address().port);s.close()})")"
     node "$ROOT/webos/tools/media-server.mjs" "$MEDIA_DIR" "$PORT" > "$OUT/media-server.log" 2>&1 &
     SERVER_PID=$!
-    trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+    trap 'kill "$SERVER_PID" "${FIXTURE_PID:-}" 2>/dev/null || true' EXIT
     export STREAM_URL="http://10.0.2.2:$PORT/redirect/$MEDIA_FILE"
 fi
 
