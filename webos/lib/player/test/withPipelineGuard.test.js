@@ -517,6 +517,25 @@ describe('withPipelineGuard', () => {
         expect(logs.join('\n')).toMatch(/repeated load\(\) calls dropped: 0/);
     });
 
+    it('releaseSettleMs: 0 (webos.pipelineGuard.quietRelease = off): the release runs at once, as in WebOsVideo', () => {
+        setup({ releaseSettleMs: 0 });
+        const { video, element } = playing(URL_A);
+        element.log.length = 0;
+        video.dispatch(UNLOAD);
+        expect(element.log).toEqual(['release']);
+    });
+
+    it('holdInPlace: false (webos.pipelineGuard.holdInPlace = off): holdVideosInPlace leaves the Player\'s nodes alone', () => {
+        setup({ holdInPlace: false });
+        const { element, containerElement } = playing(URL_A);
+        const parent = createNode();
+        parent.appendChild(containerElement);
+        element.log.length = 0;
+        expect(holdVideosInPlace(containerElement, { setTimeout: clock.setTimeout })).toBe(0);
+        expect(element.log).toEqual([]);
+        expect(Object.prototype.hasOwnProperty.call(parent, 'removeChild')).toBe(false);
+    });
+
     it('two <video> in the same container: each guard holds the one its WebOsVideo created (the last)', () => {
         const first = playing(URL_A);
         const second = create(first.containerElement);
@@ -535,12 +554,13 @@ describe('withPipelineGuard', () => {
 });
 
 describe('readGuardSettings', () => {
-    const { readGuardSettings, GUARD_KEY, EXTRA_LOAD_KEY, WATCHDOG_KEY } = require('../withPipelineGuard');
+    const { readGuardSettings, GUARD_KEY, EXTRA_LOAD_KEY, WATCHDOG_KEY, QUIET_RELEASE_KEY, HOLD_KEY } = require('../withPipelineGuard');
     const storage = (values) => ({ getItem: (key) => (Object.prototype.hasOwnProperty.call(values, key) ? values[key] : null) });
 
     it('everything on by default; each key turns its part off', () => {
-        expect([GUARD_KEY, EXTRA_LOAD_KEY, WATCHDOG_KEY]).toEqual(['webos.pipelineGuard', 'webos.pipelineGuard.extraLoad', 'webos.pipelineGuard.watchdog']);
-        const all = { enabled: true, dropExtraLoad: true, watchdog: true };
+        expect([GUARD_KEY, EXTRA_LOAD_KEY, WATCHDOG_KEY, QUIET_RELEASE_KEY, HOLD_KEY]).toEqual(['webos.pipelineGuard',
+            'webos.pipelineGuard.extraLoad', 'webos.pipelineGuard.watchdog', 'webos.pipelineGuard.quietRelease', 'webos.pipelineGuard.holdInPlace']);
+        const all = { enabled: true, dropExtraLoad: true, watchdog: true, quietRelease: true, holdInPlace: true };
         expect(readGuardSettings(storage({}))).toEqual(all);
         expect(readGuardSettings(null)).toEqual(all);
         expect(readGuardSettings({ getItem: () => { throw new Error('denied'); } })).toEqual(all);
@@ -548,5 +568,7 @@ describe('readGuardSettings', () => {
         expect(readGuardSettings(storage({ [GUARD_KEY]: 'on' }))).toEqual(all);
         expect(readGuardSettings(storage({ [EXTRA_LOAD_KEY]: 'keep' }))).toEqual({ ...all, dropExtraLoad: false });
         expect(readGuardSettings(storage({ [WATCHDOG_KEY]: 'off' }))).toEqual({ ...all, watchdog: false });
+        expect(readGuardSettings(storage({ [QUIET_RELEASE_KEY]: 'off' }))).toEqual({ ...all, quietRelease: false });
+        expect(readGuardSettings(storage({ [HOLD_KEY]: 'off' }))).toEqual({ ...all, holdInPlace: false });
     });
 });

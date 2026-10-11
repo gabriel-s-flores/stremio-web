@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // Evaluates the output of webos/tests/player/switches.sh (F5.6) and exits non-zero on failure.
-//   node switches-evaluate.mjs <output-dir> [on|off]
+//   node switches-evaluate.mjs <output-dir> [on|off] [keys]
 // With the guard off (the A/B run) the checks are reported the same way; the exit code then says
-// whether that build managed the 6 loads.
+// whether that build managed the 6 loads. keys: the KEYS of switches.sh (other guard keys, F5.6b).
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const [dir, guard = 'on'] = process.argv.slice(2);
+const [dir, guard = 'on', keys = ''] = process.argv.slice(2);
 const read = (file) => fs.readFileSync(path.join(dir, file), 'utf8');
 const loads = read('loads.jsonl').trim().split('\n').filter(Boolean).map((line) => JSON.parse(line));
 const page = JSON.parse(read('page.json'));
@@ -34,6 +35,35 @@ const oomFrom = (() => {
     return index === -1 ? null : Number(sections[index].split(' ')[0]);
 })();
 
+// The picture of a load (F5.6b): the video plane only shows in the VM screen (the page capture is
+// transparent there). The two VM captures of switches.sh, 2 s apart, reduced to 480x270 with
+// ImageMagick as in the F6.4 e2e run: the middle band of the screen must not be dark and must change
+// between them (the test media move: testsrc2). A dark or still screen with the element's clock moving
+// is a picture that never reached the screen.
+const PICTURE = { width: 480, height: 270, top: 0.25, bottom: 0.7, minBrightness: 20, minChanged: 0.01, pixel: 32 };
+const rawOf = (file) => spawnSync('magick', [file, '-filter', 'Box', '-resize', `${PICTURE.width}x${PICTURE.height}!`, '-alpha', 'off', '-depth', '8', 'rgb:-'], { maxBuffer: 16 * 1024 * 1024 }).stdout;
+const pictureOf = (i) => {
+    const files = ['a', 'b'].map((suffix) => path.join(dir, `vm-load-${i}-${suffix}.png`));
+    if (!files.every((file) => fs.existsSync(file))) return { ok: false, error: 'no capture' };
+    const [a, b] = files.map(rawOf);
+    if (!a || !b || a.length !== b.length || a.length === 0) return { ok: false, error: 'no capture' };
+    const rows = [Math.floor(PICTURE.height * PICTURE.top), Math.floor(PICTURE.height * PICTURE.bottom)];
+    let sum = 0;
+    let changed = 0;
+    let count = 0;
+    for (let y = rows[0]; y < rows[1]; y++) {
+        for (let x = 0; x < PICTURE.width; x++) {
+            const p = (y * PICTURE.width + x) * 3;
+            sum += (b[p] + b[p + 1] + b[p + 2]) / 3;
+            if (Math.max(Math.abs(a[p] - b[p]), Math.abs(a[p + 1] - b[p + 1]), Math.abs(a[p + 2] - b[p + 2])) > PICTURE.pixel) changed++;
+            count++;
+        }
+    }
+    const brightness = Math.round(sum / count);
+    const changedRatio = Math.round((changed / count) * 10000) / 10000;
+    return { ok: brightness >= PICTURE.minBrightness && changedRatio >= PICTURE.minChanged, brightness, changedRatio };
+};
+
 const perLoad = loads.map((load) => {
     const played = load.msToPlay !== null && load.after && load.after.video && load.after.video.src === load.file &&
         load.after.video.currentTime > (load.atPlay && load.atPlay.video ? load.atPlay.video.currentTime : 0) + 2;
@@ -48,12 +78,15 @@ const perLoad = loads.map((load) => {
         pipelineGets: pipelineGets(load.file),
         wedged: !!(load.pipelines && load.pipelines.wedged),
         errorLayer: !!(load.after && load.after.errorLayer),
+        picture: pictureOf(load.i),
     };
 });
 
 check('6 loads were made (5 stream switches)', loads.length === 6, loads.map((load) => load.way));
 check('every load plays (video moving 4 s after the start)', perLoad.every((load) => load.played),
     perLoad.map((load) => `${load.i} ${load.way} ${load.file}: ${load.played ? `${load.msToPlay} ms` : 'did not play'}`));
+check('every load that plays shows its picture on the VM screen (not dark, moving)', perLoad.every((load) => !load.played || load.picture.ok),
+    perLoad.map((load) => `${load.i} ${load.way} ${load.file}: ${load.played ? '' : '(did not play) '}brightness ${load.picture.brightness}, changed ${load.picture.changedRatio}`));
 check('the uMediaServer stayed up (dmesg)', umsDownFrom === null, umsDownFrom === null ? null : `down at load ${umsDownFrom}`);
 check('no process killed for memory (dmesg OOM)', oomFrom === null, oomFrom === null ? null : `OOM by load ${oomFrom}`);
 check('no wedged pipeline in the emulator after any load', perLoad.every((load) => !load.wedged),
@@ -111,9 +144,9 @@ const ok = checks.every((c) => c.ok);
 // "inconclusive (emulator)" only when the emulator broke first: an OOM kill, the uMediaServer down or
 // a page reload at or before the first load that failed. A wedged pipeline by itself is not one: with
 // the guard on and none of those, it is the app's failure (and, with the guard off, the very bug).
-const firstFailure = perLoad.filter((load) => !load.played || load.wedged).map((load) => load.i)[0];
+const firstFailure = perLoad.filter((load) => !load.played || load.wedged || !load.picture.ok).map((load) => load.i)[0];
 const firstBreak = [umsDownFrom, oomFrom].concat(reloads).filter((i) => i !== null && i !== undefined).sort((a, b) => a - b)[0];
 const emulatorBroken = !ok && firstBreak !== undefined && (firstFailure === undefined || firstBreak <= firstFailure);
 const verdict = ok ? 'pass' : emulatorBroken ? 'inconclusive (emulator)' : 'fail';
-console.log(JSON.stringify({ ok, verdict, guard, loads: perLoad, order, checks }, null, 2));
+console.log(JSON.stringify({ ok, verdict, guard, keys, loads: perLoad, order, checks }, null, 2));
 process.exit(ok ? 0 : 1);

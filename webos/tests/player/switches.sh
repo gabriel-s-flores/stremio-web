@@ -7,7 +7,11 @@
 # failure. Run inside a pool reservation, after `pnpm webos:package`:
 #   webos/tools/emu-run --timeout 20 -- webos/tests/player/switches.sh <output-dir> [on|off]
 # off: the same build with the guard turned off (localStorage webos.pipelineGuard = "off"), for the
-# A/B. The F5.5 review case is load 3: a subtitle chosen right before leaving the Player must reach
+# A/B. KEYS="key=value,..." sets other localStorage keys the same way (read when the app starts), for
+# the A/B of one part of the guard (F5.6b: webos.pipelineGuard.quietRelease=off, .holdInPlace=off,
+# .extraLoad=keep, .watchdog=off). Each load must also show its picture on the VM screen (the page
+# capture is transparent where the video plane is): two VM captures 2 s apart, evaluated as in the
+# F6.4 e2e run (F5.6b). The F5.5 review case is load 3: a subtitle chosen right before leaving the Player must reach
 # that stream's pipeline (Luna selectTrack with its mediaId, before its release), not the next one.
 # The files of $MEDIA_DIR (default ~/webos-tv-sdk/media-tests/suite: gen-media.sh) are looped
 # to 60 s or more (stream copy, cached in $SWITCH_MEDIA_DIR): a clip that ends makes the Player go
@@ -94,12 +98,15 @@ wait_core() {
     exit 1
 }
 wait_core
-if [[ "$GUARD" == off ]]; then
-    cdp_eval "(function(){ localStorage.setItem('webos.pipelineGuard', 'off'); location.reload(); return true; })()" > /dev/null
+KEYS="${KEYS:-}"
+[[ "$GUARD" == off ]] && KEYS="webos.pipelineGuard=off${KEYS:+,$KEYS}"
+if [[ -n "$KEYS" ]]; then
+    keys_json="$(node -e "console.log(JSON.stringify(Object.fromEntries(process.argv[1].split(',').map((kv) => kv.split('=')))))" "$KEYS")"
+    cdp_eval "(function(){ var keys = $keys_json; Object.keys(keys).forEach(function(k){ localStorage.setItem(k, keys[k]); }); location.reload(); return true; })()" > /dev/null
     sleep 5
     wait_core
 fi
-cdp_eval "JSON.stringify({ guard: localStorage.getItem('webos.pipelineGuard'), webos: window.__webos || null })" > "$OUT/app-state.json"
+cdp_eval "JSON.stringify({ guard: localStorage.getItem('webos.pipelineGuard'), keys: Object.keys(localStorage).filter(function(k){ return k.indexOf('webos.pipelineGuard') === 0; }).reduce(function(o, k){ o[k] = localStorage.getItem(k); return o; }, {}), webos: window.__webos || null })" > "$OUT/app-state.json"
 cdp_eval "$(cat "$ROOT/webos/tests/player/switches-page.js")" > /dev/null
 # The memory peak of the boot (WebAppMgr at 470-550 MB) is when the 1 GB VM kills the page (OOM): the
 # first load waits for it to pass (F5.6 review), which leaves fewer inconclusive runs.
@@ -146,7 +153,12 @@ for i in "${!FILES[@]}"; do
         fi
         if [[ "$sample" == *'"errorLayer":true'* ]]; then break; fi
     done
-    [[ "$played" == null ]] || sleep 4
+    # The picture: two VM captures 2 s apart while it plays (switches-evaluate.mjs measures them).
+    [[ "$played" == null ]] || sleep 1
+    "${EMU[@]}" screenshot "$OUT/vm-load-$i-a.png" > /dev/null 2>&1 || true
+    sleep 2
+    "${EMU[@]}" screenshot "$OUT/vm-load-$i-b.png" > /dev/null 2>&1 || true
+    [[ "$played" == null ]] || sleep 1
     after="$(cdp_eval "JSON.stringify(window.__f56.sample())" 2>/dev/null || echo null)"
     wedge="$(node "$ROOT/webos/tests/player/pipeline-state.js" 2>/dev/null || true)"
     # The page reloaded (the helpers are gone): say so, and put them back for the next loads.
@@ -163,4 +175,4 @@ done
 "${EMU[@]}" screenshot "$OUT/tela-vm-final.png" > /dev/null 2>&1 || true
 cdp_eval "JSON.stringify({ videos: window.__f56.videos, events: window.__f56.events, console: window.__f56.console, errors: window.__f56.errors, luna: window.__f56.luna, marks: window.__f56.marks })" > "$OUT/page.json"
 
-node "$ROOT/webos/tests/player/switches-evaluate.mjs" "$OUT" "$GUARD" | tee "$OUT/resultado.json"
+node "$ROOT/webos/tests/player/switches-evaluate.mjs" "$OUT" "$GUARD" "$KEYS" | tee "$OUT/resultado.json"

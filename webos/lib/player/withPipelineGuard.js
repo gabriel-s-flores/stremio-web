@@ -36,6 +36,8 @@
 //   webos.pipelineGuard = "off"            WebOsVideo as it is (all of the above off)
 //   webos.pipelineGuard.extraLoad = "keep" keep WebOsVideo's second load() (2 above)
 //   webos.pipelineGuard.watchdog = "off"   no start watchdog (3 above)
+//   webos.pipelineGuard.quietRelease = "off"  release at once, as WebOsVideo does (1 above, F5.6b A/B)
+//   webos.pipelineGuard.holdInPlace = "off"   the Player's nodes leave at once (holdVideosInPlace, F5.6b A/B)
 
 const ERROR = require('@stremio/stremio-video/src/error');
 
@@ -51,6 +53,8 @@ const PROGRESS_EVENTS = ['loadstart', 'progress', 'durationchange'];
 const GUARD_KEY = 'webos.pipelineGuard';
 const EXTRA_LOAD_KEY = 'webos.pipelineGuard.extraLoad';
 const WATCHDOG_KEY = 'webos.pipelineGuard.watchdog';
+const QUIET_RELEASE_KEY = 'webos.pipelineGuard.quietRelease';
+const HOLD_KEY = 'webos.pipelineGuard.holdInPlace';
 
 // A load waiting for another video's release checks again this often.
 const WAIT_STEP_MS = 50;
@@ -107,7 +111,8 @@ const UNLOAD = Object.freeze({ type: 'command', commandName: 'unload' });
 
 // deps (all optional): log (console-like), now, setTimeout, clearTimeout, document (visibility),
 // shared (state shared by the guarded videos), releaseSettleMs, loadGapMs, startTimeoutMs,
-// dropExtraLoad (default true), watchdog (default true).
+// dropExtraLoad (default true), watchdog (default true), holdInPlace (default true: holdVideosInPlace
+// holds this video's nodes).
 const withPipelineGuard = (Video, deps) => {
     deps = deps || {};
     const log = deps.log || null;
@@ -120,6 +125,7 @@ const withPipelineGuard = (Video, deps) => {
     const startTimeoutMs = option('startTimeoutMs', START_TIMEOUT_MS);
     const dropExtraLoad = deps.dropExtraLoad !== false;
     const useWatchdog = deps.watchdog !== false;
+    const holdInPlace = deps.holdInPlace !== false;
     const doc = deps.document || (typeof document !== 'undefined' ? document : null);
     // Every guarded video of the page: releases in progress, when they are due, and when the last
     // pipeline was released.
@@ -166,7 +172,7 @@ const withPipelineGuard = (Video, deps) => {
         const hasPipeline = () => videoElement !== null && videoElement.hasAttribute('src');
         const nativeLoad = videoElement ? videoElement.load : null;
         if (videoElement) {
-            guardedElements.set(videoElement, options.containerElement);
+            if (holdInPlace) guardedElements.set(videoElement, options.containerElement);
             videoElement.load = function() {
                 if (dropExtraLoad && this.hasAttribute('src')) {
                     droppedLoads++;
@@ -185,9 +191,10 @@ const withPipelineGuard = (Video, deps) => {
             watchdog = schedule(onStartTimeout, startTimeoutMs);
         };
 
-        // Pauses the element and says how long to wait before the pipeline can go.
+        // Pauses the element and says how long to wait before the pipeline can go. With releaseSettleMs
+        // 0 (the A/B key) the element is not paused: only a subtitle selection is waited for.
         const settle = () => {
-            if (!videoElement.paused) videoElement.pause();
+            if (releaseSettleMs > 0 && !videoElement.paused) videoElement.pause();
             if (quietSince === null) quietSince = now();
             return Math.max(0, quietSince + releaseSettleMs - now(), subtitlesSelectedAt + SUBTITLE_SELECT_SETTLE_MS - now());
         };
@@ -365,6 +372,8 @@ const readGuardSettings = (storage) => ({
     enabled: readKey(storage, GUARD_KEY) !== 'off',
     dropExtraLoad: readKey(storage, EXTRA_LOAD_KEY) !== 'keep',
     watchdog: readKey(storage, WATCHDOG_KEY) !== 'off',
+    quietRelease: readKey(storage, QUIET_RELEASE_KEY) !== 'off',
+    holdInPlace: readKey(storage, HOLD_KEY) !== 'off',
 });
 
 module.exports = {
@@ -374,6 +383,8 @@ module.exports = {
     GUARD_KEY,
     EXTRA_LOAD_KEY,
     WATCHDOG_KEY,
+    QUIET_RELEASE_KEY,
+    HOLD_KEY,
     LEAVE_DELAY_MS,
     SUBTITLE_SELECT_SETTLE_MS,
     RELEASE_SETTLE_MS,
