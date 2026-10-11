@@ -11,12 +11,13 @@
 //    An embedded subtitle selection makes WebOsVideo call Luna selectTrack 500 ms later with the
 //    element's mediaId of that moment: the release also waits SUBTITLE_SELECT_SETTLE_MS after the
 //    last selection, so that call reaches the pipeline it was meant for, never the next one.
-//    The Player unmounts on a stream switch, and React takes its container out of the page before
-//    the destroy arrives (a passive effect): a <video> leaving the document while it plays tears
-//    the pipeline down at once (its mediaId goes empty). keepVideosConnected(), called by
-//    useVideo.webos.js in a layout effect cleanup (it runs before React removes the nodes), pauses
-//    the guarded <video> and moves it to a hidden holder in the body; the guard releases it there and
-//    puts it back in its container for WebOsVideo's own destroy.
+//    The Player unmounts on a stream switch, and React takes its nodes out of the page before the
+//    destroy arrives (a passive effect): a <video> leaving the document (or moved in it) has its
+//    pipeline torn down at once, paused or not, unless it was paused for about a second. So
+//    holdVideosInPlace(), called by useVideo.webos.js in a layout effect cleanup (it runs before
+//    React removes the nodes), pauses the guarded <video> and makes the removal of the node that
+//    holds it wait: that node stays where it is, hidden, until LEAVE_DELAY_MS later, after the
+//    guard released the pipeline in place.
 //    A load starts only after the releases in progress of every guarded video of the page (a stream
 //    switch remounts the Player: the new <video> loads while the old one is still settling) and no
 //    sooner than LOAD_GAP_MS after the last one, so two pipelines never overlap.
@@ -49,31 +50,48 @@ const WAIT_STEP_MS = 50;
 // A release counted as in progress for longer than this past its due time is dropped from the count.
 const STALE_RELEASE_MS = 5000;
 
-const HOLDER_ATTRIBUTE = 'data-webos-releasing-videos';
+// The node React removes when the Player goes away stays in place (hidden) this long: the guard
+// releases the pipeline RELEASE_SETTLE_MS after the pause, in place, and only then it leaves.
+const LEAVE_DELAY_MS = RELEASE_SETTLE_MS + 500;
 
-// The <video> elements of guarded videos, still in their container, with the container.
+// The <video> elements of guarded videos, with their container.
 const guardedElements = new WeakMap();
 
-// Pauses the guarded <video> elements of `containerElement` that still have a pipeline and moves them
-// to a hidden holder in the body, so they stay in the document until their guard releases them.
-// doc: document-like (tests).
-const keepVideosConnected = (containerElement, doc) => {
-    doc = doc || (typeof document !== 'undefined' ? document : null);
-    if (!containerElement || !doc || !doc.body) return 0;
+// Pauses the guarded <video> elements of `containerElement` that still have a pipeline, and delays
+// the removal of whichever ancestor React removes next (the Player's nodes, on unmount): it is
+// hidden at once and taken out LEAVE_DELAY_MS later. The interception is one-off per ancestor and
+// undone after LEAVE_DELAY_MS if React removes nothing. deps (tests): setTimeout.
+const holdVideosInPlace = (containerElement, deps) => {
+    const schedule = (deps && deps.setTimeout) || setTimeout;
+    if (!containerElement) return 0;
     const videos = Array.prototype.slice.call(containerElement.querySelectorAll('video'))
         .filter((element) => guardedElements.get(element) === containerElement && element.hasAttribute('src'));
     if (videos.length === 0) return 0;
-    let holder = doc.body.querySelector('[' + HOLDER_ATTRIBUTE + ']');
-    if (!holder) {
-        holder = doc.createElement('div');
-        holder.setAttribute(HOLDER_ATTRIBUTE, '');
-        holder.style.display = 'none';
-        doc.body.appendChild(holder);
-    }
     videos.forEach((element) => {
         if (!element.paused) element.pause();
-        holder.appendChild(element);
     });
+    const patched = [];
+    const restore = () => {
+        patched.splice(0).forEach((parent) => {
+            delete parent.removeChild;
+        });
+    };
+    for (let node = containerElement; node && node.parentNode; node = node.parentNode) {
+        const parent = node.parentNode;
+        if (Object.prototype.hasOwnProperty.call(parent, 'removeChild')) continue;
+        const held = node;
+        parent.removeChild = function(child) {
+            if (child !== held) return Object.getPrototypeOf(parent).removeChild.call(parent, child);
+            restore();
+            child.style.display = 'none';
+            schedule(() => {
+                if (child.parentNode === parent) Object.getPrototypeOf(parent).removeChild.call(parent, child);
+            }, LEAVE_DELAY_MS);
+            return child;
+        };
+        patched.push(parent);
+    }
+    schedule(restore, LEAVE_DELAY_MS);
     return videos.length;
 };
 
@@ -293,16 +311,6 @@ const withPipelineGuard = (Video, deps) => {
                     ELEMENT_LISTENERS.forEach(([eventName, listener]) => videoElement.removeEventListener(eventName, listener));
                 }
             }
-            if (command === 'destroy' && videoElement && videoElement.parentNode !== options.containerElement) {
-                // Kept in the document by keepVideosConnected(): release it there, then give it back
-                // to its container for WebOsVideo's destroy (which removes it from the container).
-                if (hasPipeline()) {
-                    videoElement.removeAttribute('src');
-                    nativeLoad.call(videoElement);
-                    shared.releasedAt = now();
-                }
-                options.containerElement.appendChild(videoElement);
-            }
             if (action && action.type === 'setProp' && action.propName === 'selectedSubtitlesTrackId') subtitlesSelectedAt = now();
             video.dispatch(action);
             if (command === 'destroy' && videoElement) {
@@ -356,4 +364,4 @@ const pipelineGuardEnabled = (storage) => {
     }
 };
 
-module.exports = { withPipelineGuard, keepVideosConnected, pipelineGuardEnabled, GUARD_KEY, SUBTITLE_SELECT_SETTLE_MS, RELEASE_SETTLE_MS, LOAD_GAP_MS, START_TIMEOUT_MS, START_RETRIES };
+module.exports = { withPipelineGuard, holdVideosInPlace, LEAVE_DELAY_MS, pipelineGuardEnabled, GUARD_KEY, SUBTITLE_SELECT_SETTLE_MS, RELEASE_SETTLE_MS, LOAD_GAP_MS, START_TIMEOUT_MS, START_RETRIES };

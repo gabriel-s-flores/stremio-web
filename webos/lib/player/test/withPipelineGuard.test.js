@@ -3,7 +3,7 @@
 // one) and of the <video> element, on a manual clock: when the pipeline is released, how many
 // pipelines a load creates, and the start watchdog.
 
-const { withPipelineGuard, keepVideosConnected, RELEASE_SETTLE_MS, START_TIMEOUT_MS, SUBTITLE_SELECT_SETTLE_MS } = require('../withPipelineGuard');
+const { withPipelineGuard, holdVideosInPlace, LEAVE_DELAY_MS, RELEASE_SETTLE_MS, START_TIMEOUT_MS, SUBTITLE_SELECT_SETTLE_MS } = require('../withPipelineGuard');
 
 const URL_A = 'http://10.0.2.2:8099/redirect/t1_h264_aac.mp4';
 const URL_B = 'http://10.0.2.2:8099/redirect/t6_h264_aac.mkv';
@@ -132,30 +132,36 @@ const createWebOsVideo = (clock, record) => {
     return FakeWebOsVideo;
 };
 
-// A node that holds children (the Player's container, the body, the holder).
-const createNode = () => {
-    const node = { children: [], attributes: {}, style: {} };
-    node.appendChild = (child) => {
+// A node that holds children (the Player's container and its ancestors); appendChild/removeChild on
+// the prototype, like Node.prototype.
+const nodeProto = {
+    appendChild(child) {
         if (child.parentNode) child.parentNode.removeChild(child);
-        node.children.push(child);
-        child.parentNode = node;
+        this.children.push(child);
+        child.parentNode = this;
         return child;
-    };
-    node.removeChild = (child) => {
-        node.children = node.children.filter((entry) => entry !== child);
+    },
+    removeChild(child) {
+        this.children = this.children.filter((entry) => entry !== child);
         child.parentNode = null;
         return child;
+    },
+};
+const createNode = () => {
+    const node = Object.create(nodeProto);
+    Object.assign(node, { children: [], style: {}, parentNode: null });
+    node.querySelectorAll = (selector) => {
+        const found = [];
+        const walk = (entry) => entry.children && entry.children.forEach((child) => {
+            if (selector === 'video' && child.log !== undefined) found.push(child);
+            walk(child);
+        });
+        walk(node);
+        return found;
     };
-    node.setAttribute = (name, value) => {
-        node.attributes[name] = value;
-    };
-    node.hasAttribute = (name) => Object.prototype.hasOwnProperty.call(node.attributes, name);
-    node.querySelectorAll = (selector) => node.children.filter((child) => (selector === 'video' ? child.log !== undefined : false));
-    node.querySelector = () => node.children.filter((child) => child.hasAttribute && child.hasAttribute('data-webos-releasing-videos'))[0] || null;
     return node;
 };
 const createContainer = createNode;
-const createDocument = () => ({ body: createNode(), createElement: () => createNode() });
 
 const load = (url) => ({ type: 'command', commandName: 'load', commandArgs: { stream: { url }, autoplay: true, time: 0 } });
 const UNLOAD = { type: 'command', commandName: 'unload' };
@@ -343,38 +349,57 @@ describe('withPipelineGuard', () => {
         expect(element.log).toEqual(['release', 'start ' + URL_A]);
     });
 
-    it('the Player unmounts: the <video> stays in the document, paused, until the guard releases it', () => {
-        const doc = createDocument();
+    it('the Player unmounts: the node React removes stays in place, hidden, until after the quiet release', () => {
         const { video, element, containerElement } = playing(URL_A);
+        // routes-container > route (React removes this one) > player > container > <video>
+        const routes = createNode();
+        const route = createNode();
+        const player = createNode();
+        routes.appendChild(route);
+        route.appendChild(player);
+        player.appendChild(containerElement);
         element.log.length = 0;
-        // Layout effect cleanup, before React removes the container; then the destroy (passive effect).
-        expect(keepVideosConnected(containerElement, doc)).toBe(1);
-        const holder = doc.body.children[0];
-        expect(holder.style.display).toBe('none');
-        expect(element.parentNode).toBe(holder);
+        // Layout effect cleanup, then React removes the route node, then the destroy (passive effect).
+        expect(holdVideosInPlace(containerElement, { setTimeout: clock.setTimeout })).toBe(1);
         expect(element.log).toEqual(['pause']);
+        expect(routes.removeChild(route)).toBe(route);
+        expect(route.parentNode).toBe(routes);
+        expect(route.style.display).toBe('none');
         video.dispatch(DESTROY);
         clock.advance(RELEASE_SETTLE_MS - 1);
-        expect(element.parentNode).toBe(holder);
         expect(element.log).toEqual(['pause']);
         clock.advance(1);
-        // Released while still in the document, then back in its container for WebOsVideo's destroy.
-        expect(element.log).toEqual(['pause', 'release', 'release']);
-        expect(record.actions).toContain('destroy');
-        expect(element.parentNode).toBeNull();
-        expect(holder.children).toEqual([]);
+        // Released while still in place.
+        expect(element.log).toEqual(['pause', 'release']);
+        expect(route.parentNode).toBe(routes);
+        clock.advance(LEAVE_DELAY_MS - RELEASE_SETTLE_MS);
+        expect(route.parentNode).toBeNull();
+        // The interception is gone: other removals are untouched.
+        expect(Object.prototype.hasOwnProperty.call(routes, 'removeChild')).toBe(false);
+        const other = createNode();
+        routes.appendChild(other);
+        routes.removeChild(other);
+        expect(other.parentNode).toBeNull();
     });
 
-    it('keepVideosConnected leaves alone what the guard does not hold: no pipeline, or another container', () => {
-        const doc = createDocument();
+    it('holdVideosInPlace leaves alone what the guard does not hold, and undoes itself if nothing is removed', () => {
         const idle = create();
-        expect(keepVideosConnected(idle.containerElement, doc)).toBe(0);
+        const parent = createNode();
+        parent.appendChild(idle.containerElement);
+        expect(holdVideosInPlace(idle.containerElement, { setTimeout: clock.setTimeout })).toBe(0);
+        expect(Object.prototype.hasOwnProperty.call(parent, 'removeChild')).toBe(false);
         const other = createContainer();
         other.appendChild(createElement());
         other.children[0].attributes.src = URL_A;
-        expect(keepVideosConnected(other, doc)).toBe(0);
-        expect(keepVideosConnected(null, doc)).toBe(0);
-        expect(doc.body.children).toEqual([]);
+        expect(holdVideosInPlace(other, { setTimeout: clock.setTimeout })).toBe(0);
+        expect(holdVideosInPlace(null)).toBe(0);
+        const { containerElement } = playing(URL_B);
+        const host = createNode();
+        host.appendChild(containerElement);
+        expect(holdVideosInPlace(containerElement, { setTimeout: clock.setTimeout })).toBe(1);
+        expect(Object.prototype.hasOwnProperty.call(host, 'removeChild')).toBe(true);
+        clock.advance(LEAVE_DELAY_MS);
+        expect(Object.prototype.hasOwnProperty.call(host, 'removeChild')).toBe(false);
     });
 
     it('reloads a stream that does not start, then reports STREAM_FAILED_TO_LOAD', () => {

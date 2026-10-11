@@ -3,8 +3,8 @@
 // webos/lib/player) and without playback speed: the state reports `playbackSpeed: null`, which the
 // Player already reads as "no speed control" (speed menu, shortcuts), and speed changes are ignored
 // (the C8 plays without sound at rates other than 1x). Add-on subtitles from hosts with a Let's
-// Encrypt certificate go through the tlsproxy (F5.5, webos/lib/subtitles). The <video> stays in the
-// document until the pipeline guard releases it (F5.6, webos/lib/player/withPipelineGuard.js).
+// Encrypt certificate go through the tlsproxy (F5.5, webos/lib/subtitles). The <video> stays in place
+// until the pipeline guard releases it (F5.6, webos/lib/player/withPipelineGuard.js).
 
 const React = require('react');
 // The explicit extension resolves to the upstream hook, not to this file.
@@ -13,7 +13,7 @@ const { PLAYBACK_SPEED_SUPPORTED, toWebOsLoadArgs } = require('../../../webos/li
 const { proxifySubtitlesTracks } = require('../../../webos/lib/subtitles');
 const tlsProxy = require('../../../webos/tlsproxy/page').default;
 const { rememberStream } = require('../../../webos/lib/debrid-link');
-const { keepVideosConnected } = require('../../../webos/lib/player/withPipelineGuard');
+const { holdVideosInPlace } = require('../../../webos/lib/player/withPipelineGuard');
 
 // Keeps the native rate: setPlaybackSpeed(2) from the "hold for 2x" gesture does nothing.
 const ignorePlaybackSpeed = () => { /* no-op */ };
@@ -24,7 +24,7 @@ const useVideo = () => {
     React.useLayoutEffect(() => {
         const containerElement = video.containerRef ? video.containerRef.current : null;
         return () => {
-            keepVideosConnected(containerElement);
+            holdVideosInPlace(containerElement);
         };
     }, [video.containerRef]);
     const upstreamLoad = video.load;

@@ -102,11 +102,11 @@ describe('upstream details the F5.6 pipeline guard depends on', () => {
         expect(read('Player.js')).toMatch(/video\.unload\(\);\s*if \(player\.selected && player\.stream\?\.type === 'Ready'[^\n]*\{\s*video\.load\(\{/);
     });
 
-    it('useVideo destroys the video in a passive effect cleanup and returns containerRef (keepVideosConnected runs before, in a layout cleanup)', () => {
+    it('useVideo destroys the video in a passive effect cleanup and returns containerRef (holdVideosInPlace runs before, in a layout cleanup)', () => {
         const source = read('useVideo.js');
         expect(source).toMatch(/React\.useEffect\(\(\) => \{\s*video\.current = new Video\(\);[\s\S]*?return \(\) => \{[\s\S]*?video\.current\.destroy\(\);/);
         expect(source.slice(source.lastIndexOf('return {'))).toMatch(/\n\s+containerRef,\n/);
-        expect(fs.readFileSync(path.join(PLAYER_DIR, 'useVideo.webos.js'), 'utf8')).toMatch(/React\.useLayoutEffect\([\s\S]*keepVideosConnected\(containerElement\)/);
+        expect(fs.readFileSync(path.join(PLAYER_DIR, 'useVideo.webos.js'), 'utf8')).toMatch(/React\.useLayoutEffect\([\s\S]*holdVideosInPlace\(containerElement\)/);
     });
 
     it('the webOS WebOsVideo is the guarded one, under the tracks decorator', () => {
