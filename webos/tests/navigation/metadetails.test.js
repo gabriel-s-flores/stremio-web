@@ -313,6 +313,19 @@ describe('restoring the focus', () => {
         navigation.setRouteActive(true);
         navigation.tick();
         expect(document.activeElement).toBe($('s3'));
+        // With the ring, whatever the focus-visible polyfill thinks of the last input.
+        expect($('s3').hasAttribute('data-focus-visible-added')).toBe(true);
+    });
+
+    it('the ring is not forced while the Magic Remote pointer shows', () => {
+        open();
+        expect($('list').hasAttribute('data-focus-visible-added')).toBe(true);
+        $('list').blur();
+        $('list').removeAttribute('data-focus-visible-added');
+        document.documentElement.setAttribute('data-webos-pointer', 'visible');
+        key(KEY.DOWN, document.body);
+        expect(document.activeElement).toBe($('list'));
+        expect($('list').hasAttribute('data-focus-visible-added')).toBe(false);
     });
 
     it('the streams list going back to the episodes (replace) restores the episode', () => {

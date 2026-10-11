@@ -210,10 +210,20 @@ const createMetaDetailsNavigation = ({ root, window: win }) => {
         parts.list ? Array.prototype.filter.call(parts.list.querySelectorAll(SELECTORS.item), isFocusable) : []
     );
 
+    // The focus this module places is for the remote (never while the pointer is in use), so it
+    // shows the ring as the focus-visible polyfill does after a key (same class and attribute, which
+    // the polyfill takes off on blur). The polyfill may think the pointer is in use when it is not:
+    // Back never reaches it (the F3.2 dispatcher takes the key) and the overlay bridge of F3.2
+    // closes the Player menus with a mouse press, so the stream focused again after the Player had
+    // no ring.
     const focus = (element) => {
         if (!element) return false;
         element.focus();
         if (doc.activeElement !== element) return false;
+        if (!pointerInUse(doc) && !element.hasAttribute('data-focus-visible-added')) {
+            element.classList.add('focus-visible');
+            element.setAttribute('data-focus-visible-added', '');
+        }
         keepInView(element, root, win);
         return true;
     };
