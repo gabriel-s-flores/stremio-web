@@ -389,6 +389,9 @@ const settingsLeft = async (name, { menu = true } = {}) => {
     return back;
 };
 
+// A step button of the Interface zoom (not the "100%" of the subtitles size menu).
+const isZoomStep = (s, text) => /^button\.label/.test(s.focused || '') && s.text === text;
+
 const guestScenario = async () => {
     await navBarOnBoard();
     await profileMenu();
@@ -484,7 +487,7 @@ const guestScenario = async () => {
 
         // Zoom: the steps with LEFT/RIGHT and OK.
         let current = await press('DOWN', 'settings-zoom');
-        for (let index = 0; index < 20 && !/^100%$/.test(current.text || ''); index++) current = await press('DOWN', 'settings-zoom');
+        for (let index = 0; index < 20 && !isZoomStep(current, '100%'); index++) current = await press('DOWN', 'settings-zoom');
         // LEFT from several rows goes to the menu, at 100%.
         current = await settingsLeft('settings-left-from-zoom-row-goes-to-menu');
         current = await pressAll(['DOWN', 'DOWN'], 'settings-left');
@@ -492,7 +495,7 @@ const guestScenario = async () => {
         current = await pressAll(['DOWN', 'DOWN', 'DOWN', 'DOWN', 'DOWN'], 'settings-left');
         current = await settingsLeft('settings-left-from-player-row-goes-to-menu');
         // Back to the zoom steps (above), never past the top of the list.
-        for (let index = 0; index < 30 && !/^100%$/.test(current.text || '') && !current.inNavBar && !/submit-button|nav-menu-popup/.test(current.focused || ''); index++) {
+        for (let index = 0; index < 30 && !isZoomStep(current, '100%') && !current.inNavBar && !/submit-button|nav-menu-popup/.test(current.focused || ''); index++) {
             current = await press('UP', 'settings-zoom');
         }
         current = await press('RIGHT', 'settings-zoom');

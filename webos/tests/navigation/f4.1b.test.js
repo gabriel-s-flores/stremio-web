@@ -162,6 +162,21 @@ describe('initial focus', () => {
         expect(text()).toBe('All');
     });
 
+    test('the filters taken while waiting give way to the list when it comes', () => {
+        render(libraryRoute({ items: 0 }));
+        start('#/library');
+        navigation.focusScreen();
+        jest.advanceTimersByTime(1800);
+        const filter = document.activeElement;
+        expect(text()).toBe('All');
+        // The grid comes in under the filters, which stay.
+        document.querySelector('.library-content-Zz9_y').insertAdjacentHTML('beforeend',
+            '<div class="meta-items-container-Mm3x4" data-rect="100,200,1800,800"><a class="meta-item-link-veMqr" href="#/detail/0" data-rect="120,200,250,380">item 0</a></div>');
+        expect(filter.isConnected).toBe(true);
+        jest.advanceTimersByTime(600);
+        expect(text()).toBe('item 0');
+    });
+
     test('a list that comes later still gets the focus', () => {
         render(libraryRoute({ items: 0 }));
         start('#/library');

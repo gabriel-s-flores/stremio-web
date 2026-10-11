@@ -41,7 +41,7 @@ const INITIAL_FOCUS_PREFERRED_MS = 1500;
 const INITIAL_FOCUS_TIMEOUT_MS = 6000;
 // After the initial focus, a list replaced right after (a filter of Addons) is focused again.
 const INITIAL_FOCUS_VERIFY_MS = 500;
-const INITIAL_FOCUS_VERIFICATIONS = 4;
+const INITIAL_FOCUS_VERIFICATIONS = 12;
 // Part of the list height kept visible beyond the focused item, and scrolled when there is none.
 const REVEAL_MARGIN = 0.15;
 const PAGE_SCROLL = 0.6;
@@ -250,7 +250,7 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
                 target.element.focus();
                 record(target.reason, target.element);
                 if (verifications < INITIAL_FOCUS_VERIFICATIONS) {
-                    pendingInitial = window.setTimeout(() => verify(target.element), INITIAL_FOCUS_VERIFY_MS);
+                    pendingInitial = window.setTimeout(() => verify(target.element, !preferredOnly && target.reason === 'initial'), INITIAL_FOCUS_VERIFY_MS);
                 }
                 return;
             }
@@ -258,13 +258,23 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
                 pendingInitial = window.setTimeout(attempt, INITIAL_FOCUS_RETRY_MS);
             }
         };
-        // The focused element went away with its list (and the focus with it): search again.
-        const verify = (element) => {
+        // The focused element went away with its list (and the focus with it): search again. A
+        // fallback (the filters) gives way to the list when it comes, if no key was pressed.
+        const verify = (element, fallback) => {
             pendingInitial = null;
             verifications++;
+            const route = visibleRoute();
+            if (fallback && route !== null && document.activeElement === element && currentScreen() === screen) {
+                const preferred = findInitial(screen, route, true);
+                if (preferred !== null && preferred !== element) {
+                    preferred.focus();
+                    record('initial', preferred);
+                    return;
+                }
+            }
             if (document.body.contains(element)) {
                 if (verifications < INITIAL_FOCUS_VERIFICATIONS) {
-                    pendingInitial = window.setTimeout(() => verify(element), INITIAL_FOCUS_VERIFY_MS);
+                    pendingInitial = window.setTimeout(() => verify(element, fallback), INITIAL_FOCUS_VERIFY_MS);
                 }
                 return;
             }
