@@ -143,16 +143,19 @@ audit() { # <file>: where the token could be, with whatever is on screen now
     cdp_eval "(function(){
     var token = '$TOKEN';
     var attributes = 0;
+    var imageSources = 0;
     var loopback = [];
     Array.prototype.forEach.call(document.querySelectorAll('*'), function(e) {
         Array.prototype.forEach.call(e.attributes, function(a) {
-            if (a.value.indexOf(token) !== -1) attributes += 1;
+            // The images of the proxy-served hosts have the proxy URL in `src` by design (F3.7, Image.webos.tsx):
+            // a Board still fading out under the Player can hold some. Not a log, not on screen: counted apart.
+            if (a.value.indexOf(token) !== -1) { if (a.name === 'src' || a.name === 'srcset' || a.name === 'style') imageSources += 1; else attributes += 1; }
             else if (a.value.indexOf('127.0.0.1') !== -1 && loopback.length < 10) loopback.push(e.tagName.toLowerCase() + '[' + a.name + ']=' + a.value.slice(0, 80));
         });
     });
     var storage = [];
     for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if ((localStorage.getItem(k) || '').indexOf(token) !== -1) storage.push(k); }
-    return JSON.stringify({ clipboard: typeof navigator.clipboard, visibleText: document.body.innerText.length, tokenInVisibleText: document.body.innerText.indexOf(token) !== -1, attributesWithToken: attributes, otherLoopbackAttributes: loopback, localStorageKeysWithToken: storage });
+    return JSON.stringify({ clipboard: typeof navigator.clipboard, visibleText: document.body.innerText.length, tokenInVisibleText: document.body.innerText.indexOf(token) !== -1, attributesWithToken: attributes, imageSourcesWithToken: imageSources, otherLoopbackAttributes: loopback, localStorageKeysWithToken: storage });
 })()" > "$1"
 }
 log "context menu: $(open_context_menu)"

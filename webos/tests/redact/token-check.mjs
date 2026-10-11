@@ -102,6 +102,7 @@ const info = {
     pageConsoleCalls: rest.filter(isPageConsole).length,
     exceptions: rest.filter((record) => record.kind === 'exception').length,
     attributesWithToken: player_.attributesWithToken,
+    imageSourcesWithToken: player_.imageSourcesWithToken,
     otherLoopbackAttributes: player_.otherLoopbackAttributes,
     clipboard: player_.clipboard,
     browserNetworkMessages: networkRecords.length,
