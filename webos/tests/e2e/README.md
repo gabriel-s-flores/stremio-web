@@ -4,7 +4,7 @@ O roteiro de aceitação do port até aqui, num boot do emulador, com o app empa
 
 1. **Board** com os catálogos do Cinemeta (convidado) → as setas até um pôster de **filme** (as fileiras ao vivo mudam: as de série são puladas) → OK;
 2. **Detalhes** → a lista de streams de um **addon local que imita um addon de debrid**, ordenada e rotulada para a C8 (F6.2), comparada com a das bibliotecas;
-3. o MKV com várias faixas → OK → **toca**: o relógio do elemento anda (2 s em 3 s, medido desde o OK) e a **imagem aparece na tela da VM** (duas capturas a 2 s: a faixa do meio da tela não está escura e muda);
+3. o MKV com várias faixas → OK → **toca**: o relógio do elemento anda (2 s em 3 s, medido desde o OK) e a **imagem aparece na tela da VM** (duas capturas a 2 s: a faixa do meio da tela não está escura e muda, fora do canto dos toasts, onde um toast que some faria um quadro congelado passar);
 4. **faixa de áudio** (F5.4): menu, inglês → português, o vídeo segue;
 5. **legenda** (F5.5): a embutida em inglês ligada pelo Player (Luna); depois a **de addon**, desenhada no overlay HTML ("ADDON EN n");
 6. **seek** pelas setas (o atalho de teclado do Player);

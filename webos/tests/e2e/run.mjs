@@ -414,7 +414,12 @@ const waitPlaying = async (okAt, seconds) => {
 // screen (no title, no control bar, no subtitles) must not be dark and must change between them
 // (the test media move: testsrc2 and a clock). A black or still screen with a moving element clock
 // is a picture that never reached the screen (review c1, finding 1).
-const PICTURE = { width: 480, height: 270, top: 0.25, bottom: 0.7, minBrightness: 20, minChanged: 0.01, pixel: 32 };
+// The toasts ("Subtitles loaded", top right, x 1193-1804 and y 196-494 of 1920x1080) are left out with a
+// margin: a frozen frame whose toast goes away between the captures would pass (F6.4 review c2, F5.6b).
+const PICTURE = { width: 480, height: 270, top: 0.25, bottom: 0.7, minBrightness: 20, minChanged: 0.01, pixel: 32,
+    toast: { left: 0.6, right: 0.96, top: 0.16, bottom: 0.48 } };
+const inToast = (x, y) => x >= PICTURE.width * PICTURE.toast.left && x < PICTURE.width * PICTURE.toast.right &&
+    y >= PICTURE.height * PICTURE.toast.top && y < PICTURE.height * PICTURE.toast.bottom;
 const rawOf = (file) => spawnSync('magick', [file, '-filter', 'Box', '-resize', `${PICTURE.width}x${PICTURE.height}!`, '-alpha', 'off', '-depth', '8', 'rgb:-'], { maxBuffer: 16 * 1024 * 1024 }).stdout;
 const pictureOf = async (name) => {
     vmShot(`${name}-a`);
@@ -429,6 +434,7 @@ const pictureOf = async (name) => {
     let count = 0;
     for (let y = rows[0]; y < rows[1]; y++) {
         for (let x = 0; x < PICTURE.width; x++) {
+            if (inToast(x, y)) continue;
             const i = (y * PICTURE.width + x) * 3;
             sum += (b[i] + b[i + 1] + b[i + 2]) / 3;
             if (Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2])) > PICTURE.pixel) changed++;
