@@ -89,6 +89,8 @@ const hasOverlay = (document) => document.querySelector('[class*="modal-containe
 
 // The behaviour shared by the three screens, on the screen's route content element. `screen`:
 // - initial(container): the element for the initial focus, or null while there is none yet;
+// - fallback(container): an element to focus meanwhile (optional); the initial one replaces it when
+//   it shows up, if the user did not move;
 // - navigate(target, dir, container, memory): an element to focus, `true` to swallow the press, or
 //   null to leave it to the spatial navigation; `memory.last` is the last focused element of the
 //   screen, `memory.content` the last one inside its lists (to go back to from the top bar);
@@ -120,7 +122,8 @@ const createScreenFocus = (container, screen, { window: win = window, timeout = 
     };
 
     // Focus for a screen with nothing focused; when the content is not there yet, waits for it
-    // (DOM mutations under the screen), as long as nothing else took the focus in between.
+    // (DOM mutations under the screen), as long as nothing else took the focus in between: the
+    // focus still lost, or still on the screen's fallback element.
     const ensureFocus = () => {
         if (!isVisibleRoute(container) || !isFocusLost(document) || hasOverlay(document)) return false;
         const element = target();
@@ -128,22 +131,25 @@ const createScreenFocus = (container, screen, { window: win = window, timeout = 
             stopWaiting();
             return focus(element);
         }
+        const fallback = screen.fallback ? screen.fallback(container) : null;
+        if (fallback) focus(fallback);
         if (waiting === null) {
             const observer = new win.MutationObserver(() => {
-                if (!isFocusLost(document)) {
+                const untouched = fallback ? document.activeElement === fallback : isFocusLost(document);
+                if (!untouched) {
                     stopWaiting();
                     return;
                 }
-                const next = target();
+                const next = fallback ? screen.initial(container) : target();
                 if (next && isVisibleRoute(container)) {
                     stopWaiting();
                     focus(next);
                 }
             });
             observer.observe(container, { childList: true, subtree: true });
-            waiting = { observer, timer: win.setTimeout(stopWaiting, timeout) };
+            waiting = { observer, fallback, timer: win.setTimeout(stopWaiting, timeout) };
         }
-        return false;
+        return fallback !== null && document.activeElement === fallback;
     };
 
     // Another route on top: what had the focus here is what Back should come back to.
@@ -170,7 +176,8 @@ const createScreenFocus = (container, screen, { window: win = window, timeout = 
         memory.last = element;
         memory.path = pathOf(element, container);
         if (screen.isContent(element, container)) memory.content = element;
-        stopWaiting();
+        // The user (or anything else) moved the focus: no initial focus to wait for any more.
+        if (waiting === null || !waiting.fallback || element !== waiting.fallback) stopWaiting();
         if (screen.align && !isPointerVisible(document)) screen.align(element, container);
     };
 

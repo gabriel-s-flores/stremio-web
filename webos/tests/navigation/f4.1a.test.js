@@ -338,11 +338,32 @@ describe('Discover grid', () => {
         expect(text(discoverScreen.initial(grid3x2()))).toBe('0');
     });
 
-    test('initial focus: the filters only once Discover shows it has no catalog', () => {
-        const opening = mount(`<div class="discover-container-UUUUU"><div class="catalog-container-VVVVV">${filters}</div></div>`);
-        expect(discoverScreen.initial(opening)).toBe(null);
-        const empty = mount(`<div class="discover-container-UUUUU"><div class="catalog-container-VVVVV">${filters}<div class="message-container-MMMMM">No catalog</div></div></div>`);
-        expect(text(discoverScreen.initial(empty))).toBe('Type');
+    test('initial focus: the first filter until the catalog shows, then its first item', async () => {
+        const container = mount(`<div class="discover-container-UUUUU"><div class="catalog-container-VVVVV">${filters}</div></div>`);
+        const focus = createScreenFocus(container, discoverScreen);
+        expect(focus.ensureFocus()).toBe(true);
+        expect(document.activeElement.textContent).toBe('Type');
+        const grid = document.createElement('div');
+        grid.className = 'meta-items-container-WWWWW';
+        grid.innerHTML = cell('0', 0, 0) + cell('1', 0, 200);
+        container.querySelector('[class*="catalog-container"]').appendChild(grid);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(document.activeElement.textContent).toBe('0');
+        focus.destroy();
+    });
+
+    test('initial focus: a filter the user moved to stays', async () => {
+        const container = mount(`<div class="discover-container-UUUUU"><div class="catalog-container-VVVVV">${filters}</div></div>`);
+        const focus = createScreenFocus(container, discoverScreen);
+        focus.ensureFocus();
+        container.querySelectorAll('[aria-haspopup]')[1].focus();
+        const grid = document.createElement('div');
+        grid.className = 'meta-items-container-WWWWW';
+        grid.innerHTML = cell('0', 0, 0);
+        container.querySelector('[class*="catalog-container"]').appendChild(grid);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(document.activeElement.textContent).toBe('Catalog');
+        focus.destroy();
     });
 
     test('the focused line goes to the top of the grid', () => {
