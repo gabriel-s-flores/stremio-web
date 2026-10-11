@@ -357,11 +357,23 @@ describe('side navigation bar', () => {
         expect(navigation.status.last.reason).toBe('nav-bar-return');
     });
 
-    test('without a known item, RIGHT is the polyfill\'s', () => {
-        render(boardRoute());
+    test('without a known item, RIGHT goes into the content, not to the top bar', () => {
+        render(`
+            <div class="route-container" data-rect="0,0,1920,1080">
+                <div class="route-content" data-rect="0,0,1920,1080">
+                    <nav class="horizontal-nav-bar-container-Hh1x2" data-rect="0,0,1920,100">
+                        <div class="submit-button-container-MImNa" tabindex="0" data-rect="1200,10,100,80">search</div>
+                    </nav>
+                    ${NAV_BAR}
+                    <a class="meta-item-link-veMqr" href="#/detail/b" data-rect="300,200,250,380">board item</a>
+                </div>
+            </div>`);
         start('#/');
         document.querySelector('.nav-tab-button-Ab1c2').focus();
-        expect(key(RIGHT).defaultPrevented).toBe(false);
+        const event = key(RIGHT);
+        expect(event.defaultPrevented).toBe(true);
+        expect(text()).toBe('board item');
+        expect(navigation.status.last.reason).toBe('nav-bar-enter');
     });
 
     test('the bar is not where the screen restores to', () => {

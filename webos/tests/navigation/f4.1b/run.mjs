@@ -304,6 +304,8 @@ const applyFixture = async () => {
         ${PAGE_HELPERS}
         return document.querySelectorAll('a[href^="#/detail/"]').length > 0 && !!window.__webosNavigationF41b;
     `, 120000, 2000);
+    // The app sends the API actions when it mounts (and on every window focus).
+    await waitFor('return !!(window.__f41bFixture && window.__f41bFixture.swapped.indexOf("PullUserFromAPI") !== -1);', 30000, 1000);
     await sleep(3000);
     const fixture = await evaluate('var p = JSON.parse(localStorage.getItem("profile") || "null"); return { auth: !!(p && p.auth), swapped: window.__f41bFixture && window.__f41bFixture.swapped };');
     check('fixture-profile-logged-in', loaded !== null && fixture.auth && fixture.swapped.indexOf('PullUserFromAPI') !== -1, { note: JSON.stringify(fixture) });
@@ -317,8 +319,8 @@ const navBarOnBoard = async () => {
     for (let attempt = 0; attempt < 12 && current.title !== 'Discover'; attempt++) {
         current = await press(!current.inNavBar ? 'LEFT' : NAV_ORDER.indexOf(current.title) > 1 ? 'UP' : 'DOWN', 'board');
     }
-    for (let attempt = 0; attempt < 3 && !/meta-item/.test(current.focused || ''); attempt++) current = await press('RIGHT', 'board');
     current = await press('RIGHT', 'board');
+    for (let attempt = 0; attempt < 2 && /meta-item/.test(current.focused || ''); attempt++) current = await press('RIGHT', 'board');
     const content = current;
     check('board-poster-focused', /meta-item/.test(content.focused || ''), { note: `${content.focused} "${content.text}"` });
     // LEFT along the row (the first column is the last poster before the bar).

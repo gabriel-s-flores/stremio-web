@@ -16,9 +16,9 @@
 //   the list scrolls by most of its height, which also reaches non-focusable content (Settings'
 //   shortcuts and info) and the end of the Library grid, where the next page loads.
 // - Side navigation bar (every screen): RIGHT goes back to the item of the screen the user left it
-//   from. LEFT from the first column already reaches it through the polyfill, once its buttons are
-//   focusable (NavTabButton.webos.js). OK on the profile button (NavMenu.webos.js) puts the focus
-//   on the first entry of its menu.
+//   from (with none, into the screen's content, never to the top bar). LEFT from the first column
+//   already reaches it through the polyfill, once its buttons are focusable (NavTabButton.webos.js).
+//   OK on the profile button (NavMenu.webos.js) puts the focus on the first entry of its menu.
 // - Interface zoom: after the zoom changes (a resize event), the focused element is scrolled back
 //   into its list.
 //
@@ -124,6 +124,11 @@ const isShown = (element) => {
     if (!element || !element.getClientRects || element.getClientRects().length === 0) return false;
     const rect = element.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
+};
+
+const inViewport = (element) => {
+    const rect = element.getBoundingClientRect();
+    return rect.bottom > 0 && rect.right > 0 && rect.top < window.innerHeight && rect.left < window.innerWidth;
 };
 
 const isTextInput = (element) => element.tagName === 'TEXTAREA' ||
@@ -340,13 +345,26 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
         }
         if (!active || !route.contains(active)) return;
 
-        // Navigation bar → screen: back to where the user came from.
+        // Navigation bar → screen: back to where the user came from, else into the screen's content
+        // (the polyfill could take the search bar at the top).
         if (dir === 'right' && closestLocal(active, [NAV_BAR], route)) {
             const content = lastContent.get(route);
             if (usable(content, route)) {
                 event.preventDefault();
                 content.focus();
                 record('nav-bar-return', content);
+                return;
+            }
+            const candidates = Array.prototype.filter.call(route.querySelectorAll('*'), (element) => (
+                isFocusable(element) && isShown(element) && !inNavBars(element, route) && inViewport(element)
+            ));
+            const best = candidates.length > 0 && typeof active.spatialNavigationSearch === 'function' ?
+                active.spatialNavigationSearch(dir, { container: route, candidates }) :
+                null;
+            if (best) {
+                event.preventDefault();
+                best.focus();
+                record('nav-bar-enter', best);
             }
             return;
         }
