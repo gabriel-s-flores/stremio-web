@@ -1,9 +1,10 @@
-# Perfil C8: baseline do app no emulador (F7.1) e o perfil de CPU (F0.9)
+# Perfil C8: baseline do app no emulador (F7.1), as otimizações (F7.2) e o perfil de CPU (F0.9)
 
-Este documento tem duas partes:
+Este documento tem três partes:
 
-1. **Medições do app no perfil C8 (F7.1)**: boot até o Board, navegação, memória (e o estouro de memória que mata o renderer), trocas de stream, o core em wasm2js × WASM e o tamanho do build. É a linha de base da F7.2 (otimizações), da F7.3 (resistência) e do G7.
-2. **O perfil C8 (F0.9)**: como a cota de CPU do emulador é aplicada, por que 40 %, e o baseline de CPU do próprio emulador.
+- **Parte 1, medições do app no perfil C8 (F7.1)**: boot até o Board, navegação, memória (e o estouro de memória que mata o renderer), trocas de stream, o core em wasm2js × WASM e o tamanho do build. É a linha de base da F7.2 (otimizações), da F7.3 (resistência) e do G7.
+- **Parte 1b, otimizações (F7.2)**: a causa e a correção do estouro de memória, o WASM em segundo plano (inviável no Chromium 53), o boot depois das mudanças e por que a meta de 10 s não cabe no emulador. **É o estado atual**; a parte 1 fica como a linha de base.
+- **Parte 2, o perfil C8 (F0.9)**: como a cota de CPU do emulador é aplicada, por que 40 %, e o baseline de CPU do próprio emulador.
 
 Base medida: `origin/webos` em `99936d365` (F4.1c; sem a F4.3 e sem a F5.6 mergeadas), IPK do `pnpm webos:package`; as rodadas do ciclo 1 da revisão (A/B de variantes do core e a hipótese do OOM) são da base `608aee79c` (com F4.3, F5.6 e F3.7b mergeadas), emulador webOS TV 4.0 com `--profile c8` (2 vCPUs, 1 GB, CPU limitada a 40 % de um núcleo do host). **O perfil estima, não reproduz a C8** (parte 2): trate todo tempo daqui como um limite inferior do que a TV vai mostrar; a calibração é da Fase 8. A rede é a de verdade (Cinemeta pela internet), então os tempos que esperam catálogo carregam a variância dela.
 
@@ -228,6 +229,8 @@ Em resumo (base `99936d365`): wasm2js 6 de 12 rodadas com OOM (sem o guarda: 2 d
 
 ### Hipóteses (de peso igual) e o experimento para a F7.2
 
+> **Resolvido na F7.2 (parte 1b): é a hipótese 1, e o compilador é o Crankshaft.** Com `--no-crankshaft` (ou `--no-opt`) os saltos e o OOM somem; com `--no-turbo`, `--no-concurrent-recompilation` ou sem inlining, não. Como a flag não muda o código JS nem o heap, isso também descarta a hipótese 2 sem precisar do `HeapProfiler` (c).
+
 Nenhuma está provada. As três que cabem nos dados:
 
 1. **Memória de compilação e de GC do V8 nas threads `WorkerPool`, provocada pelo código do wasm2js.** O arquivo do core tem 9 MB numa linha só e ~4.600 funções, algumas enormes: a recompilação otimizadora concorrente (zona de compilação) e a varredura/compactação do GC alocam memória nativa em picos e a devolvem depois, o que casa com saltos transitórios que só matam quando coincidem com o resto. O WASM é compilado uma vez (os 21 s do boot) e não é recompilado, o que casa com **0 de 11**.
@@ -281,6 +284,8 @@ O IPK leva os dois cores (wasm2js e WASM: 13,7 MB descomprimidos); trocar a vari
 
 ## O que a F7.2 deve atacar (ordem sugerida)
 
+> Feito na F7.2: os itens 1 e 2, com os resultados na parte 1b. O item 3 continua com a F7.3.
+
 1. **O estouro de memória** (impede a meta e a F7.3): o experimento (b) da seção "Hipóteses" (V8 do worker sem recompilação concorrente) e o `HeapProfiler` do worker (c); depois decidir o padrão do core com o quadro "wasm2js × WASM" na mão. Se o WASM for o caminho, o problema é só chegar nele sem os 21 s de compilação sem cache (carregar o wasm2js primeiro e trocar por WASM compilado em segundo plano, ou reduzir o `.wasm`).
 2. **O boot de ~32 s** (meta 10 s): 5,7 s de parse do `main.js` (9 MB; dividir em chunks e adiar o que o Board não usa), 4 s do wasm2js, ~20 s do core pronto até o 1º item (o core em JS processando catálogos), mais a rede. Qualquer ganho no core em JS aparece dobrado: boot e todas as interações.
 3. **`shmem`** crescendo ~36 MB por passeio de navegação (F7.3).
@@ -289,6 +294,150 @@ O IPK leva os dois cores (wasm2js e WASM: 13,7 MB descomprimidos); trocar a vari
 ## Como refazer
 
 `webos/tests/perf/README.md` (`perf.mjs` roda tudo, `summarize.mjs` resume, `ab-boot.sh` compara builds). Dados brutos desta tarefa: `~/webos-tv-sdk/orquestrador/tarefas/F7.1/evidencias/`.
+
+# Parte 1b: otimizações (F7.2)
+
+Base: `origin/webos` em `d34cbc376` (com F5.7, F6.4 e F7.1). Os IPKs "base" e "final" diferem só pelos commits da F7.2. Mesmo perfil c8, o mesmo método da parte 1 (rodadas calmas, A/B intercalado ABBA na mesma reserva, n declarado). Dados brutos e scripts: `~/webos-tv-sdk/orquestrador/tarefas/F7.2/evidencias/`.
+
+## Resumo e metas do G7 depois da F7.2
+
+| | Meta do G7 | Base (F7.1, `d34cbc376`) | Final (F7.2) | Atinge? |
+|---|---|---|---|---|
+| Boot até o Board (1º item visível) | ≤ 10 s | 29,2 s (25,0–33,6), n = 15 | **25,5 s** (23,2–32,0), n = 12; p = 0,014 | **não** (ver "Onde está o tempo agora, e por que 10 s não cabe no emulador") |
+| Core pronto | – | 12,4 s (11,3–13,7) | **10,1 s** (9,3–11,8); p < 0,0001 | – |
+| Memória com a lista de streams, a reprodução e 5 trocas | ≤ 250 MB, sem OOM | **OOM em 3 de 3** (picos de 484–504 MB) | **sem OOM em 3 de 3**, pico de 220–227 MB; 188–203 MB depois das trocas | **sim** |
+| Memória parada no Board (antes de abrir Detalhes) | ≤ 250 MB | 190–214 MB | **146–162 MB** | sim |
+| `main.js` (interpretado antes do core começar) | – | 8,94 MB (2,65 MB gzip) | **1,99 MB** (0,58 MB gzip) | – |
+
+As quatro mudanças, em ordem de efeito:
+
+1. **`"v8ExtraFlags": "--no-crankshaft"` no `appinfo.json`**: acaba com o estouro de memória (seção seguinte).
+2. **Catálogos sem a lista de episódios** para o core (`webos/lib/catalog-trim`): 59 % menos JSON para o core interpretar no boot.
+3. **Traduções sob demanda** (`webos/stubs/stremio-translations.js`): o `main.js` cai de 8,94 para 1,99 MB.
+4. **`getState` repetidos compartilham a resposta** (`webos/lib/core-calls`): metade das chamadas ao worker no boot.
+
+## O estouro de memória: a causa é o Crankshaft sobre o wasm2js
+
+**Causa: o Crankshaft (o compilador otimizador clássico do V8 5.8) otimizando as funções do core em wasm2js.** É a hipótese 1 da F7.1, agora separada por compilador. **Correção: `"v8ExtraFlags": "--no-crankshaft"` no `webos/app/appinfo.json`.** O WAM de 2018 lê essa chave e aplica as flags ao V8 do processo do app (página e worker do core). No emulador, `"--expose-gc"` faz aparecer `gc` na página (`evidencias/wasm-cache/resultado.md`). As flags que o V8 5.8 da LG aceita foram lidas do próprio `libcbe.so` do emulador (`evidencias/v8-flags/`).
+
+Cenário: Detalhes com a lista de streams, 1ª reprodução e 5 trocas (`play --switches 5`), wasm2js, `PERF_THREADS=1`, perfil c8. Em cada linha o IPK é o mesmo build e só o `appinfo.json` muda (base `d34cbc376`; as rodadas "final" usam o IPK da F7.2 inteiro).
+
+| Flags do V8 (`v8ExtraFlags`) | Rodadas | OOM | Pico do app | Saltos > 60 MB fora do início do processo | O que mostra |
+|---|---|---|---|---|---|
+| nenhuma (base) | 3, em pares intercalados com `--no-opt` | **3 de 3** | 484–504 MB | vários, com `DedicatedWorker` + `WorkerPool` | o OOM da F7.1 na base atual |
+| `--no-concurrent-recompilation` (o experimento (b) da F7.1) | 1 | **1 de 1** | 487 MB | sim, agora só com o `DedicatedWorker` | a otimização sai do `WorkerPool` e passa para a thread do worker, e o salto vai junto: é a compilação, não uma thread qualquer |
+| `--single-threaded` | 1 | – | – | – | o Board nunca aparece: inútil |
+| `--no-turbo-inlining --no-use-inlining` | 1 | 0 de 1 | **408 MB** (transitório) | sim | atenua, não resolve |
+| `--no-turbo` (só o TurboFan desligado) | 1 | **1 de 1** | 508 MB | sim, `DedicatedWorker` + `WorkerPool` | o TurboFan não é o culpado |
+| `--no-opt` (nenhuma otimização) | 4 (3 em pares com a base) | 0 de 4 | 241–259 MB | **nenhum** | sem compilador otimizador, sem salto |
+| **`--no-crankshaft`** (base) | 1 | 0 de 1 | 256 MB | **nenhum** | o Crankshaft é o culpado |
+| **`--no-crankshaft`** (IPK final) | 3 | **0 de 3** | **220–227 MB** | **nenhum** | a correção, com as outras mudanças da F7.2 |
+
+![base: o salto e o OOM depois da 2ª troca](baseline-c8/f72-mem-w3-2-base2.svg)
+
+![final, com --no-crankshaft: sem salto nas 6 reproduções](baseline-c8/f72-mem-final.svg)
+
+Fisher exato: sem Crankshaft 0 de 4 × base 3 de 3, p = 0,029; contando as rodadas da F7.1 (base 5 de 5 no A/B da base `608aee79c`), 0 de 4 × 8 de 8, p = 0,002. Com `--no-opt`, que também desliga o Crankshaft, são 0 de 8 sem Crankshaft no total.
+
+- **Por que a compilação estoura a memória.** O wasm2js tem ~4.600 funções num arquivo de 9 MB, algumas enormes, e o Crankshaft otimiza uma função inteira de uma vez (grafo Hydrogen/Lithium numa zona de memória nativa). Numa das funções gigantes isso pode chegar a centenas de MB que só existem por alguns segundos, o que casa com os saltos transitórios da F7.1 e com o kernel só matando quando o salto coincide com o resto da memória ocupada. (Inferência: não medi a zona por função. O que os dados mostram é o salto sumir com `--no-crankshaft` e não com `--no-turbo`.) Com `--no-crankshaft` o V8 5.8 ainda otimiza com o TurboFan o que ele aceita, sem os saltos.
+- **Custo.** O código quente fica sem o Crankshaft. Com o worker ocioso e o código já aquecido, um `getState('board')` (110 KB) custa ~430 ms (325–694, 15 medidas) com `--no-crankshaft`, ~205 ms (110–513) sem flag e ~600 ms (397–900) com `--no-opt`, numa reserva só (`evidencias/boot-instr/iab5-*`). No uso real isso quase não aparece. O boot melhora (abaixo), porque o Crankshaft gastava a CPU da cota otimizando o serde durante a interpretação dos catálogos. As trocas de stream ficam no tempo da base, dominadas pela decodificação por software do emulador. Na navegação, só as telas que esperam o core pagam: itens do Discover +0,7 s e Busca +0,4 s (tabela em "Navegação e memória do build final").
+- **Por que `--no-crankshaft` e não `--no-opt`.** Os dois eliminam o OOM e empatam no uso real: no A/B direto (2 reservas ABBA, n = 8 cada), 1º item em 25,5 s × 24,3 s, e itens do Discover em 6,3–6,9 s × 6,6–7,4 s (2 pares de navegação). `--no-crankshaft` é a flag mais estreita (desliga só o compilador que causa o problema) e mantém o TurboFan onde ele acelera o código quente.
+- **Por que não o WASM.** A F7.1 achou 0 OOM em 11 rodadas com o WASM, e ele continua sendo a reserva (chave `webos.coreVariant`). Mas, num IPK com todas as mudanças de boot (HEAD + `--no-opt`), o WASM ainda deixa o boot ~5 s pior que o wasm2js: core pronto em 25,6 s contra 10,8 s, 1º item em 32,0 s contra 26,8 s (A/B intercalado na mesma reserva, n = 2 calmas × 4; `evidencias/ab/b5-resumo.md`). Com o OOM resolvido no wasm2js, o padrão do G0 (wasm2js) fica.
+
+## WASM em segundo plano: inviável no Chromium 53
+
+O plano B era começar no wasm2js e compilar o WASM em segundo plano (ou guardá-lo compilado para os boots seguintes). Os dois caminhos esbarram no mesmo limite do Chromium 53 do webOS 4: **um `WebAssembly.Module` não pode ser serializado** (`evidencias/wasm-cache/resultado.md`):
+
+- `IDBObjectStore.put(module)`: `DataCloneError` (não há cache de módulo no IndexedDB);
+- `worker.postMessage(module)` (página → worker) e `postMessage(module)` (worker → página): `DataCloneError` (não dá para compilar num worker à parte e entregar ao worker do core).
+
+Sobra compilar dentro do próprio worker do core. No V8 5.8 o `WebAssembly.compile` é síncrono na thread que chama: 21 s com o core parado. Depois disso, o core teria de ser reiniciado com o estado da sessão, porque o estado vive na memória do wasm2js. Não há ganho que pague isso.
+
+## Boot: o que mudou
+
+1. **Traduções sob demanda** (`webos/stubs/stremio-translations.js`, pelos aliases da F1.5): o pacote `stremio-translations` exigia as 50+ línguas de uma vez, 6,3 MB do `main.js` (o achado da F1.5). Agora só o en-US vai no `main.js`. Cada outra língua vira um chunk de ~250 KB, carregado quando o i18next troca para ela (App.js troca para o idioma do perfil). Até o chunk chegar, a tela fica em en-US. **`main.js`: 8,94 → 1,99 MB.**
+2. **`getState` repetidos compartilham a resposta** (`webos/lib/core-calls`, aplicado no `createTransport.webos.js`): cada inscrito de um modelo pede o estado ao core a cada `NewState`. No boot eram 47 `getState('ctx')` (490 KB serializados) e 10 `getState('board')`, em rajadas de 9–10 pedidos iguais. Agora, um `getState(m)` pedido enquanto outro igual ainda está a caminho do worker, sem nenhuma outra chamada depois dele, recebe a mesma resposta. Como o worker responde em ordem, é uma resposta que o pedido separado também poderia ter recebido. **Chamadas ao worker no boot: 74 → 37** (`ctx` 47 → 12, `board` 10 → 6). Sozinha, a mudança não muda o tempo de forma mensurável: com o worker ocioso, um `getState('ctx')` custa 3–120 ms.
+3. **Catálogos sem a lista de episódios** (`webos/lib/catalog-trim`, no `fetch` do worker do core): o catálogo de séries do Cinemeta traz em cada item o `videos` inteiro (412 dos 522 KB do "top" de séries). O core 0.65 lê o texto, monta o JSON inteiro como `serde_json::Value` dentro do wasm e fica só com os campos do `MetaItemPreview`, que não tem `videos` (`stremio-core`, `src/types/addon/response.rs`). A resposta `200`/`201` de um `GET …/catalog/….json` chega ao core sem esse campo, e o resto do JSON fica igual. **JSON que o core interpreta no boot: 1,55 → 0,64 MB** (séries top 522 → 109 KB, séries por nota 607 → 111 KB). A equivalência foi provada com o core de verdade: o core 0.65.0 do npm, rodando no Node sobre as mesmas respostas gravadas, dá os estados `board`, `discover` (50 séries, com os campos da prévia) e `search` **idênticos byte a byte** com e sem a mudança (`evidencias/catalog-trim/`).
+4. `--no-crankshaft` (acima) também tira do boot a CPU que o Crankshaft gastava otimizando as funções do serde que a interpretação dos catálogos esquenta.
+
+**A/B intercalado (ABBA), perfil c8, rodadas calmas, 1º item do Board visível (a sonda da F3.6):**
+
+| Build | n | Core pronto | 1º item | Reservas |
+|---|---|---|---|---|
+| base | 15 | 12,4 s (11,3–13,7) | 29,2 s (25,0–33,6) | b2, b3, b4, b6 |
+| traduções + `getState` (sem catálogo, sem flag) | 4 | 10,6 s (10,0–11,8) | 30,2 s (27,5–34,7) | b1 |
+| traduções + `getState` + `--no-opt` | 4 | 10,8 s | 30,7 s (22,3–32,6) | b1 |
+| HEAD sem flag (traduções + `getState` + catálogos) | 4 | 11,2 s (10,8–11,6) | 30,1 s (27,7–33,0) | b2 |
+| `--no-crankshaft` × `--no-opt`, direto | 8 × 8 | 10,1 × 10,2 s | 25,5 × 24,3 s | b7, b8 |
+| **final** (HEAD + `--no-crankshaft`), todas as reservas | 12 | **10,1 s** (9,3–11,8) | **25,5 s** (23,2–32,0) | b6, b7, b8 |
+| HEAD + `--no-opt`, todas as reservas | 22 | 10,6 s | 24,6 s (22,1–34,9) | b2, b3, b4, b6, b7, b8 |
+
+Base × final: 1º item −3,7 s (−13 %), Mann-Whitney exato p = 0,014 (n = 15 × 12); core pronto −2,3 s, p < 0,0001. A base foi intercalada com o final na reserva b6 e com `--no-opt` em b2–b4, e as duas flags foram intercaladas em b7–b8. Base × HEAD + `--no-opt`: −4,6 s, p = 0,0019 (n = 15 × 22). As mudanças só aparecem juntas: o `main.js` menor adianta o core (~1,4 s), mas o 1º item espera os catálogos. Os catálogos menores só aparecem quando o Crankshaft deixa de gastar a CPU da cota otimizando o serde.
+
+Marcas do próprio app no build final (tela de diagnóstico, `run.sh boot`, 4 lançamentos calmos; `evidencias/ui/boot-c8`), contra a parte 1:
+
+| Marco (mediana) | Base (F7.1) | Final |
+|---|---|---|
+| `DOMContentLoaded` (o `main.js`) | 5,7 s | **3,2 s** (2,9–4,3) |
+| início do init do core | 5,9 s | 3,6 s |
+| carregar o wasm2js no worker (`wasm2jsLoadMs`) | 3,9 s | 4,0 s |
+| core pronto | 12,8 s | **9,8 s** (8,9–10,7) |
+| Board montado | 16,0 s | **12,2 s** |
+| 1º item do Board no DOM | 28,6 s | **22,9 s** (16,4–29,5) |
+| RSS do app parado 25 s depois do Board | 209 MB | **149 MB** (147–151) |
+
+A memória parada cai 60 MB. A causa provável (não separei as duas): o JSON das 50+ línguas deixou de ser interpretado e de ficar no heap, e sem o Crankshaft o processo não acumula código otimizado nem zonas de compilação.
+
+## Onde está o tempo agora, e por que 10 s não cabe no emulador
+
+Linha do tempo de um boot calmo do build final, instrumentado (chamadas da página ao core e `fetch` do worker; IPK temporário, não commitado; `evidencias/boot-instr/iab5-3-instr4-nocs.json`, lançamento 1):
+
+| Marco (`performance.now()` da página) | Tempo | O que acontece |
+|---|---|---|
+| o worker do core pede a variante | 4,7 s | o `main.js` (2 MB) carregou e rodou; o transporte criou o worker |
+| o core começa o init (lê o `localStorage`) | 8,7 s | **4 s** de `importScripts` do wasm2js (9 MB de JS) |
+| core pronto (`window.core`) | 9,5 s | init do core |
+| o Board pede os catálogos (`Load` + `LoadRange`) | 12,7–13,7 s | a página monta o App e o Board; o core atende `ctx`, eventos, `Pull*` do convidado |
+| os 4 catálogos do Cinemeta terminam de chegar | 17,9–18,1 s | **4,3 s** de rede: redirect 307 para outro host, dois handshakes TLS, ~1,5 MB (antes de aparar), tudo dentro da cota de CPU da VM (a rede `slirp` do QEMU também é CPU da VM) |
+| `board` com as 6 linhas | 25,1 s | **~7 s** do core em wasm2js interpretando ~460 KB de JSON e montando o estado |
+| 1º item visível | 25,5 s | renderização |
+
+Só o core pronto já leva ~9,5–11 s: carregar e instanciar 9 MB de wasm2js num V8 a 0,4 núcleo, mais o init. Isso fica fora do que a F7.2 pode mudar (o core e o `webos/core` são de outra trilha). Depois disso vêm ~5 s de rede e ~7 s de core nos catálogos. **No perfil c8 do emulador, 10 s não cabe** sem uma destas mudanças maiores, que ficam como recomendação:
+
+1. **Primeira tela útil com cache**: guardar a última resposta do Board (ou os catálogos) e mostrá-la antes do core, atualizando quando ele ficar pronto. É a opção 2 do G0 ("primeira tela útil < 10 s"), e é a única que leva o Board para perto de 5–6 s no emulador.
+2. **Menos trabalho por catálogo**: aparar também os outros campos que o `MetaItemPreview` descarta (`popularities`, `cast`, `awards`, `slug`, `keywords`… levam 614 → 449 KB, −27 %). Não foi feito porque acopla o app à lista de campos de uma versão do core: um campo que um core novo passe a ler sumiria sem aviso. O `videos`, ao contrário, nunca faz parte de uma prévia.
+3. **Um core menor ou mais rápido de carregar** (o wasm2js de 9 MB e o init), na trilha do core.
+
+**O que a Fase 8 pode mudar:** a CPU real da C8 (o perfil de 40 % é uma estimativa, parte 2), uma placa de rede de verdade (no emulador a rede passa pelo `slirp` dentro da cota de CPU, e os ~4 s de catálogos devem cair) e a latência da rede da casa. Na TV também é preciso confirmar que o WAM aplica `v8ExtraFlags` (o mesmo cenário de reprodução com 5 trocas, sem OOM).
+
+## Navegação e memória do build final
+
+Rodadas `nav` (perfil c8, calmas; do evento de entrada até a tela pronta, na linha do tempo da página; `evidencias/nav/`):
+
+| Passo | Base (n = 2) | Final, `--no-crankshaft` (n = 3) | `--no-opt` (n = 3) |
+|---|---|---|---|
+| Board → Detalhes (OK), 1ª vez | 2,3 s (2,0–2,6) | 1,9 s (1,7–2,6) | 1,9 s (1,8–2,1) |
+| … prévia de Detalhes completa | 4,8 s (4,0–5,6) | 4,7 s (4,4–7,4) | 4,4 s (4,4–4,5) |
+| Detalhes → Board | 1,4 s (1,4–1,5) | 1,0 s (0,9–1,1) | 1,0 s (0,8–1,0) |
+| Board → Discover | 0,7 s (0,7–0,8) | 0,6 s (0,5–0,7) | 0,6 s (0,4–0,7) |
+| … itens do Discover | 6,2 s (6,0–6,4) | 6,9 s (6,3–7,1) | 6,7 s (6,6–7,4) |
+| Board → Busca | 0,8 s (0,8–0,9) | 0,5 s (0,5–0,9) | 0,5 s (0,3–0,7) |
+| Busca por "matrix" até 3 resultados | 4,5 s (4,5–4,6) | 4,9 s (4,9–5,3) | 4,6 s (4,5–6,0) |
+| Library | 0,5 s (0,5–0,6) | 0,4 s (0,3–0,6) | 0,5 s (0,5–0,6) |
+| Settings | 0,3 s (0,3–0,4) | 0,3 s (0,3–0,3) | 0,3 s (0,3–0,4) |
+| Board → Detalhes, 2ª vez | 0,5 s (0,3–0,7) | 0,3 s (0,2–0,7) | 0,3 s (0,3–0,6) |
+
+Memória do app no mesmo passeio (RSS): parado no Board **149–159 MB** (base 207–212 MB), máximo em Settings **213–219 MB** (base 245–254 MB), de volta ao Board **202–208 MB** (base 249–250 MB). O `shmem` continua crescendo ao longo do passeio, como na parte 1 (F7.3).
+
+Os roteiros de UI sobre o IPK final não mudam em relação à base: e2e da F6.4 em 45/46, com a mesma falha da base sem a F5.6b (a imagem da 2ª mídia); regressão visual da F2.7 com 13 de 16 cenas em 0,000 %, e as 3 de Detalhes em 0,000 % contra as referências que a F4.4 atualizou (na base elas falham igual, por causa da coluna da F4.1c); navegação F4.1b em 66/66, F4.1c (walk) em 30/32 com as mesmas 2 falhas da base, F4.1a com as 4 falhas da busca que a base também tem (as duas registradas na F4.4).
+
+## Tamanho
+
+| | Base | Final |
+|---|---|---|
+| `main.js` | 8,94 MB (2,65 MB gzip) | **1,99 MB** (0,58 MB gzip) |
+| chunks de idioma | – | um por língua (~0,1–0,25 MB), carregado só quando o idioma do perfil não é o en-US |
+| IPK | 10,13 MB | 10,15 MB |
 
 # Parte 2: o perfil C8 (F0.9)
 
