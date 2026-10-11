@@ -16,11 +16,12 @@
 // player: a stream of the kit (plays in the emulator) opened from the list, the audio menu of the
 //   Player (opened with a click, the Player controls are not part of this task) and Back to the
 //   list: the focus must come back to the stream. One media scenario per boot.
-// Catalogs and details come from the fixture addon of the visual regression (F2.7,
-// webos/tests/screens/fixture): the guest profile is rewritten with it alone before the test addon
-// goes in, so the Board, the movie and its column are the same every day (F6.4: the live Board
-// changed and the run fell on a series). LIVE=1 keeps Cinemeta (the title of the day decides the
-// column: with no IMDb button at the top, UP from the first link goes on to the page header).
+// Catalogs from the live Cinemeta (the walk expects a real column: a Trailer button first, a summary
+// that overflows); a movie row is looked for up and down (F6.4: the first live row became series).
+// The title of the day still decides the top of the column: with no IMDb button there, UP from the
+// first link goes on to the page header. FIXTURE=1 rewrites the guest profile with the fixture addon
+// of the visual regression (F2.7, webos/tests/screens/fixture) for a Board that never changes; the
+// walk's column checks do not fit its movie (no trailer), so it suits `player` and `restore`.
 
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -108,7 +109,7 @@ const setup = async () => {
     for (let i = 0; i < 50 && !fs.existsSync(info); i++) await sleep(200);
     const { manifestUrl } = JSON.parse(fs.readFileSync(info, 'utf8'));
     let fixtureUrl = null;
-    if (process.env.LIVE !== '1') {
+    if (process.env.FIXTURE === '1') {
         const fixtureInfo = path.join(OUT, 'fixture.json');
         fs.rmSync(fixtureInfo, { force: true });
         const fixture = spawn('node', [path.join(ROOT, 'webos/tests/screens/fixture/server.mjs'), '--host', '10.0.2.2', '--info', fixtureInfo], { stdio: ['ignore', fs.openSync(path.join(OUT, 'fixture-server.log'), 'w'), 'inherit'] });
