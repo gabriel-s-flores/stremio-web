@@ -17,6 +17,7 @@ jest.mock('../../external-links/ExternalLinkDialog.less', () => ({
     container: 'container',
     title: 'title',
     qr: 'qr',
+    large: 'large',
     url: 'url',
     close: 'close',
 }), { virtual: true });
@@ -36,9 +37,15 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let container;
 let root;
 
-const render = (element) => act(() => {
-    root.render(element);
-});
+// The QR code comes from a lazy chunk (import('./qr')): render, then let it load.
+const render = async (element) => {
+    await act(async () => {
+        root.render(element);
+    });
+    await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+};
 
 const press = (keyCode) => {
     const event = new Event('keydown', { bubbles: true, cancelable: true });
@@ -65,7 +72,11 @@ beforeEach(() => {
     root = createRoot(container);
 });
 
-afterEach(() => {
+afterEach(async () => {
+    // Lets the lazy QR chunk of a test that did not wait for it settle inside act().
+    await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    });
     act(() => root.unmount());
     container.remove();
     document.body.innerHTML = '';
@@ -74,14 +85,14 @@ afterEach(() => {
 const dialog = () => document.querySelector('.external-link-dialog');
 
 describe('ExternalLinkDialog', () => {
-    test('renders nothing while there is no link', () => {
-        render(React.createElement(ExternalLinkDialog, { url: null, onClose: jest.fn() }));
+    test('renders nothing while there is no link', async () => {
+        await render(React.createElement(ExternalLinkDialog, { url: null, onClose: jest.fn() }));
         expect(dialog()).toBeNull();
     });
 
-    test('shows the title, the QR code of the link, the link and Close, in a portal on the body', () => {
+    test('shows the title, the QR code of the link, the link and Close, in a portal on the body', async () => {
         const url = 'https://www.stremio.com/warning#https%3A%2F%2Fexample.com%2Fconfigure';
-        render(React.createElement(ExternalLinkDialog, { url, onClose: jest.fn() }));
+        await render(React.createElement(ExternalLinkDialog, { url, onClose: jest.fn() }));
         expect(container.querySelector('.external-link-dialog')).toBeNull();
         expect(dialog().parentNode).toBe(document.body);
         expect(dialog().getAttribute('role')).toBe('dialog');
@@ -100,14 +111,34 @@ describe('ExternalLinkDialog', () => {
         expect(path.getAttribute('d').indexOf('M0 0h7v1h-7z')).toBe(0);
     });
 
-    test('too long for a QR code: still shows the link and Close', () => {
-        render(React.createElement(ExternalLinkDialog, { url: `https://example.com/${'a'.repeat(3000)}`, onClose: jest.fn() }));
+    test('the QR code is not there until its chunk has loaded, and the link and Close are', async () => {
+        act(() => {
+            root.render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
+        });
+        expect(dialog().querySelector('svg')).toBeNull();
+        expect(dialog().querySelector('.url').textContent).toBe('https://example.com/');
+        expect(dialog().querySelector('button.close')).not.toBeNull();
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+        expect(dialog().querySelector('svg')).not.toBeNull();
+    });
+
+    test('a long link gets the larger code (from version 14), a short one does not', async () => {
+        await render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
+        expect(dialog().querySelector('svg').getAttribute('class')).toBe('qr');
+        await render(React.createElement(ExternalLinkDialog, { url: `https://example.com/${'a'.repeat(400)}`, onClose: jest.fn() }));
+        expect(dialog().querySelector('svg').getAttribute('class')).toBe('qr large');
+    });
+
+    test('too long for a QR code: still shows the link and Close', async () => {
+        await render(React.createElement(ExternalLinkDialog, { url: `https://example.com/${'a'.repeat(3000)}`, onClose: jest.fn() }));
         expect(dialog().querySelector('svg')).toBeNull();
         expect(dialog().querySelector('button.close')).not.toBeNull();
     });
 
-    test('the focus goes to Close and the arrows and other keys do not reach the page', () => {
-        render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
+    test('the focus goes to Close and the arrows and other keys do not reach the page', async () => {
+        await render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
         const close = dialog().querySelector('button.close');
         expect(document.activeElement).toBe(close);
         [37, 38, 39, 40, 49, 403].forEach((keyCode) => {
@@ -116,8 +147,8 @@ describe('ExternalLinkDialog', () => {
         });
     });
 
-    test('keeps the focus on Close even if something else took it', () => {
-        render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
+    test('keeps the focus on Close even if something else took it', async () => {
+        await render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
         const other = document.createElement('button');
         document.body.appendChild(other);
         other.focus();
@@ -125,31 +156,31 @@ describe('ExternalLinkDialog', () => {
         expect(document.activeElement).toBe(dialog().querySelector('button.close'));
     });
 
-    test('OK (Enter) presses Close', () => {
+    test('OK (Enter) presses Close', async () => {
         const onClose = jest.fn();
-        render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose }));
+        await render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose }));
         press(13);
         expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    test('Back closes it, through the dispatcher, and the key goes no further', () => {
+    test('Back closes it, through the dispatcher, and the key goes no further', async () => {
         const onClose = jest.fn();
-        render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose }));
+        await render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose }));
         expect(pressBack()).toEqual({ reachedPage: false, defaultPrevented: true });
         expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    test('Back is not taken once the dialog is closed', () => {
+    test('Back is not taken once the dialog is closed', async () => {
         const onClose = jest.fn();
-        render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose }));
-        render(React.createElement(ExternalLinkDialog, { url: null, onClose }));
+        await render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose }));
+        await render(React.createElement(ExternalLinkDialog, { url: null, onClose }));
         pressBack();
         expect(onClose).not.toHaveBeenCalled();
     });
 
-    test('a click on the backdrop closes it, a click inside does not', () => {
+    test('a click on the backdrop closes it, a click inside does not', async () => {
         const onClose = jest.fn();
-        render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose }));
+        await render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose }));
         act(() => {
             dialog().querySelector('.container').dispatchEvent(new MouseEvent('click', { bubbles: true }));
         });
@@ -160,47 +191,49 @@ describe('ExternalLinkDialog', () => {
         expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    test('closing gives the focus back to the link that had it', () => {
+    test('closing gives the focus back to the link that had it', async () => {
         const link = document.createElement('a');
         link.setAttribute('href', 'https://example.com/');
         link.setAttribute('tabindex', '0');
         document.body.appendChild(link);
         link.focus();
-        render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
+        await render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
         expect(document.activeElement).not.toBe(link);
-        render(React.createElement(ExternalLinkDialog, { url: null, onClose: jest.fn() }));
+        await render(React.createElement(ExternalLinkDialog, { url: null, onClose: jest.fn() }));
         expect(document.activeElement).toBe(link);
     });
 
-    test('the keys reach the page again after it closes', () => {
-        render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
-        render(React.createElement(ExternalLinkDialog, { url: null, onClose: jest.fn() }));
+    test('the keys reach the page again after it closes', async () => {
+        await render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
+        await render(React.createElement(ExternalLinkDialog, { url: null, onClose: jest.fn() }));
         expect(press(40).reachedPage).toBe(true);
     });
 });
 
 describe('ExternalLinks (index.js)', () => {
-    test('a click on a web link opens the dialog, Back closes it, a second link replaces the first', () => {
+    test('a click on a web link opens the dialog, Back closes it, a second link replaces the first', async () => {
         const { ExternalLinks, externalLinks } = require('../../external-links');
-        render(React.createElement(ExternalLinks));
+        await render(React.createElement(ExternalLinks));
         expect(dialog()).toBeNull();
 
         const anchor = document.createElement('a');
         anchor.setAttribute('href', 'https://www.stremio.com/privacy');
         anchor.setAttribute('target', '_blank');
         document.body.appendChild(anchor);
-        act(() => {
+        await act(async () => {
             anchor.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+            await new Promise((resolve) => setTimeout(resolve, 0));
         });
         expect(dialog().querySelector('.url').textContent).toBe('https://www.stremio.com/privacy');
 
-        act(() => {
+        await act(async () => {
             window.open('https://www.stremio.com/tos', '_blank');
+            await new Promise((resolve) => setTimeout(resolve, 0));
         });
         expect(document.querySelectorAll('.external-link-dialog')).toHaveLength(1);
         expect(dialog().querySelector('.url').textContent).toBe('https://www.stremio.com/tos');
 
-        pressBack();
+        await pressBack();
         expect(dialog()).toBeNull();
         expect(externalLinks.getState().url).toBeNull();
     });

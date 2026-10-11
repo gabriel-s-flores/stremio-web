@@ -9,33 +9,50 @@
 
 const React = require('react');
 const { createPortal } = require('react-dom');
+const classnames = require('classnames');
 const { useTranslation } = require('react-i18next');
 const useBackHandler = require('../back/useBackHandler');
-const { encode, toPath } = require('./qr');
 const styles = require('./ExternalLinkDialog.less');
 
 const ENTER_KEY_CODE = 13;
 // Modules of white around the code, as the standard asks, so that the phone can find its edges.
 const QUIET_ZONE = 4;
+// From this version the code has so many modules that it is drawn larger (a 20 rem code of version 14 has
+// about 4 px per module on the TV; version 40 would have less than 3).
+const LARGE_FROM_VERSION = 14;
 
 const h = React.createElement;
 
-const QrCode = ({ url }) => {
-    // Built once per link; encode() is the only heavy part and it only runs when a link is opened.
-    const qr = React.useMemo(() => encode(url), [url]);
+// The generator (qr.js) is a lazy chunk: it is not in the boot bundle, and the dialog loads it when
+// the first link is opened. Until it arrives, and for a link too long for a code, only the text shows.
+const QrCode = ({ url, onSize }) => {
+    const [qr, setQr] = React.useState(null);
+    React.useEffect(() => {
+        let cancelled = false;
+        setQr(null);
+        import('./qr').then(({ encode, toPath }) => {
+            const encoded = encode(url);
+            if (!cancelled && encoded !== null) {
+                setQr({ size: encoded.size, version: encoded.version, path: toPath(encoded) });
+            }
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [url]);
     if (qr === null) {
         return null;
     }
     const side = qr.size + QUIET_ZONE * 2;
     return h('svg', {
-        className: styles['qr'],
+        className: classnames(styles['qr'], { [styles['large']]: qr.version >= LARGE_FROM_VERSION }),
         viewBox: `0 0 ${side} ${side}`,
         shapeRendering: 'crispEdges',
         role: 'img',
         'aria-label': url,
     },
     h('rect', { width: side, height: side, fill: '#ffffff' }),
-    h('path', { transform: `translate(${QUIET_ZONE} ${QUIET_ZONE})`, d: toPath(qr), fill: '#000000' }));
+    h('path', { transform: `translate(${QUIET_ZONE} ${QUIET_ZONE})`, d: qr.path, fill: '#000000' }));
 };
 
 const ExternalLinkDialog = ({ url, onClose }) => {
