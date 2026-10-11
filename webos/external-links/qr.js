@@ -1,7 +1,36 @@
-// Small QR Code generator (byte mode, error correction L or M, versions 1 to 40), written for the
-// external links dialog (F3.4). No dependencies; plain ES2015 for the Chromium 53 of webOS TV 4.x.
-// Follows ISO/IEC 18004: function patterns, Reed-Solomon over GF(256) (0x11D), zigzag placement,
-// the eight masks scored with the standard penalty rules, BCH format and version information.
+/*
+ * QR Code generator for the external links dialog of the webOS TV port (F3.4).
+ *
+ * Based on the QR Code generator library by Project Nayuki
+ * (https://www.nayuki.io/page/qr-code-generator-library), reduced to what the dialog needs (byte
+ * mode, error correction L and M) and reworked: the finder-like penalty rule (N3) is written
+ * differently, and an M-then-L level choice and the SVG path output are added. The algorithm
+ * structure, the capacity tables and several function bodies (Reed-Solomon, interleaving, module
+ * placement, format and version bits) are from that library.
+ *
+ * Copyright (c) Project Nayuki. (MIT License)
+ * https://www.nayuki.io/page/qr-code-generator-library
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ * - The above copyright notice and this permission notice shall be included in
+ *   all copies or substantial portions of the Software.
+ * - The Software is provided "as is", without warranty of any kind, express or
+ *   implied, including but not limited to the warranties of merchantability,
+ *   fitness for a particular purpose and noninfringement. In no event shall the
+ *   authors or copyright holders be liable for any claim, damages or other
+ *   liability, whether in an action of contract, tort or otherwise, arising from,
+ *   out of or in connection with the Software or the use or other dealings in the
+ *   Software.
+ */
+
+// Plain ES2015 for the Chromium 53 of webOS TV 4.x; no dependencies. Follows ISO/IEC 18004: function
+// patterns, Reed-Solomon over GF(256) (0x11D), zigzag placement, the eight masks scored with the
+// four penalty rules, BCH format and version information.
 //
 //   const { encode, toPath } = require('./qr');
 //   const qr = encode('https://www.stremio.com/');   // { size, version, level, mask, modules }
@@ -318,7 +347,10 @@ const applyMask = (mask, size, modules, isFunction) => {
     }
 };
 
-// Runs of 5 or more equal modules and the 1:1:3:1:1 finder-like pattern, over one row or column.
+// Rule N1 (runs of 5 or more equal modules) and rule N3 (the 1:1:3:1:1 finder-like pattern at module
+// scale 1, with four light modules on one side; the line is padded with light modules past its ends,
+// the quiet zone), over one row or column. N3 is simpler than the library's (no larger scales): the
+// result can pick another mask than qrencode, which is as valid, just not always the same.
 const linePenalty = (line) => {
     let penalty = 0;
     let runLength = 1;
@@ -338,7 +370,7 @@ const linePenalty = (line) => {
         if (core) {
             const lightBefore = i >= 4 && !line[i - 1] && !line[i - 2] && !line[i - 3] && !line[i - 4];
             const lightAfter = i + 11 <= line.length && !line[i + 7] && !line[i + 8] && !line[i + 9] && !line[i + 10];
-            // Light margins running past the edge count as light, as in the reference scoring.
+            // Light margins running past the edge count as light.
             const edgeBefore = i < 4 && line.slice(0, i).every((dark) => !dark);
             const edgeAfter = i + 11 > line.length && line.slice(i + 7).every((dark) => !dark);
             if (lightBefore || edgeBefore) {
@@ -379,8 +411,7 @@ const getPenaltyScore = (size, modules) => {
     return penalty + steps * PENALTY_N4;
 };
 
-const pickVersion = (byteLength) => {
-    const levels = ['M', 'L'];
+const pickVersion = (byteLength, levels) => {
     for (let l = 0; l < levels.length; l++) {
         for (let version = MIN_VERSION; version <= MAX_VERSION; version++) {
             const lengthBits = version <= 9 ? 8 : 16;
@@ -393,11 +424,12 @@ const pickVersion = (byteLength) => {
     return null;
 };
 
-// Highest level that fits wins (M, then L): a longer URL still gets a code, just a denser one.
-// Returns null when the text does not fit in version 40-L (2953 bytes).
-const encode = (text) => {
+// The smallest version at level M; when the text does not fit even in 40-M, level L (a longer URL
+// still gets a code, just a denser one). `options.level` ('M' or 'L') asks for that level only.
+// Returns null when the text does not fit (more than 2953 bytes at L).
+const encode = (text, options = {}) => {
     const bytes = toUtf8(String(text));
-    const fit = pickVersion(bytes.length);
+    const fit = pickVersion(bytes.length, options.level ? [options.level] : ['M', 'L']);
     if (fit === null) {
         return null;
     }
