@@ -115,8 +115,18 @@ toggle_subtitles_menu() {
         return button ? button.className : null;
     })()"
 }
+# The add-on subtitle of the language of the settings is chosen when the stream loads and fails then; its toast
+# lasts 3 s, so it is looked for on every step (capture_toast), here and after playback starts.
+: > "$OUT/toasts.json"
+capture_toast() {
+    [[ ! -s "$OUT/toasts.json" ]] || return 0
+    local toasts
+    toasts="$(cdp_eval "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[class*=\"toast\"]'), function(e) { return e.textContent; }).filter(function(t) { return t; }))" 2>/dev/null || echo '[]')"
+    if [[ "$toasts" != '[]' && -n "$toasts" ]]; then echo "$toasts" > "$OUT/toasts.json"; shot "$OUT/tela-legenda-falhou.png" || true; fi
+}
 for _ in $(seq 1 120); do
     sleep 1
+    capture_toast
     if cdp_eval "(function(){ var v = document.querySelector('video'); return !!v && v.readyState >= 3 && v.currentTime > 0 && !v.paused; })()" 2>/dev/null | grep -q true; then
         echo "{\"secondsToPlayback\":$(( $(date +%s) - start ))}" > "$OUT/startup.json"
         break
@@ -130,15 +140,8 @@ sleep 3
 menu_open || log "open subtitles menu: $(toggle_subtitles_menu)"
 sleep 1
 log "choose language eng: $(cdp_eval "(function(){ var b = document.querySelector('[class*=\"subtitles-menu-container\"] [data-lang=\"eng\"]'); if (b) b.click(); return !!b; })()")"
-# The toast of the failed subtitle lasts 3 s: poll for its text while it is on screen (and take the capture then).
-: > "$OUT/toasts.json"
-for _ in $(seq 1 24); do
-    sleep 0.25
-    toasts="$(cdp_eval "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[class*=\"toast\"]'), function(e) { return e.textContent; }).filter(function(t) { return t; }))" 2>/dev/null || echo '[]')"
-    if [[ "$toasts" != '[]' && -n "$toasts" ]]; then echo "$toasts" > "$OUT/toasts.json"; shot "$OUT/tela-legenda-falhou.png" || true; break; fi
-done
+for _ in $(seq 1 8); do capture_toast; [[ -s "$OUT/toasts.json" ]] && break; sleep 0.5; done
 [[ -s "$OUT/toasts.json" ]] || echo '[]' > "$OUT/toasts.json"
-sleep 2
 [[ -f "$OUT/tela-legenda-falhou.png" ]] || shot "$OUT/tela-legenda-falhou.png" || true
 
 # The context menu of the add-on subtitle (F3.7b): the Player has the URL the add-on gave, not the proxy
