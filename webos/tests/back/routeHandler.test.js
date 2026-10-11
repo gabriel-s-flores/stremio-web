@@ -3,7 +3,7 @@
 
 const { PENDING_MS, createRouteBackHandler } = require('../../back/routes');
 
-const setup = ({ pathname = '/discover', historyIndex = 2, pageBackButton = null, state = null } = {}) => {
+const setup = ({ pathname = '/discover', historyIndex = 2, pageBackButton = null, state = null, getEntry } = {}) => {
     let time = 1000;
     const location = { pathname, state, key: 'k1' };
     const navigate = jest.fn();
@@ -11,6 +11,7 @@ const setup = ({ pathname = '/discover', historyIndex = 2, pageBackButton = null
     const handler = createRouteBackHandler({
         getLocation: () => location,
         getHistoryIndex: () => historyIndex,
+        getEntry,
         getFallbackPath: () => '/',
         findPageBackButton: () => pageBackButton,
         navigate,
@@ -85,5 +86,14 @@ describe('createRouteBackHandler', () => {
         expect(press()).toEqual({ consumed: true, detail: 'exit-dialog' });
         expect(openExitDialog).toHaveBeenCalledTimes(2);
         expect(navigate).not.toHaveBeenCalled();
+    });
+
+    test('a delta of more than one entry goes to navigate(delta) as is (F3.2b)', () => {
+        const entries = [{ pathname: '/' }, { pathname: '/search' }, { pathname: '/search', search: '?search=a' }];
+        const { press, navigate } = setup({ pathname: '/search', historyIndex: 3, getEntry: (index) => entries[index] || null });
+        // Index 3 itself is not known: it does not matter, only the entries before are looked at.
+        expect(press()).toEqual({ consumed: true, detail: 'navigate:-3' });
+        expect(navigate).toHaveBeenCalledWith(-3);
+        expect(press().detail).toBe('pending');
     });
 });

@@ -9,7 +9,12 @@
 // - navigation (default): Board, quit dialog, dropdown, popup, MetaDetails, modal, keyboard, quit;
 // - player: a video served from the host (webos/tools/media-server.mjs, $MEDIA_FILE, by default
 //   ~/webos-tv-sdk/run/f16-media/longo_h264_aac.mp4, 90 s), its speed menu and its context menu
-//   closed by Back with the playback rate checked, then Back out of the Player.
+//   closed by Back with the playback rate checked, then Back out of the Player;
+// - screens (F3.2b): each Back leaves exactly one screen. Board -> Discover -> MetaDetails -> Player
+//   (a stream of the local test addon, webos/tests/addon) and back to the Board; Board -> Search ->
+//   two queries -> a result -> MetaDetails and back; the diagnostics screen (RED GREEN YELLOW BLUE)
+//   and back; then quit from the Board. Each Back must move history.state.idx down, to the entry of
+//   the previous screen, with one popstate; the focus after each press is recorded.
 //
 // Navigation between screens is done the way the remote would trigger it (clicks on the app's own
 // links and buttons over CDP, so react-router pushes history entries); every Back is a real key.
@@ -503,7 +508,151 @@ const playerScenario = async () => {
     }
 };
 
-const SCENARIOS = { navigation: navigationScenario, player: playerScenario };
+// F3.2b: Back leaves exactly one screen, with no entry pushed on the way back.
+const isMeta = (hash) => /^#\/(metadetails|detail)\//.test(hash);
+const isDiscover = (hash) => hash.indexOf('#/discover') === 0;
+const isSearch = (hash) => hash.indexOf('#/search') === 0;
+
+// One Back that must leave the screen for the entry `toIdx` (history.go(-n) is one popstate).
+const backToScreen = (name, toIdx, onScreen, options) => back(name, (b, a) => ({
+    'one popstate': a.popstates === b.popstates + 1,
+    [`idx ${b.idx} -> ${toIdx}`]: a.idx === toIdx,
+    'history length unchanged (nothing pushed)': a.historyLength === b.historyLength,
+    'expected screen': onScreen(a.hash),
+    'consumed by route': a.lastDispatch && a.lastDispatch.consumedBy === 'route',
+    'no dialog': !a.exitDialog,
+}), options);
+
+// The system keyboard comes up whenever a text field takes the focus (the Search field does when
+// its route comes back, until F4.1a restores the focus on the result). The system takes that Back.
+const keyboardUp = () => evaluate('var e = window.__f32.keyboardEvents; return e.length > 0 && e[e.length - 1].visibility === true;') === true;
+const hideKeyboardIfUp = async (name) => {
+    if (!keyboardUp()) return;
+    await back(name, (b, a) => ({
+        'keyboard hidden (keyboardStateChange false)': a.lastKeyboardEvent === false,
+        'no popstate': a.popstates === b.popstates,
+    }), { settleMs: 3000, vm: true, dispatches: 0 });
+};
+
+const screensScenario = async () => {
+    const info = path.join(OUT, 'addon.json');
+    const log = fs.openSync(path.join(OUT, 'addon-server.log'), 'w');
+    const server = spawn('node', ['webos/tests/addon/server.mjs', '--host', '10.0.2.2', '--info', info], { cwd: REPO, stdio: ['ignore', log, log] });
+    try {
+        for (let i = 0; i < 50 && !fs.existsSync(info); i++) await sleep(200);
+        const manifestUrl = fs.existsSync(info) ? JSON.parse(fs.readFileSync(info, 'utf8')).manifestUrl : null;
+        record('S00-test-addon', { ok: manifestUrl !== null, note: manifestUrl });
+        if (manifestUrl === null) return;
+        // Installed in the guest profile the way the Addons screen does (webos/tests/addon/README.md).
+        evaluate(`
+            fetch(${JSON.stringify(manifestUrl.replace('127.0.0.1', '10.0.2.2'))}).then(function (r) { return r.json(); }).then(function (manifest) {
+                window.core.dispatch({ action: 'Ctx', args: { action: 'InstallAddon', args: { transportUrl: ${JSON.stringify(manifestUrl.replace('127.0.0.1', '10.0.2.2'))}, manifest: manifest, flags: { official: false, protected: false } } } });
+                window.__f32.addon = manifest.id;
+            });
+            return true;
+        `);
+        const installedMs = await waitFor('return !!window.__f32.addon;', 15000);
+        record('S00-test-addon-installed', { ok: installedMs !== null });
+        const start = state();
+        record('S00-start', { ok: onBoard(start.hash) && start.idx === 0, state: start });
+
+        // A. Board -> Discover -> MetaDetails -> Player, then back one screen per press.
+        if (!click('S01-open-discover', 'document.querySelector(\'a[href="#/discover"]\')')) return;
+        await waitFor('return location.hash.indexOf("#/discover") === 0 && !!document.querySelector(\'.route-container:last-child [data-index="0"]\');', 60000);
+        await sleep(2000);
+        const discover = state();
+        screenshot('S01-discover');
+        // The selected item (index 0) opens MetaDetails on OK, the others are only selected first.
+        for (let i = 0; i < 2 && isDiscover(state().hash); i++) {
+            click(`S02-open-metadetails-${i}`, 'document.querySelector(\'.route-container:last-child [data-index="0"]\')');
+            await waitFor('return /^#\\/(metadetails|detail)\\//.test(location.hash);', 5000);
+        }
+        // The test addon stream of a kit file that plays in the emulator (H264 + AAC); any link to the
+        // Player (the trailer) if the addon did not answer.
+        const addonStream = 'Array.prototype.filter.call(document.querySelectorAll(\'.route-container:last-child a[href^="#/player"]\'), function (a) { return a.textContent.indexOf("H264.AAC") !== -1; })[0]';
+        const streamSelector = `${addonStream} || document.querySelector('.route-container:last-child a[href^="#/player"]')`;
+        await waitFor(`return !!(${addonStream});`, 45000, 1000);
+        const streamsMs = await waitFor(`return !!(${streamSelector});`, 15000, 1000);
+        const meta = state();
+        record('S02-metadetails', { ok: isMeta(meta.hash) && meta.idx === discover.idx + 1 && streamsMs !== null, state: meta, screenshot: screenshot('S02-metadetails') });
+        if (!isMeta(meta.hash)) return;
+        if (streamsMs !== null && click('S03-open-player', streamSelector)) {
+            await waitFor('return location.hash.indexOf("#/player") === 0;', 15000);
+            const playingMs = await waitFor('var video = document.querySelector("video"); return !!video && video.readyState >= 3 && video.currentTime > 1;', 60000, 1000);
+            const player = state();
+            record('S03-player', {
+                ok: player.hash.indexOf('#/player') === 0 && player.idx === meta.idx + 1,
+                note: playingMs === null ? 'the video did not start (only the route is checked)' : `playing after ${Math.round(playingMs / 1000)} s`,
+                state: player,
+                screenshot: screenshot('S03-player'),
+            });
+            await backToScreen('S04-player-back-to-metadetails', meta.idx, isMeta, { settleMs: 3000 });
+        }
+        await sleep(1500);
+        await backToScreen('S05-metadetails-back-to-discover', discover.idx, isDiscover, { settleMs: 2000 });
+        await backToScreen('S06-discover-back-to-board', start.idx, onBoard, { settleMs: 2000 });
+        await back('S07-board-back-opens-exit-dialog', (b, a) => ({ 'dialog open': a.exitDialog, 'no popstate': a.popstates === b.popstates }));
+        await back('S08-exit-dialog-back-cancels', (b, a) => ({ 'dialog closed': !a.exitDialog, 'still on Board': onBoard(a.hash) }), { shot: false });
+
+        // B. Board -> Search -> two queries -> a result -> MetaDetails, then back.
+        if (click('S09-open-search', 'document.querySelector(window.__f32.sel("search-bar-container"))')) {
+            await waitFor('return location.hash.indexOf("#/search") === 0 && !!document.querySelector(".route-container:last-child input");', 30000);
+            await sleep(1500);
+            // A query is submitted the way OK on the system keyboard does: Enter in the field.
+            const submit = (query) => evaluate(`
+                var input = document.querySelector('.route-container:last-child input');
+                input.focus();
+                input.value = ${JSON.stringify(query)};
+                input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+                return location.hash;
+            `);
+            submit('matrix');
+            await waitFor('return location.hash.indexOf("search=matrix") !== -1;', 10000);
+            await sleep(1500);
+            submit('star wars');
+            await waitFor('return location.hash.indexOf("search=star") !== -1;', 10000);
+            // Takes the focus off the field, which hides the system keyboard.
+            evaluate('document.activeElement && document.activeElement.blur(); return true;');
+            const resultSelector = 'document.querySelector(\'.route-container:last-child a[href^="#/detail"], .route-container:last-child a[href^="#/metadetails"]\')';
+            const resultsMs = await waitFor(`return !!(${resultSelector});`, 60000, 1000);
+            await sleep(1500);
+            const search = state();
+            record('S10-search-two-queries', { ok: isSearch(search.hash) && search.idx === start.idx + 3 && resultsMs !== null, note: search.hash, state: search, screenshot: screenshot('S10-search') });
+            if (resultsMs !== null && click('S11-open-result', resultSelector)) {
+                await waitFor('return /^#\\/(metadetails|detail)\\//.test(location.hash);', 15000);
+                await sleep(3000);
+                const searchMeta = state();
+                record('S11-metadetails-from-search', { ok: isMeta(searchMeta.hash) && searchMeta.idx === search.idx + 1, state: searchMeta, screenshot: screenshot('S11-metadetails') });
+                await backToScreen('S12-metadetails-back-to-search', search.idx, (hash) => hash === search.hash, { settleMs: 2500 });
+                await hideKeyboardIfUp('S12b-search-keyboard-came-back');
+            }
+            await backToScreen('S13-search-back-to-board', start.idx, onBoard, { settleMs: 2000 });
+        }
+
+        // C. The diagnostics screen, opened with the remote shortcut (F3.6), and back.
+        remote('RED', 'GREEN', 'YELLOW', 'BLUE');
+        const diagnosticsMs = await waitFor('return location.hash.indexOf("#/webos-diagnostics") === 0;', 10000);
+        await sleep(2000);
+        const diagnostics = state();
+        record('S14-diagnostics', { ok: diagnosticsMs !== null && diagnostics.idx === start.idx + 1, state: diagnostics, screenshot: screenshot('S14-diagnostics') });
+        if (diagnosticsMs !== null) {
+            await backToScreen('S15-diagnostics-back-to-board', start.idx, onBoard, { settleMs: 2000 });
+        }
+
+        // D. Quit from the Board: the dialog, RIGHT + OK, the app closes.
+        await back('S16-board-back-opens-exit-dialog', (b, a) => ({ 'dialog open': a.exitDialog, 'on Board': onBoard(a.hash) }));
+        remote('RIGHT');
+        await sleep(500);
+        remote('OK');
+        await sleep(4000);
+        const running = runningApps().join(', ');
+        record('S17-app-closed', { ok: running.indexOf(APP_ID) === -1, note: `running: ${running || '(none)'}` });
+    } finally {
+        server.kill();
+    }
+};
+
+const SCENARIOS = { navigation: navigationScenario, player: playerScenario, screens: screensScenario };
 
 try {
     if (!SCENARIOS[SCENARIO]) {
