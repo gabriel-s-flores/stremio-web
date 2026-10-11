@@ -5,7 +5,7 @@
 // overlay), and the memory sampled every few minutes. One media scenario per boot is the emulator's limit
 // (docs/PESQUISA.md, section 7), so this is its own reservation; stream switches are the `play` scenario of F7.1.
 //
-//   webos/tools/emu-run --profile c8 --timeout 100 -- webos/tests/perf/run.sh <out> soak-play --ipk <ipk> --minutes 50
+//   webos/tools/emu-run --profile c8 --timeout 100 -- webos/tests/perf/run.sh <out> soak-play --ipk <ipk> --minutes 50 [--no-subtitle]
 //
 // Output: samples.jsonl (every --sample-every minutes, default 3, after a GC), video.jsonl (the element's state
 // every 30 s: currentTime against the wall clock, paused, readyState, dropped frames), steps.jsonl (the
@@ -128,6 +128,7 @@ const mediaStart = Date.now();
 // Player shortcut (S), the "exclusive" variant by a click on the option.
 let overlayOn = false;
 try {
+    if (args['no-subtitle']) throw new Error('--no-subtitle: the A/B without the add-on subtitle overlay');
     await soak.domKey(83);
     await sleep(2500);
     const picked = await soak.evaluate(`(function(){ var o = Array.prototype.filter.call(document.querySelectorAll('[class*=subtitles-menu-container] [class*=variant-option]'), function(v){ return /xclusiv/i.test(v.textContent); })[0]; if (o) { o.click(); return true; } return false; })()`);

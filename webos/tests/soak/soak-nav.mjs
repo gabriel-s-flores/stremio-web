@@ -97,22 +97,33 @@ async function pointerLink(href) {
     await soak.evaluate(`(function(){ var a = document.querySelector('a[href="${href}"]'); if (a) a.click(); return !!a; })()`);
 }
 
+// The search field: the visible one (the top bar and the side bar both have the bar, one hidden). The route may
+// still be mounting (c8 is slow) and swallow the first value: type until the field keeps it, then Enter, and again
+// Enter if the route did not go to the query.
+const VISIBLE_INPUT = `[].filter.call(document.querySelectorAll('input[type="text"]'), function(i){ return i.getBoundingClientRect().width > 0; })[0]`;
 async function typeInSearch(text) {
-    await soak.evaluate(`(function(){
-        var input = [].filter.call(document.querySelectorAll('input[type="text"]'), function(i){ return i.getBoundingClientRect().width > 0; })[0]; if (!input) return false;
-        input.focus();
-        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(text)});
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        return true; })()`);
-    await sleep(1200);
-    await soak.evaluate(`(function(){
-        var input = [].filter.call(document.querySelectorAll('input[type="text"]'), function(i){ return i.getBoundingClientRect().width > 0; })[0]; if (!input) return false;
-        ['keydown', 'keyup'].forEach(function(type){
-            var e = new KeyboardEvent(type, { key: 'Enter', code: 'Enter', bubbles: true });
-            Object.defineProperty(e, 'keyCode', { get: function(){ return 13; } });
-            Object.defineProperty(e, 'which', { get: function(){ return 13; } });
-            input.dispatchEvent(e); });
-        return true; })()`);
+    for (let attempt = 0; attempt < 4; attempt++) {
+        await soak.evaluate(`(function(){
+            var input = ${VISIBLE_INPUT}; if (!input) return false;
+            input.focus();
+            Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(text)});
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            return true; })()`);
+        await sleep(1500 * SLOW);
+        if (await soak.evaluate(`(function(){ var input = ${VISIBLE_INPUT}; return !!input && input.value === ${JSON.stringify(text)}; })()`).catch(() => false)) break;
+    }
+    for (let attempt = 0; attempt < 3; attempt++) {
+        await soak.evaluate(`(function(){
+            var input = ${VISIBLE_INPUT}; if (!input) return false;
+            ['keydown', 'keyup'].forEach(function(type){
+                var e = new KeyboardEvent(type, { key: 'Enter', code: 'Enter', bubbles: true });
+                Object.defineProperty(e, 'keyCode', { get: function(){ return 13; } });
+                Object.defineProperty(e, 'which', { get: function(){ return 13; } });
+                input.dispatchEvent(e); });
+            return true; })()`);
+        await sleep(4000 * SLOW);
+        if (await soak.evaluate(`/search=${text}/.test(location.hash)`).catch(() => false)) return;
+    }
 }
 
 async function wheel(selector, deltaY) {
