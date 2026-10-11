@@ -226,9 +226,14 @@ const createMetaDetailsNavigation = ({ root, window: win, hub = getInputHub(win)
         let pending = null;
         if (restore) {
             const saved = memory.get(pathname);
-            if (saved && saved.section === 'listEntry' && parts.list && parts.streams) {
-                parts.list.setAttribute('tabindex', '-1');
-                target = parts.list;
+            // The panel of a streams list. Not on another page: the panel may have been focused
+            // under a new path while its old content was still on screen (a series opened from a
+            // movie in the same page), and an episodes list has no panel.
+            if (saved && saved.section === 'listEntry') {
+                if (parts.list && parts.streams) {
+                    parts.list.setAttribute('tabindex', '-1');
+                    target = parts.list;
+                }
             } else if (saved) {
                 const section = savedSection(parts, saved);
                 target = section ? resolve(saved.locator, section) : null;
@@ -373,6 +378,15 @@ const createMetaDetailsNavigation = ({ root, window: win, hub = getInputHub(win)
             return;
         }
         if (key === 'ok') return;
+
+        // DOWN from the bar on top (UP from the top of the column reaches its buttons, the profile
+        // one since F4.1b): back to the column element focused before, not to the list below.
+        if (key === 'down' && parts.navBar && parts.navBar.contains(active) && !insideOverlay(active, parts.navBar)) {
+            const target = metaTarget(parts);
+            if (target) focus(target);
+            consume(event);
+            return;
+        }
 
         // The action buttons row and the summary. The polyfill measures the whole box of an element,
         // also the part the column has scrolled out of view: a summary cut by the bottom of the column

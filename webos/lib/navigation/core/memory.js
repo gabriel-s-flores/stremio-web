@@ -42,6 +42,7 @@ const locate = (element, section) => ({
 });
 
 const resolve = (locator, section) => {
+    if (!locator) return null;
     const candidates = focusablesIn(section);
     const byHref = locator.href ? candidates.filter((element) => element.getAttribute('href') === locator.href) : [];
     if (byHref.length > 0) return byHref[0];

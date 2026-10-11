@@ -668,3 +668,27 @@ describe('F4.4: the low findings of the F4.1c review', () => {
         expect(hub.listeners.focus).toBe(before.focus);
     });
 });
+
+describe('F4.4: a series opened from a movie in the same page, and the bar on top', () => {
+    it('the panel focused under the new path while the old streams were on screen does not break the episodes', () => {
+        open('/detail/movie/tt1/tt1');
+        document.activeElement.blur();
+        // The location changes first (POP: the hash set by hand), the streams list is still there.
+        navigation.setLocation('/detail/series/tt2', 'POP');
+        navigation.tick();
+        expect(document.activeElement).toBe($('list'));
+        // Then the page renders the episodes, with nothing focused.
+        $('list').outerHTML = VIDEOS_LIST;
+        document.activeElement.blur();
+        expect(() => navigation.tick()).not.toThrow();
+        expect(document.activeElement).toBe($('v2'));
+    });
+
+    it('DOWN from the bar goes back to the column element focused before, not to the list', () => {
+        open();
+        $('cast').focus();
+        $('profile').focus();
+        expect(key(KEY.DOWN).defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe($('cast'));
+    });
+});
