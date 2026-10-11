@@ -244,7 +244,9 @@ const discover = async () => {
         s = await key(`down-${index}`, 'DOWN', (b, a) => (a.gridIndex === b.gridIndex ? {
             'last line: waits for the next page': a.gridScroll >= b.gridScroll,
         } : {
-            'next line, same column': a.gridIndex > b.gridIndex && Math.abs(a.rect[0] - b.rect[0]) < 30,
+            // A shorter last line: its nearest item, to the left.
+            'next line, same column (or the nearest item of a shorter line)': a.gridIndex > b.gridIndex &&
+                (Math.abs(a.rect[0] - b.rect[0]) < 30 || (a.rect[0] < b.rect[0] && a.gridIndex === a.gridItems - 1)),
             'item on screen': a.onScreen,
         }), { screenshot: index === 3 });
         if (s.gridItems > firstPage) loadedMore = true;
