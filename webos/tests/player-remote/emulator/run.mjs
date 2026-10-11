@@ -216,6 +216,14 @@ const PAGE_HELPERS = `
     if (!window.__f57) {
         window.__f57 = { errors: [] };
         window.addEventListener('error', function (event) { window.__f57.errors.push(String(event.message) + ' ' + event.filename + ':' + event.lineno); });
+        // The pipeline guard's log (F5.6): releases, dropped load() calls, watchdog.
+        window.__f57.guard = [];
+        var originalInfo = console.info;
+        console.info = function () {
+            var text = Array.prototype.map.call(arguments, String).join(' ');
+            if (text.indexOf('[webos] player:') !== -1) window.__f57.guard.push({ time: Date.now(), text: text.slice(0, 300) });
+            return originalInfo.apply(console, arguments);
+        };
         var original = console.error;
         console.error = function () {
             window.__f57.errors.push(Array.prototype.map.call(arguments, String).join(' ').slice(0, 300));
@@ -259,6 +267,7 @@ const PAGE_HELPERS = `
             remote: remote ? { action: remote.status.action, zone: remote.status.zone, result: remote.status.result, count: remote.status.count, key: remote.status.key } : null,
             lastBack: window.__webosBack && window.__webosBack.history.length ? window.__webosBack.history[window.__webosBack.history.length - 1] : null,
             errors: window.__f57.errors.length,
+            guard: window.__f57.guard.length,
         };
     };
     return true;
@@ -587,7 +596,12 @@ const main = async () => {
     }
     const final = await state().catch(() => null);
     record('system-log', { note: guest(SYSTEM_LOG), memory: guest(GUEST_MEMORY) });
-    const failed = save({ final, reloads, errors: await evaluate('return window.__f57.errors;').catch(() => null) });
+    const errors = await evaluate('return window.__f57.errors;').catch(() => null);
+    const guardLog = await evaluate('return window.__f57.guard;').catch(() => null);
+    // With the pipeline guard (F5.6): no watchdog error and no stream error during the scenario.
+    const watchdog = (errors || []).concat((guardLog || []).map((entry) => entry.text)).filter((text) => /watchdog|STREAM_FAILED_TO_LOAD|failed to load/i.test(text));
+    record('pipeline-guard', { ok: watchdog.length === 0, note: `${(guardLog || []).length} guard log lines, ${watchdog.length} watchdog/stream errors`, guardLog, watchdog });
+    const failed = save({ final, reloads, errors, guardLog });
     console.log(failed.length ? `FALHAS: ${failed.join(', ')}` : 'tudo ok');
     if (session) session.close();
     process.exit(failed.length ? 1 : 0);
