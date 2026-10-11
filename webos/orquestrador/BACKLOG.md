@@ -251,6 +251,15 @@ Modelos: **O** = `claude-opus-5-5`, **S** = `claude-sonnet-5-5`; effort entre pa
 - **Aceite:** pôsteres do metahub aparecem no Board do app no emulador; addons em hosts Let's
   Encrypt funcionam.
 
+### F3.7b · Token do proxy fora dos logs
+- **Depende de:** F3.7, F5.5  · **Modelo:** S (high)
+- **Escopo:** achado da revisão F3.4 c2: o `console.error('Player')` do upstream registra a URL do
+  proxy de certificados da F3.7 **com o token** quando falha uma legenda de addon passada pelo proxy
+  (F5.5). Mascarar o token em todo log do webOS (console, relatório da tela de diagnóstico da F3.6,
+  mensagens de erro) sem mexer no upstream além de overrides.
+- **Aceite:** no emulador, com uma legenda de addon que falha pelo proxy, nenhum log nem tela mostra
+  o token; teste automatizado que falha se o token aparecer.
+
 ## Fase 4 — navegação por controle remoto
 
 ### F4.1a · Navegação: Board, Discover e Busca
