@@ -165,7 +165,7 @@ if [[ "$SCENARIO" == addon ]]; then
     # Player settings: the ASS styling option is gone, the other subtitle options stay.
     cdp_eval "location.hash = '#/settings'" > /dev/null
     sleep 4
-    cdp_eval "(function(){ var s = document.querySelector('[class*=\"section\"] [class*=\"category\"]'); var all = Array.prototype.filter.call(document.querySelectorAll('[class*=\"section-container\"], [class*=\"section\"]'), function(e) { return /Subtitle|Legenda/i.test(e.textContent); }); if (all[0]) all[0].scrollIntoView(); return all.length; })()" > /dev/null || true
+    cdp_eval "(function(){ var label = Array.prototype.filter.call(document.querySelectorAll('div'), function(e) { return e.children.length === 0 && e.textContent === 'Default Subtitles Language'; })[0]; if (label) label.scrollIntoView(true); return !!label; })()" > /dev/null || true
     sleep 2
     cdp_eval "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[class*=\"option-container\"], [class*=\"option\"] [class*=\"label\"]'), function(e) { return e.textContent; }).filter(function(t, i, all) { return t && all.indexOf(t) === i; }))" > "$OUT/settings-options.json" || true
     "${CDP[@]}" screenshot "$OUT/tela-configuracoes-player.png" || true
