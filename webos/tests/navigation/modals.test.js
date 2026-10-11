@@ -236,7 +236,7 @@ describe('an overlay that stays in the DOM when it closes', () => {
 });
 
 describe('an overlay that owns the remote (the QR dialog of F3.4)', () => {
-    const DIALOG = '<div role="dialog" aria-modal="true" id="qr"><button id="qr-close">Close</button></div>';
+    const DIALOG = '<div role="dialog" aria-modal="true" class="external-link-dialog-e1" id="qr"><button id="qr-close">Close</button></div>';
 
     test('nothing is pulled back to the overlay under it, and its keys are not taken', async () => {
         page();
@@ -253,6 +253,18 @@ describe('an overlay that owns the remote (the QR dialog of F3.4)', () => {
         document.getElementById('qr-close').blur();
         document.getElementById('behind-b').focus();
         expect(document.activeElement.id).toBe('behind-b');
+    });
+
+    test('a modal that only has role="dialog" (EpgProgramModal) is not an owner: the focus stays trapped', async () => {
+        page();
+        modalFocus.start();
+        await settle();
+        document.getElementById('behind-a').focus();
+        document.querySelector('.modals-container').innerHTML = '<div class="modal-container modal-container-q1" role="dialog" aria-modal="true"><div id="inner" tabindex="0"></div></div>';
+        await settle();
+        expect(document.activeElement.id).toBe('inner');
+        document.getElementById('behind-b').focus();
+        expect(document.activeElement.id).toBe('inner');
     });
 
     test('when it closes the overlay under it holds the focus again', async () => {

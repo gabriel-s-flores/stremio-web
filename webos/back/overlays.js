@@ -118,6 +118,10 @@ const getPopupTrigger = (element) => {
 };
 
 // Ordered from the top of the screen down: the first one found is the one closed.
+// The QR dialog of external links (webos/external-links): `role="dialog" aria-modal="true"` alone also
+// matches the EpgProgramModal, the StreamingServerUrlModal and the BottomSheet, so its class is part of it.
+const EXTERNAL_LINK_DIALOG = '[role="dialog"][class^="external-link-dialog-"], [role="dialog"][class*=" external-link-dialog-"]';
+
 const OVERLAYS = [
     {
         // webos/external-links ExternalLinkDialog (F3.4): the QR code of an external link. It owns the
@@ -127,7 +131,7 @@ const OVERLAYS = [
         name: 'external-link-dialog',
         owner: true,
         trapsFocus: false,
-        find: (doc) => find(doc, '[role="dialog"][aria-modal="true"]'),
+        find: (doc) => find(doc, EXTERNAL_LINK_DIALOG),
         close: (win, doc, element) => element.click(),
     },
     {
@@ -219,7 +223,7 @@ const OVERLAY_HINT = [
     '[data-gamepad-modal]',
     classPrefix('context-menu-container'),
     '[role="menu"]',
-    '[role="dialog"][aria-modal="true"]',
+    EXTERNAL_LINK_DIALOG,
     POPUP_SELECTORS,
     // MultiselectMenu without portal: the label only gets aria-expanded, the dropdown is what mounts.
     classPrefix('dropdown'),

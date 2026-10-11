@@ -57,10 +57,22 @@ describe('findTopOverlay', () => {
 
     test('the QR dialog of F3.4 owns the remote and wins over the overlay under it', () => {
         render('', '<div class="modal-container modal-container-q1"></div>');
-        document.body.insertAdjacentHTML('beforeend', '<div role="dialog" aria-modal="true" id="qr"></div>');
+        document.body.insertAdjacentHTML('beforeend', '<div role="dialog" aria-modal="true" class="external-link-dialog-e1" id="qr"></div>');
         const overlay = findTopOverlay(document);
         expect(overlay).toMatchObject({ name: 'external-link-dialog', owner: true, trapsFocus: false });
         expect(overlay.root).toBe(document.getElementById('qr'));
+    });
+
+    test('other modals with role="dialog" are not the QR dialog: the EpgProgramModal keeps its Escape', () => {
+        // ModalDialog markup of the upstream (role and aria-modal come from the Modal/BottomSheet/EPG components).
+        render('', '<div class="modal-container modal-container-q1" role="dialog" aria-modal="true"><div class="modal-dialog-container-d1"></div></div>');
+        document.body.insertAdjacentHTML('beforeend', '<div role="dialog" aria-modal="true" class="streaming-server-url-modal-s1"><h1 id="streaming-server-url-modal-title"></h1></div>');
+        let overlay = findTopOverlay(document);
+        expect(overlay.name).toBe('streaming-server-url-modal');
+        expect(overlay.owner).toBe(false);
+        document.body.lastChild.remove();
+        overlay = findTopOverlay(document);
+        expect(overlay).toMatchObject({ name: 'modal', owner: false, trapsFocus: true });
     });
 
     test('isOverlayOpen: true while it is found, false once it closed even if the root stays', () => {
@@ -99,7 +111,7 @@ describe('OVERLAY_HINT', () => {
         ['ActionMenu', '<div role="menu"></div>', ''],
         ['MultiselectMenu dropdown', '<div class="multiselect-menu-m1"><div aria-haspopup="listbox" aria-expanded="true"></div><div class="dropdown-d1"></div></div>', ''],
         ['gamepad modal', '<div data-gamepad-modal><div class="backdrop-b1"></div></div>', ''],
-        ['external link dialog', '<div role="dialog" aria-modal="true"></div>', ''],
+        ['external link dialog', '<div role="dialog" aria-modal="true" class="external-link-dialog-e1"></div>', ''],
     ])('%s', (name, fixture, modals) => {
         expect(hints(fixture, modals)).toBe(true);
     });
