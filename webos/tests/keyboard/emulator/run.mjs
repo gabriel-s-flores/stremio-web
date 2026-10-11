@@ -343,16 +343,38 @@ const linksScenario = async () => {
         'no navigation': keysHeld.hash === before.hash,
     }, { data: keysHeld });
 
+    // Back closes the dialog and nothing else. The profile menu closes on any click inside it (upstream
+    // does that for every option), so this link is gone and the focus has nowhere to return: the
+    // arrows must still work from there. The focus return is checked on a link that stays (Settings).
     const popBefore = state();
     remote('BACK');
     await sleep(1500);
     const closed = state();
-    check('06-back-closes-the-dialog-and-returns-the-focus-to-the-link', {
+    check('06-back-closes-the-dialog-and-nothing-else', {
         'dialog closed': !closed.linkDialog,
-        'focus back on the link': closed.focusedHref === 'https://www.stremio.com/tos',
         'no navigation': closed.hash === popBefore.hash && closed.popstates === popBefore.popstates,
         'no quit dialog': !closed.exitDialog,
     }, { before: popBefore, after: closed, screenshot: screenshot('06-after-back') });
+    remote('DOWN');
+    await sleep(800);
+    const arrow = state();
+    check('07-arrows-work-after-the-dialog-closes', { 'focus is on an element again': arrow.focused !== 'body' }, { data: arrow });
+
+    // Settings has the same links as plain links on the page: they stay, so the focus returns to them.
+    click('08-open-settings', 'document.querySelector("a[href=\\"#/settings\\"]")');
+    await waitFor('return location.hash.indexOf("#/settings") === 0;', 30000);
+    await sleep(3000);
+    const privacy = evaluate(FOCUS_LINK('https://www.stremio.com/privacy'));
+    record('09-privacy-link-focused', { ok: privacy !== 'not found', note: String(privacy), screenshot: screenshot('09-settings-link') });
+    const settingsBefore = state();
+    remote('OK');
+    await sleep(1200);
+    const settingsOpen = state();
+    check('10-settings-link-shows-qr-dialog', { 'dialog open': !!settingsOpen.linkDialog && settingsOpen.linkDialog.url === 'https://www.stremio.com/privacy', 'still on Settings': settingsOpen.hash === settingsBefore.hash }, { data: settingsOpen, screenshot: screenshot('10-settings-qr') });
+    remote('BACK');
+    await sleep(1200);
+    const settingsClosed = state();
+    check('11-back-returns-the-focus-to-the-link', { 'dialog closed': !settingsClosed.linkDialog, 'focus back on the link': settingsClosed.focusedHref === 'https://www.stremio.com/privacy', 'still on Settings': settingsClosed.hash === settingsBefore.hash, 'no navigation': settingsClosed.popstates === settingsBefore.popstates }, { data: settingsClosed });
 
     // OK on the focused Close button closes it too.
     remote('OK');
@@ -361,18 +383,18 @@ const linksScenario = async () => {
     remote('OK');
     await sleep(1200);
     const closedByOk = state();
-    check('07-ok-on-close-closes-the-dialog', { 'reopened by OK on the link': !!reopened.linkDialog, 'closed by OK on Close': !closedByOk.linkDialog, 'focus back on the link': closedByOk.focusedHref === 'https://www.stremio.com/tos' }, { reopened, closedByOk });
+    check('12-ok-on-close-closes-the-dialog', { 'reopened by OK on the link': !!reopened.linkDialog, 'closed by OK on Close': !closedByOk.linkDialog, 'focus back on the link': closedByOk.focusedHref === 'https://www.stremio.com/privacy' }, { reopened, closedByOk });
 
     // window.open (Platform.openExternal, the login and "configure" buttons) and a magnet link.
     const urlBefore = evaluate('return location.href;');
     evaluate('window.__opened = window.open("https://www.stremio.com/warning#" + encodeURIComponent("https://example.com/configure?x=1&y=2"), "_blank"); return true;');
     await sleep(1000);
     const viaOpen = state();
-    check('08-window-open-shows-the-qr-code', {
+    check('13-window-open-shows-the-qr-code', {
         'dialog open with the link': !!viaOpen.linkDialog && viaOpen.linkDialog.url === 'https://www.stremio.com/warning#https%3A%2F%2Fexample.com%2Fconfigure%3Fx%3D1%26y%3D2',
         'window.open returned null': evaluate('return window.__opened === null;') === true,
         'page not navigated': evaluate('return location.href;') === urlBefore,
-    }, { data: viaOpen, screenshot: screenshot('08-window-open') });
+    }, { data: viaOpen, screenshot: screenshot('13-window-open') });
     remote('BACK');
     await sleep(1000);
     const magnet = evaluate(`
@@ -387,7 +409,7 @@ const linksScenario = async () => {
     `);
     await sleep(500);
     const afterMagnet = state();
-    check('09-magnet-link-is-disabled', { 'click cancelled': magnet.prevented === true, 'no dialog': !afterMagnet.linkDialog, 'page not navigated': magnet.url === urlBefore }, { data: magnet });
+    check('14-magnet-link-is-disabled', { 'click cancelled': magnet.prevented === true, 'no dialog': !afterMagnet.linkDialog, 'page not navigated': magnet.url === urlBefore }, { data: magnet });
 
     // The debts of the F1.6: clipboard and mediaSession.
     const clipboard = evaluate(`
@@ -401,14 +423,14 @@ const linksScenario = async () => {
         }
         return out;
     `);
-    check('10-navigator-clipboard-does-not-throw', { 'clipboard exists': clipboard.clipboard === 'object', 'writeText returns a promise': clipboard.returnsPromise === true, 'no TypeError': clipboard.threw === false }, { data: clipboard });
+    check('15-navigator-clipboard-does-not-throw', { 'clipboard exists': clipboard.clipboard === 'object', 'writeText returns a promise': clipboard.returnsPromise === true, 'no TypeError': clipboard.threw === false }, { data: clipboard });
     const outcome = evaluate(`
         window.__clip = 'pending';
         navigator.clipboard.writeText('x').then(function () { window.__clip = 'resolved'; }, function (error) { window.__clip = 'rejected:' + error.name; });
         return true;
     `);
     await sleep(500);
-    record('11-clipboard-outcome', { note: String(evaluate('return window.__clip;')), outcome });
+    record('16-clipboard-outcome', { note: String(evaluate('return window.__clip;')), outcome });
 };
 
 const SCENARIOS = { keyboard: keyboardScenario, links: linksScenario };
