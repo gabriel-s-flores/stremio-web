@@ -3,7 +3,7 @@
 // one) and of the <video> element, on a manual clock: when the pipeline is released, how many
 // pipelines a load creates, and the start watchdog.
 
-const { withPipelineGuard, holdVideosInPlace, LEAVE_DELAY_MS, RELEASE_SETTLE_MS, START_TIMEOUT_MS, SUBTITLE_SELECT_SETTLE_MS } = require('../withPipelineGuard');
+const { withPipelineGuard, holdVideosInPlace, LEAVE_DELAY_MS, RELEASE_SETTLE_MS, START_TIMEOUT_MS, SUBTITLE_SELECT_SETTLE_MS, DISPLAY_NUDGE_MS } = require('../withPipelineGuard');
 
 const URL_A = 'http://10.0.2.2:8099/redirect/t1_h264_aac.mp4';
 const URL_B = 'http://10.0.2.2:8099/redirect/t6_h264_aac.mkv';
@@ -49,7 +49,8 @@ const elementProto = {
 };
 const createElement = () => {
     const element = Object.create(elementProto);
-    Object.assign(element, { attributes: {}, paused: true, readyState: 0, networkState: 0, handlers: {}, log: [] });
+    // WebOsVideo sets the element's width and height to 100%.
+    Object.assign(element, { attributes: {}, paused: true, readyState: 0, networkState: 0, handlers: {}, log: [], style: { width: '100%' } });
     Object.defineProperty(element, 'src', {
         get: () => element.attributes.src || '',
         set: (value) => {
@@ -517,6 +518,63 @@ describe('withPipelineGuard', () => {
         expect(logs.join('\n')).toMatch(/repeated load\(\) calls dropped: 0/);
     });
 
+    it('releaseSettleMs: 0 (webos.pipelineGuard.quietRelease = off): the release runs at once, as in WebOsVideo', () => {
+        setup({ releaseSettleMs: 0 });
+        const { video, element } = playing(URL_A);
+        element.log.length = 0;
+        video.dispatch(UNLOAD);
+        expect(element.log).toEqual(['release']);
+    });
+
+    it('holdInPlace: false (webos.pipelineGuard.holdInPlace = off): holdVideosInPlace leaves the Player\'s nodes alone', () => {
+        setup({ holdInPlace: false });
+        const { element, containerElement } = playing(URL_A);
+        const parent = createNode();
+        parent.appendChild(containerElement);
+        element.log.length = 0;
+        expect(holdVideosInPlace(containerElement, { setTimeout: clock.setTimeout })).toBe(0);
+        expect(element.log).toEqual([]);
+        expect(Object.prototype.hasOwnProperty.call(parent, 'removeChild')).toBe(false);
+    });
+
+    it('the first playing of each load narrows the <video> for a moment, and only that one (display window, F5.6b)', () => {
+        const { video, element } = playing(URL_A);
+        expect(element.style.width).toBe('calc(100% - 2px)');
+        clock.advance(DISPLAY_NUDGE_MS - 1);
+        expect(element.style.width).toBe('calc(100% - 2px)');
+        clock.advance(1);
+        expect(element.style.width).toBe('100%');
+        // Playing again after a pause or a seek: no change.
+        element.fire('playing');
+        expect(element.style.width).toBe('100%');
+        // A new load in the same element: once more.
+        video.dispatch(load(URL_B));
+        clock.advance(RELEASE_SETTLE_MS + 300);
+        element.started();
+        expect(element.style.width).toBe('calc(100% - 2px)');
+        clock.advance(DISPLAY_NUDGE_MS);
+        expect(element.style.width).toBe('100%');
+    });
+
+    it('a destroy within the nudge cancels the width coming back: the timer leaves the element alone', () => {
+        // Without the quiet release the destroy runs at once, inside the DISPLAY_NUDGE_MS.
+        setup({ releaseSettleMs: 0 });
+        const { video, element } = playing(URL_A);
+        expect(element.style.width).toBe('calc(100% - 2px)');
+        clock.advance(DISPLAY_NUDGE_MS - 1);
+        video.dispatch(DESTROY);
+        expect(element.log).toContain('release');
+        clock.advance(10 * DISPLAY_NUDGE_MS);
+        expect(element.style.width).toBe('calc(100% - 2px)');
+        expect(clock.timers).toEqual([]);
+    });
+
+    it('displayNudge: false (webos.pipelineGuard.displayNudge = off) leaves the width alone', () => {
+        setup({ displayNudge: false });
+        const quiet = playing(URL_A);
+        expect(quiet.element.style.width).toBe('100%');
+    });
+
     it('two <video> in the same container: each guard holds the one its WebOsVideo created (the last)', () => {
         const first = playing(URL_A);
         const second = create(first.containerElement);
@@ -535,12 +593,14 @@ describe('withPipelineGuard', () => {
 });
 
 describe('readGuardSettings', () => {
-    const { readGuardSettings, GUARD_KEY, EXTRA_LOAD_KEY, WATCHDOG_KEY } = require('../withPipelineGuard');
+    const { readGuardSettings, GUARD_KEY, EXTRA_LOAD_KEY, WATCHDOG_KEY, QUIET_RELEASE_KEY, HOLD_KEY, DISPLAY_NUDGE_KEY } = require('../withPipelineGuard');
     const storage = (values) => ({ getItem: (key) => (Object.prototype.hasOwnProperty.call(values, key) ? values[key] : null) });
 
     it('everything on by default; each key turns its part off', () => {
-        expect([GUARD_KEY, EXTRA_LOAD_KEY, WATCHDOG_KEY]).toEqual(['webos.pipelineGuard', 'webos.pipelineGuard.extraLoad', 'webos.pipelineGuard.watchdog']);
-        const all = { enabled: true, dropExtraLoad: true, watchdog: true };
+        expect([GUARD_KEY, EXTRA_LOAD_KEY, WATCHDOG_KEY, QUIET_RELEASE_KEY, HOLD_KEY, DISPLAY_NUDGE_KEY]).toEqual(['webos.pipelineGuard',
+            'webos.pipelineGuard.extraLoad', 'webos.pipelineGuard.watchdog', 'webos.pipelineGuard.quietRelease', 'webos.pipelineGuard.holdInPlace',
+            'webos.pipelineGuard.displayNudge']);
+        const all = { enabled: true, dropExtraLoad: true, watchdog: true, quietRelease: true, holdInPlace: true, displayNudge: true };
         expect(readGuardSettings(storage({}))).toEqual(all);
         expect(readGuardSettings(null)).toEqual(all);
         expect(readGuardSettings({ getItem: () => { throw new Error('denied'); } })).toEqual(all);
@@ -548,5 +608,8 @@ describe('readGuardSettings', () => {
         expect(readGuardSettings(storage({ [GUARD_KEY]: 'on' }))).toEqual(all);
         expect(readGuardSettings(storage({ [EXTRA_LOAD_KEY]: 'keep' }))).toEqual({ ...all, dropExtraLoad: false });
         expect(readGuardSettings(storage({ [WATCHDOG_KEY]: 'off' }))).toEqual({ ...all, watchdog: false });
+        expect(readGuardSettings(storage({ [QUIET_RELEASE_KEY]: 'off' }))).toEqual({ ...all, quietRelease: false });
+        expect(readGuardSettings(storage({ [HOLD_KEY]: 'off' }))).toEqual({ ...all, holdInPlace: false });
+        expect(readGuardSettings(storage({ [DISPLAY_NUDGE_KEY]: 'off' }))).toEqual({ ...all, displayNudge: false });
     });
 });
