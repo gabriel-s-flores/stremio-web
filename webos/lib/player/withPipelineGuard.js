@@ -32,12 +32,19 @@
 //    Every sign of progress restarts the time, the time stops while the app is hidden, and nothing is
 //    aborted before the error: a slow link (a debrid resolve answering the 302 late) keeps its request.
 //    A wedged pipeline in the emulator does not recover anyway (the state outlives the app).
+// 4. Display window (F5.6b). In the emulator, a load after the first one of the boot can play with a
+//    black screen: the pipeline decodes (the clock moves) but the video plane never gets the place of
+//    the <video> on the screen, which goes to the pipeline only when the element's geometry changes,
+//    and the new <video> takes exactly the place of the previous one. At the first `playing` of each
+//    load the guard narrows the element by DISPLAY_NUDGE_PX for DISPLAY_NUDGE_MS and puts it back,
+//    which sends the place again to the pipeline that is playing.
 // localStorage keys (read once, when the app starts; A/B in the emulator and a way out in Phase 8):
 //   webos.pipelineGuard = "off"            WebOsVideo as it is (all of the above off)
 //   webos.pipelineGuard.extraLoad = "keep" keep WebOsVideo's second load() (2 above)
 //   webos.pipelineGuard.watchdog = "off"   no start watchdog (3 above)
 //   webos.pipelineGuard.quietRelease = "off"  release at once, as WebOsVideo does (1 above, F5.6b A/B)
 //   webos.pipelineGuard.holdInPlace = "off"   the Player's nodes leave at once (holdVideosInPlace, F5.6b A/B)
+//   webos.pipelineGuard.displayNudge = "off"  no geometry change at the start of a load (4 above)
 
 const ERROR = require('@stremio/stremio-video/src/error');
 
@@ -55,6 +62,11 @@ const EXTRA_LOAD_KEY = 'webos.pipelineGuard.extraLoad';
 const WATCHDOG_KEY = 'webos.pipelineGuard.watchdog';
 const QUIET_RELEASE_KEY = 'webos.pipelineGuard.quietRelease';
 const HOLD_KEY = 'webos.pipelineGuard.holdInPlace';
+const DISPLAY_NUDGE_KEY = 'webos.pipelineGuard.displayNudge';
+
+// The geometry change that sends the <video>'s place to its pipeline again (4 above).
+const DISPLAY_NUDGE_PX = 2;
+const DISPLAY_NUDGE_MS = 250;
 
 // A load waiting for another video's release checks again this often.
 const WAIT_STEP_MS = 50;
@@ -112,7 +124,7 @@ const UNLOAD = Object.freeze({ type: 'command', commandName: 'unload' });
 // deps (all optional): log (console-like), now, setTimeout, clearTimeout, document (visibility),
 // shared (state shared by the guarded videos), releaseSettleMs, loadGapMs, startTimeoutMs,
 // dropExtraLoad (default true), watchdog (default true), holdInPlace (default true: holdVideosInPlace
-// holds this video's nodes).
+// holds this video's nodes), displayNudge (default true).
 const withPipelineGuard = (Video, deps) => {
     deps = deps || {};
     const log = deps.log || null;
@@ -126,6 +138,7 @@ const withPipelineGuard = (Video, deps) => {
     const dropExtraLoad = deps.dropExtraLoad !== false;
     const useWatchdog = deps.watchdog !== false;
     const holdInPlace = deps.holdInPlace !== false;
+    const displayNudge = deps.displayNudge !== false;
     const doc = deps.document || (typeof document !== 'undefined' ? document : null);
     // Every guarded video of the page: releases in progress, when they are due, and when the last
     // pipeline was released.
@@ -161,6 +174,9 @@ const withPipelineGuard = (Video, deps) => {
         let starting = false;
         let watchdog = null;
         let droppedLoads = 0;
+        // A load whose first `playing` still has to send the element's place to the pipeline.
+        let nudgePending = false;
+        let nudgeTimer = null;
 
         const info = (message) => {
             if (log) log.info('[webos] player: ' + message);
@@ -253,6 +269,17 @@ const withPipelineGuard = (Video, deps) => {
         const onPlay = () => {
             quietSince = null;
         };
+        const onPlaying = () => {
+            onPlay();
+            if (!nudgePending) return;
+            nudgePending = false;
+            const width = videoElement.style.width;
+            videoElement.style.width = 'calc(' + (width || '100%') + ' - ' + DISPLAY_NUDGE_PX + 'px)';
+            nudgeTimer = schedule(() => {
+                nudgeTimer = null;
+                videoElement.style.width = width;
+            }, DISPLAY_NUDGE_MS);
+        };
         const onElementError = () => {
             starting = false;
             clearWatchdog();
@@ -262,7 +289,7 @@ const withPipelineGuard = (Video, deps) => {
             ['pause', onQuiet],
             ['ended', onQuiet],
             ['play', onPlay],
-            ['playing', onPlay],
+            ['playing', onPlaying],
             ['error', onElementError],
         ].concat(PROGRESS_EVENTS.map((eventName) => [eventName, onProgress]));
         if (videoElement) {
@@ -314,6 +341,8 @@ const withPipelineGuard = (Video, deps) => {
                     ELEMENT_LISTENERS.forEach(([eventName, listener]) => videoElement.removeEventListener(eventName, listener));
                 }
                 if (doc && useWatchdog) doc.removeEventListener('visibilitychange', onVisibility);
+                if (nudgeTimer !== null) cancel(nudgeTimer);
+                nudgeTimer = null;
             }
             if (action && action.type === 'setProp' && action.propName === 'selectedSubtitlesTrackId') subtitlesSelectedAt = now();
             video.dispatch(action);
@@ -328,6 +357,7 @@ const withPipelineGuard = (Video, deps) => {
                 starting = true;
                 droppedLoads = 0;
                 quietSince = null;
+                nudgePending = displayNudge;
                 armWatchdog();
             }
         }
@@ -374,6 +404,7 @@ const readGuardSettings = (storage) => ({
     watchdog: readKey(storage, WATCHDOG_KEY) !== 'off',
     quietRelease: readKey(storage, QUIET_RELEASE_KEY) !== 'off',
     holdInPlace: readKey(storage, HOLD_KEY) !== 'off',
+    displayNudge: readKey(storage, DISPLAY_NUDGE_KEY) !== 'off',
 });
 
 module.exports = {
@@ -385,6 +416,9 @@ module.exports = {
     WATCHDOG_KEY,
     QUIET_RELEASE_KEY,
     HOLD_KEY,
+    DISPLAY_NUDGE_KEY,
+    DISPLAY_NUDGE_PX,
+    DISPLAY_NUDGE_MS,
     LEAVE_DELAY_MS,
     SUBTITLE_SELECT_SETTLE_MS,
     RELEASE_SETTLE_MS,
