@@ -508,15 +508,19 @@ const subtitles = async () => {
     state = playerState();
     const variant = ((state.subtitlesMenu || { variants: [] }).variants.filter((entry) => entry.selected)[0]) || null;
     await key('BACK', 1200);
+    // A cue lasts 0.9 s every 2 s: the screenshots are taken while one is on screen.
     const overlay = [];
-    for (let i = 0; i < 5; i++) {
+    let shown = false;
+    for (let i = 0; i < 8; i++) {
         state = playerState();
-        overlay.push(state && state.overlay ? state.overlay.text : null);
-        if (i === 2) {
+        const text = state && state.overlay ? state.overlay.text : null;
+        overlay.push(text);
+        if (!shown && text) {
+            shown = true;
             shot('07-addon-subtitle');
             vmShot('07-addon-subtitle');
         }
-        await sleep(1000);
+        await sleep(shown ? 1000 : 300);
     }
     const enables = (json('JSON.stringify(window.__f51.luna.filter(function(c){ return c.method === "setSubtitleEnable"; }).map(function(c){ return c.parameters.enable; }))') || []);
     check('add-on subtitle chosen: drawn in the HTML overlay ("ADDON EN n"), pipeline subtitles off',
