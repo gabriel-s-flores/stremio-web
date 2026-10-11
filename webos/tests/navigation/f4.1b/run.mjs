@@ -217,17 +217,20 @@ const pressAll = async (sequence, label) => {
 const NAV_ORDER = ['Board', 'Discover', 'Library', 'Calendar', 'Addons', 'Settings'];
 
 // Opens a screen from the side bar: LEFT until the bar has the focus, UP/DOWN to the tab, OK.
+// Every key that leaves the bar on the way is counted (nav-bar-escapes).
 const openFromNavBar = async (label, expectedHash) => {
     let current = await state();
-    for (let attempt = 0; attempt < 8 && !current.inNavBar; attempt++) current = await press('LEFT', `nav:${label}`);
-    if (!current.inNavBar) {
-        check(`nav-bar-reached-for-${label}`, false, { note: current.focused });
-        return false;
-    }
-    for (let attempt = 0; attempt < 8 && current.title !== label; attempt++) {
+    let escapes = 0;
+    for (let attempt = 0; attempt < 16 && current.title !== label; attempt++) {
+        if (!current.inNavBar) {
+            current = await press('LEFT', `nav:${label}`);
+            continue;
+        }
         const index = NAV_ORDER.indexOf(current.title);
-        current = await press(index !== -1 && index > NAV_ORDER.indexOf(label) ? 'UP' : 'DOWN', `nav:${label}`);
+        current = await press(index > NAV_ORDER.indexOf(label) ? 'UP' : 'DOWN', `nav:${label}`);
+        if (!current.inNavBar) escapes++;
     }
+    check(`nav-bar-to-${label}-without-escapes`, escapes === 0, { note: `${escapes} keys left the bar` });
     if (current.title !== label) {
         check(`nav-tab-${label}`, false, { note: String(current.title) });
         return false;
@@ -308,10 +311,14 @@ const applyFixture = async () => {
 
 // The side bar from a screen of another task (Board): LEFT reaches it, RIGHT comes back.
 const navBarOnBoard = async () => {
-    // A poster of the Board first (its initial focus is F4.1a's): DOWN until one has the focus.
+    // A poster of the Board first (its initial focus is F4.1a's): into the bar, to the Discover tab
+    // (next to the first row) and RIGHT.
     let current = await state();
-    for (let attempt = 0; attempt < 6 && !/meta-item/.test(current.focused || ''); attempt++) current = await press('DOWN', 'board');
-    for (let attempt = 0; attempt < 2 && /meta-item/.test(current.focused || ''); attempt++) current = await press('RIGHT', 'board');
+    for (let attempt = 0; attempt < 12 && current.title !== 'Discover'; attempt++) {
+        current = await press(!current.inNavBar ? 'LEFT' : NAV_ORDER.indexOf(current.title) > 1 ? 'UP' : 'DOWN', 'board');
+    }
+    for (let attempt = 0; attempt < 3 && !/meta-item/.test(current.focused || ''); attempt++) current = await press('RIGHT', 'board');
+    current = await press('RIGHT', 'board');
     const content = current;
     check('board-poster-focused', /meta-item/.test(content.focused || ''), { note: `${content.focused} "${content.text}"` });
     // LEFT along the row (the first column is the last poster before the bar).
@@ -416,6 +423,10 @@ const guestScenario = async () => {
         check('settings-zoom-steps-reachable', ticks >= 1, { note: `${ticks} zoom steps focused` });
         check('settings-zoom-unchanged-by-arrows', rows.current.interfaceScale === '1.75', { note: `--interface-scale ${rows.current.interfaceScale}` });
         check('settings-end-reached', rows.current.listScroll > 0, { note: `scrollTop ${rows.current.listScroll}`, screenshot: await screenshot('settings-end') });
+        // The subtitle color buttons (#RRGGBBAA values, which Chromium 53 drops): their color shows.
+        const colors = await evaluate('return Array.prototype.map.call(document.querySelectorAll("[class*=color-input-container]"), function (b) { return { title: b.getAttribute("title"), background: getComputedStyle(b).backgroundColor }; });');
+        const white = colors.filter((color) => /^#FFFFFFFF$/i.test(color.title || ''))[0];
+        check('settings-subtitle-color-shown', white && /rgba?\(255, 255, 255/.test(white.background), { note: JSON.stringify(colors) });
         const offered = await evaluate('return Array.prototype.map.call(document.querySelectorAll("[class*=sections-container] [class*=ticks] button"), function (b) { return b.textContent; });');
         check('settings-zoom-steps-tv-only', JSON.stringify(offered) === JSON.stringify(['100%', '125%']), { note: JSON.stringify(offered) });
         const top = await walk('settings-rows-up', 'UP', 70, { stopWhen: (s) => s.inNavBar || /submit-button|search/.test(s.focused || '') || s.text === 'General' });

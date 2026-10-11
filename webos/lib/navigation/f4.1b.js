@@ -105,9 +105,10 @@ const NAV_BAR = 'vertical-nav-bar-container';
 const HORIZONTAL_NAV_BAR = 'horizontal-nav-bar-container';
 const PROFILE_BUTTON = 'nav-menu-popup-label';
 const PROFILE_MENU = 'nav-menu-container';
-// The profile menu renders a moment after OK, and its focus lock takes the focus off the button.
+// The profile menu renders a moment after OK (over a second in a busy emulator), and its focus
+// lock takes the focus off the button.
 const PROFILE_MENU_RETRY_MS = 100;
-const PROFILE_MENU_TIMEOUT_MS = 1000;
+const PROFILE_MENU_TIMEOUT_MS = 3000;
 
 // The hash router keeps the path in location.hash.
 const pathFromLocation = (location) => String(location.hash || '').replace(/^#/, '').split('?')[0];
@@ -140,6 +141,7 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
     // element outside the navigation bars.
     const lastContent = new WeakMap();
     let pendingInitial = null;
+    let pendingProfileMenu = null;
 
     const visibleRoute = () => {
         const routes = document.querySelectorAll('.routes-container > .route-container');
@@ -291,21 +293,30 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
     const focusProfileMenu = (route) => {
         const started = Date.now();
         const attempt = () => {
+            pendingProfileMenu = null;
             const menu = queryLocal(route, PROFILE_MENU)[0];
             const first = menu ? firstFocusable(menu) : null;
             if (first && !menu.contains(document.activeElement)) {
                 first.focus();
                 record('profile-menu', first);
             } else if (!first && Date.now() - started < PROFILE_MENU_TIMEOUT_MS) {
-                window.setTimeout(attempt, PROFILE_MENU_RETRY_MS);
+                pendingProfileMenu = window.setTimeout(attempt, PROFILE_MENU_RETRY_MS);
             }
         };
-        window.setTimeout(attempt, PROFILE_MENU_RETRY_MS);
+        pendingProfileMenu = window.setTimeout(attempt, PROFILE_MENU_RETRY_MS);
+    };
+
+    const cancelProfileMenu = () => {
+        if (pendingProfileMenu !== null) {
+            window.clearTimeout(pendingProfileMenu);
+            pendingProfileMenu = null;
+        }
     };
 
     const onKeyDown = (event) => {
         const dir = ARROWS[event.keyCode];
         if (pendingInitial !== null) cancelInitial();
+        cancelProfileMenu();
         if (event.keyCode === 13 && document.activeElement && closestLocal(document.activeElement, [PROFILE_BUTTON], null)) {
             const route = visibleRoute();
             if (route !== null) focusProfileMenu(route);
@@ -378,6 +389,7 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
         document.addEventListener('focusin', onFocusIn, true);
         return () => {
             cancelInitial();
+            cancelProfileMenu();
             if (pendingReveal !== null) window.clearTimeout(pendingReveal);
             window.removeEventListener('keydown', onKeyDown, true);
             window.removeEventListener('resize', onResize);
