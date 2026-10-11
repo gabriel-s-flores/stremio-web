@@ -4,7 +4,7 @@
 // findTopOverlay (webos/back/overlays.js): the catalogue the focus of the overlays reads. The DOM
 // mimics what the upstream components render (CSS modules: `<local>-<hash>`).
 
-const { findTopOverlay, OVERLAY_HINT } = require('../../back/overlays');
+const { findTopOverlay, isOverlayOpen, OVERLAY_HINT } = require('../../back/overlays');
 
 const render = (content, modals = '') => {
     document.body.innerHTML = `<div class="routes-container"><div class="route-container"><div class="route-content">${content}</div><div class="modals-container">${modals}</div></div></div>`;
@@ -55,6 +55,23 @@ describe('findTopOverlay', () => {
         expect(overlay.root).toBe(document.getElementById('lock'));
     });
 
+    test('the QR dialog of F3.4 owns the remote and wins over the overlay under it', () => {
+        render('', '<div class="modal-container modal-container-q1"></div>');
+        document.body.insertAdjacentHTML('beforeend', '<div role="dialog" aria-modal="true" id="qr"></div>');
+        const overlay = findTopOverlay(document);
+        expect(overlay).toMatchObject({ name: 'external-link-dialog', owner: true, trapsFocus: false });
+        expect(overlay.root).toBe(document.getElementById('qr'));
+    });
+
+    test('isOverlayOpen: true while it is found, false once it closed even if the root stays', () => {
+        render('<div class="multiselect-menu-m1" id="box"><div aria-haspopup="listbox" aria-expanded="true" id="label"></div></div>');
+        const overlay = findTopOverlay(document);
+        expect(isOverlayOpen(document, overlay)).toBe(true);
+        document.getElementById('label').setAttribute('aria-expanded', 'false');
+        expect(isOverlayOpen(document, overlay)).toBe(false);
+        expect(document.body.contains(overlay.root)).toBe(true);
+    });
+
     test('the topmost overlay wins: a popup over a modal', () => {
         render('', '<div class="modal-container modal-container-q1"><div class="active label-a1"><div class="menu-container-m1"></div></div></div>');
         expect(findTopOverlay(document).name).toBe('popup');
@@ -81,6 +98,8 @@ describe('OVERLAY_HINT', () => {
         ['Popup portal layer', '<div class="portal-layer-p1"><div class="menu-container-m1"></div></div>', ''],
         ['ActionMenu', '<div role="menu"></div>', ''],
         ['MultiselectMenu dropdown', '<div class="multiselect-menu-m1"><div aria-haspopup="listbox" aria-expanded="true"></div><div class="dropdown-d1"></div></div>', ''],
+        ['gamepad modal', '<div data-gamepad-modal><div class="backdrop-b1"></div></div>', ''],
+        ['external link dialog', '<div role="dialog" aria-modal="true"></div>', ''],
     ])('%s', (name, fixture, modals) => {
         expect(hints(fixture, modals)).toBe(true);
     });
@@ -92,6 +111,13 @@ describe('OVERLAY_HINT', () => {
         expect(document.body.firstChild.matches(OVERLAY_HINT)).toBe(true);
         document.body.innerHTML = '<div><div><h1 id="streaming-server-url-modal-title"></h1></div></div>';
         expect(document.body.firstChild.querySelector(OVERLAY_HINT)).not.toBeNull();
+    });
+
+    test('what mounts with a MultiselectMenu dropdown is the .dropdown-* element alone (aria-expanded is an attribute, not observed)', () => {
+        render('<div class="multiselect-menu-m1"><div aria-haspopup="listbox"></div></div>');
+        const dropdown = document.createElement('div');
+        dropdown.className = 'dropdown-d1 open-o1';
+        expect(dropdown.matches(OVERLAY_HINT)).toBe(true);
     });
 
     test('ordinary page content does not match', () => {

@@ -11,6 +11,10 @@
 //     RED GREEN YELLOW BLUE (diagnostics, F3.6) is a sequence: a YELLOW right after GREEN is part of it;
 //   - holding the pointer button (left, ~0.6 s, without moving) on an item: the Magic Remote.
 //     The release that follows does not click (only when a menu handled the press).
+// Never over a slider (seek bar, volume): the upstream Slider ends its drag on any `mouseup` on window,
+// whatever the button, so the synthetic right click would drop the thumb of a held press (measured:
+// a seek bar held 0.9 s and then dragged stayed at the press point). A press that starts on a slider,
+// or lands while a slider is being dragged (`active-slider-within` on <html>), is left alone.
 // "Handled" is the `contextmenu` event coming back with defaultPrevented, which all the upstream
 // handlers do when they open a menu. In the Player, with nothing under the trigger that handles it,
 // the event goes to the video: its ContextMenu (stream options) opens.
@@ -21,6 +25,9 @@ const DIAGNOSTICS_GAP_MS = 2500;
 const LONG_PRESS_MS = 600;
 // Device pixels the pointer may drift while held (the pointer of the Magic Remote shakes a little).
 const MOVE_TOLERANCE_PX = 16;
+// CSS modules: `<local>-<hash>`, matched by prefix like webos/back/overlays.js does.
+const SLIDER = '[class^="slider-container-"], [class*=" slider-container-"]';
+const SLIDER_DRAGGED = /(^|\s)active-slider-within-/;
 
 const mouseInit = (win, button, x, y) => ({
     bubbles: true,
@@ -100,12 +107,18 @@ const installContextMenuTrigger = (win, { longPressMs = LONG_PRESS_MS, now = Dat
         if (!isTrusted(event) || event.button !== 0) {
             return;
         }
+        if (event.target && typeof event.target.closest === 'function' && event.target.closest(SLIDER)) {
+            return;
+        }
         press = { x: event.clientX, y: event.clientY };
         timer = timeout(() => {
             const { x, y } = press;
             cancel();
+            if (SLIDER_DRAGGED.test(String(doc.documentElement.className))) {
+                return;
+            }
             const target = doc.elementFromPoint(x, y);
-            if (target && sendRightClick(win, target, x, y)) {
+            if (target && !(typeof target.closest === 'function' && target.closest(SLIDER)) && sendRightClick(win, target, x, y)) {
                 swallowClick = true;
             }
         }, longPressMs);

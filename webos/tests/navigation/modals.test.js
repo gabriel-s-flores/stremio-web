@@ -145,6 +145,16 @@ describe('entering an overlay', () => {
         expect(document.activeElement).toBe(document.body);
     });
 
+    test('with the corner popup of the next video open, arrows and OK are not taken', async () => {
+        page('<div class="player-container-z1x2c"><div id="bar" tabindex="0"></div><div class="next-video-popup-container-q1 menu-layer-a1"><div class="dismiss-x" tabindex="0"></div></div></div>');
+        modalFocus.start();
+        await settle();
+        document.getElementById('bar').focus();
+        expect(press(40).defaultPrevented).toBe(false);
+        expect(press(13).defaultPrevented).toBe(false);
+        expect(document.activeElement.id).toBe('bar');
+    });
+
     test('the search history dropdown leaves the focus on the field', async () => {
         page('<div class="search-bar-container-s1"><input id="search"><div class="menu-container-m1"><div tabindex="0" id="entry"></div></div></div>');
         modalFocus.start();
@@ -196,6 +206,69 @@ describe('inside an overlay', () => {
         expect(document.activeElement.id).toBe('item-1');
         label.remove();
         await settle();
+        expect(document.activeElement.id).toBe('ok');
+    });
+});
+
+describe('an overlay that stays in the DOM when it closes', () => {
+    test('a MultiselectMenu without portal gives the focus back to its label after an option is chosen', async () => {
+        page('<div class="multiselect-menu-m1" id="box"><div id="label" tabindex="0" aria-haspopup="listbox" aria-expanded="false"></div></div>');
+        modalFocus.start();
+        await settle();
+        const label = document.getElementById('label');
+        label.focus();
+        label.setAttribute('aria-expanded', 'true');
+        const dropdown = document.createElement('div');
+        dropdown.className = 'dropdown-d1 open-o1';
+        dropdown.innerHTML = '<div id="option-1" tabindex="0" class="option-o1 selected"></div><div id="option-2" tabindex="0"></div>';
+        document.getElementById('box').appendChild(dropdown);
+        await settle();
+        // The label is inside the root and has the focus: it stays; an arrow moves to an option.
+        expect(document.activeElement.id).toBe('label');
+        document.getElementById('option-1').focus();
+        // OK on an option: the dropdown unmounts, the label and the container stay.
+        label.setAttribute('aria-expanded', 'false');
+        dropdown.remove();
+        await settle();
+        expect(modalFocus.current).toBeNull();
+        expect(document.activeElement.id).toBe('label');
+    });
+});
+
+describe('an overlay that owns the remote (the QR dialog of F3.4)', () => {
+    const DIALOG = '<div role="dialog" aria-modal="true" id="qr"><button id="qr-close">Close</button></div>';
+
+    test('nothing is pulled back to the overlay under it, and its keys are not taken', async () => {
+        page();
+        await openModal();
+        document.getElementById('ok').focus();
+        const dialog = document.createElement('div');
+        dialog.innerHTML = DIALOG;
+        document.body.appendChild(dialog);
+        await settle();
+        document.getElementById('qr-close').focus();
+        expect(document.activeElement.id).toBe('qr-close');
+        expect(press(40).defaultPrevented).toBe(false);
+        expect(press(13).defaultPrevented).toBe(false);
+        document.getElementById('qr-close').blur();
+        document.getElementById('behind-b').focus();
+        expect(document.activeElement.id).toBe('behind-b');
+    });
+
+    test('when it closes the overlay under it holds the focus again', async () => {
+        page();
+        await openModal();
+        document.getElementById('ok').focus();
+        const dialog = document.createElement('div');
+        dialog.innerHTML = DIALOG;
+        document.body.appendChild(dialog);
+        await settle();
+        document.getElementById('qr-close').focus();
+        dialog.remove();
+        document.getElementById('ok').focus();
+        await settle();
+        expect(modalFocus.current).toBe(document.querySelector('.modal-container'));
+        document.getElementById('behind-a').focus();
         expect(document.activeElement.id).toBe('ok');
     });
 });

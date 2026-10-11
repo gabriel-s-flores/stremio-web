@@ -154,6 +154,33 @@ describe('holding the pointer button', () => {
         expect(target.dispatchEvent).not.toHaveBeenCalled();
     });
 
+    test('holding over a slider does not send a right click: it would end the drag', () => {
+        page('<div class="slider-container-s1" id="slider"><div class="thumb-t1" id="thumb"></div></div>');
+        const target = { dispatchEvent: jest.fn(() => false) };
+        document.elementFromPoint = () => target;
+        document.getElementById('thumb').dispatchEvent(trusted('mousedown', { clientX: 50, clientY: 60 }));
+        jest.advanceTimersByTime(LONG_PRESS_MS + 10);
+        expect(target.dispatchEvent).not.toHaveBeenCalled();
+    });
+
+    test('nor while a slider is being dragged, nor when the pointer ends up on one', () => {
+        page('<div id="item" tabindex="0"></div><div class="slider-container-s1" id="slider"></div>');
+        const target = { dispatchEvent: jest.fn(() => false) };
+        document.elementFromPoint = () => target;
+        const item = document.getElementById('item');
+        document.documentElement.className = 'active-slider-within-a1';
+        item.dispatchEvent(trusted('mousedown', { clientX: 50, clientY: 60 }));
+        jest.advanceTimersByTime(LONG_PRESS_MS + 10);
+        expect(target.dispatchEvent).not.toHaveBeenCalled();
+        document.documentElement.className = '';
+        const slider = document.getElementById('slider');
+        slider.dispatchEvent = jest.fn(() => false);
+        document.elementFromPoint = () => slider;
+        item.dispatchEvent(trusted('mousedown', { clientX: 50, clientY: 60 }));
+        jest.advanceTimersByTime(LONG_PRESS_MS + 10);
+        expect(slider.dispatchEvent).not.toHaveBeenCalled();
+    });
+
     test('untrusted presses and other buttons are ignored', () => {
         page('<div id="item" tabindex="0"></div>');
         const target = { dispatchEvent: jest.fn(() => false) };

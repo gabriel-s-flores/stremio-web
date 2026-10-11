@@ -33,7 +33,13 @@ componentes:
 4. **Ponteiro.** Depois de um evento de mouse confiável nada move o foco: clicar fora continua
    fechando popups do jeito do upstream. A primeira seta depois disso entra no overlay e é consumida.
 
-Exceções: o popup de "próximo vídeo" (canto da tela, aparece sozinho) e o dropdown de histórico da
+5. **Overlay que não fecha na hora (dropdown sem portal).** O `MultiselectMenu` sem portal só perde o
+   menu ao fechar: a raiz (rótulo + menu) continua no DOM. Um overlay conta como fechado quando deixa
+   de estar aberto (`isOverlayOpen`), não só quando sai do DOM, e o foco volta ao gatilho.
+
+Exceções: o diálogo do QR code da F3.4 (`ExternalLinkDialog`) é dono do controle (foco, teclas e Back
+próprios): enquanto aberto, a camada não faz nada, nem puxa o foco de volta ao overlay que estiver
+embaixo dele; ao fechar, o overlay de baixo reassume. O popup de "próximo vídeo" (canto da tela, aparece sozinho) e o dropdown de histórico da
 busca (o foco fica no campo enquanto se digita) não prendem o foco.
 
 Custo: um `MutationObserver` no `body` (só lista de filhos, sem atributos) que agenda uma checagem
@@ -60,7 +66,11 @@ dois controles tem botão direito e o long press do upstream ignora ponteiros do
   faz parte dela e não abre menu. Futuras teclas de cor do Player (F4.x/F5.x) precisam respeitar isso.
 - **Segurar o botão do ponteiro (~0,6 s, sem mexer mais de 16 px)** — Magic Remote. O clique da
   soltura é engolido, mas só quando um menu tratou o evento (`contextmenu` voltou com
-  `defaultPrevented`): segurar um botão comum continua clicando ao soltar.
+  `defaultPrevented`): segurar um botão comum continua clicando ao soltar. **Nunca sobre um slider**
+  (seek bar, volume): o `Slider` do upstream encerra o arrasto em qualquer `mouseup` na `window`, de
+  qualquer botão, então o clique direito sintético soltaria o arrasto de quem mira parado e depois arrasta.
+  Não dispara se o aperto começou num `slider-container`, se o ponteiro está sobre um quando o tempo
+  acaba, nem com um arrasto ativo (`active-slider-within` no `<html>`).
 
 ## Testes
 
@@ -71,7 +81,8 @@ dois controles tem botão direito e o long press do upstream ignora ponteiros do
   `menus`: popup do perfil, dropdown do Discover, modal de adicionar addon, dropdown do Settings e menu
   do episódio (amarelo): o foco entra, dez setas o mantêm dentro, o Back fecha e o foco volta.
   `player`: menu de contexto (amarelo) e menu de áudio no Player, com a reprodução a 1x.
-  `pointer`: long press do Magic Remote por `Input.dispatchMouseEvent`.
+  `pointer`: long press do Magic Remote por `Input.dispatchMouseEvent`. O `player` também segura o
+  ponteiro 0,9 s no seek bar e arrasta (o seek tem que chegar a ~40 %).
 
 ## Pendências
 

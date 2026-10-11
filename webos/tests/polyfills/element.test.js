@@ -5,11 +5,9 @@ class FakeNode {
     constructor(ownerDocument) {
         this.ownerDocument = ownerDocument;
         this.childNodes = [];
-    }
-    // jest-worker JSON-stringifies the operands of a failed expect, and ownerDocument closes a
-    // circle: without this the suite died with "Converting circular structure to JSON".
-    toJSON() {
-        return `<node ${this.nodeType}>`;
+        // See FakeElement in webos/tests/magic-remote: without an own toJSON a failing expect kills the
+        // worker with "Converting circular structure to JSON" (ownerDocument closes a circle).
+        Object.defineProperty(this, 'toJSON', { value: () => `<node ${this.nodeType}>` });
     }
     get firstChild() {
         return this.childNodes[0] || null;

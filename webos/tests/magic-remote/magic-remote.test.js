@@ -21,12 +21,12 @@ class FakeElement extends EventTarget {
         this.nodeType = 1;
         this.attributes = {};
         this.dispatched = [];
-    }
-    // A failing expect hands the element to jest-worker, which JSON-stringifies it to report the
-    // failure: parentNode and ownerDocument are circular, and the suite died with "Converting
-    // circular structure to JSON" instead of showing the assertion.
-    toJSON() {
-        return `<${this.name}>`;
+        // A failing expect hands the element to jest-worker, which JSON-stringifies it to report the
+        // failure; parentNode and ownerDocument are circular and the suite died with "Converting
+        // circular structure to JSON" instead of showing the assertion. It has to be an own
+        // property: jest-circus copies the operands with deepCyclicCopy, which drops the prototype
+        // (and the toJSON in it).
+        Object.defineProperty(this, 'toJSON', { value: () => `<${name}>` });
     }
     hasAttribute(name) {
         return name in this.attributes;

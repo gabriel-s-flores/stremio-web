@@ -158,8 +158,9 @@ describe('closeTopOverlay', () => {
         expect(of('keydown')).toEqual([]);
     });
 
-    test('the order: body modals, menus and popups come before route modals and the Player', () => {
+    test('the order: the QR dialog (F3.4), body modals, menus and popups come before route modals and the Player', () => {
         expect(OVERLAYS.map(({ name }) => name)).toEqual([
+            'external-link-dialog',
             'streaming-server-url-modal',
             'shortcuts-modal',
             'gamepad-modal',

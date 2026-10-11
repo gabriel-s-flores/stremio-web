@@ -143,7 +143,11 @@ const boot = async () => {
             // system apps may refuse to close
         }
     });
+    // Bringing the app to the front again may restart the page, a few seconds later: mark this page and
+    // wait for the mark to go away (or for 25 s, when no restart comes) before looking at the Board.
+    evaluate('window.__f43Marker = true; return true;');
     run('webos/scripts/ares.sh', ['launch'], { env: APP_ENV });
+    await waitFor('return !window.__f43Marker;', 25000, 1000);
     const focusMs = await waitFor('return document.hasFocus();', 20000);
     // Bringing the app to the front again may restart the page: wait for the Board once more.
     await sleep(3000);
@@ -253,6 +257,15 @@ const menusScenario = async () => {
     if (await goTo('discover', 'a[href="#/discover"]', 'return location.hash.indexOf("#/discover") === 0 && document.querySelectorAll(\'[aria-haspopup="listbox"]\').length > 0;')) {
         const dropdown = 'document.querySelector(\'[aria-haspopup="listbox"]\')';
         await overlayLife('discover-dropdown', async () => click(dropdown), { focus: dropdown });
+        // OK on an option of a dropdown without portal: the focus must not fall on the body.
+        evaluate(`var element = ${dropdown}; element.focus(); element.click(); return true;`);
+        await sleep(1500);
+        remote('DOWN');
+        await sleep(600);
+        remote('OK');
+        await sleep(2500);
+        const chosen = state();
+        record('discover-dropdown-ok-keeps-focus', { ok: chosen.overlay === null && chosen.focused !== 'body' && chosen.focused !== null, note: `after OK on an option: focus ${chosen.focused}`, state: chosen, screenshot: shot('discover-dropdown-ok') });
         remote('BACK');
         await sleep(1500);
     }
@@ -295,6 +308,34 @@ const menusScenario = async () => {
     }
 };
 
+// ----- pointer (Magic Remote long press) -----
+const mouse = async (events) => {
+    const targets = await (await fetch(`http://127.0.0.1:${CDP_PORT}/json`)).json();
+    const target = targets.find((entry) => (entry.url + entry.title).indexOf(APP_ID) !== -1);
+    const socket = new WebSocket(target.webSocketDebuggerUrl);
+    await new Promise((resolve, reject) => {
+        socket.onopen = resolve;
+        socket.onerror = reject;
+    });
+    let id = 0;
+    const send = (method, params) => new Promise((resolve) => {
+        const mine = ++id;
+        const onMessage = (message) => {
+            if (JSON.parse(message.data).id === mine) {
+                socket.removeEventListener('message', onMessage);
+                resolve();
+            }
+        };
+        socket.addEventListener('message', onMessage);
+        socket.send(JSON.stringify({ id: mine, method, params }));
+    });
+    for (const event of events) {
+        if (event.wait) await sleep(event.wait);
+        else await send('Input.dispatchMouseEvent', { button: 'left', clickCount: 1, ...event });
+    }
+    socket.close();
+};
+
 // ----- player -----
 const MEDIA_FILE = process.env.MEDIA_FILE || path.join(process.env.HOME, 'webos-tv-sdk', 'run', 'f16-media', 'longo_h264_aac.mp4');
 const videoState = () => evaluate(`
@@ -334,6 +375,31 @@ const playerScenario = async () => {
         record('P01-player-playing', { ok: playingMs !== null, data: videoState(), screenshot: shot('P01-player') });
         if (playingMs === null) return;
 
+        // Magic Remote: hold the pointer still on the seek bar for 0.9 s, then drag. The long press must not
+        // send a right click there (its mouseup would end the Slider's drag): the drag goes on and seeks.
+        const seek = () => evaluate(`var s = document.querySelector('[class*="seek-bar-container"] [class*="slider-container"]') || document.querySelector('[class*="slider-container"]');
+            if (!s) return null; var r = s.getBoundingClientRect(); return { x0: Math.round(r.left), x1: Math.round(r.right), y: Math.round((r.top + r.bottom) / 2) };`);
+        await mouse([{ type: 'mouseMoved', x: 600, y: 500, button: 'none' }, { wait: 800 }]);
+        const bar = seek();
+        record('P01b-seek-bar', { ok: !!bar, note: JSON.stringify(bar) });
+        if (bar) {
+            const at = (p) => Math.round(bar.x0 + (bar.x1 - bar.x0) * p);
+            await mouse([
+                { type: 'mouseMoved', x: at(0.2), y: bar.y, button: 'none' }, { type: 'mousePressed', x: at(0.2), y: bar.y }, { wait: 900 },
+                { type: 'mouseMoved', x: at(0.3), y: bar.y }, { wait: 100 }, { type: 'mouseMoved', x: at(0.4), y: bar.y }, { wait: 100 },
+            ]);
+            const during = evaluate('return { active: document.documentElement.className.indexOf("active-slider-within") !== -1, menus: document.querySelectorAll(\'body > [class*="context-menu-container"]\').length };');
+            await mouse([{ type: 'mouseReleased', x: at(0.4), y: bar.y }]);
+            await sleep(2500);
+            const seeked = evaluate('var v = document.querySelector("video"); return { t: Math.round(v.currentTime * 10) / 10, d: Math.round(v.duration * 10) / 10 };');
+            record('P01c-hold-then-drag-on-slider', {
+                ok: during.active && during.menus === 0 && Math.abs(seeked.t - seeked.d * 0.4) < seeked.d * 0.1,
+                note: `during the drag: slider active ${during.active}, context menus ${during.menus}; t=${seeked.t}/${seeked.d} (expected ~${Math.round(seeked.d * 0.4)})`,
+                data: { during, seeked },
+                screenshot: shot('P01c-hold-then-drag'),
+            });
+        }
+
         // Context menu of the Player with the remote: YELLOW (nothing is focused, the video takes it).
         await overlayLife('player-context-menu', async () => {
             remote('YELLOW');
@@ -367,34 +433,6 @@ const playerScenario = async () => {
     } finally {
         server.kill();
     }
-};
-
-// ----- pointer (Magic Remote long press) -----
-const mouse = async (events) => {
-    const targets = await (await fetch(`http://127.0.0.1:${CDP_PORT}/json`)).json();
-    const target = targets.find((entry) => (entry.url + entry.title).indexOf(APP_ID) !== -1);
-    const socket = new WebSocket(target.webSocketDebuggerUrl);
-    await new Promise((resolve, reject) => {
-        socket.onopen = resolve;
-        socket.onerror = reject;
-    });
-    let id = 0;
-    const send = (method, params) => new Promise((resolve) => {
-        const mine = ++id;
-        const onMessage = (message) => {
-            if (JSON.parse(message.data).id === mine) {
-                socket.removeEventListener('message', onMessage);
-                resolve();
-            }
-        };
-        socket.addEventListener('message', onMessage);
-        socket.send(JSON.stringify({ id: mine, method, params }));
-    });
-    for (const event of events) {
-        if (event.wait) await sleep(event.wait);
-        else await send('Input.dispatchMouseEvent', { button: 'left', clickCount: 1, ...event });
-    }
-    socket.close();
 };
 
 const pointerScenario = async () => {

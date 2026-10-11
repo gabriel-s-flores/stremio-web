@@ -120,6 +120,17 @@ const getPopupTrigger = (element) => {
 // Ordered from the top of the screen down: the first one found is the one closed.
 const OVERLAYS = [
     {
+        // webos/external-links ExternalLinkDialog (F3.4): the QR code of an external link. It owns the
+        // remote while it is up (its own focus, keys and Back handler, which runs before this layer),
+        // so the focus layer leaves everything alone, including the overlay it may sit on.
+        // Closing it is a click on its backdrop, which is the dialog element itself.
+        name: 'external-link-dialog',
+        owner: true,
+        trapsFocus: false,
+        find: (doc) => find(doc, '[role="dialog"][aria-modal="true"]'),
+        close: (win, doc, element) => element.click(),
+    },
+    {
         // src/App/StreamingServerUrlModal: listens for Escape on window.
         name: 'streaming-server-url-modal',
         find: (doc) => doc.getElementById('streaming-server-url-modal-title'),
@@ -208,13 +219,13 @@ const OVERLAY_HINT = [
     '[data-gamepad-modal]',
     classPrefix('context-menu-container'),
     '[role="menu"]',
+    '[role="dialog"][aria-modal="true"]',
     POPUP_SELECTORS,
     // MultiselectMenu without portal: the label only gets aria-expanded, the dropdown is what mounts.
     classPrefix('dropdown'),
     '.modals-container > .modal-container',
     classPrefix('menu-layer'),
     classPrefix('side-drawer-layer'),
-    classPrefix('next-video-popup-container'),
 ].join(', ');
 
 // The topmost open overlay: { name, element, root, trapsFocus, close }, or null. `element` is what
@@ -228,11 +239,19 @@ const findTopOverlay = (doc) => {
                 element,
                 root: (overlay.root && overlay.root(doc, element)) || element,
                 trapsFocus: overlay.trapsFocus !== false,
+                owner: overlay.owner === true,
                 close: overlay.close,
             };
         }
     }
     return null;
+};
+
+// Whether an overlay found earlier by findTopOverlay is still open (it may stay in the DOM when it
+// closes: the dropdown of a MultiselectMenu without portal only drops its menu).
+const isOverlayOpen = (doc, overlay) => {
+    const entry = OVERLAYS.find((candidate) => candidate.name === overlay.name);
+    return !!entry && entry.find(doc) === overlay.element;
 };
 
 // Closes the topmost open overlay; returns its name, or null when none is open.
@@ -258,5 +277,6 @@ module.exports = {
     closeTopOverlay,
     findPageBackButton,
     findTopOverlay,
+    isOverlayOpen,
     getActiveRoute,
 };

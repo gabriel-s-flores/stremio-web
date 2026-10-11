@@ -24,7 +24,7 @@
 // c8 profile, measured: running it after every burst of the Board load added 1.2 s to the boot).
 // The key handlers use the overlay found by the last check, they never search.
 
-const { findTopOverlay, OVERLAY_HINT } = require('../../back/overlays');
+const { findTopOverlay, isOverlayOpen, OVERLAY_HINT } = require('../../back/overlays');
 
 const DIRECTIONS = { 37: 'left', 38: 'up', 39: 'right', 40: 'down' };
 const ARROW_KEYS = Object.keys(DIRECTIONS).map(Number);
@@ -74,6 +74,8 @@ const createModalFocus = (win, {
     const records = new Map();
     let current = null;
     let currentOverlay = null;
+    // An overlay that owns the remote is up (the QR dialog of F3.4): nothing here acts meanwhile.
+    let ownerOpen = false;
     let lastInput = 'key';
     let lastPointerTime = -Infinity;
     let checkTimer = null;
@@ -94,8 +96,13 @@ const createModalFocus = (win, {
     const isInside = (root, element) => !!element && root.contains(element);
     const isLost = (element) => !element || element === doc.body || element === doc.documentElement || !doc.body.contains(element);
 
+    // The overlay to hold the focus: null when there is none, or the topmost one does not want it
+    // (corner popup, search history). An owner is returned as it is, for the caller to step aside.
     const searchTopOverlay = () => {
         const overlay = findTopOverlay(doc);
+        if (overlay !== null && overlay.owner) {
+            return overlay;
+        }
         return overlay === null || !overlay.trapsFocus || overlay.root.closest(PASSIVE_ROOT) ? null : overlay;
     };
 
@@ -133,7 +140,7 @@ const createModalFocus = (win, {
         // hidden): try again shortly.
         if ((target === null || !focusElement(target)) && attempt < ENTER_RETRIES) {
             retryTimer = timeout(() => {
-                if (current === root && !isInside(root, doc.activeElement)) enter(root, attempt + 1);
+                if (current === root && !ownerOpen && !isInside(root, doc.activeElement)) enter(root, attempt + 1);
             }, ENTER_RETRY_DELAY_MS);
         }
     };
@@ -155,6 +162,12 @@ const createModalFocus = (win, {
 
     const runCheck = () => {
         const overlay = searchTopOverlay();
+        ownerOpen = overlay !== null && overlay.owner;
+        if (ownerOpen) {
+            // Whatever is under it keeps its state: when it closes, the check finds it again.
+            trace('owner', overlay.name);
+            return;
+        }
         const top = overlay === null ? null : overlay.root;
         const previous = current;
         currentOverlay = overlay;
@@ -167,7 +180,9 @@ const createModalFocus = (win, {
         current = top;
         trace('overlay', top ? `${top.nodeName} ${String(top.className).slice(0, 40)}` : 'closed');
         records.forEach((record, root) => {
-            if (!doc.body.contains(root) && root !== top) {
+            // Closed: out of the DOM, or still there but no longer open (the dropdown of a
+            // MultiselectMenu without portal only drops its menu).
+            if (root !== top && (!doc.body.contains(root) || !isOverlayOpen(doc, record.overlay))) {
                 records.delete(root);
                 // The overlay that closed gives the focus back to what opened it, unless the page
                 // already moved it somewhere else.
@@ -185,8 +200,10 @@ const createModalFocus = (win, {
         if (!records.has(top)) {
             const active = doc.activeElement;
             const candidates = [active].concat(recentFocus.slice().reverse());
-            const origin = candidates.find((element) => !isLost(element) && !isInside(top, element)) || null;
-            records.set(top, { origin, lastInside: isInside(top, active) ? active : null });
+            // The opener of a MultiselectMenu dropdown sits inside the root (label and menu share a container):
+            // with nothing outside to go back to, the element that had the focus is the one.
+            const origin = candidates.find((element) => !isLost(element) && !isInside(top, element)) || (isLost(active) ? null : active);
+            records.set(top, { origin, lastInside: isInside(top, active) ? active : null, overlay: { name: overlay.name, element: overlay.element } });
         }
         if (lastInput === 'key' && !isInside(top, doc.activeElement)) {
             enter(top);
@@ -230,6 +247,9 @@ const createModalFocus = (win, {
     };
 
     const onFocusIn = (event) => {
+        if (ownerOpen) {
+            return;
+        }
         if (recentFocus[recentFocus.length - 1] !== event.target) {
             recentFocus.push(event.target);
             if (recentFocus.length > RECENT_FOCUS) recentFocus.shift();
@@ -252,6 +272,9 @@ const createModalFocus = (win, {
 
     const onKeyDown = (event) => {
         lastInput = 'key';
+        if (ownerOpen) {
+            return;
+        }
         const overlay = currentOverlay;
         const top = current;
         if (top !== null && isInside(top, doc.activeElement) && ARROW_KEYS.indexOf(event.keyCode) !== -1) {
