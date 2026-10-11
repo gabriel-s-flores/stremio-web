@@ -3,7 +3,7 @@
 // one) and of the <video> element, on a manual clock: when the pipeline is released, how many
 // pipelines a load creates, and the start watchdog.
 
-const { withPipelineGuard, RELEASE_SETTLE_MS, START_TIMEOUT_MS, SUBTITLE_SELECT_SETTLE_MS } = require('../withPipelineGuard');
+const { withPipelineGuard, keepVideosConnected, RELEASE_SETTLE_MS, START_TIMEOUT_MS, SUBTITLE_SELECT_SETTLE_MS } = require('../withPipelineGuard');
 
 const URL_A = 'http://10.0.2.2:8099/redirect/t1_h264_aac.mp4';
 const URL_B = 'http://10.0.2.2:8099/redirect/t6_h264_aac.mkv';
@@ -94,7 +94,7 @@ const createElement = () => {
 const createWebOsVideo = (clock, record) => {
     function FakeWebOsVideo(options) {
         const element = createElement();
-        options.containerElement.children.push(element);
+        options.containerElement.appendChild(element);
         const listeners = {};
         record.instances.push({ element, listeners });
         let destroyed = false;
@@ -121,7 +121,8 @@ const createWebOsVideo = (clock, record) => {
                 element.load();
                 if (action.commandName === 'destroy') {
                     destroyed = true;
-                    options.containerElement.children = options.containerElement.children.filter((child) => child !== element);
+                    if (element.parentNode !== options.containerElement) throw new Error('NotFoundError: not a child of the container');
+                    options.containerElement.removeChild(element);
                 }
             }
         };
@@ -131,11 +132,30 @@ const createWebOsVideo = (clock, record) => {
     return FakeWebOsVideo;
 };
 
-const createContainer = () => {
-    const container = { children: [] };
-    container.querySelectorAll = () => container.children.slice();
-    return container;
+// A node that holds children (the Player's container, the body, the holder).
+const createNode = () => {
+    const node = { children: [], attributes: {}, style: {} };
+    node.appendChild = (child) => {
+        if (child.parentNode) child.parentNode.removeChild(child);
+        node.children.push(child);
+        child.parentNode = node;
+        return child;
+    };
+    node.removeChild = (child) => {
+        node.children = node.children.filter((entry) => entry !== child);
+        child.parentNode = null;
+        return child;
+    };
+    node.setAttribute = (name, value) => {
+        node.attributes[name] = value;
+    };
+    node.hasAttribute = (name) => Object.prototype.hasOwnProperty.call(node.attributes, name);
+    node.querySelectorAll = (selector) => node.children.filter((child) => (selector === 'video' ? child.log !== undefined : false));
+    node.querySelector = () => node.children.filter((child) => child.hasAttribute && child.hasAttribute('data-webos-releasing-videos'))[0] || null;
+    return node;
 };
+const createContainer = createNode;
+const createDocument = () => ({ body: createNode(), createElement: () => createNode() });
 
 const load = (url) => ({ type: 'command', commandName: 'load', commandArgs: { stream: { url }, autoplay: true, time: 0 } });
 const UNLOAD = { type: 'command', commandName: 'unload' };
@@ -160,16 +180,17 @@ describe('withPipelineGuard', () => {
         }, options));
     };
     const create = () => {
-        const video = new Guarded({ containerElement: createContainer() });
-        return { video, element: record.instances[record.instances.length - 1].element };
+        const containerElement = createContainer();
+        const video = new Guarded({ containerElement });
+        return { video, element: record.instances[record.instances.length - 1].element, containerElement };
     };
     // A stream that started playing.
     const playing = (url) => {
-        const { video, element } = create();
-        video.dispatch(load(url));
+        const created = create();
+        created.video.dispatch(load(url));
         clock.advance(300);
-        element.started();
-        return { video, element };
+        created.element.started();
+        return created;
     };
 
     beforeEach(() => setup());
@@ -320,6 +341,40 @@ describe('withPipelineGuard', () => {
         clock.advance(SUBTITLE_SELECT_SETTLE_MS);
         expect(record.selectTracks).toEqual(['id:' + URL_A, 'id:' + URL_B]);
         expect(element.log).toEqual(['release', 'start ' + URL_A]);
+    });
+
+    it('the Player unmounts: the <video> stays in the document, paused, until the guard releases it', () => {
+        const doc = createDocument();
+        const { video, element, containerElement } = playing(URL_A);
+        element.log.length = 0;
+        // Layout effect cleanup, before React removes the container; then the destroy (passive effect).
+        expect(keepVideosConnected(containerElement, doc)).toBe(1);
+        const holder = doc.body.children[0];
+        expect(holder.style.display).toBe('none');
+        expect(element.parentNode).toBe(holder);
+        expect(element.log).toEqual(['pause']);
+        video.dispatch(DESTROY);
+        clock.advance(RELEASE_SETTLE_MS - 1);
+        expect(element.parentNode).toBe(holder);
+        expect(element.log).toEqual(['pause']);
+        clock.advance(1);
+        // Released while still in the document, then back in its container for WebOsVideo's destroy.
+        expect(element.log).toEqual(['pause', 'release', 'release']);
+        expect(record.actions).toContain('destroy');
+        expect(element.parentNode).toBeNull();
+        expect(holder.children).toEqual([]);
+    });
+
+    it('keepVideosConnected leaves alone what the guard does not hold: no pipeline, or another container', () => {
+        const doc = createDocument();
+        const idle = create();
+        expect(keepVideosConnected(idle.containerElement, doc)).toBe(0);
+        const other = createContainer();
+        other.appendChild(createElement());
+        other.children[0].attributes.src = URL_A;
+        expect(keepVideosConnected(other, doc)).toBe(0);
+        expect(keepVideosConnected(null, doc)).toBe(0);
+        expect(doc.body.children).toEqual([]);
     });
 
     it('reloads a stream that does not start, then reports STREAM_FAILED_TO_LOAD', () => {
