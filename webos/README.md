@@ -70,3 +70,10 @@ No emulador, dentro de uma reserva do pool:
   segue no `spatial-navigation-polyfill`. Testes: `webos/tests/navigation/f4.1a.test.js`,
   `f4.1a-screen.test.js` (o wrapper React) e, no emulador, `webos/tests/navigation/emulator/f4.1a.mjs`
   (dentro do `emu-run`).
+- `webos/lib/navigation/f4.1b.js`: navegação por controle remoto de Library, Calendar, Addons e Settings
+  e da barra lateral em todas as telas (F4.1b), sobre o `spatial-navigation-polyfill`: foco inicial e
+  restauração ao voltar, foco nunca perdido, listas que rolam com o foco (uma fileira por tecla) e
+  RIGHT da barra lateral de volta ao item de onde se saiu. A barra e o botão do perfil ficam focáveis
+  (`NavTabButton.webos.js`, `NavMenu.webos.js`), os toggles de Settings também (`Option.webos.tsx`) e o
+  "Interface zoom" fica em 100/125 % com os botões de porcentagem (`Scale.webos.tsx`). Testes:
+  `webos/tests/navigation/f4.1b.test.js` e, no emulador, `webos/tests/navigation/f4.1b/run.mjs`.
