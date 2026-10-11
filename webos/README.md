@@ -67,5 +67,6 @@ No emulador, dentro de uma reserva do pool:
   Foco inicial no primeiro item, foco restaurado no item de onde se saiu quando o Back traz a tela de
   volta, foco recuperado quando o elemento some, linhas do Board/Busca como faixas horizontais com os
   10 itens (`webos/styles/strips.less`) e grade do Discover rolando com o foco; o resto das setas
-  segue no `spatial-navigation-polyfill`. Testes: `webos/tests/navigation/f4.1a.test.js` e, no
-  emulador, `webos/tests/navigation/emulator/f4.1a.mjs` (dentro do `emu-run`).
+  segue no `spatial-navigation-polyfill`. Testes: `webos/tests/navigation/f4.1a.test.js`,
+  `f4.1a-screen.test.js` (o wrapper React) e, no emulador, `webos/tests/navigation/emulator/f4.1a.mjs`
+  (dentro do `emu-run`).
