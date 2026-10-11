@@ -8,7 +8,9 @@
 # `pnpm webos:package`:
 #   webos/tools/emu-run --timeout 15 -- webos/tests/debrid/emulator.sh <output-dir> <scenario>
 # Scenarios (SCENARIOS in evaluate.mjs): redirect-ok, redirect-403, expired-410, not-found-404,
-# rate-limited-429, server-error-503, network-drop, network-refused.
+# rate-limited-429, server-error-503, network-drop, network-refused (the TV has internet, the link
+# host does not answer), le-host (a Let's Encrypt host the Chromium 53 fetch() refuses, with
+# internet), offline-drop (navigator.onLine false: the TV has no internet).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 OUT="${1:?usage: emulator.sh <output-dir> <scenario>}"
@@ -38,6 +40,8 @@ case "$SCENARIO" in
     server-error-503)   URL="$BASE/status/503/$FILE" ;;
     network-drop)       URL="$BASE/drop/$FILE" ;;
     network-refused)    URL="http://10.0.2.2:$DEAD_PORT/$FILE" ;;
+    le-host)            URL="https://letsencrypt.org/robots.txt" ;;
+    offline-drop)       URL="$BASE/drop/$FILE" ;;
     *) echo "error: unknown scenario $SCENARIO" >&2; exit 1 ;;
 esac
 echo "$SCENARIO" > "$OUT/scenario.txt"
@@ -55,6 +59,9 @@ for _ in $(seq 1 90); do
 done
 [[ -n "$encoded" ]] || { echo "error: the core did not answer encodeStream" >&2; exit 1; }
 cdp_eval "$(cat "$ROOT/webos/tests/player/page.js")"
+if [[ "$SCENARIO" == offline-drop ]]; then
+    cdp_eval "(function(){ Object.defineProperty(navigator, 'onLine', { get: function() { return false; }, configurable: true }); return String(navigator.onLine); })()" > "$OUT/online.txt"
+fi
 cdp_eval "location.hash = '#/player/' + encodeURIComponent('$encoded')"
 start="$(date +%s)"
 

@@ -136,23 +136,42 @@ describe('diagnose', () => {
         expect(fetchImpl).toHaveBeenCalledTimes(1);
     });
 
-    it('says network when the request fails and the host cannot be reached either', async () => {
-        const fetchImpl = jest.fn(() => Promise.reject(new TypeError('Failed to fetch')));
+    // fetch() as the Chromium 53 behaves: the Range request to a host it rejects fails, and a HEAD in
+    // no-cors mode (no preflight, no body) resolves for the hosts that answer. `reach` lists them.
+    const hostsAnswering = (reach) => jest.fn((input, init) => {
+        const host = debridLink.hostOf(input);
+        if (init && init.method === 'HEAD' && init.mode === 'no-cors' && reach.indexOf(host) !== -1) {
+            return Promise.resolve({ type: 'opaque', status: 0 });
+        }
+        return Promise.reject(new TypeError('Failed to fetch'));
+    });
+    const CONTROL_HOST = debridLink.hostOf(debridLink.CONTROL_URL);
+
+    it('says network when neither the link host nor a control host the app uses answer', async () => {
+        const fetchImpl = hostsAnswering([]);
         const result = await diagnoser(fetchImpl).diagnose(stream, 83);
         expect(result).toMatchObject({ kind: 'network', source: 'request', host: 'resolver.example' });
-        // The second request is a HEAD in no-cors mode: no preflight, no body.
         expect(fetchImpl.mock.calls[1]).toEqual([URL, { method: 'HEAD', mode: 'no-cors', credentials: 'omit' }]);
+        expect(fetchImpl.mock.calls[2]).toEqual([debridLink.CONTROL_URL, { method: 'HEAD', mode: 'no-cors', credentials: 'omit' }]);
     });
 
-    it('says network when the host does not answer the HEAD in time', async () => {
+    it('is not the network when the link host fails but the control host answers (a certificate this TV refuses, or the server down)', async () => {
+        const result = await diagnoser(hostsAnswering([CONTROL_HOST])).diagnose(stream, 83);
+        expect(result.kind).toBe('host');
+        expect(debridLink.describe(result)).toMatchObject({ key: 'WEBOS_LINK_HOST', message: 'The TV could not connect to the server of this link.' });
+        expect(debridLink.describe(result).hint).toContain('certificate');
+        expect(debridLink.describe(result).hint).not.toContain('internet');
+    });
+
+    it('says network when the control host does not answer in time either', async () => {
         jest.useFakeTimers();
         try {
             const fetchImpl = jest.fn()
                 .mockReturnValueOnce(Promise.reject(new TypeError('Failed to fetch')))
+                .mockReturnValueOnce(Promise.reject(new TypeError('Failed to fetch')))
                 .mockReturnValueOnce(new Promise(() => null));
             const pending = diagnoser(fetchImpl, null, { timeout: 5000 }).diagnose(stream, 83);
-            await Promise.resolve();
-            await Promise.resolve();
+            for (let i = 0; i < 6; i++) await Promise.resolve();
             jest.advanceTimersByTime(5000);
             expect((await pending).kind).toBe('network');
         } finally {
@@ -161,10 +180,7 @@ describe('diagnose', () => {
     });
 
     it('does not blame the network when the host answers but fetch() cannot read it (no CORS)', async () => {
-        const fetchImpl = jest.fn()
-            .mockReturnValueOnce(Promise.reject(new TypeError('Failed to fetch')))
-            .mockReturnValueOnce(Promise.resolve({ type: 'opaque', status: 0 }));
-        const result = await diagnoser(fetchImpl).diagnose(stream, 83);
+        const result = await diagnoser(hostsAnswering(['resolver.example'])).diagnose(stream, 83);
         expect(result.kind).toBe('unknown');
         expect(debridLink.describe(result)).toBeNull();
     });
@@ -208,9 +224,59 @@ describe('diagnose', () => {
         ];
         results.forEach((result) => expect(JSON.stringify(result)).not.toContain(SECRET));
     });
+
+    it('keeps user:password@ of the URL out of the host', async () => {
+        const withUserinfo = { url: `https://user:${SECRET}@cdn.example:8443/f/file.mkv?token=${SECRET}` };
+        expect(debridLink.hostOf(withUserinfo.url)).toBe('cdn.example:8443');
+        const results = [
+            await diagnoser(() => answer(403, { url: withUserinfo.url })).diagnose(withUserinfo, 83),
+            await diagnoser(() => Promise.reject(new Error(withUserinfo.url))).diagnose(withUserinfo, 83),
+            await diagnoser(() => null, { status: 'failed', httpStatus: 404, finishedAt: 1 }, { now: () => 2 }).diagnose(withUserinfo, 83),
+        ];
+        results.forEach((result) => {
+            expect(JSON.stringify(result)).not.toContain(SECRET);
+            expect(JSON.stringify(result)).not.toContain('user:');
+        });
+    });
+
+    it('does not keep the answer of a probe: a later success of the probe is not shadowed (B2)', async () => {
+        const fetchImpl = jest.fn(() => answer(206));
+        let failure = { httpStatus: 429, at: 1000 };
+        const checker = diagnoser(fetchImpl, null, { now: () => 2000, getFailure: () => failure });
+        expect((await checker.diagnose(stream, 83)).kind).toBe('rate-limited');
+        failure = null; // the Player probed the same URL again and it passed
+        expect((await checker.diagnose(stream, 83)).kind).toBe('ok');
+        expect(fetchImpl).toHaveBeenCalledTimes(1);
+    });
+
+    it('forgets an earlier answer when the Player loads the link again (B2)', async () => {
+        const fetchImpl = jest.fn()
+            .mockReturnValueOnce(answer(503))
+            .mockReturnValueOnce(answer(206));
+        const created = debridLink.createDiagnoser({ fetch: fetchImpl, getQueue: () => ({ get: () => null }), getFailure: () => null });
+        expect((await created.diagnose(stream, 83)).kind).toBe('server-error');
+        created.forget(URL);
+        expect((await created.diagnose(stream, 83)).kind).toBe('ok');
+    });
 });
 
 describe('the last loaded stream', () => {
+    it('drops the answer kept for the URL when the Player loads it again (the module diagnoser)', async () => {
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = jest.fn()
+            .mockReturnValueOnce(answer(503))
+            .mockReturnValueOnce(answer(206));
+        try {
+            const own = { url: 'https://module.example/resolve/KEY2/file.mkv' };
+            expect((await debridLink.diagnose(own, 83)).kind).toBe('server-error');
+            expect((await debridLink.diagnose(own, 83)).kind).toBe('server-error');
+            debridLink.rememberStream(own);
+            expect((await debridLink.diagnose(own, 83)).kind).toBe('ok');
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
     it('is what the Player loaded last', () => {
         debridLink.rememberStream(stream);
         expect(debridLink.lastLoadedStream()).toBe(stream);

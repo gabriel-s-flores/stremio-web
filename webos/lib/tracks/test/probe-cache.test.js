@@ -38,6 +38,20 @@ describe('probe cache', () => {
         expect(cache.failureOf('u1')).toBeNull();
     });
 
+    it('does not keep the HTTP status of a probe that was cancelled (the Player left the stream)', async () => {
+        let reject = null;
+        const probe = jest.fn(() => new Promise((_resolve, fail) => {
+            reject = fail;
+        }));
+        const cache = createProbeCache({ probe });
+        const pending = cache.get('u1');
+        await flush();
+        cache.cancel('u1');
+        reject(Object.assign(new Error('HTTP 403'), { httpStatus: 403 }));
+        await expect(pending).rejects.toThrow('HTTP 403');
+        expect(cache.failureOf('u1')).toBeNull();
+    });
+
     it('does not start the probe synchronously (the load goes first)', () => {
         const probe = jest.fn(() => Promise.resolve({}));
         createProbeCache({ probe }).get('u1');

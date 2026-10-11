@@ -17,11 +17,16 @@ const SCENARIOS = {
     'redirect-403': { kind: 'expired', label: /expired or was refused \(HTTP 403\)/, hint: /open the stream list again/ },
     'expired-410': { kind: 'expired', label: /expired or was refused \(HTTP 410\)/, hint: /open the stream list again/ },
     'not-found-404': { kind: 'not-found', label: /no longer available at this link \(HTTP 404\)/, hint: /Pick another stream/ },
-    'rate-limited-429': { kind: 'rate-limited', label: /limiting requests right now \(HTTP 429\)/, hint: /Wait a moment/ },
-    'server-error-503': { kind: 'server-error', label: /having problems \(HTTP 503\)/, hint: /Try again in a while/ },
-    'network-drop': { kind: 'network', label: /Could not reach the server of this link/, hint: /internet connection/ },
+    'rate-limited-429': { kind: 'rate-limited', label: /limiting requests right now \(HTTP 429\)/, hint: /Wait a moment, then go back and open the stream again/ },
+    'server-error-503': { kind: 'server-error', label: /having problems \(HTTP 503\)/, hint: /Go back and open the stream again in a while/ },
+    // The TV has internet (the control host answers) and the link host does not: not "no internet".
+    'network-drop': { kind: 'host', label: /The TV could not connect to the server of this link/, hint: /certificate may not be accepted.*Pick another stream/ },
     // Nothing listens on the port: the check cannot show up in the media server log.
-    'network-refused': { kind: 'network', noServer: true, label: /Could not reach the server of this link/, hint: /internet connection/ },
+    'network-refused': { kind: 'host', noServer: true, label: /The TV could not connect to the server of this link/, hint: /certificate may not be accepted.*Pick another stream/ },
+    // Let's Encrypt host: the Chromium 53 fetch() refuses it while the TV has internet (review c1, M1).
+    'le-host': { kind: 'host', noServer: true, label: /The TV could not connect to the server of this link/, hint: /certificate may not be accepted.*Pick another stream/ },
+    // No internet: navigator.onLine is false.
+    'offline-drop': { kind: 'network', noServer: true, label: /Could not reach the server of this link/, hint: /Check the internet connection of the TV, then go back and open the stream again/ },
 };
 
 const checks = [];
@@ -40,6 +45,7 @@ if (scenario === 'redirect-ok') {
         check('the message is the clear one, not the upstream "not supported"', typeof last.label === 'string' && expected.label.test(last.label), last.label);
         check('the hint says what to do', typeof last.hint === 'string' && expected.hint.test(last.hint), last.hint);
         check('the check is logged with the kind and no URL', console_.some((c) => new RegExp(`link check ${expected.kind}`).test(c.text) && !/https?:/.test(c.text)), console_);
+        check('the message does not send the user to the internet connection when the TV has internet', expected.kind === 'network' || !/internet/i.test(`${last.label} ${last.hint}`), last);
         // The source of the answer: the Player's own probe already got the HTTP status (no new request
         // then), otherwise one 1-byte Range request went through the redirect to the failing host.
         const source = (console_.map((c) => /link check \S+ \S+ (\S+)/.exec(c.text)).filter(Boolean)[0] || [])[1];

@@ -16,6 +16,9 @@ const MEDIA_ERR_DECODE = 82;
 const REUSE_MS = 10 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 10000;
 const MAX_ENTRIES = 16;
+// A host the app itself talks to and whose certificate the Chromium 53 accepts (not Let's Encrypt):
+// when it answers, the TV has internet, so a link host that does not is the problem, not the network.
+const CONTROL_URL = 'https://v3-cinemeta.strem.io/manifest.json';
 
 // kind -> the message (i18n key, English text: the translations package has no key for these) and
 // the next step. `{{status}}` is the HTTP status.
@@ -42,13 +45,13 @@ const PROBLEMS = {
         key: 'WEBOS_LINK_RATE_LIMITED',
         message: 'The debrid service is limiting requests right now (HTTP {{status}}).',
         hintKey: 'WEBOS_LINK_RATE_LIMITED_HINT',
-        hint: 'Wait a moment and try again.',
+        hint: 'Wait a moment, then go back and open the stream again.',
     },
     'server-error': {
         key: 'WEBOS_LINK_SERVER_ERROR',
         message: 'The server of this link is having problems (HTTP {{status}}).',
         hintKey: 'WEBOS_LINK_SERVER_ERROR_HINT',
-        hint: 'Try again in a while, or pick another stream.',
+        hint: 'Go back and open the stream again in a while, or pick another stream.',
     },
     refused: {
         key: 'WEBOS_LINK_REFUSED',
@@ -60,13 +63,19 @@ const PROBLEMS = {
         key: 'WEBOS_LINK_NETWORK',
         message: 'Could not reach the server of this link.',
         hintKey: 'WEBOS_LINK_NETWORK_HINT',
-        hint: 'Check the internet connection of the TV and try again.',
+        hint: 'Check the internet connection of the TV, then go back and open the stream again.',
+    },
+    host: {
+        key: 'WEBOS_LINK_HOST',
+        message: 'The TV could not connect to the server of this link.',
+        hintKey: 'WEBOS_LINK_HOST_HINT',
+        hint: 'Its certificate may not be accepted by this TV, or the server is down. Pick another stream.',
     },
     timeout: {
         key: 'WEBOS_LINK_TIMEOUT',
         message: 'The server of this link took too long to answer.',
         hintKey: 'WEBOS_LINK_TIMEOUT_HINT',
-        hint: 'Try again in a while, or pick another stream.',
+        hint: 'Go back and open the stream again in a while, or pick another stream.',
     },
 };
 
@@ -165,7 +174,7 @@ const isReachable = (fetchImpl, url, timeout) => new Promise((resolve) => {
     }
 });
 
-// options.fetch, options.now, options.timeout; options.getQueue (the F6.2 list probe queue) and
+// options.fetch, options.now, options.timeout, options.controlUrl; options.getQueue (the F6.2 list probe queue) and
 // options.getFailure(url) (the Player's own probe, F5.4 probe-cache) are loaded on first use.
 const createDiagnoser = (options) => {
     const opts = options || {};
@@ -174,6 +183,7 @@ const createDiagnoser = (options) => {
     const getFetch = () => opts.fetch || (typeof fetch === 'function' ? (input, init) => fetch(input, init) : null);
     const getQueue = opts.getQueue || (() => require('../stream-ranking').getProbeQueue());
     const getFailure = opts.getFailure || ((url) => require('../tracks/probe-cache').probeCache.failureOf(url));
+    const controlUrl = opts.controlUrl || CONTROL_URL;
     const results = new Map();
 
     const remember = (url, diagnosis) => {
@@ -217,7 +227,8 @@ const createDiagnoser = (options) => {
         }
 
         const probed = fromProbe(url);
-        if (probed !== null) return Promise.resolve(remember(url, probed));
+        // Not kept in `results`: a later probe of the same URL can succeed (a 429 that passed).
+        if (probed !== null) return Promise.resolve(probed);
         const known = results.get(url);
         if (known && now() - known.at <= REUSE_MS) return Promise.resolve(known);
 
@@ -230,22 +241,30 @@ const createDiagnoser = (options) => {
             const failed = (kind) => ({ kind, status: null, source: 'request', redirected: null, host: hostOf(url), at: now() });
             if (failure.kind === 'timeout' || isOffline()) return failed(failure.kind);
             // Reachable but unreadable (no CORS): the status stays unknown, the Player message stands.
-            return isReachable(fetchImpl, url, timeout).then((reachable) => failed(reachable ? 'unknown' : 'network'));
+            return isReachable(fetchImpl, url, timeout).then((reachable) => {
+                if (reachable) return failed('unknown');
+                // fetch() also rejects a certificate this Chromium refuses (Let's Encrypt) while the
+                // <video> plays it: only a TV that reaches no host at all is "without internet".
+                return isReachable(fetchImpl, controlUrl, timeout).then((online) => failed(online ? 'host' : 'network'));
+            });
         });
     };
 
-    return { diagnose, clear: () => results.clear() };
+    return { diagnose, forget: (url) => results.delete(url), clear: () => results.clear() };
 };
 
 // The stream the Player loaded last: the error layer is rendered after the video unloaded, when the
 // Player state no longer has the stream.
 let lastStream = null;
+let diagnoser = null;
 const rememberStream = (stream) => {
     lastStream = stream !== undefined ? stream : null;
+    // A new load of the link starts from what the link answers now, not from an earlier diagnosis.
+    const url = urlOf(lastStream);
+    if (diagnoser !== null && url !== null) diagnoser.forget(url);
 };
 const lastLoadedStream = () => lastStream;
 
-let diagnoser = null;
 const diagnose = (stream, playerCode) => {
     if (diagnoser === null) diagnoser = createDiagnoser();
     return diagnoser.diagnose(stream, playerCode);
@@ -254,6 +273,7 @@ const diagnose = (stream, playerCode) => {
 module.exports = {
     PROBLEMS,
     REUSE_MS,
+    CONTROL_URL,
     kindOfStatus,
     describe,
     hostOf,
