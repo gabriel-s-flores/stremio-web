@@ -1,6 +1,7 @@
 // Header probe results by stream URL (F5.4): the Player probes a stream once per session, and the
 // hook reads the result synchronously (peek) to pick the initial audio track. A failed probe is
-// not kept, so the next load of the same URL tries again.
+// not kept, so the next load of the same URL tries again; only the HTTP status of a refused
+// request is (failureOf, F6.3), so the Player's error layer can say "expired" without asking again.
 
 const { probe: probeHeader, createFetchReadRange, ProbeError } = require('../header-probe');
 
@@ -22,6 +23,7 @@ const createProbeCache = (options) => {
     const probe = opts.probe || probeCancellable;
     const maxEntries = opts.maxEntries || MAX_ENTRIES;
     const entries = new Map();
+    const failures = new Map();
 
     const get = (url) => {
         const entry = entries.get(url);
@@ -34,9 +36,15 @@ const createProbeCache = (options) => {
         const created = { result: null, promise: null, cancelled: false };
         created.promise = Promise.resolve().then(() => probe(url, () => created.cancelled)).then((result) => {
             created.result = result;
+            failures.delete(url);
             return result;
         }, (error) => {
             if (entries.get(url) === created) entries.delete(url);
+            if (error && typeof error.httpStatus === 'number' && !created.cancelled) {
+                failures.delete(url);
+                failures.set(url, { httpStatus: error.httpStatus, at: Date.now() });
+                while (failures.size > maxEntries) failures.delete(failures.keys().next().value);
+            }
             throw error;
         });
         entries.set(url, created);
@@ -58,7 +66,10 @@ const createProbeCache = (options) => {
         }
     };
 
-    return { get, peek, cancel, clear: () => entries.clear() };
+    // { httpStatus, at } of the last HTTP failure (403, 404…) of the URL's probe, or null.
+    const failureOf = (url) => failures.get(url) || null;
+
+    return { get, peek, failureOf, cancel, clear: () => { entries.clear(); failures.clear(); } };
 };
 
 module.exports = {

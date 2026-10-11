@@ -48,7 +48,11 @@ const createProbeQueue = (options) => {
         }
         entry.status = status;
         if (status === 'done') entry.result = value;
-        else entry.error = value && value.code ? value.code : String(value && value.message || value);
+        else {
+            entry.error = value && value.code ? value.code : String(value && value.message || value);
+            // HTTP status of a refused request (403 expired link, 404…), for webos/lib/debrid-link.
+            if (value && typeof value.httpStatus === 'number') entry.httpStatus = value.httpStatus;
+        }
         entry.finishedAt = Date.now();
         trim();
         emit(url);
