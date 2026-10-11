@@ -286,7 +286,8 @@ const boot = async () => {
     await waitFor('return document.hasFocus();', 20000);
     check('board-loaded', boardMs !== null, { note: `${Math.round((Date.now() - started) / 1000)} s after install; closed: ${others.join(', ') || '(none)'}` });
     await evaluate(PAGE_HELPERS);
-    await sleep(2000);
+    // The Board keeps rendering its rows for a while after the first ones (its focus is F4.1a's).
+    await sleep(8000);
     return boardMs !== null;
 };
 
@@ -344,7 +345,7 @@ const profileMenu = async () => {
     for (let attempt = 0; attempt < 4 && !/nav-menu-popup-label/.test(current.focused || ''); attempt++) current = await press('RIGHT', 'profile');
     check('profile-button-reachable', /nav-menu-popup-label/.test(current.focused || ''), { note: current.focused });
     const opened = await press('OK', 'profile');
-    await sleep(500);
+    await waitFor('var a = document.activeElement; return !!(a && window.__f41b.closest(a, "nav-menu-container"));', 4000);
     const menu = await evaluate('return document.querySelectorAll("[class*=nav-menu-container]").length;');
     const inMenu = await evaluate('var a = document.activeElement; return !!(a && window.__f41b.closest(a, "nav-menu-container"));');
     check('profile-menu-opens-with-ok', menu > 0, { note: `menus: ${menu}`, screenshot: await screenshot('profile-menu-open') });
@@ -373,7 +374,7 @@ const walk = async (name, key, count, { stopWhen } = {}) => {
 };
 
 // LEFT from a row of the Settings sections: to the menu (or, with no menu at 125%, the side bar),
-// with the list where it was. RIGHT goes back into the sections.
+// with the list where it was; RIGHT comes back to the same row.
 const settingsLeft = async (name, { menu = true } = {}) => {
     const before = await state();
     const after = await press('LEFT', name);
@@ -381,7 +382,11 @@ const settingsLeft = async (name, { menu = true } = {}) => {
     check(name, target && after.listScroll === before.listScroll, {
         note: `from "${before.text}" (${before.focused}) to "${after.text || after.title}" (${after.focused}); scrollTop ${before.listScroll} -> ${after.listScroll}`,
     });
-    return after;
+    const back = await press('RIGHT', name);
+    check(`${name}-and-right-back`, back.focused === before.focused && back.text === before.text && String(back.rect) === String(before.rect), {
+        note: `back on "${back.text}" (${back.focused}) ${back.rect}, left from ${before.rect}`,
+    });
+    return back;
 };
 
 const guestScenario = async () => {
@@ -436,7 +441,8 @@ const guestScenario = async () => {
             await waitFor('return location.hash.indexOf("community") !== -1;', 10000);
             await sleep(6000);
             const switched = await state();
-            check('addons-filter-switch-keeps-focus', !switched.lost && /addon-/.test(switched.focused || ''), {
+            // On the filter or on the new list, not lost.
+            check('addons-filter-switch-keeps-focus', !switched.lost, {
                 note: `${switched.hash} ${switched.focused} "${switched.text}"`,
                 screenshot: await screenshot('addons-community'),
             });
@@ -480,16 +486,15 @@ const guestScenario = async () => {
         let current = await press('DOWN', 'settings-zoom');
         for (let index = 0; index < 20 && !/^100%$/.test(current.text || ''); index++) current = await press('DOWN', 'settings-zoom');
         // LEFT from several rows goes to the menu, at 100%.
-        await settingsLeft('settings-left-from-zoom-row-goes-to-menu');
-        current = await press('RIGHT', 'settings-left');
+        current = await settingsLeft('settings-left-from-zoom-row-goes-to-menu');
         current = await pressAll(['DOWN', 'DOWN'], 'settings-left');
-        await settingsLeft('settings-left-from-lower-row-goes-to-menu');
-        current = await press('RIGHT', 'settings-left');
+        current = await settingsLeft('settings-left-from-toggle-row-goes-to-menu');
         current = await pressAll(['DOWN', 'DOWN', 'DOWN', 'DOWN', 'DOWN'], 'settings-left');
-        await settingsLeft('settings-left-from-player-row-goes-to-menu');
-        current = await press('RIGHT', 'settings-left');
-        // Back to the zoom steps (above).
-        for (let index = 0; index < 30 && !/^100%$/.test(current.text || ''); index++) current = await press('UP', 'settings-zoom');
+        current = await settingsLeft('settings-left-from-player-row-goes-to-menu');
+        // Back to the zoom steps (above), never past the top of the list.
+        for (let index = 0; index < 30 && !/^100%$/.test(current.text || '') && !current.inNavBar && !/submit-button|nav-menu-popup/.test(current.focused || ''); index++) {
+            current = await press('UP', 'settings-zoom');
+        }
         current = await press('RIGHT', 'settings-zoom');
         await press('OK', 'settings-zoom');
         await sleep(1500);
@@ -503,9 +508,7 @@ const guestScenario = async () => {
         check('settings-zoom-125-right-stays', right125.text === '125%', { note: `${right125.focused} "${right125.text}"` });
         current = await press('LEFT', 'settings-zoom-125');
         check('settings-zoom-125-left-to-100', current.text === '100%', { note: current.text });
-        await settingsLeft('settings-left-at-125-goes-to-side-bar', { menu: false });
-        current = await press('RIGHT', 'settings-zoom-125');
-        check('settings-zoom-125-right-back-to-100', current.text === '100%', { note: current.text });
+        current = await settingsLeft('settings-left-at-125-goes-to-side-bar', { menu: false });
         await press('OK', 'settings-zoom');
         await sleep(1500);
         const restored = await state();

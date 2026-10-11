@@ -12,7 +12,8 @@
 //   among all items of the list, not only the visible ones, and the list scrolls just enough to show
 //   it with a margin. LEFT/RIGHT stay in the visible items of the same row; with none, they leave the
 //   list for the closest visible element outside it (Settings: LEFT to the selected menu entry),
-//   never for the bar at the top (RIGHT at the end of a row stays). The polyfill only sees visible items (the row above a scrolled grid is hidden, so it
+//   never for the bar at the top (RIGHT at the end of a row stays). RIGHT from the Settings menu goes
+//   back to the row it was entered from. The polyfill only sees visible items (the row above a scrolled grid is hidden, so it
 //   scrolled 40px per press) and scrolls every focused item to the top of the list
 //   (scrollIntoView() runs unconditionally in focusingController). With no item in that direction
 //   the list scrolls by most of its height, which also reaches non-focusable content (Settings'
@@ -105,8 +106,10 @@ const SCREENS = [
             ['sections-container'],
         ],
         lists: ['sections-container'],
-        // LEFT out of the sections: the entry of the section on screen.
+        // LEFT out of the sections: the entry of the section on screen; RIGHT from the menu: back to
+        // the row the user left (when it is still on screen).
         leftExit: (route) => queryLocal(route, 'menu').map((menu) => queryLocal(menu, 'selected')[0]).filter(Boolean)[0],
+        rightReturn: { from: 'menu', to: 'sections-container' },
     },
 ];
 
@@ -154,6 +157,8 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
     // Per route container (routes below the top one stay mounted, display: none): the last focused
     // element outside the navigation bars.
     const lastContent = new WeakMap();
+    // Per list of a screen: the last element focused in it.
+    const lastInList = new WeakMap();
     let pendingInitial = null;
     let pendingProfileMenu = null;
 
@@ -449,6 +454,18 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
 
         if (screen === null || isTextInput(active)) return;
         // Open dropdowns (role="listbox") are lists of their own: the language list of Settings.
+        // RIGHT from a menu next to a list (Settings): back to the row the user left.
+        if (dir === 'right' && screen.rightReturn && closestLocal(active, [screen.rightReturn.from], route)) {
+            const list = queryLocal(route, screen.rightReturn.to)[0];
+            const row = list ? lastInList.get(list) : null;
+            if (usable(row, route) && inViewport(row)) {
+                event.preventDefault();
+                row.focus();
+                record('menu-return', row);
+                return;
+            }
+        }
+
         // LEFT/RIGHT in an open dropdown are the polyfill's (F4.3).
         const listbox = active.closest ? active.closest('[role="listbox"]') : null;
         const screenList = closestLocal(active, screen.lists, route);
@@ -481,7 +498,11 @@ const createNavigation = ({ window, document = window.document, screens = SCREEN
         const target = event.target;
         if (!target || target.nodeType !== 1) return;
         const route = target.closest ? target.closest('.route-container') : null;
-        if (route && !inNavBars(target, route) && !inModal(target)) lastContent.set(route, target);
+        if (!route || inNavBars(target, route) || inModal(target)) return;
+        lastContent.set(route, target);
+        const screen = currentScreen();
+        const list = screen !== null && !target.closest('[role="listbox"]') ? closestLocal(target, screen.lists, route) : null;
+        if (list !== null) lastInList.set(list, target);
     };
 
     const install = () => {

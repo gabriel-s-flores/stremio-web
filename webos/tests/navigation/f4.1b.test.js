@@ -391,6 +391,17 @@ describe('Settings, two columns', () => {
         expect(list.scrollTop).toBe(600);
     });
 
+    test('RIGHT from the menu goes back to the row LEFT came from', () => {
+        const list = startSettings();
+        byText('toggle').focus();
+        key(LEFT);
+        expect(document.activeElement).toBe(byText('Interface'));
+        key(RIGHT);
+        expect(document.activeElement).toBe(byText('toggle'));
+        expect(navigation.status.last.reason).toBe('menu-return');
+        expect(list.scrollTop).toBe(600);
+    });
+
     test('LEFT/RIGHT between the zoom steps of the same row', () => {
         startSettings();
         byText('100%').focus();
