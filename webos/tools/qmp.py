@@ -33,8 +33,13 @@ if args[0] == 'screendump':
     out = os.path.abspath(args[1])
     tmp = out + '.ppm.tmp'
     r = call({"execute": "screendump", "arguments": {"filename": tmp, "format": "ppm"}})
-    if 'return' in r:
-        ppm_to_png(tmp, out); os.unlink(tmp)
+    try:
+        if 'return' in r:
+            ppm_to_png(tmp, out)
+    finally:
+        # Também com erro na conversão (ou no screendump): o .ppm.tmp tem ~6 MB.
+        if os.path.exists(tmp):
+            os.unlink(tmp)
     print(r)
 elif args[0] == 'key':
     print(call({"execute": "send-key", "arguments": {"keys": [{"type": "qcode", "data": k} for k in args[1:]]}}))

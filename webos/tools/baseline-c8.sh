@@ -22,7 +22,9 @@ trap 'kill ${HTTP:-} 2>/dev/null || true; rm -rf "$WORK"' EXIT
 qpid="$(for p in $(pgrep -x qemu-system-x86); do tr '\0' ' ' < /proc/$p/cmdline | grep -q -- "-name webos4-$EMU_INSTANCE " && echo "$p" && break; done)"
 boot_s="$(ps -o etimes= -p "$qpid" | tr -d ' ')"
 unit="$(sed 's#.*/##' /proc/$qpid/cgroup)"
-cpu_max="$(cat "/sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/app.slice/$unit/cpu.max" 2>/dev/null || echo n/a)"
+# Sem cota, o arquivo some ou diz "max 100000", conforme outro scope tenha ligado o controlador cpu em app.slice: os dois viram "max".
+cpu_max="$(cat "/sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/app.slice/$unit/cpu.max" 2>/dev/null || echo max)"
+[[ "$cpu_max" != "max "* ]] || cpu_max=max
 smp="$(tr '\0' ' ' < /proc/$qpid/cmdline | grep -o -- '-smp [0-9]*' | cut -d' ' -f2)"
 load_start="$(cut -d' ' -f1-3 /proc/loadavg)"
 # Referência no host (mesmo laço do benchmark da página, em Node, mínimo de 3): mostra a disputa por CPU.

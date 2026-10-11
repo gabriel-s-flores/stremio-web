@@ -99,7 +99,7 @@ case "$cmd" in
             *) die "perfil desconhecido: $profile (use c8)" ;;
         esac
         mem="${mem:-1024}" smp="${smp:-3}"
-        [[ -z "$quota" || "$quota" =~ ^[0-9]+$ ]] || die "--cpu-quota deve ser um inteiro (% de um núcleo do host)"
+        [[ -z "$quota" || "$quota" =~ ^[1-9][0-9]*$ ]] || die "--cpu-quota deve ser um inteiro maior que zero (% de um núcleo do host)"
         # Sem placa de som o pipeline de mídia do emulador reproduz normalmente; com AC97 e
         # backend "none" a reprodução trava em "stalled".
         case "$sound" in
@@ -180,6 +180,7 @@ case "$cmd" in
         qmp key "$@" >/dev/null
         ;;
     *)
-        sed -n '2,16p' "$0"; exit 1
+        # A ajuda é o cabeçalho de comentários inteiro, até o primeiro "set -", seja qual for o tamanho dele.
+        sed -n '2,/^set -/{/^set -/!p;}' "$0"; exit 1
         ;;
 esac
