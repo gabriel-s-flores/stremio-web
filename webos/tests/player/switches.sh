@@ -84,7 +84,8 @@ SAMPLER_PID=$!
 trap 'kill "$SERVER_PID" "$SAMPLER_PID" 2>/dev/null || true' EXIT
 
 cd "$ROOT"
-pnpm webos:install
+# IPK=<file>: install that package instead of dist-webos (a fixed build for a series of A/B runs).
+if [[ -n "${IPK:-}" ]]; then ares-install --device "$EMU_DEVICE" "$IPK"; else pnpm webos:install; fi
 pnpm webos:launch
 
 wait_core() {
