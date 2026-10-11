@@ -1,0 +1,68 @@
+// webOS TV 4.x build only (owner: F4.1a). A mixin: the catalog rows of the Board and of Search as
+// horizontal strips that scroll with the focus of the remote (webos/lib/navigation/board.js). Used
+// by src/routes/Board/styles.webos.less and src/routes/Search/styles.webos.less, which map
+// .meta-items-container and .meta-item to MetaRow's classes with :import (MetaRow's own style sheet
+// stays the upstream one, so the class names the routes import do not change).
+//
+// Upstream, a row shows as many of its 10 items as fit the screen width and hides the others
+// (.visible-items of src/components/MetaRow/styles.less): the remote could never reach them. Here
+// every item is shown, with the width the visible ones had, and the strip scrolls with the arrows.
+// The pointer of the Magic Remote does not scroll it (no scroll bar or wheel): it reaches what the
+// arrows brought into view, as upstream, where the other items were hidden.
+
+@import (reference) '~stremio/common/screen-sizes.less';
+
+// @rows/@landscape-rows: the selectors of the poster and landscape rows inside the list.
+.webos-strips(@rows, @landscape-rows) {
+    // offsetTop/offsetLeft of rows and items are measured against the list and the strip.
+    position: relative;
+
+    // MetaRow lets the strip overflow (visible): focus() then scrolled the whole list sideways.
+    // Hidden: only the navigation scrolls it (scrollLeft), with no scroll bar.
+    .meta-items-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    // Filler cells of a short row are empty and stay as upstream; placeholders too (they do not scroll).
+    @{rows}, @{landscape-rows} {
+        .meta-items-container {
+            .meta-item:not(:empty) {
+                display: block;
+                flex: none;
+                width: calc(100% / var(--webos-strip-items));
+            }
+
+            .meta-item.poster-shape-landscape:not(:empty) {
+                width: calc(100% / (var(--webos-strip-items) - 1));
+            }
+        }
+    }
+
+    // How many poster items a row showed at each width (landscape rows: one less).
+    --webos-strip-items: 10;
+
+    @media (max-width: @large) {
+        --webos-strip-items: 9;
+    }
+
+    @media (max-width: @normal) {
+        --webos-strip-items: 8;
+    }
+
+    @media (max-width: @medium) {
+        --webos-strip-items: 7;
+    }
+
+    @media (max-width: @small) {
+        --webos-strip-items: 6;
+    }
+
+    @media (max-width: @xsmall) {
+        --webos-strip-items: 5;
+    }
+
+    @media (max-width: @xxsmall) {
+        --webos-strip-items: 4;
+    }
+}

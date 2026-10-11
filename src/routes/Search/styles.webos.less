@@ -1,0 +1,19 @@
+// webOS TV 4.x build only (resolved instead of styles.less by webos/webpack/app.js): the upstream
+// styles, with the result rows as horizontal strips for the remote (F4.1a).
+
+@import './styles.less';
+@import (reference) '../../../webos/styles/strips.less';
+
+:import('~stremio/components/MetaRow/styles.less') {
+    meta-items-container: meta-items-container;
+    poster-shape-landscape: poster-shape-landscape;
+}
+
+// Not in the phone layout (640px wide or less), where upstream rows already scroll sideways.
+@media only screen and (min-width: (@minimum + 1)) {
+    .search-container {
+        .search-content {
+            .webos-strips(~".search-row-poster, .search-row-square", ~".search-row-landscape");
+        }
+    }
+}

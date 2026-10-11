@@ -62,3 +62,11 @@ No emulador, dentro de uma reserva do pool:
   teclado em vez de enviar; o Enter do teclado envia e o fecha mantendo o foco no campo. O que se mediu no
   emulador e pode diferir da TV está no README da pasta. `webos/polyfills/clipboard.js`: `navigator.clipboard`
   para as ações de copiar não lançarem no Chromium 53.
+- `webos/lib/navigation/` (F4.1a: `f4.1a.js`, `f4.1a-screen.js`, `board.js`, `discover.js`, `search.js`):
+  navegação pelo controle no Board, no Discover e na Busca, ligada pelos `index.webos.js` das rotas.
+  Foco inicial no primeiro item, foco restaurado no item de onde se saiu quando o Back traz a tela de
+  volta, foco recuperado quando o elemento some, linhas do Board/Busca como faixas horizontais com os
+  10 itens (`webos/styles/strips.less`) e grade do Discover rolando com o foco; o resto das setas
+  segue no `spatial-navigation-polyfill`. Testes: `webos/tests/navigation/f4.1a.test.js`,
+  `f4.1a-screen.test.js` (o wrapper React) e, no emulador, `webos/tests/navigation/emulator/f4.1a.mjs`
+  (dentro do `emu-run`).
