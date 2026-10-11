@@ -87,6 +87,15 @@ streams dele). Com o guarda de pipeline da F5.6, o episódio novo começava na p
 `time` do `<video>` segurado chegava ao core como posição do novo): corrigido no `useVideo.webos.js`
 (ver `webos/lib/player/README.md`, "O tempo do stream que sai").
 
+## Saída do Player e o foco
+
+No upstream o Player nunca pega o foco: ele fica no elemento que abriu o Player (o stream da página de
+detalhes, um pôster do Board) na rota de baixo, e as páginas restauram a partir dele quando o Player
+fecha (F4.1a, F4.1c). O controle leva o foco para a barra; sem cuidado, ao sair ele cairia no `<body>` e
+a página de detalhes voltava sem foco (achado no ciclo 1 com o teste `player` da F4.1c e o e2e da F6.4).
+Por isso o controlador guarda, ao montar, o elemento focado fora do Player, e ao desmontar devolve o foco
+a ele (com o anel, salvo com o ponteiro do Magic Remote em uso) se o foco ficou no Player ou no `<body>`.
+
 ## Magic Remote
 
 Os eventos de mouse continuam com o upstream: o ponteiro mostra a barra, clica nos botões e arrasta o
