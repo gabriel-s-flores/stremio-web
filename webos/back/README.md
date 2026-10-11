@@ -57,6 +57,11 @@ formato das classes (`localIdentName`). O `overlays.test.js` (jsdom) confere o q
 qual overlay fecha, a ordem, o filtro da rota visível e do `-exit`, o alvo de cada evento
 (`window` × `document` × elemento) e que nenhuma pressão fica aberta.
 
+O catálogo também diz onde mora o foco de cada overlay (`root`) e se ele prende o foco
+(`trapsFocus`); `findTopOverlay(doc)` devolve o de cima. O foco dos overlays (entrar, ficar preso,
+voltar ao fechar) é de `webos/lib/navigation/modals.js` e usa essa mesma lista (F4.3,
+`webos/lib/navigation/README.md`).
+
 ### Camada de rota (`routes.js`, `useRouteBack.js`, `BackNavigation.js`)
 
 Cada Back sai de **uma tela** (F3.2b). A camada (`useRouteBack.js`) guarda as entradas do histórico
@@ -161,5 +166,6 @@ diagnóstico (F3.6).
   `history.state.idx`, os eventos `popstate` e capturas de tela.
   - `navigation`: Board, diálogo, dropdown, popup, MetaDetails, modal, teclado do sistema; no fim sai
     pelo diálogo (direita + OK) e confere que o app fechou.
-  - `player`: um vídeo servido pelo `media-server.mjs`, os menus de velocidade e de contexto fechados
-    com Back, conferindo que a reprodução segue a 1x, e o Back que sai do Player.
+  - `player`: um vídeo servido pelo `media-server.mjs`, os menus de áudio e de contexto fechados com
+    Back, conferindo que a reprodução segue a 1x, e o Back que sai do Player. O menu de velocidade (tecla
+    `r`) saiu do roteiro: a F5.1 tirou a velocidade no webOS e o atalho não abre nada (F4.3).

@@ -8,8 +8,10 @@
 // Scenarios (one per emu-run: the emulator only plays the first media after a boot):
 // - navigation (default): Board, quit dialog, dropdown, popup, MetaDetails, modal, keyboard, quit;
 // - player: a video served from the host (webos/tools/media-server.mjs, $MEDIA_FILE, by default
-//   ~/webos-tv-sdk/run/f16-media/longo_h264_aac.mp4, 90 s), its speed menu and its context menu
-//   closed by Back with the playback rate checked, then Back out of the Player;
+//   ~/webos-tv-sdk/run/f16-media/longo_h264_aac.mp4, 90 s), its audio menu and its context menu
+//   closed by Back with the playback rate checked, then Back out of the Player. The speed menu
+//   (shortcut `r`) is not here: F5.1 removed the playback speed on webOS (useVideo.webos.js reports
+//   no speed control), so the shortcut opens nothing; the scenario checks that it stays closed;
 // - screens (F3.2b): each Back leaves exactly one screen. Board -> Discover -> MetaDetails -> Player
 //   (a stream of the local test addon, webos/tests/addon) and back to the Board; Board -> Search ->
 //   two queries -> a result -> MetaDetails and back; the diagnostics screen (RED GREEN YELLOW BLUE)
@@ -466,12 +468,19 @@ const playerScenario = async () => {
             return;
         }
 
-        // Speed menu (a Player menu layer), opened with its shortcut.
+        // The speed menu does not exist on webOS (F5.1): its shortcut opens nothing.
         evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { key: "r", bubbles: true })); return true;');
         await sleep(800);
+        const speedLayers = evaluate(`return document.querySelectorAll(window.__f32.sel('menu-layer')).length;`);
+        record('P02-speed-menu-stays-closed', { ok: speedLayers === 0, note: `menu layers: ${speedLayers}`, screenshot: screenshot('P02-speed-shortcut') });
+
+        // Audio menu (a Player menu layer), opened with its shortcut; the control bar is not
+        // reachable by arrows, and the menu is the one that has tracks to show here.
+        evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { key: "a", code: "KeyA", keyCode: 65, bubbles: true })); return true;');
+        await sleep(800);
         const menuLayers = evaluate(`return document.querySelectorAll(window.__f32.sel('menu-layer')).length;`);
-        record('P02-speed-menu-open', { ok: menuLayers > 0, note: `menu layers: ${menuLayers}`, screenshot: screenshot('P02-speed-menu') });
-        await back('P03-player-back-closes-speed-menu', (b, a) => ({
+        record('P02b-audio-menu-open', { ok: menuLayers > 0, note: `menu layers: ${menuLayers}`, screenshot: screenshot('P02b-audio-menu') });
+        await back('P03-player-back-closes-audio-menu', (b, a) => ({
             'consumed by overlay (player-menu)': a.lastDispatch && a.lastDispatch.detail === 'player-menu',
             'menu closed': evaluate(`return document.querySelectorAll(window.__f32.sel('menu-layer')).length;`) === 0,
             'still in Player': a.hash.indexOf('#/player') === 0,
@@ -479,7 +488,7 @@ const playerScenario = async () => {
         }), { settleMs: 1500 });
         await sleep(1000);
         const afterMenu = videoState();
-        record('P04-playback-after-speed-menu', { ok: afterMenu.rate === 1 && !afterMenu.paused, data: afterMenu });
+        record('P04-playback-after-audio-menu', { ok: afterMenu.rate === 1 && !afterMenu.paused, data: afterMenu });
 
         // Context menu of the Player (right click on the video; the remote has no right click,
         // but the bridge has to close it right when it is open).
