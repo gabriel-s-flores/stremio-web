@@ -51,6 +51,17 @@ sintéticas (marcadas, `keydown` com o `repeat` da tecla real e `keyup` na soltu
 perdido, evento perdido), o controlador solta a tecla sozinho depois de 1 s, senão o alvo ficaria na
 tela sem ser aplicado. No emulador o seek cai no keyframe anterior (PESQUISA §7).
 
+**Seek no perfil c8 do emulador** (`seek-probe`, arquivo 1080p do e2e da F6.4, GOP de 1 s). O alvo
+aplicado é sempre o pedido (+10 s por toque, ao keyframe anterior). O que reduz o "salto líquido"
+(`avanço − tempo decorrido`, a métrica do e2e) é: (1) **o `keydown` do segundo toque rápido não chega à
+página** em 6 de 7 rodadas (só o `keyup` dele chega, 100–500 ms depois do primeiro; com 1,7 s entre os
+toques os dois chegam): a tecla se perde antes de qualquer listener do app, no sistema do emulador com a
+CPU limitada, então um toque vale −10 s; (2) cada seek para a reprodução por ~3 s no c8
+(`seeking`→`seeked` 1,5–2,6 s e a retomada), tempo que a métrica conta como perda. Juntar toques num
+seek só não recupera um `keydown` perdido, e tratar `keyup` órfão como toque arriscaria ações dobradas:
+nada mudou no app. **Fase 8:** conferir na C8 se dois toques rápidos de → chegam ao app e quanto um seek
+para a reprodução (decodificação por hardware, link de debrid).
+
 **Volume.** ↑/↓ não mexem mais no volume do `<video>` (atalho `volume` do upstream): na TV o volume é
 o do sistema, nas teclas próprias do controle.
 
@@ -121,3 +132,6 @@ regras acima.
   arrasto do Magic Remote no seek bar, Back que esconde a barra e Back que sai. `next`: popup de
   próximo vídeo pelas setas, Back que o dispensa, botão "próximo" da barra, STOP. `watch`: OK em
   "assistir". `resume-*`: a posição salva pelo core sobrevive ao reboot e o episódio abre nela.
+  `context-menu`: as setas no menu de contexto (amarelo) não mudam volume nem tempo do vídeo atrás.
+  `seek-probe` (de preferência com `--profile c8` e `F57_MEDIA` apontando para o 1080p do e2e): teclas
+  que chegam à página, tempos aplicados ao `<video>` e paradas de seek.
