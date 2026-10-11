@@ -87,10 +87,10 @@ const setup = (options) => {
     const Video = withC8Tracks(Inner, { probeCache, log });
     const video = new Video({ containerElement });
     const events = [];
-    ['propValue', 'propChanged', 'audioTrackLoaded', 'ended', 'error'].forEach((name) => {
+    ['propValue', 'propChanged', 'audioTrackLoaded', 'subtitlesTrackLoaded', 'ended', 'error'].forEach((name) => {
         video.on(name, (...args) => events.push([name].concat(args)));
     });
-    ['audioTracks', 'selectedAudioTrackId', 'subtitlesTracks', 'time'].forEach((propName) => {
+    ['audioTracks', 'selectedAudioTrackId', 'subtitlesTracks', 'selectedSubtitlesTrackId', 'time'].forEach((propName) => {
         video.dispatch({ type: 'observeProp', propName });
     });
     const last = (propName) => events.filter((event) => event[0].startsWith('prop') && event[1] === propName).slice(-1)[0][2];
@@ -294,20 +294,81 @@ describe('withC8Tracks', () => {
         expect(() => t.video.dispatch({ type: 'command', commandName: 'unload' })).toThrow('Video is destroyed');
     });
 
-    it('choosing an embedded subtitle does not reach WebOsVideo (listed only until F5.5); null and add-on subtitles do', async () => {
+    const subtitleSetProps = (inner) => inner.actions
+        .filter((action) => action.type === 'setProp' && action.propName === 'selectedSubtitlesTrackId')
+        .map((action) => action.propValue);
+    const playWith = async (probe) => {
         t.load();
         t.play();
-        t.probe.resolve(kit);
+        t.probe.resolve(probe);
         await flush();
-        const subtitleSetProps = () => t.inner.actions.filter((action) => action.type === 'setProp' && action.propName === 'selectedSubtitlesTrackId').map((action) => action.propValue);
+    };
+
+    it('an embedded subtitle goes to WebOsVideo (Luna) and the selection is published, with subtitlesTrackLoaded', async () => {
+        await playWith(kit);
+        t.video.dispatch({ type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: 'EMBEDDED_1' });
+        expect(subtitleSetProps(t.inner)).toEqual(['EMBEDDED_1']);
+        expect(t.last('selectedSubtitlesTrackId')).toBe('EMBEDDED_1');
+        expect(t.last('subtitlesTracks').map((track) => [track.id, track.mode])).toEqual([['EMBEDDED_0', 'disabled'], ['EMBEDDED_1', 'showing']]);
+        const loaded = t.events.filter((event) => event[0] === 'subtitlesTrackLoaded');
+        expect(loaded.map((event) => [event[1].id, event[1].lang])).toEqual([['EMBEDDED_1', 'por']]);
+    });
+
+    it('the Luna index skips the bitmap subtitles before the track (the WebOsVideo numbering)', async () => {
+        const mixed = JSON.parse(JSON.stringify(kit));
+        const first = mixed.tracks.filter((track) => track.type === 'subtitle')[0];
+        first.codec = 'pgs';
+        first.subtitle = Object.assign({}, first.subtitle, { text: false });
+        await playWith(mixed);
+        expect(t.last('subtitlesTracks').map((track) => [track.id, track.lunaIndex])).toEqual([['EMBEDDED_1', 0]]);
+        t.video.dispatch({ type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: 'EMBEDDED_1' });
+        expect(subtitleSetProps(t.inner)).toEqual(['EMBEDDED_0']);
+        expect(t.last('selectedSubtitlesTrackId')).toBe('EMBEDDED_1');
+    });
+
+    it('null and add-on subtitles go to WebOsVideo (pipeline subtitles off) and the selection becomes null', async () => {
+        await playWith(kit);
         t.video.dispatch({ type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: 'EMBEDDED_0' });
-        expect(subtitleSetProps()).toEqual([]);
         t.video.dispatch({ type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: null });
+        expect(t.last('selectedSubtitlesTrackId')).toBeNull();
+        expect(t.last('subtitlesTracks').every((track) => track.mode === 'disabled')).toBe(true);
         t.video.dispatch({ type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: 'https://addon/sub.srt' });
-        expect(subtitleSetProps()).toEqual([null, 'https://addon/sub.srt']);
+        expect(subtitleSetProps(t.inner)).toEqual(['EMBEDDED_0', null, 'https://addon/sub.srt']);
+        expect(t.last('selectedSubtitlesTrackId')).toBeNull();
+        // the WebOsVideo value of the prop is not passed on (it would be the Luna index)
+        t.inner.emit('propChanged', 'selectedSubtitlesTrackId', 'EMBEDDED_0');
+        expect(t.last('selectedSubtitlesTrackId')).toBeNull();
         // other props still go through
         t.video.dispatch({ type: 'setProp', propName: 'subtitlesSize', propValue: 100 });
         expect(t.inner.actions.filter((action) => action.propName === 'subtitlesSize').length).toBe(1);
+    });
+
+    it('an embedded subtitle that is not listed (before the video plays) does not reach WebOsVideo', () => {
+        t.probeCache.peek.mockReturnValue(kit);
+        t.load();
+        t.video.dispatch({ type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: 'EMBEDDED_0' });
+        expect(subtitleSetProps(t.inner)).toEqual([]);
+        expect(t.last('selectedSubtitlesTrackId')).toBeNull();
+        expect(t.log.warn.mock.calls).toEqual([['[webos] subtitles: EMBEDDED_0 is not listed, not turned on']]);
+    });
+
+    it('a new load or an unload turns the selection off', async () => {
+        await playWith(kit);
+        t.video.dispatch({ type: 'setProp', propName: 'selectedSubtitlesTrackId', propValue: 'EMBEDDED_0' });
+        t.video.dispatch({ type: 'command', commandName: 'unload' });
+        expect(t.last('selectedSubtitlesTrackId')).toBeNull();
+        expect(t.last('subtitlesTracks')).toEqual([]);
+    });
+
+    it('the subtitle colors of the settings become the nearest pipeline colors', () => {
+        t.video.dispatch({ type: 'setProp', propName: 'subtitlesTextColor', propValue: '#F0E010FF' });
+        t.video.dispatch({ type: 'setProp', propName: 'subtitlesBackgroundColor', propValue: '#00000000' });
+        t.video.dispatch({ type: 'setProp', propName: 'subtitlesBackgroundColor', propValue: '#10101080' });
+        expect(t.inner.actions.filter((action) => /Color$/.test(action.propName)).map((action) => [action.propName, action.propValue])).toEqual([
+            ['subtitlesTextColor', '#FFFF00FF'],
+            ['subtitlesBackgroundColor', 'rgba(0, 0, 0, 0)'],
+            ['subtitlesBackgroundColor', '#000000FF'],
+        ]);
     });
 
     it('a probe still running is cancelled on unload, on destroy and on the next load; not once done', async () => {

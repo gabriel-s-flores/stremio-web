@@ -12,6 +12,7 @@ jest.mock('../../../../src/routes/Player/useVideo.js', () => {
     const upstream = {
         state: { playbackSpeed: 1, time: 5000, duration: 20000 },
         load: jest.fn(),
+        addExtraSubtitlesTracks: jest.fn(),
         setPlaybackSpeed: jest.fn(),
         setPaused: jest.fn(),
     };
@@ -19,6 +20,14 @@ jest.mock('../../../../src/routes/Player/useVideo.js', () => {
     useVideo.upstream = upstream;
     return useVideo;
 });
+
+// The tlsproxy of the page (F3.7): debrid-link.com is a known Let's Encrypt host.
+jest.mock('../../../../webos/tlsproxy/page', () => ({
+    __esModule: true,
+    default: {
+        proxify: (url) => (url.indexOf('https://debrid-link.com/') === 0 ? 'http://127.0.0.1:47443/proxy?t=x&url=' + encodeURIComponent(url) : url),
+    },
+}));
 
 // Same parts of the upstream render the override relies on: the speed button opens the menu
 // through onClick, and the seek bar label divides the remaining time by playbackSpeed.
@@ -54,6 +63,7 @@ const renderHook = (hook) => {
 describe('useVideo.webos', () => {
     beforeEach(() => {
         upstreamVideo.load.mockClear();
+        upstreamVideo.addExtraSubtitlesTracks.mockClear();
         upstreamVideo.setPlaybackSpeed.mockClear();
     });
 
@@ -77,8 +87,32 @@ describe('useVideo.webos', () => {
         video.load({ stream: { url: 'https://example.com/a.mkv' }, forceTranscoding: true, maxAudioChannels: 2, streamingServerURL: 'http://127.0.0.1:11470/', platform: 'webOS' }, options);
         expect(upstreamVideo.load).toHaveBeenCalledTimes(1);
         const [args, passedOptions] = upstreamVideo.load.mock.calls[0];
-        expect(args).toEqual({ stream: { url: 'https://example.com/a.mkv' }, forceTranscoding: false, maxAudioChannels: 32, streamingServerURL: null, platform: 'webOS' });
+        expect(args).toEqual({ stream: { url: 'https://example.com/a.mkv' }, forceTranscoding: false, maxAudioChannels: 32, streamingServerURL: null, assSubtitlesStyling: false, platform: 'webOS' });
         expect(passedOptions).toBe(options);
+    });
+
+    it('turns the ASS styling off (libass is a stub on webOS)', () => {
+        const video = renderHook(useVideo);
+        video.load({ stream: { url: 'https://example.com/a.mkv' }, assSubtitlesStyling: true });
+        expect(upstreamVideo.load.mock.calls[0][0].assSubtitlesStyling).toBe(false);
+    });
+
+    it('sends the add-on subtitles of Let\'s Encrypt hosts through the tlsproxy', () => {
+        const video = renderHook(useVideo);
+        const other = { id: 'b', url: 'https://opensubtitles.example/b.srt', lang: 'por' };
+        video.addExtraSubtitlesTracks([{ id: 'a', url: 'https://debrid-link.com/a.srt', lang: 'eng' }, other]);
+        const [tracks] = upstreamVideo.addExtraSubtitlesTracks.mock.calls[0];
+        expect(tracks[0]).toEqual({ id: 'a', url: 'http://127.0.0.1:47443/proxy?t=x&url=' + encodeURIComponent('https://debrid-link.com/a.srt'), lang: 'eng' });
+        expect(tracks[1]).toBe(other);
+    });
+
+    it('also the subtitles that come with the stream; the stream stays the same object without them', () => {
+        const video = renderHook(useVideo);
+        const plain = { url: 'https://example.com/a.mkv', subtitles: [{ id: 'b', url: 'https://example.com/b.srt', lang: 'por' }] };
+        video.load({ stream: plain });
+        expect(upstreamVideo.load.mock.calls[0][0].stream).toBe(plain);
+        video.load({ stream: { url: 'https://example.com/a.mkv', subtitles: [{ id: 'a', url: 'https://debrid-link.com/a.srt', lang: 'eng' }] } });
+        expect(upstreamVideo.load.mock.calls[1][0].stream.subtitles[0].url).toBe('http://127.0.0.1:47443/proxy?t=x&url=' + encodeURIComponent('https://debrid-link.com/a.srt'));
     });
 
     it('keeps the other upstream commands', () => {

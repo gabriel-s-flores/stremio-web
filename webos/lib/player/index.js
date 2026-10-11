@@ -3,10 +3,13 @@
 
 // No transcoding (there is no streaming server, P3) and every audio channel goes to the TV, which
 // downmixes to its own speakers (P2): the same as the upstream "surround sound" setting turned on.
+// No ASS styling (F5.5): libass is a stub in the webOS build (F1.5), so with the setting on every
+// ASS add-on subtitle would fail first (an error toast) and then fall back to plain text.
 const WEBOS_LOAD_ARGS = Object.freeze({
     forceTranscoding: false,
     streamingServerURL: null,
     maxAudioChannels: 32,
+    assSubtitlesStyling: false,
 });
 
 // Playback rates other than 1x play without sound on the C8, so the app keeps the native rate.
