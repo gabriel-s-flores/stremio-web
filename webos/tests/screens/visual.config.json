@@ -1,0 +1,8 @@
+{
+    "default": { "pixel": 32, "ratio": 0.002, "block": 0.08 },
+    "scenes": {
+        "addon-details": { "masks": [[460, 525, 560, 55]] },
+        "settings": { "masks": [[220, 880, 420, 100]] },
+        "diagnostics": { "masks": [[700, 545, 800, 125]] }
+    }
+}
