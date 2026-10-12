@@ -48,7 +48,9 @@ describe('upstream details the F5.5 subtitles depend on', () => {
     it('the Player settings render the ASS option as an Option with that label (Player.webos.tsx drops it)', () => {
         const settings = read(ROOT, 'src', 'routes', 'Settings', 'Player', 'Player.tsx');
         expect(settings).toMatch(/<Option label=\{'SETTINGS_ASS_SUBTITLES_STYLING'\}>/);
+        // F8.4: the external player option goes too.
+        expect(settings).toMatch(/<Option label=\{'SETTINGS_PLAY_IN_EXTERNAL_PLAYER'\}>/);
         expect(settings).toMatch(/const Player = forwardRef<HTMLDivElement, Props>\(/);
-        expect(read(ROOT, 'src', 'routes', 'Settings', 'Player', 'Player.webos.tsx')).toMatch(/const ASS_STYLING_LABEL = 'SETTINGS_ASS_SUBTITLES_STYLING';/);
+        expect(read(ROOT, 'src', 'routes', 'Settings', 'Player', 'Player.webos.tsx')).toMatch(/const REMOVED_LABELS = \['SETTINGS_ASS_SUBTITLES_STYLING', 'SETTINGS_PLAY_IN_EXTERNAL_PLAYER'\];/);
     });
 });
