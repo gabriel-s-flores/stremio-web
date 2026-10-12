@@ -5,6 +5,9 @@
 // that follows the debrid redirect (302) like the <video> does. API and behaviour: README.md.
 // The URL carries the user's debrid key (Torrentio puts it in the path): it is never logged or
 // stored in a result, only its host.
+// Torrentio does not fail with an HTTP error when the debrid service refuses or is not ready: its
+// resolver redirects to a notice video of its own (/videos/failed_access_v3.mp4…), a valid MP4 that
+// answers 206. Those are recognised by the URL (F8.4) and get the message the video would show.
 
 const HTTP_URL = /^https?:\/\//i;
 // Error code of stremio-video (src/error.js) for "the TV could not decode this": the bytes arrived,
@@ -77,6 +80,100 @@ const PROBLEMS = {
         hintKey: 'WEBOS_LINK_TIMEOUT_HINT',
         hint: 'Go back and open the stream again in a while, or pick another stream.',
     },
+    // Torrentio notices (noticeOf): what its video says, and the next step.
+    'notice-downloading': {
+        key: 'WEBOS_LINK_NOTICE_DOWNLOADING',
+        message: 'The debrid service is still downloading this file: it was not in its cache.',
+        hintKey: 'WEBOS_LINK_NOTICE_DOWNLOADING_HINT',
+        hint: 'Wait a few minutes and open the stream again, or pick a stream that is already cached.',
+    },
+    'notice-download-failed': {
+        key: 'WEBOS_LINK_NOTICE_DOWNLOAD_FAILED',
+        message: 'The debrid service could not download this file.',
+        hintKey: 'WEBOS_LINK_NOTICE_DOWNLOAD_FAILED_HINT',
+        hint: 'Pick another stream.',
+    },
+    'notice-access-denied': {
+        key: 'WEBOS_LINK_NOTICE_ACCESS_DENIED',
+        message: 'The debrid service denied access to the account set in the addon.',
+        hintKey: 'WEBOS_LINK_NOTICE_ACCESS_DENIED_HINT',
+        hint: 'Check the API key and the subscription of the debrid account, configure the addon again, and reopen the stream.',
+    },
+    'notice-access-blocked': {
+        key: 'WEBOS_LINK_NOTICE_ACCESS_BLOCKED',
+        message: 'The debrid service blocked the access of the addon to the account.',
+        hintKey: 'WEBOS_LINK_NOTICE_ACCESS_BLOCKED_HINT',
+        hint: 'Check the account on the site of the debrid service, then configure the addon again.',
+    },
+    'notice-archive': {
+        key: 'WEBOS_LINK_NOTICE_ARCHIVE',
+        message: 'On the debrid service this file is a compressed archive (RAR), which cannot be played.',
+        hintKey: 'WEBOS_LINK_NOTICE_ARCHIVE_HINT',
+        hint: 'Pick another stream.',
+    },
+    'notice-too-big': {
+        key: 'WEBOS_LINK_NOTICE_TOO_BIG',
+        message: 'This torrent is too big for the debrid service.',
+        hintKey: 'WEBOS_LINK_NOTICE_TOO_BIG_HINT',
+        hint: 'Pick another stream.',
+    },
+    'notice-opening-failed': {
+        key: 'WEBOS_LINK_NOTICE_OPENING_FAILED',
+        message: 'The debrid service could not open this torrent.',
+        hintKey: 'WEBOS_LINK_NOTICE_OPENING_FAILED_HINT',
+        hint: 'Pick another stream.',
+    },
+    'notice-removed': {
+        key: 'WEBOS_LINK_NOTICE_REMOVED',
+        message: 'The debrid service removed this file after a copyright claim.',
+        hintKey: 'WEBOS_LINK_NOTICE_REMOVED_HINT',
+        hint: 'Pick another stream.',
+    },
+    'notice-limits': {
+        key: 'WEBOS_LINK_NOTICE_LIMITS',
+        message: 'The debrid account reached one of its limits (active downloads or traffic).',
+        hintKey: 'WEBOS_LINK_NOTICE_LIMITS_HINT',
+        hint: 'Free some downloads on the site of the debrid service or wait a while, then open the stream again.',
+    },
+    'notice-unavailable': {
+        key: 'WEBOS_LINK_NOTICE_UNAVAILABLE',
+        message: 'The debrid service is unavailable right now.',
+        hintKey: 'WEBOS_LINK_NOTICE_UNAVAILABLE_HINT',
+        hint: 'Open the stream again in a while.',
+    },
+    'notice-addon-error': {
+        key: 'WEBOS_LINK_NOTICE_ADDON_ERROR',
+        message: 'The addon could not get this stream from the debrid service.',
+        hintKey: 'WEBOS_LINK_NOTICE_ADDON_ERROR_HINT',
+        hint: 'Open the stream again in a while, or pick another stream.',
+    },
+};
+
+// Torrentio's notice videos (torrentio-scraper, addon/moch/static.js: `<name>_v<n>.mp4` under
+// /videos/) -> kind. The version suffix changes over time, so only the name is matched.
+const TORRENTIO_NOTICES = {
+    downloading: 'notice-downloading',
+    download_failed: 'notice-download-failed',
+    failed_access: 'notice-access-denied',
+    blocked_access: 'notice-access-blocked',
+    failed_rar: 'notice-archive',
+    failed_too_big: 'notice-too-big',
+    failed_opening: 'notice-opening-failed',
+    failed_infringement: 'notice-removed',
+    limits_exceeded: 'notice-limits',
+    failed_unavailable: 'notice-unavailable',
+    failed_unexpected: 'notice-addon-error',
+};
+const NOTICE_PATH = /^https?:\/\/[^/?#]+(?:\/[^?#]*)?\/videos\/([a-z_]+?)_v\d+\.mp4(?:[?#]|$)/i;
+
+// The kind of a Torrentio notice video URL, or null. An unknown `failed_*` notice (a newer one) is
+// still a refusal of the addon, told as its unexpected error.
+const noticeOf = (url) => {
+    const match = typeof url === 'string' ? NOTICE_PATH.exec(url) : null;
+    if (match === null) return null;
+    const name = match[1].toLowerCase();
+    if (TORRENTIO_NOTICES[name]) return TORRENTIO_NOTICES[name];
+    return name.indexOf('failed_') === 0 ? 'notice-addon-error' : null;
 };
 
 // HTTP status of a failed answer -> kind. 403 and 410 are what an expired debrid link answers.
@@ -125,7 +222,8 @@ const isOffline = () => typeof navigator !== 'undefined' && navigator.onLine ===
 
 // One Range request for the first byte. It follows redirects (the debrid resolver answers 302 to the
 // file host) and drops the body as soon as the headers are in, so a server that ignores Range does
-// not send the whole video. Resolves { status, redirected, host } or rejects with { kind }.
+// not send the whole video. Resolves { status, redirected, host, notice } or rejects with { kind }.
+// `notice`: the final URL is a Torrentio notice video (noticeOf); the URL itself is not kept.
 const requestFirstByte = (fetchImpl, url, headers, timeout) => new Promise((resolve, reject) => {
     let settled = false;
     const timer = setTimeout(() => {
@@ -153,6 +251,7 @@ const requestFirstByte = (fetchImpl, url, headers, timeout) => new Promise((reso
             status: response.status,
             redirected: response.redirected === true,
             host: hostOf(response.url || url),
+            notice: noticeOf(response.url || url),
         });
     }, () => done(reject, { kind: 'network' }));
 });
@@ -221,6 +320,9 @@ const createDiagnoser = (options) => {
     const diagnose = (stream, playerCode) => {
         const url = urlOf(stream);
         if (url === null) return Promise.resolve({ kind: 'unknown', status: null, source: 'none', redirected: null, host: null });
+        // The stream (or the link the Player loaded after resolving the redirect) is the notice itself.
+        const notice = noticeOf(url);
+        if (notice !== null) return Promise.resolve({ kind: notice, status: null, source: 'url', redirected: false, host: hostOf(url) });
         if (playerCode === MEDIA_ERR_DECODE) {
             // The TV got the bytes and failed to decode them: not a link problem, no request needed.
             return Promise.resolve({ kind: 'ok', status: null, source: 'player', redirected: null, host: hostOf(url) });
@@ -235,7 +337,7 @@ const createDiagnoser = (options) => {
         const fetchImpl = getFetch();
         if (fetchImpl === null) return Promise.resolve({ kind: 'unknown', status: null, source: 'none', redirected: null, host: hostOf(url) });
         return requestFirstByte(fetchImpl, url, headersOf(stream), timeout).then((answer) => {
-            const kind = kindOfStatus(answer.status) || 'ok';
+            const kind = (answer.notice !== null && kindOfStatus(answer.status) === null ? answer.notice : null) || kindOfStatus(answer.status) || 'ok';
             return remember(url, { kind, status: answer.status, source: 'request', redirected: answer.redirected, host: answer.host, at: now() });
         }, (failure) => {
             const failed = (kind) => ({ kind, status: null, source: 'request', redirected: null, host: hostOf(url), at: now() });
@@ -275,6 +377,7 @@ module.exports = {
     REUSE_MS,
     CONTROL_URL,
     kindOfStatus,
+    noticeOf,
     describe,
     hostOf,
     urlOf,
