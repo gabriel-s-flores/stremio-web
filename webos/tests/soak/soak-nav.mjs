@@ -94,6 +94,9 @@ async function step(name, action, expectation, seconds = 45) {
 
 // The side bar link, by the pointer; if the bar has no such link on screen (or no size), the DOM click, counted.
 async function pointerLink(href) {
+    // A click during the previous screen's transition is lost (the nav bar of the route is being replaced): 12 of 56
+    // Library -> Calendar clicks in the `only-local` run, none in 40 clicks 2.5 s after the screen opened. Let it settle.
+    await sleep(1500);
     if (await soak.pointerClick(`a[href="${href}"]`)) return;
     stats.fallbacks++;
     soak.note('fallback-dom-click', { href });
