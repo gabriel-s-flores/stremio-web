@@ -57,7 +57,7 @@ O emulador é a **imagem oficial da LG do webOS TV 4.0**, rodando em QEMU/KVM ne
 | DD+ Atmos (E-AC3 JOC) | ✅ Atmos virtual nos alto-falantes | Prefere essa faixa quando existir |
 | E-AC3 e AC3 5.1, AAC | ✅ downmix nos alto-falantes | Toca direto |
 | TrueHD (com ou sem Atmos) | ❌ fica mudo | Escolhe outra faixa sozinho; sem alternativa, avisa e rebaixa o stream |
-| DTS e DTS-HD | ❓ fontes contraditórias | Prefere outra faixa; a Fase 8 decide |
+| DTS e DTS-HD | ✅ (Fase 8: DTS-HD MA 5.1 tocou na TV) | Aceito desde a F8.4: preferência DD+ Atmos > DTS > E-AC3 > AC3, rótulo "DTS-HD MA"/"DTS" na lista |
 | AV1 | ❌ | Oculta ou rebaixa |
 | Velocidade ≠ 1x | ❌ sem áudio | Opção escondida no webOS |
 | Legendas PGS e VobSub | ❌ | Ocultas; texto embutido via Luna e legendas de addons em overlay HTML |

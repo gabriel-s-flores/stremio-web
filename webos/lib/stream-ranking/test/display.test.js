@@ -21,7 +21,8 @@ describe('toDisplay', () => {
     it('turns demoting and hiding warnings into short texts; info warnings stay out', () => {
         expect(texts(show('Movie.2160p.BluRay.REMUX.DV.P5.HEVC.TrueHD.7.1.Atmos.mkv'))).toEqual(['DV P5: cores erradas', 'TrueHD: pode ficar sem som']);
         expect(texts(show('Movie.2160p.WEB-DL.DV.HEVC.mkv'))).toEqual(['Pode ser DV P5']);
-        expect(texts(show('Movie.1080p.BluRay.DTS-HD.MA.7.1.mkv'))).toEqual(['DTS a confirmar']);
+        // DTS plays on the C8 (F8.4): no warning by name, and no label (the name does not say which track starts)
+        expect(texts(show('Movie.1080p.BluRay.DTS-HD.MA.7.1.mkv'))).toEqual([]);
         const av1 = show('Movie.2160p.WEB-DL.AV1.Opus.mp4');
         expect(texts(av1)).toEqual(['AV1: não toca nesta TV']);
         expect(av1.warnings[0]).toMatchObject({ severity: 'hide', code: 'VIDEO_UNSUPPORTED' });
@@ -32,7 +33,7 @@ describe('toDisplay', () => {
         const truehd = show('Movie.1080p.mp4', await probeFixture('truehd-atmos-mp4'));
         expect(truehd).toMatchObject({ tier: 'demoted', source: 'probe' });
         expect(texts(truehd)).toEqual(['TrueHD: sem som nesta TV']);
-        expect(texts(show('Movie.1080p.mkv', await probeHeader('dts-hd-ma.mkv')))).toEqual(['DTS a confirmar']);
+        expect(texts(show('Movie.1080p.mkv', await probeHeader('dts-hd-ma.mkv')))).toEqual(['DTS-HD MA']);
         expect(texts(show('Movie.720p.mp4', await probeFixture('eac3-joc-mp4')))).toEqual(['Atmos']);
     });
 

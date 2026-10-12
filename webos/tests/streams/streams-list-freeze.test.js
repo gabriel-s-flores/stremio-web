@@ -10,8 +10,8 @@
 const { act, createHarness, NAME_ORDER, LIST_SETTINGS, ranking } = require('./render-setup');
 
 const ORDER_WITH_PROBES = [
-    'web-dv-hdr10-atmos-mkv', 'web-dv-p81-mp4', 'web-dv-p5-mp4', 'uncached-hdr10', 'web-hevc10-ddp', 'web-multi-mkv',
-    'web-unnamed-atmos', 'web-h264-aac', 'dts-hd-ma', 'truehd-only', 'remux-dv-p5-truehd', 'remux-unnamed', 'web-av1',
+    'web-dv-hdr10-atmos-mkv', 'web-dv-p81-mp4', 'web-dv-p5-mp4', 'uncached-hdr10', 'dts-hd-ma', 'web-hevc10-ddp',
+    'web-multi-mkv', 'web-unnamed-atmos', 'web-h264-aac', 'truehd-only', 'remux-dv-p5-truehd', 'remux-unnamed', 'web-av1',
 ];
 
 let list = null;

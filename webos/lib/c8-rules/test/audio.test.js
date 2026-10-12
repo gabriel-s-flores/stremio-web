@@ -33,8 +33,8 @@ describe('initial audio track', () => {
 
     it('without a match, keeps the language of the file default track', async () => {
         const probe = await probeHeader(MULTI);
-        expect(initial(probe, ['ita'])).toMatchObject({ codec: 'ac3', language: 'eng' });
-        expect(initial(probe, [])).toMatchObject({ codec: 'ac3', language: 'eng' });
+        expect(initial(probe, ['ita'])).toMatchObject({ codec: 'dts', language: 'eng' });
+        expect(initial(probe, [])).toMatchObject({ codec: 'dts', language: 'eng' });
     });
 
     it('MP4 tracks with ISO 639-2/T codes match bibliographic preferences (fra = fre)', async () => {
@@ -70,7 +70,7 @@ describe('initial audio track', () => {
     it('lists every track with its status, best first', async () => {
         const result = evaluate({ probe: await probeHeader(MULTI), preferences: { audioLanguages: ['por'] } });
         expect(result.audio.tracks.map((track) => [track.id, track.codec, track.status])).toEqual([
-            [3, 'eac3', 'ok'], [2, 'ac3', 'ok'], [4, 'dts', 'unconfirmed'], [5, 'truehd', 'unsupported'],
+            [3, 'eac3', 'ok'], [4, 'dts', 'ok'], [2, 'ac3', 'ok'], [5, 'truehd', 'unsupported'],
         ]);
         expect(result.audio.initialTrack).toBe(result.audio.tracks[0]);
     });

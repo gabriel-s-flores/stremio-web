@@ -36,7 +36,7 @@ describe('StreamsList on webOS', () => {
         expect(list.chipsOf('web-dv-hdr10-atmos-mkv')).toEqual(['HDR10 nesta TV', 'Atmos']);
         expect(list.chipsOf('remux-dv-p5-truehd')).toEqual(['DV P5: cores erradas', 'TrueHD: pode ficar sem som']);
         expect(list.chipsOf('truehd-only')).toEqual(['TrueHD: pode ficar sem som']);
-        expect(list.chipsOf('dts-hd-ma')).toEqual(['DTS a confirmar']);
+        expect(list.chipsOf('dts-hd-ma')).toEqual([]);
         expect(list.chipsOf('web-av1')).toEqual(['AV1: não toca nesta TV']);
         expect(list.chipsOf('remux-unnamed')).toEqual([]);
         const av1 = list.items()[list.items().length - 1];
@@ -69,18 +69,20 @@ describe('StreamsList on webOS', () => {
         // The unnamed REMUX is DV P5 + TrueHD: down to the demoted streams, with the warnings.
         // The DV P8.1 MKV has a DD+ Atmos track in Portuguese, the profile language: +20 over the DV MP4s.
         expect(list.order()).toEqual([
-            'web-dv-hdr10-atmos-mkv', 'web-dv-p81-mp4', 'web-dv-p5-mp4', 'uncached-hdr10', 'web-hevc10-ddp', 'web-multi-mkv',
-            'web-unnamed-atmos', 'web-h264-aac', 'dts-hd-ma', 'truehd-only', 'remux-dv-p5-truehd', 'remux-unnamed', 'web-av1',
+            'web-dv-hdr10-atmos-mkv', 'web-dv-p81-mp4', 'web-dv-p5-mp4', 'uncached-hdr10', 'dts-hd-ma', 'web-hevc10-ddp',
+            'web-multi-mkv', 'web-unnamed-atmos', 'web-h264-aac', 'truehd-only', 'remux-dv-p5-truehd', 'remux-unnamed', 'web-av1',
         ]);
         expect(list.chipsOf('remux-unnamed')).toEqual(['DV P5: cores erradas', 'TrueHD: sem som nesta TV']);
         expect(list.items()[0].getAttribute('data-c8-source')).toBe('probe');
-        // The REMUX left the top: the HEVC 10-bit took its place among the first 4 probeable streams
-        // and is probed in turn; nothing below them is.
+        // The REMUX left the top: the DTS-HD MA (it plays since F8.4) took its place among the first 4
+        // probeable streams and is probed in turn; nothing below them is.
         await list.advance(LIST_SETTINGS.initialDelay);
-        expect(list.probedIds()).toEqual(['web-dv-p81-mp4', 'web-dv-p5-mp4', 'web-dv-hdr10-atmos-mkv', 'remux-unnamed', 'web-hevc10-ddp']);
+        expect(list.probedIds()).toEqual(['web-dv-p81-mp4', 'web-dv-p5-mp4', 'web-dv-hdr10-atmos-mkv', 'remux-unnamed', 'dts-hd-ma']);
         await list.advance(LIST_SETTINGS.initialDelay);
         expect(list.readerSpy).toHaveBeenCalledTimes(5);
-        expect(list.order().slice(0, 5)).toEqual(['web-dv-hdr10-atmos-mkv', 'web-dv-p81-mp4', 'web-dv-p5-mp4', 'uncached-hdr10', 'web-hevc10-ddp']);
+        // The DTS-HD MA track is in the profile language (eng): +20, above the HDR10 one (+10).
+        expect(list.order().slice(0, 5)).toEqual(['web-dv-hdr10-atmos-mkv', 'web-dv-p81-mp4', 'web-dv-p5-mp4', 'dts-hd-ma', 'uncached-hdr10']);
+        expect(list.chipsOf('dts-hd-ma')).toEqual(['DTS-HD MA']);
     });
 
     it('keeps the order once the user moves; the focused stream is probed after a pause and only its labels change', async () => {
@@ -112,7 +114,7 @@ describe('StreamsList on webOS', () => {
 
     it('leaving the list drops the queued probes and stops the running ones (their transfer is cancelled)', async () => {
         const queue = ranking.getProbeQueue();
-        const ids = ['web-multi-mkv', 'web-h264-aac', 'dts-hd-ma'];
+        const ids = ['web-multi-mkv', 'web-h264-aac', 'truehd-only'];
         const urls = ids.map(list.urlOf);
         urls.forEach(list.network.hang);
         for (const id of ids) {

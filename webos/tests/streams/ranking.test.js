@@ -38,7 +38,7 @@ describe('test addon: names only (the list as it opens)', () => {
         });
     });
 
-    it('DV in MP4 first, then HDR10 nesta TV + Atmos; DTS, TrueHD and DV P5 in MKV demoted; AV1 last', () => {
+    it('DV in MP4 first, then HDR10 nesta TV + Atmos; DTS plays (F8.4); TrueHD and DV P5 in MKV demoted; AV1 last', () => {
         const ranked = ranking.createRanker({ rules }).rank(media.streams);
         expect(idsOf(ranked)).toEqual([
             'web-dv-p81-mp4',
@@ -46,11 +46,11 @@ describe('test addon: names only (the list as it opens)', () => {
             'web-dv-hdr10-atmos-mkv',
             'uncached-hdr10',
             'remux-unnamed',
+            'dts-hd-ma',
             'web-hevc10-ddp',
             'web-multi-mkv',
             'web-unnamed-atmos',
             'web-h264-aac',
-            'dts-hd-ma',
             'truehd-only',
             'remux-dv-p5-truehd',
             'web-av1',

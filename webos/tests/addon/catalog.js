@@ -60,7 +60,7 @@ const STREAMS = [
         name: '[RD+] Teste\n1080p',
         description: `${TITLE}.1080p.BluRay.DTS-HD.MA.7.1-GRP.mkv\n💾 16.3 GB ⚙️ Teste`,
         media: 'headers/dts-hd-ma.mkv',
-        expect: { name: ['demoted', 'AUDIO_UNCONFIRMED_POSSIBLE'], probe: ['demoted', 'AUDIO_UNCONFIRMED'] },
+        expect: { name: ['ok'], probe: ['ok', 'dts-hd-ma'] },
     },
     {
         id: 'web-hevc10-ddp',

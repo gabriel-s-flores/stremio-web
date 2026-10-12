@@ -5,7 +5,7 @@
 // helpers.js). Dolby Vision P7 only exists in the FATE suite, which is not in git: those tests
 // are skipped with a warning when tools/fetch-fate-fixtures.sh has not been run.
 
-const { evaluate, compare } = require('../index');
+const { evaluate, compare, sortStreams } = require('../index');
 const { hasFixture, probeFixture, probeHeader, withoutDolbyVision, editTracks, codes } = require('./helpers');
 
 const FATE_IDS = ['fate-dv-p7-mkv', 'fate-dv-p7-dual-mp4'];
@@ -398,7 +398,7 @@ describe('Linha 6 · E-AC-3 e AC-3 5.1, AAC (✅ downmix nos alto-falantes: toca
 describe('Linha 7 · TrueHD com ou sem Atmos (❌ mudo: escolhe outra faixa; sem alternativa, avisa e rebaixa)', () => {
     it('TrueHD jpn preferred but mute: the compatible track is chosen and the skip is reported', async () => {
         const result = rate(await probeHeader('mkv-multitrack-ac3-eac3joc-dtshdma-truehd-pgs.mkv'), null, { audioLanguages: ['jpn'] });
-        expect(result.audio.initialTrack).toMatchObject({ codec: 'ac3', language: 'eng' });
+        expect(result.audio.initialTrack).toMatchObject({ codec: 'dts', language: 'eng' });
         expect(result.warnings.find((warning) => warning.code === 'AUDIO_TRACK_SKIPPED')).toMatchObject({ track: 5, severity: 'info' });
         expect(result.audio.tracks.find((track) => track.codec === 'truehd').status).toBe('unsupported');
         expect(result.tier).toBe('ok');
@@ -452,12 +452,44 @@ describe('Linha 7 · TrueHD com ou sem Atmos (❌ mudo: escolhe outra faixa; sem
     });
 });
 
-describe('Linha 8 · DTS e DTS-HD (❓ fontes contraditórias: prefere outra faixa; a Fase 8 decide)', () => {
-    it('another track is preferred over DTS even in the preferred language (D8)', async () => {
+describe('Linha 8 · DTS e DTS-HD (✅ na C8: a TV tocou DTS-HD MA 5.1 na Fase 8; F8.4)', () => {
+    it('DTS in the preferred language beats DD+ Atmos in another one (the language comes first)', async () => {
         const result = rate(await probeFixture('dv-p81-multi-mkv'), null, { audioLanguages: ['eng'] });
-        expect(result.audio.initialTrack).toMatchObject({ id: 2, codec: 'eac3', language: 'por' });
-        expect(result.warnings.find((warning) => warning.code === 'AUDIO_TRACK_SKIPPED')).toMatchObject({ track: 3 });
-        expect(result.audio.tracks.filter((track) => track.codec === 'dts').map((track) => track.status)).toEqual(['unconfirmed', 'unconfirmed']);
+        expect(result.audio.initialTrack).toMatchObject({ id: 3, codec: 'dts', profile: 'DTS-HD MA', language: 'eng', status: 'ok' });
+        expect(warningsOf(result)).not.toContain('AUDIO_TRACK_SKIPPED');
+        expect(labelsOf(result)).toEqual(['hdr10-on-tv', 'dts-hd-ma']);
+        expect(result.audio.tracks.filter((track) => track.codec === 'dts').map((track) => track.status)).toEqual(['ok', 'ok']);
+    });
+
+    it('DD+ Atmos still beats DTS-HD MA in the same language (derived: dv-p81-multi-mkv, DTS-HD MA relabelled por)', async () => {
+        const probe = editTracks(await probeFixture('dv-p81-multi-mkv'), (track) => {
+            if (track.id === 3) Object.assign(track, { language: 'por', default: true });
+            if (track.id === 2) track.default = false;
+        });
+        const result = rate(probe, null, { audioLanguages: ['por'] });
+        expect(result.audio.initialTrack).toMatchObject({ id: 2, profile: 'E-AC-3 JOC', atmosOnTv: true });
+        expect(result.audio.tracks[1]).toMatchObject({ id: 3, codec: 'dts' });
+        expect(labelsOf(result)).toEqual(['hdr10-on-tv', 'atmos']);
+    });
+
+    it('multitrack MKV: eng DTS-HD MA chosen over eng AC-3', async () => {
+        const result = rate(await probeHeader('mkv-multitrack-ac3-eac3joc-dtshdma-truehd-pgs.mkv'), null, { audioLanguages: ['eng'] });
+        expect(result.audio.initialTrack).toMatchObject({ id: 4, codec: 'dts', language: 'eng', status: 'ok' });
+        expect(result.audio.tracks[1]).toMatchObject({ id: 2, codec: 'ac3' });
+        expect(labelsOf(result)).toEqual(['dts-hd-ma']);
+        expect(result.tier).toBe('ok');
+    });
+
+    it('DTS-HD MA beats a plain E-AC-3 of the same language, even default and with more channels (derived)', async () => {
+        const probe = editTracks(await probeHeader('mkv-multitrack-ac3-eac3joc-dtshdma-truehd-pgs.mkv'), (track) => {
+            if (track.id === 3) {
+                Object.assign(track, { language: 'eng', default: true });
+                Object.assign(track.audio, { channels: 8, profile: null, atmos: false });
+            }
+            if (track.id === 4) track.default = false;
+        });
+        const result = rate(probe, null, { audioLanguages: ['eng'] });
+        expect(result.audio.tracks.map((track) => track.id).slice(0, 3)).toEqual([4, 3, 2]);
     });
 
     it('DTS-HD MA main track beats an AC-3 commentary (derived: multitrack, AC-3 as commentary, no E-AC-3)', async () => {
@@ -467,28 +499,30 @@ describe('Linha 8 · DTS e DTS-HD (❓ fontes contraditórias: prefere outra fai
             if (track.id === 2) track.commentary = true;
         });
         const result = rate(probe, null, { audioLanguages: ['eng'] });
-        expect(result.audio.initialTrack).toMatchObject({ id: 4, codec: 'dts', status: 'unconfirmed' });
-        expect(warningsOf(result)).toContain('AUDIO_UNCONFIRMED');
+        expect(result.audio.initialTrack).toMatchObject({ id: 4, codec: 'dts', status: 'ok' });
         expect(warningsOf(result)).not.toContain('AUDIO_ONLY_SECONDARY');
     });
 
-    it('multitrack MKV: eng AC-3 chosen over eng DTS-HD MA', async () => {
-        const result = rate(await probeHeader('mkv-multitrack-ac3-eac3joc-dtshdma-truehd-pgs.mkv'), null, { audioLanguages: ['eng'] });
-        expect(result.audio.initialTrack).toMatchObject({ codec: 'ac3', language: 'eng' });
+    it.each([
+        ['dts-core-mkv', 'DTS', 'dts', probeFixture],
+        ['dts-hdma-mkv', 'DTS-HD MA', 'dts-hd-ma', probeFixture],
+        ['dts-x-mkv', 'DTS-HD MA + DTS:X', 'dts-hd-ma', probeFixture],
+        ['dts-hdma-mp4', 'DTS-HD MA', 'dts-hd-ma', probeFixture],
+        ['dtsc-mp4', 'DTS', 'dts', probeFixture],
+        ['dts-hd-ma.mkv', 'DTS-HD MA', 'dts-hd-ma', probeHeader],
+    ])('DTS only (%s, %s): plays, not demoted, labelled', async (id, profile, label, run) => {
+        const result = rate(await run(id));
+        expect(result.audio.initialTrack).toMatchObject({ codec: 'dts', profile, status: 'ok' });
+        expect(warningsOf(result).filter((code) => /^AUDIO_/.test(code))).toEqual([]);
+        expect(labelsOf(result)).toContain(label);
+        expect(result.tier).toBe('ok');
     });
 
-    it.each([
-        ['dts-core-mkv', 'DTS', probeFixture],
-        ['dts-hdma-mkv', 'DTS-HD MA', probeFixture],
-        ['dts-x-mkv', 'DTS-HD MA + DTS:X', probeFixture],
-        ['dts-hdma-mp4', 'DTS-HD MA', probeFixture],
-        ['dtsc-mp4', 'DTS', probeFixture],
-        ['dts-hd-ma.mkv', 'DTS-HD MA', probeHeader],
-    ])('DTS only (%s, %s): chosen as the only option, "a confirmar", demoted', async (id, profile, run) => {
-        const result = rate(await run(id));
-        expect(result.audio.initialTrack).toMatchObject({ codec: 'dts', profile, status: 'unconfirmed' });
-        expect(result.warnings.find((warning) => warning.code === 'AUDIO_UNCONFIRMED')).toMatchObject({ severity: 'demote' });
-        expect(result.tier).toBe('demoted');
+    it('DTS-HD (HRA) gets its own label (derived: DTS-HD MA relabelled)', async () => {
+        const probe = editTracks(await probeFixture('dts-hdma-mkv'), (track) => {
+            if (track.audio) track.audio.profile = 'DTS-HD';
+        });
+        expect(labelsOf(rate(probe))).toEqual(['dts-hd']);
     });
 
     it.each([
@@ -498,20 +532,22 @@ describe('Linha 8 · DTS e DTS-HD (❓ fontes contraditórias: prefere outra fai
         const result = rate(await probeFixture(id));
         expect(result.audio.initialTrack).toBeNull();
         expect(warningsOf(result)).toContain('AUDIO_UNSUPPORTED');
+        expect(labelsOf(result)).toEqual([]);
     });
 
-    it('DTS-only sorts above TrueHD-only and below a compatible stream', async () => {
+    it('DTS-only sorts with a compatible stream (the addon order stays) and above TrueHD-only', async () => {
         const dts = rate(await probeFixture('dts-core-mkv'));
         const truehd = rate(await probeFixture('truehd-atmos-mp4'));
         const ac3 = rate(await probeHeader('mkv-video-ac3-pgs.mkv'));
-        expect([truehd, dts, ac3].sort(compare)).toEqual([ac3, dts, truehd]);
+        expect(compare(dts, ac3)).toBe(0);
+        expect(sortStreams([truehd, dts, ac3])).toEqual([dts, ac3, truehd]);
     });
 
-    it('name only: DTS as the only codec → "a confirmar" by name', () => {
+    it('name only: DTS as the only codec plays, with no warning and no probe needed', () => {
         const result = rate(null, 'Movie.1080p.BluRay.x264.DTS-HD.MA.5.1.mkv');
-        expect(result.audio.status).toBe('unconfirmed');
-        expect(warningsOf(result)).toEqual(['AUDIO_UNCONFIRMED_POSSIBLE']);
-        expect(result.needsProbe).toBe(true);
+        expect(result.audio.status).toBe('ok');
+        expect(result.warnings).toEqual([]);
+        expect(result.needsProbe).toBe(false);
     });
 });
 
@@ -584,13 +620,13 @@ describe('D7 · Dolby Vision: MP4 toca direto, MKV P7/P8.1 como HDR10, MKV P5 re
     });
 });
 
-describe('D8 · Atmos: DD+ Atmos preferido; TrueHD trocado sozinho; DTS "a confirmar" e preterido', () => {
+describe('D8 · Atmos: DD+ Atmos preferido; TrueHD trocado sozinho; DTS aceito na Fase 8 (F8.4)', () => {
     it('every audio track of the multitrack MKV gets the D8 status', async () => {
         const result = rate(await probeHeader('mkv-multitrack-ac3-eac3joc-dtshdma-truehd-pgs.mkv'));
         const byCodec = {};
         result.audio.tracks.forEach((track) => {
             byCodec[track.codec] = track.status;
         });
-        expect(byCodec).toEqual({ ac3: 'ok', eac3: 'ok', dts: 'unconfirmed', truehd: 'unsupported' });
+        expect(byCodec).toEqual({ ac3: 'ok', eac3: 'ok', dts: 'ok', truehd: 'unsupported' });
     });
 });

@@ -234,6 +234,15 @@ const preferenceIndex = (profile, track) => {
     return index !== -1 ? index : order.length;
 };
 
+// The label of a DTS initial track (F8.4): the variant the probe read. DTS:X plays as its DTS-HD MA
+// part on the C8, so it gets the DTS-HD MA label; DTS-HD HRA and other DTS-HD, the DTS-HD one.
+const dtsLabel = (track) => {
+    if (track.codec !== 'dts' || track.status === 'unsupported') return null;
+    const variant = track.profile || '';
+    if (variant.indexOf('DTS-HD MA') === 0) return 'dts-hd-ma';
+    return variant.indexOf('DTS-HD') === 0 ? 'dts-hd' : 'dts';
+};
+
 const byKeys = (keyOf) => (a, b) => {
     const ka = keyOf(a);
     const kb = keyOf(b);
@@ -276,9 +285,9 @@ const evaluateProbeAudio = (profile, probe, name, languages, report) => {
     tracks.forEach((track) => {
         track.preference = preferenceIndex(profile, track);
     });
-    // Playable first; among them the main track over commentary (a "to be confirmed" DTS film
-    // track beats an AC-3 commentary), then the codec status (DTS waits for phase 8, D8), the
-    // language, the codec preference (DD+ Atmos first), the default flag, channels, file order.
+    // Playable first; among them the main track over commentary (an "unconfirmed" film track
+    // beats an AC-3 commentary), then the codec status (ok before unconfirmed and unknown), the
+    // language, the codec preference (DD+ Atmos, then DTS: F8.4), the default flag, channels, file order.
     tracks.sort(byKeys((track) => [track.status === 'unsupported' ? 1 : 0, track.secondary ? 1 : 0, AUDIO_TIERS[track.status],
         track.languageRank, track.preference, track.default ? 0 : 1, -(track.channels || 0), track.index]));
     const chosen = tracks.filter((track) => track.status !== 'unsupported')[0] || null;
@@ -303,6 +312,8 @@ const evaluateProbeAudio = (profile, probe, name, languages, report) => {
             report.warn('AUDIO_UNKNOWN', 'probe', 'A única opção de áudio é ' + describeTrack(chosen) + ', que ' + STATUS_TEXT.unknown + '.', chosen.id);
         }
         if (chosen.atmosOnTv) report.label('atmos', chosen.atmosSource === 'probe' ? 'probe' : 'probe+name');
+        const dts = dtsLabel(chosen);
+        if (dts !== null && profile.labels[dts]) report.label(dts, 'probe');
     }
     const status = chosen !== null ? chosen.status : (tracks.length > 0 ? 'unsupported' : null);
     return {

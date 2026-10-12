@@ -105,7 +105,7 @@ describe('audio menu', () => {
             ['EMBEDDED_1', 'por', 'DD+ Atmos 5.1', 'disabled'],
             ['EMBEDDED_2', 'eng', 'DTS-HD MA 7.1', 'disabled'],
         ]);
-        expect(audioMenu(multi, [], 0).map((track) => track.status)).toEqual(['ok', 'ok', 'unconfirmed']);
+        expect(audioMenu(multi, [], 0).map((track) => track.status)).toEqual(['ok', 'ok', 'ok']);
     });
 
     it('only TrueHD: listed anyway (nothing else to offer)', () => {
@@ -170,11 +170,12 @@ describe('initial audio track', () => {
         expect(choose(kit, KIT_ELEMENT, [])).toBe('EMBEDDED_2');
     });
 
-    it('multi-track MKV: a track that plays, never TrueHD; DTS waits for phase 8', () => {
-        expect(choose(multi, [], ['jpn'])).toBe('EMBEDDED_0');
+    it('multi-track MKV: a track that plays, never TrueHD; DTS-HD MA over AC-3 (F8.4)', () => {
+        // jpn is the mute TrueHD: the default language (eng) and its best codec, the DTS-HD MA
+        expect(choose(multi, [], ['jpn'])).toBe('EMBEDDED_2');
         expect(choose(multi, [], ['por'])).toBe('EMBEDDED_1');
-        // AC-3 eng plays; the DTS-HD MA eng is "to be confirmed" (D8)
-        expect(choose(multi, [], ['eng'])).toBe('EMBEDDED_0');
+        // AC-3 eng and DTS-HD MA eng both play; DTS comes first in the C8 preference
+        expect(choose(multi, [], ['eng'])).toBe('EMBEDDED_2');
     });
 
     it('nothing plays: no choice (the pipeline keeps its track)', () => {

@@ -22,8 +22,9 @@ describe('perfil-c8.json', () => {
         });
     });
 
-    it('states the table and D8: DTS "a confirmar", TrueHD and AV1 unsupported, only 1x', () => {
-        expect(DEFAULT_PROFILE.audio.codecs.dts.status).toBe('unconfirmed');
+    it('states the table and D8 as phase 8 left them: DTS ok (F8.4), TrueHD and AV1 unsupported, only 1x', () => {
+        expect(DEFAULT_PROFILE.audio.codecs.dts.status).toBe('ok');
+        expect(DEFAULT_PROFILE.audio.preference.slice(0, 4)).toEqual(['eac3-atmos', 'dts', 'eac3', 'ac3']);
         expect(DEFAULT_PROFILE.audio.codecs.truehd.status).toBe('unsupported');
         expect(DEFAULT_PROFILE.audio.atmosCodecs).toEqual(['eac3']);
         expect(DEFAULT_PROFILE.audio.preference[0]).toBe('eac3-atmos');
@@ -39,6 +40,7 @@ describe('perfil-c8.json', () => {
             evaluate({ probe: await probeFixture('dv-p81-multi-mkv') }),
             evaluate({ probe: await probeFixture('dv-p5-mp4') }),
             evaluate({ probe: await probeFixture('dts-core-mkv') }),
+            evaluate({ probe: await probeFixture('dts-hdma-mkv') }),
             evaluate({ probe: await probeHeader('dv-p10-av1-dav1-moov-end.mp4') }),
             evaluate({ stream: 'DV TrueHD Atmos' }),
             evaluate({ stream: 'DTS' }),
@@ -52,20 +54,30 @@ describe('perfil-c8.json', () => {
 
 describe('mergeProfile (phase 8 overrides)', () => {
     it('merges objects deeply and replaces arrays and values, without touching the base', () => {
-        const merged = mergeProfile(DEFAULT_PROFILE, { audio: { codecs: { dts: { status: 'ok' } }, preference: ['ac3'] } });
-        expect(merged.audio.codecs.dts).toEqual({ status: 'ok' });
+        const merged = mergeProfile(DEFAULT_PROFILE, { audio: { codecs: { dts: { status: 'unconfirmed' } }, preference: ['ac3'] } });
+        expect(merged.audio.codecs.dts).toEqual({ status: 'unconfirmed' });
         expect(merged.audio.codecs.truehd.status).toBe('unsupported');
         expect(merged.audio.preference).toEqual(['ac3']);
-        expect(DEFAULT_PROFILE.audio.codecs.dts.status).toBe('unconfirmed');
+        expect(DEFAULT_PROFILE.audio.codecs.dts.status).toBe('ok');
         expect(mergeProfile(DEFAULT_PROFILE, null)).toBe(DEFAULT_PROFILE);
     });
 
-    it('DTS confirmed on the TV: the eng DTS-HD MA track is chosen for an eng user', async () => {
+    it('DTS back to "a confirmar" (the D8 default before phase 8): another track wins even in the preferred language', async () => {
         const probe = await probeFixture('dv-p81-multi-mkv');
-        const profile = mergeProfile(DEFAULT_PROFILE, { audio: { codecs: { dts: { status: 'ok' } } } });
+        const profile = mergeProfile(DEFAULT_PROFILE, { audio: { codecs: { dts: { status: 'unconfirmed' } } } });
         const result = evaluate({ probe, profile, preferences: { audioLanguages: ['eng'] } });
-        expect(result.audio.initialTrack).toMatchObject({ id: 3, codec: 'dts', language: 'eng', status: 'ok' });
-        expect(codes(result.warnings)).not.toContain('AUDIO_TRACK_SKIPPED');
+        expect(result.audio.initialTrack).toMatchObject({ id: 2, codec: 'eac3', language: 'por' });
+        expect(result.warnings.find((warning) => warning.code === 'AUDIO_TRACK_SKIPPED')).toMatchObject({ track: 3 });
+        const only = evaluate({ probe: await probeFixture('dts-core-mkv'), profile });
+        expect(only.audio.initialTrack).toMatchObject({ codec: 'dts', status: 'unconfirmed' });
+        expect(codes(only.warnings)).toContain('AUDIO_UNCONFIRMED');
+        expect(only.tier).toBe('demoted');
+    });
+
+    it('DTS after the Dolby codecs, by preference only: same-language E-AC-3 and AC-3 win over DTS-HD MA', async () => {
+        const profile = mergeProfile(DEFAULT_PROFILE, { audio: { preference: ['eac3-atmos', 'eac3', 'ac3', 'dts', 'aac'] } });
+        const result = evaluate({ probe: await probeHeader('mkv-multitrack-ac3-eac3joc-dtshdma-truehd-pgs.mkv'), profile, preferences: { audioLanguages: ['eng'] } });
+        expect(result.audio.initialTrack).toMatchObject({ id: 2, codec: 'ac3' });
     });
 
     it('DTS ruled out on the TV: DTS-only becomes mute', async () => {

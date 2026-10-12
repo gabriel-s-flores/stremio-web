@@ -1,7 +1,7 @@
 {
     "version": 1,
     "device": "LG OLED55C8PSA (webOS TV 4.0, Chromium 53)",
-    "basis": "Plano do port, seção 2 e decisões D6 a D8; PESQUISA.md, seção 4. A Fase 8 ajusta este arquivo na TV real.",
+    "basis": "Plano do port, seção 2 e decisões D6 a D8; PESQUISA.md, seção 4. A Fase 8 ajusta este arquivo na TV real: F8.4 confirmou o DTS (DTS-HD MA 5.1 tocou na C8, firmware 05.50.70).",
     "video": {
         "codecs": {
             "hevc": "ok",
@@ -44,7 +44,7 @@
             "flac": { "status": "ok", "maxChannels": 2 },
             "truehd": { "status": "unsupported" },
             "ac4": { "status": "unsupported" },
-            "dts": { "status": "unconfirmed" },
+            "dts": { "status": "ok" },
             "opus": { "status": "unknown" },
             "vorbis": { "status": "unknown" },
             "unknown": { "status": "unknown" }
@@ -54,7 +54,7 @@
             "DTS-UHD": "unsupported"
         },
         "atmosCodecs": ["eac3"],
-        "preference": ["eac3-atmos", "eac3", "ac3", "aac", "pcm", "flac", "mp3", "opus", "vorbis", "dts"]
+        "preference": ["eac3-atmos", "dts", "eac3", "ac3", "aac", "pcm", "flac", "mp3", "opus", "vorbis"]
     },
     "subtitles": {
         "text": "ok",
@@ -70,7 +70,10 @@
         "hdr10-on-tv": "HDR10 nesta TV",
         "hlg-on-tv": "HLG nesta TV",
         "sdr-on-tv": "SDR nesta TV",
-        "atmos": "Atmos"
+        "atmos": "Atmos",
+        "dts": "DTS",
+        "dts-hd": "DTS-HD",
+        "dts-hd-ma": "DTS-HD MA"
     },
     "scoring": {
         "labels": {
@@ -80,7 +83,10 @@
             "hdr10-on-tv": 10,
             "hlg-on-tv": 10,
             "sdr-on-tv": 0,
-            "atmos": 15
+            "atmos": 15,
+            "dts": 0,
+            "dts-hd": 0,
+            "dts-hd-ma": 0
         },
         "preferredLanguage": 20
     },

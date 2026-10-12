@@ -127,12 +127,12 @@ if (MODE === 'entrada') {
     check('itens de outros addons (sem sinais para as regras) ficam neutros: tier ok, nota 0, sem rótulos',
         others.every((item) => item.tier === 'ok' && item.score === '0' && item.labels.length === 0),
         others.map((item) => ({ file: item.file, name: item.name, tier: item.tier, score: item.score })));
-    check('rótulos: DV no MP4, HDR10 nesta TV + Atmos, DV P5/TrueHD/DTS/AV1 avisados',
+    check('rótulos: DV no MP4, HDR10 nesta TV + Atmos, DV P5/TrueHD/AV1 avisados; DTS toca (F8.4: sem aviso, "DTS-HD MA" com o probe)',
         byId(afterProbes, 'web-dv-p81-mp4').labels.join() === 'DV' &&
         byId(afterProbes, 'web-dv-hdr10-atmos-mkv').labels.join() === 'HDR10 nesta TV,Atmos' &&
         byId(afterProbes, 'remux-dv-p5-truehd').labels.join() === 'DV P5: cores erradas,TrueHD: pode ficar sem som' &&
         byId(afterProbes, 'remux-unnamed').labels.join() === 'DV P5: cores erradas,TrueHD: sem som nesta TV' &&
-        byId(afterProbes, 'dts-hd-ma').labels.join() === 'DTS a confirmar' &&
+        ['', 'DTS-HD MA'].indexOf(byId(afterProbes, 'dts-hd-ma').labels.join()) !== -1 && byId(afterProbes, 'dts-hd-ma').tier === 'ok' &&
         byId(afterProbes, 'web-av1').labels.join() === 'AV1: não toca nesta TV' && byId(afterProbes, 'web-av1').tier === 'hidden',
         afterProbes.map((item) => ({ id: idOfFile(item.file), tier: item.tier, source: item.source, labels: item.labels })));
     const focused = afterFocus.filter((item) => item.focused)[0];
