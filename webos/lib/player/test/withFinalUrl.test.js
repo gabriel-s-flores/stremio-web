@@ -78,10 +78,11 @@ describe('withFinalUrl', () => {
     });
 
     it('a final URL already known (a probe followed the redirect) loads at once', () => {
-        const { video, finalUrls, summary } = setup({ [RESOLVER]: FINAL });
+        const { video, finalUrls, summary, logs } = setup({ [RESOLVER]: FINAL });
         video.dispatch(load(RESOLVER));
         video.dispatch(setProp('paused', false));
         expect(summary()).toEqual(['load ' + FINAL, 'setProp:paused']);
+        expect(logs).toEqual(['[webos] player: final URL known (10.0.2.2:8099)']);
         expect(finalUrls.resolve).not.toHaveBeenCalled();
     });
 

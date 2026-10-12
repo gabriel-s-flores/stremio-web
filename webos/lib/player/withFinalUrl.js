@@ -18,6 +18,8 @@
 // localStorage key (read once, when the app starts): webos.player.finalUrl = "off" loads the
 // resolver's link, as before.
 
+const { hostOf } = require('../debrid-link');
+
 const FINAL_URL_KEY = 'webos.player.finalUrl';
 
 const isCommand = (action, commandName) => action !== null && typeof action === 'object' &&
@@ -77,6 +79,7 @@ const withFinalUrl = (Video, deps) => {
             const url = urlOfLoad(load);
             const known = finalUrls.peek(url);
             if (known !== null) {
+                info('final URL known' + (hostOf(known) ? ' (' + hostOf(known) + ')' : ''));
                 pass(load, known);
                 return;
             }
