@@ -143,6 +143,7 @@ try {
 const inPlayer = await soak.evaluate(`/^#\\/player\\//.test(location.hash)`).catch(() => false);
 if (!inPlayer) record('left-player-by-subtitle-step', { ok: false });
 await soak.sample('play+1', { video: await video() });
+if (args['worker-heap']) await soak.workerSnapshot('start').then((r) => { if (r.error) log('worker snapshot failed', r.error); }, (e) => log('worker snapshot failed', e.message));
 
 // The interactions, in turn. Each one is followed by a check that the video plays on.
 const INTERACTIONS = [
@@ -201,6 +202,7 @@ await soak.sample('leave-2-board');
 phase('after-playback-idle');
 await sleep(60000);
 await soak.sample('leave-2-board+60s');
+if (args['worker-heap']) await soak.workerSnapshot('end').then((r) => { if (r.error) log('worker snapshot failed', r.error); }, (e) => log('worker snapshot failed', e.message));
 phase('end');
 const final = await soak.evaluate('JSON.stringify({ hash: location.hash, errors: window.__soak.errors })').then(JSON.parse).catch(() => null);
 fs.writeFileSync(path.join(OUT, 'soak.json'), `${JSON.stringify({

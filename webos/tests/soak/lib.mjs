@@ -6,6 +6,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { APP_ID, PAGE_MEMORY, connect, remoteKey, sleep, statusSnapshot } from '../perf/lib.mjs';
 
 export { APP_ID, remoteKey, sleep };
@@ -183,6 +184,71 @@ export function createSoak({ ipk, out, port = process.env.EMU_CDP_PORT, device =
         return entry;
     };
 
+    // The heap of the core's worker (the JS side of wasm2js and the Rust core's glue), which performance.memory
+    // cannot see: a V8 heap snapshot of the worker through the inspector's Worker domain (Chromium 53 takes
+    // Worker.sendMessageToWorker without connectToWorker). ~10 MB of JSON; takes a minute or two in c8, and the
+    // worker allocates while it builds it: take it at the ends of a run, not between samples. Saves the raw
+    // snapshot (gzip) and a summary: total self size and the biggest constructors.
+    soak.workerSnapshot = async (label, timeoutMs = 600000) => {
+        const s = soak.session;
+        // disable + enable: the inspector announces the live workers again on enable.
+        await soak.send('Worker.disable', {}, 15000).catch(() => {});
+        s.events.length = 0;
+        await soak.send('Worker.enable', {}, 15000).catch(() => {});
+        await sleep(2000);
+        const live = new Map();
+        for (const e of s.events) {
+            if (e.method === 'Worker.workerCreated') live.set(e.params.workerId, e.params);
+            if (e.method === 'Worker.workerTerminated') live.delete(e.params.workerId);
+        }
+        const wid = [...live.keys()].pop();
+        if (!wid) return { label, error: 'no live worker' };
+        let id = 1000 + Math.floor(Math.random() * 1000);
+        const send = (method, params = {}) => { id++; return s.send('Worker.sendMessageToWorker', { workerId: wid, message: JSON.stringify({ id, method, params }) }, 30000).then(() => id); };
+        await send('HeapProfiler.enable');
+        await sleep(1000);
+        s.events.length = 0;
+        const t0 = Date.now();
+        const snapshotId = await send('HeapProfiler.takeHeapSnapshot', { reportProgress: false });
+        let done = false;
+        const chunks = [];
+        let taken = 0;
+        while (!done && Date.now() - t0 < timeoutMs) {
+            await sleep(1500);
+            const batch = s.events.splice(0, s.events.length);
+            for (const e of batch) {
+                if (e.method !== 'Worker.dispatchMessageFromWorker') continue;
+                const m = JSON.parse(e.params.message);
+                if (m.method === 'HeapProfiler.addHeapSnapshotChunk') chunks.push(m.params.chunk);
+                else if (m.id === snapshotId) done = true;
+            }
+            taken = chunks.length;
+        }
+        if (!done) return { label, error: `snapshot not finished in ${timeoutMs} ms (${taken} chunks)` };
+        const raw = chunks.join('');
+        fs.writeFileSync(path.join(out, `worker-heap-${label}.heapsnapshot.gz`), zlib.gzipSync(raw));
+        const snap = JSON.parse(raw);
+        const fields = snap.snapshot.meta.node_fields;
+        const stride = fields.length;
+        const iName = fields.indexOf('name'); const iSize = fields.indexOf('self_size'); const iType = fields.indexOf('type');
+        const types = snap.snapshot.meta.node_types[0];
+        const by = new Map();
+        let total = 0;
+        for (let i = 0; i < snap.nodes.length; i += stride) {
+            const size = snap.nodes[i + iSize];
+            total += size;
+            const type = types[snap.nodes[i + iType]];
+            const name = type === 'string' || type === 'concatenated string' || type === 'sliced string' ? `(${type})` : snap.strings[snap.nodes[i + iName]];
+            const key = `${type}:${String(name).slice(0, 60)}`;
+            const e = by.get(key) || { key, count: 0, bytes: 0 };
+            e.count++; e.bytes += size; by.set(key, e);
+        }
+        const top = [...by.values()].sort((a, b) => b.bytes - a.bytes).slice(0, 40);
+        const summary = { label, at: Date.now(), min: Math.round(((Date.now() - startedAt) / 60000) * 10) / 10, seconds: Math.round((Date.now() - t0) / 1000), nodes: snap.nodes.length / stride, totalMB: Math.round(total / 104857.6) / 10, top };
+        fs.writeFileSync(path.join(out, `worker-heap-${label}.json`), `${JSON.stringify(summary, null, 2)}\n`);
+        log('worker heap', label, `${summary.totalMB} MB in ${summary.nodes} nodes, ${summary.seconds} s`);
+        return summary;
+    };
     return soak;
 }
 

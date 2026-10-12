@@ -3,7 +3,7 @@
 // remote keys (webos/tools/remote.mjs) and the Magic Remote pointer (CDP mouse events + cursorStateChange),
 // and the memory taken at the Board after every cycle.
 //
-//   webos/tools/emu-run --profile c8 --timeout 90 -- webos/tests/perf/run.sh <out> soak-nav --ipk <ipk> --minutes 60
+//   webos/tools/emu-run --profile c8 --timeout 90 -- webos/tests/perf/run.sh <out> soak-nav --ipk <ipk> --minutes 60 [--worker-heap]
 //   (run.sh finds this script in webos/tests/soak; it adds the guest memory sampler, the phases and the OOM check)
 //
 // A cycle: Board (arrows) -> Details (OK, the stream list of the test addon, arrows) -> Back -> Discover (pointer
@@ -249,11 +249,13 @@ while (minutesSince(runStart) < MINUTES) {
     phase(`sample-${cycle}`);
     const focus = await soak.evaluate('window.__soak.focus()').catch(() => null);
     await soak.sample(`cycle-${cycle}`, { cycle, focus, cycleSeconds: Math.round((Date.now() - cycleStart) / 1000) });
+    if (cycle === 1 && args['worker-heap']) await soak.workerSnapshot('start').then((r) => { if (r.error) log('worker snapshot failed', r.error); }, (e) => log('worker snapshot failed', e.message));
 }
 
 phase('final-idle');
 await sleep(60000);
 await soak.sample('final-idle');
+if (args['worker-heap']) await soak.workerSnapshot('end').then((r) => { if (r.error) log('worker snapshot failed', r.error); }, (e) => log('worker snapshot failed', e.message));
 phase('end');
 const final = await soak.evaluate('JSON.stringify({ hash: location.hash, errors: window.__soak.errors })').then(JSON.parse).catch(() => null);
 fs.writeFileSync(path.join(OUT, 'soak.json'), `${JSON.stringify({
