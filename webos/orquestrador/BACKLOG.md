@@ -458,3 +458,12 @@ orquestrador** antes do merge (os agentes não usam a TV).
   ligadura" sem colisão no fake do `measureText` e a ligação `tvText`/`decodeMetaItem` com a tela (B1 e B2 da revisão
   c1 da F8.3).
 - **Aceite:** testes com mutações que caem; cenário novo no emulador; e2e da F6.4 sem regressão.
+
+### F8.6 · Detalhes otimista
+- **Depende de:** F8.2, F8.3 (merge)  · **Modelo:** O (high)
+- **Escopo:** na TV o título de Detalhes leva ~3 s porque espera o core wasm2js (Load → meta pronta 1–3 s; relatório
+  da F8.2). Sem mexer em `webos/core`: mostrar já na abertura o que o item do catálogo tem (nome, pôster/logo, ano,
+  tipo) na coluna de Detalhes, e trocar pela meta completa quando ela chegar, sem salto de layout nem perda de foco.
+  Nada de pré-carregar a meta no foco do pôster.
+- **Aceite:** no emulador c8, tempo até o nome visível < 0,8 s após o OK (A/B); visual e e2e sem regressão; na TV
+  (orquestrador): nome em ≲ 1,5 s.
