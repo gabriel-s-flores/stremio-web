@@ -3,7 +3,7 @@
 // remote keys (webos/tools/remote.mjs) and the Magic Remote pointer (CDP mouse events + cursorStateChange),
 // and the memory taken at the Board after every cycle.
 //
-//   webos/tools/emu-run --profile c8 --timeout 90 -- webos/tests/perf/run.sh <out> soak-nav --ipk <ipk> --minutes 60 [--worker-heap]
+//   webos/tools/emu-run --profile c8 --timeout 90 -- webos/tests/perf/run.sh <out> soak-nav --ipk <ipk> --minutes 60 [--worker-heap] [--idle]
 //   (run.sh finds this script in webos/tests/soak; it adds the guest memory sampler, the phases and the OOM check)
 //
 // A cycle: Board (arrows) -> Details (OK, the stream list of the test addon, arrows) -> Back -> Discover (pointer
@@ -234,7 +234,8 @@ while (minutesSince(runStart) < MINUTES) {
     const cycleStart = Date.now();
     log(`--- cycle ${cycle} (${Math.round(minutesSince(runStart))} of ${MINUTES} min)`);
     try {
-        await oneCycle();
+        // --idle: the control run, the same samples with no navigation at all (is it the harness or the app?).
+        if (args.idle) await sleep(110000); else await oneCycle();
     } catch (e) {
         log('cycle error', e.message);
         soak.note('cycle-error', { cycle, error: String(e.message).slice(0, 200) });
