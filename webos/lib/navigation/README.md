@@ -128,6 +128,17 @@ acontece durante a espera do foco inicial (como antes, na F4.1a). O `onMutation`
 na hora sem espiada pendente (as mutações chegam em rajadas enquanto os catálogos carregam). O hub não
 guarda nada além das listas de manipuladores.
 
+**Fora do núcleo (F8.2).** Na TV cada seta levava ~370 ms até o foco aparecer, com o perfil de CPU tomado
+por `focus()` e `getClientRects`. O núcleo não era a causa: o polyfill de `:focus-within`
+(`postcss-focus-within/browser`) tirava e repunha o atributo `[focus-within]` em toda a cadeia de
+ancestrais, até o `<html>`, a cada `focus`/`blur`, e cada troca num ancestral invalidava o estilo de todos
+os pôsteres da página. Isso forçava um recálculo inteiro dentro do `focus()` e na primeira leitura de layout
+depois dele (o `align` do Board). Hoje o polyfill é o `webos/polyfills/focus-within.js`, que só mexe nos
+nós que entram ou saem da cadeia. O resto vinha da transição de 100 ms do zoom do pôster: animar o
+`transform` repintava ~25 pôsteres por quadro (sem transição desde a F8.2, `webos/styles/app.less`). No
+perfil c8 do emulador, a seta foi de ~1,3 s a ~60 ms até o quadro e de ~600 ms a ~10 ms até o foco.
+Medição: `webos/tests/perf/keys.mjs`.
+
 ## As telas
 
 ### Board e Busca (`board.js`, `search.js`)

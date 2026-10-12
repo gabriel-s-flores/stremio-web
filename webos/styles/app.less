@@ -69,3 +69,12 @@ html:root body [class*='meta-item-link'][data-focus-visible-added] [class*='post
         display: flex;
     }
 }
+
+// F8.2: the poster grows at once, without the 100 ms transition of its zoom (src/components/MetaItem/styles.less).
+// Animating that transform made Chromium 53 repaint ~25 posters on every frame of the transition (a
+// composited layer for the animation, and the posters painted after it with it): ~1 s per arrow on the
+// Board in the C8 profile of the emulator, ~45 ms without it. Matched by prefix: LiveTvContinueWatchingItem
+// imports the upstream class names of MetaItem, so a MetaItem override would split them.
+html:root body [class*='meta-item-container'] [class*='poster-image-layer'] {
+    transition: none;
+}
