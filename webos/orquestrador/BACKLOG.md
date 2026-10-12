@@ -400,3 +400,51 @@ Modelos: **O** = `claude-opus-5-5`, **S** = `claude-sonnet-5-5`; effort entre pa
 - **Critérios:** boot até o Board ≤ 10 s no perfil C8; memória do app ≤ 250 MB; bateria de mídia e
   ponta a ponta passando; nenhuma tarefa bloqueada sem decisão. Aprovado → parar e avisar o Gabriel
   para a Fase 8 (TV real).
+
+## Fase 8 — correções vindas da TV real (LG OLED55C8PSA)
+
+Insumos: `~/webos-tv-sdk/orquestrador/tarefas/F8/notas.md` (medições e capturas na TV, firmware 05.50.70,
+3 GB de RAM, `devicePixelRatio` 2). Os agentes trabalham no emulador; **a validação na TV é feita pelo
+orquestrador** antes do merge (os agentes não usam a TV).
+
+### F8.1 · Stream começa rápido: link final do debrid e watchdog tolerante
+- **Depende de:** G7  · **Modelo:** O (high)
+- **Escopo:** na TV, o pipeline de mídia leva 1,5–3 min (ou nunca começa num `<video>` puro) quando recebe o
+  link do Torrentio (`/resolve/…` → 302 para o RD); com o link final começa em ~6 s, inclusive retomando no
+  meio do filme. O app passa a resolver o redirect (fetch com `Range: bytes=0-0`, `response.url`, timeout,
+  sem baixar corpo; reaproveitar o probe da F5.2/F6.2 quando já seguiu o redirect) e entrega o link final ao
+  `WebOsVideo`. Conferir se a liberação silenciosa (F5.6) e o probe concorrente atrasam o início. O watchdog
+  de 60 s da F5.6 não pode derrubar um carregamento que ainda progride (arquivos grandes com moov no fim).
+- **Aceite:** no emulador, com o `media-server.mjs` imitando um resolvedor com 302, o `<video>` recebe o link
+  final e o tempo até `playing` não inclui o redirect; testes; e2e da F6.4 sem regressão. Na TV (orquestrador):
+  1ª imagem de um stream do Torrentio+RD em ≲ 10 s.
+
+### F8.2 · Navegação e abertura de telas rápidas na TV
+- **Depende de:** G7  · **Modelo:** O (high)
+- **Escopo:** na TV cada seta leva ~370 ms até o foco aparecer; o perfil de CPU mostra quase tudo em layout
+  forçado (`getClientRects` + `focus()`), não em JS. Abrir Detalhes leva 0,9 s até a rota e 3,3 s até o título.
+  Reduzir o custo de layout por tecla (limitar candidatos da busca espacial ao contêiner, ler retângulos uma
+  vez, `contain` nas faixas/listas, rolar sem forçar layout) e o custo de abrir Detalhes.
+- **Aceite:** no emulador (perfil c8), latência tecla→quadro e tempo de abertura de Detalhes medidos antes e
+  depois com A/B; roteiros de navegação (F4.x) e e2e sem regressão. Na TV (orquestrador): seta ≲ 120 ms de
+  mediana; Detalhes com título em ≲ 1,5 s.
+
+### F8.3 · Enquadramento na TV (densidade de pixels 2)
+- **Depende de:** G7  · **Modelo:** O (high)
+- **Escopo:** a TV renderiza com `devicePixelRatio` 2 (o emulador, 1) e zoom 1,75; em Detalhes os nomes dos
+  streams são cortados, os itens têm espaço demais, os rótulos ficam soltos, o foco envolve o painel inteiro,
+  "Directors" é cortado pelos botões, emojis viram quadrados. Revisar a escala da F2.6 para dpr 2 e o layout
+  de Detalhes/lista de streams; trocar emojis sem glifo na fonte da TV.
+- **Aceite:** capturas no emulador (e simulando dpr 2, se possível) sem cortes; regressão visual da F2.7
+  atualizada com justificativa. Na TV (orquestrador): capturas de Board, Detalhes, lista de streams, Player,
+  Settings sem cortes nem sobreposição.
+
+### F8.4 · Formatos e mensagens que a TV revelou
+- **Depende de:** G7  · **Modelo:** O (high)
+- **Escopo:** (1) Dolby Vision em MP4 (P8.1) toca como HDR na C8 — descobrir como ativar DV no pipeline
+  (opção de mídia/Luna no load) ou documentar; (2) a C8 toca **DTS** (DTS-HD MA 5.1 testado): aceitar DTS
+  nas regras C8 (`webos/lib/c8-rules`), mantendo a preferência adequada; (3) reconhecer os vídeos de aviso do
+  Torrentio (`/videos/failed_*`, `downloading_*`) e mostrar a mensagem certa; (4) esconder "Open in external
+  player" no webOS.
+- **Aceite:** testes das regras e das mensagens; no emulador, os cenários de faixas e de erro; na TV
+  (orquestrador): DV em MP4 com selo DV (ou limitação documentada), DTS escolhido quando for o melhor.
