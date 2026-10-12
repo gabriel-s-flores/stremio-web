@@ -20,19 +20,20 @@ const decodeMetaItem = (metaItem) => {
 
 const useMetaDetails = (urlParams) => {
     const metaDetails = useUpstreamMetaDetails(urlParams);
+    const { type, id, videoId } = urlParams || {};
     // Only the streams page (a video in the path): the episodes list of a series has nothing to show
     // without the meta. Not Live TV (its own page).
     const preview = React.useMemo(() => (
-        typeof document !== 'undefined' && urlParams.type !== 'tv' && typeof urlParams.videoId === 'string' && urlParams.videoId !== '' ?
-            findPreview(document, urlParams.type, urlParams.id)
+        typeof document !== 'undefined' && type !== 'tv' && typeof videoId === 'string' && videoId !== '' ?
+            findPreview(document, type, id)
             :
             null
-    ), [urlParams.type, urlParams.id, urlParams.videoId]);
+    ), [type, id, videoId]);
     return React.useMemo(() => {
         const streams = hideTorrentStreams(metaDetails.streams);
         // The state may still be the one of the page opened before (the Load not processed yet).
         const selected = metaDetails.selected;
-        const current = selected === null || (selected.metaPath && selected.metaPath.id === urlParams.id && selected.metaPath.type === urlParams.type);
+        const current = !selected || (selected.metaPath && selected.metaPath.id === id && selected.metaPath.type === type);
         const metaItem = optimisticMetaItem(decodeMetaItem(metaDetails.metaItem), current ? preview : null);
         return streams === metaDetails.streams && metaItem === metaDetails.metaItem ? metaDetails : { ...metaDetails, streams, metaItem };
     }, [metaDetails, preview]);
