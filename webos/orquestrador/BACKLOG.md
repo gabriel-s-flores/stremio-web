@@ -449,14 +449,16 @@ orquestrador** antes do merge (os agentes não usam a TV).
 - **Aceite:** testes das regras e das mensagens; no emulador, os cenários de faixas e de erro; na TV
   (orquestrador): DV em MP4 com selo DV (ou limitação documentada), DTS escolhido quando for o melhor.
 
-### F8.5 · Integração F8.1 × F8.4 e testes que faltaram na F8.3
-- **Depende de:** F8.1, F8.3, F8.4 (merge das três)  · **Modelo:** S (medium)
+### F8.5 · Integração F8.1 × F8.4, testes que faltaram (F8.2, F8.3) e limpeza
+- **Depende de:** F8.1–F8.4 (merge das quatro)  · **Modelo:** S (medium)
 - **Escopo:** (1) `final-url` `isKeepable` também recusa `debridLink.noticeOf(finalUrl)` (aviso servido de outro
   host não fica guardado; achado B1 da revisão c2 da F8.1); se o link final for um aviso conhecido, falhar logo com
   a mensagem da F8.4 em vez de tocar o MP4 do aviso; (2) cenário de emulador em que o `/redirect/` vai para **outra**
   origem, cobrindo o `known` vindo do probe da lista (B2 da c2 da F8.1); (3) testes da F8.3: o ramo "bandeira sem
   ligadura" sem colisão no fake do `measureText` e a ligação `tvText`/`decodeMetaItem` com a tela (B1 e B2 da revisão
-  c1 da F8.3).
+  c1 da F8.3); (4) da revisão c1 da F8.2: README da navegação com as medianas finais (697→32 ms, 297→7 ms),
+  testes jsdom do polyfill de focus-within (foco redirecionado num handler de `focus`; elemento focado removido)
+  e remover a dependência direta `postcss-focus-within`, que ficou sem uso.
 - **Aceite:** testes com mutações que caem; cenário novo no emulador; e2e da F6.4 sem regressão.
 
 ### F8.6 · Detalhes otimista
