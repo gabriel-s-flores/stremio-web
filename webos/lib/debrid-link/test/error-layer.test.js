@@ -16,9 +16,15 @@ const ERROR_DIR = path.join(__dirname, '..', '..', '..', '..', 'src', 'routes', 
 jest.mock('../../../../src/routes/Player/Error/Error.js', () => {
     const MockReact = require('react');
     const h = MockReact.createElement;
-    const Upstream = MockReact.forwardRef(({ className, code, message }, ref) => h('div', { ref, className },
+    // Like the upstream one: the code 2 hint, and the "Open in external player" button when the stream
+    // has the external player playlist.
+    const Upstream = MockReact.forwardRef(({ className, code, message, stream }, ref) => h('div', { ref, className },
         h('div', { className: 'error-label' }, message),
-        code === 2 ? h('div', { className: 'error-sub' }, 'external player hint') : null));
+        code === 2 ? h('div', { className: 'error-sub' }, 'external player hint') : null,
+        stream && stream.deepLinks && stream.deepLinks.externalPlayer && stream.deepLinks.externalPlayer.playlist && stream.deepLinks.externalPlayer.fileName ?
+            h('a', { className: 'playlist-button', href: stream.deepLinks.externalPlayer.playlist }, 'PLAYER_OPEN_IN_EXTERNAL')
+            :
+            null));
     Upstream.propTypes = {};
     return Upstream;
 });
@@ -105,6 +111,35 @@ describe('Error.webos', () => {
         await render({ code: 81, message: 'Error occurred when downloading', stream: null });
         expect(debridLink.diagnose).toHaveBeenCalledWith(stream, 81);
         expect(container.querySelector('.error-label').textContent).toContain('WEBOS_LINK_NETWORK|Could not reach');
+    });
+
+    it('no external player on the TV (F8.4): no "Open in external player" button and no code 2 hint', async () => {
+        const withLinks = Object.assign({}, stream, {
+            deepLinks: { player: '#/player/x', externalPlayer: { playlist: 'data:application/vnd.apple.mpegurl;base64,AA', fileName: 'playlist.m3u' } },
+        });
+        debridLink.diagnose.mockResolvedValue({ kind: 'ok', status: 206, source: 'request', host: 'cdn.example' });
+        await render({ code: 2, message: 'Stream is not supported', stream: withLinks });
+        expect(container.querySelector('.error-label').textContent).toBe('Stream is not supported');
+        expect(container.querySelector('.playlist-button')).toBeNull();
+        expect(container.querySelector('.error-sub')).toBeNull();
+        // The link check still gets the real stream and code.
+        expect(debridLink.diagnose).toHaveBeenCalledWith(withLinks, 2);
+    });
+
+    it('no external player button either when the link is the problem', async () => {
+        const withLinks = Object.assign({}, stream, { deepLinks: { externalPlayer: { playlist: 'data:x', fileName: 'playlist.m3u' } } });
+        debridLink.diagnose.mockResolvedValue({ kind: 'expired', status: 410, source: 'request', host: 'cdn.example' });
+        await render({ code: 83, message: 'Video is not supported', stream: withLinks });
+        expect(container.querySelector('.playlist-button')).toBeNull();
+        expect(container.querySelector('.error-label').textContent).toContain('WEBOS_LINK_EXPIRED');
+    });
+
+    it('a Torrentio notice (debrid access denied) replaces "Stream failed to load" with what the notice says', async () => {
+        debridLink.diagnose.mockResolvedValue({ kind: 'notice-access-denied', status: 206, source: 'request', redirected: true, host: 'torrentio.strem.fun' });
+        await render({ code: 3, message: 'Stream failed to load', stream });
+        expect(container.querySelector('.error-label').textContent).toContain('WEBOS_LINK_NOTICE_ACCESS_DENIED|The debrid service denied access');
+        expect(container.querySelector('.error-sub').textContent).toContain('WEBOS_LINK_NOTICE_ACCESS_DENIED_HINT|Check the API key');
+        expect(container.firstChild.getAttribute('data-link-problem')).toBe('notice-access-denied');
     });
 
     it('checks nothing for a stream without an HTTP URL', async () => {

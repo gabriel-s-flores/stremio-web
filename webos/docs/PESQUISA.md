@@ -82,14 +82,14 @@ O `<video src="…">` com URL direta vai para o uMediaServer, o pipeline nativo 
 | VP9 Profile 2 | Talvez | só em MKV ou via MSE | [?] |
 | HDR10, HLG | Sim | | [P] |
 | HDR10+ | Toca como HDR10 | | [P] |
-| **Dolby Vision P5 e P8.1 em MP4** | Sim | | [P] |
+| **Dolby Vision P5 e P8.1 em MP4** | P5: sim (relato com `dvhe`). **P8.1 (`hvc1`+`dvvC`) pelo `<video src>`: HDR10 na TV** | Fase 8, dois arquivos; o web app não tem como pedir DV ao pipeline (F8.4) | [P] / [TV] |
 | **Dolby Vision em MKV** | **Não ativa DV.** P7 e P8.1 caem para HDR10; **P5 fica com cores erradas** (não tem camada base HDR10) | DV em MKV só no webOS 25 | [P] |
 | DV P7 | Só MP4 dual-track (muxer antigo) | | [?] |
 | DV em TS, HLS ou MSE | Contraditório ou desconhecido | o MSE do Chromium 53 da LG não aceita `dvh1/dvhe` | [?] [TV] |
 | AAC, AC3, E-AC3 5.1/7.1 | Sim | | [V] |
 | **E-AC3 Atmos (JOC)** | Decodifica (Atmos virtual nos alto-falantes) | pelo ARC: [TV] | [P] |
 | **TrueHD (e TrueHD Atmos)** | **Não** (fica mudo) | | [P] |
-| DTS, DTS-HD | Contraditório; no máximo o núcleo DTS | a spec 4.0 lista DTS em MKV; o suporte da LG diz "só USB/HDMI" | [?] [TV] |
+| DTS, DTS-HD | **Sim:** DTS-HD MA 5.1 em MKV tocou na TV (Fase 8) | `tv.hw.dtsType = "DTS HD"`; aceito nas regras na F8.4 | [TV] |
 | FLAC | Só 2 canais | | [V] |
 | Opus, Vorbis | Desconhecido | | [?] |
 | LPCM | Sim | 2 canais pelo ARC | [P] |

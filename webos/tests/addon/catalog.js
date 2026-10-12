@@ -46,7 +46,9 @@ const STREAMS = [
         name: '[RD+] Teste\n4k DV',
         description: `${TITLE}.2160p.WEB-DL.DV.HEVC-GRP.mp4\n💾 14.2 GB ⚙️ Teste`,
         media: 'fixtures/dv-p81-mp4.mp4',
-        expect: { name: ['ok', 'dv'], probe: ['ok', 'dv'] },
+        // "DV" alone in the name reads as P5 (DV active in MP4); the probe finds P8.1, which the C8
+        // shows as HDR10 (F8.4).
+        expect: { name: ['ok', 'dv'], probe: ['ok', 'hdr10-on-tv'] },
     },
     {
         id: 'web-dv-p5-mp4',
@@ -60,7 +62,7 @@ const STREAMS = [
         name: '[RD+] Teste\n1080p',
         description: `${TITLE}.1080p.BluRay.DTS-HD.MA.7.1-GRP.mkv\n💾 16.3 GB ⚙️ Teste`,
         media: 'headers/dts-hd-ma.mkv',
-        expect: { name: ['demoted', 'AUDIO_UNCONFIRMED_POSSIBLE'], probe: ['demoted', 'AUDIO_UNCONFIRMED'] },
+        expect: { name: ['ok'], probe: ['ok', 'dts-hd-ma'] },
     },
     {
         id: 'web-hevc10-ddp',

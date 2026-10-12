@@ -4,7 +4,7 @@ Motor de regras de capacidade da LG OLED55C8PSA (webOS TV 4.0). Recebe a saída 
 
 - a **faixa de áudio inicial**: uma que toque na TV, no idioma preferido do usuário;
 - os **rótulos**: "DV", "HDR10 nesta TV", "Atmos"…;
-- os **avisos**: DV P5 em MKV, TrueHD sem alternativa, DTS a confirmar, AV1…;
+- os **avisos**: DV P5 em MKV, TrueHD sem alternativa, AV1…;
 - a **nota** e a **camada** (`tier`), que a ordenação da lista de streams (F6.2) usa.
 
 São as decisões D6 a D8 do [plano](../../docs/PLANO-PORT-WEBOS4.md) (Fase 5, item 3) aplicadas à tabela "O que a C8 entrega" (seção 2). Os fatos da TV ficam em [`perfil-c8.json`](perfil-c8.json), e a Fase 8 os ajusta por configuração, sem mudar código (D6).
@@ -93,10 +93,11 @@ O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os doi
 
 | `code` | Texto padrão | Quando |
 |---|---|---|
-| `dv` | DV | Dolby Vision ativo na C8: MP4 com P5, P8.1 ou P7 dual-track |
+| `dv` | DV | Dolby Vision ativo na C8: MP4 com P5 ou P7 dual-track. O P8.1 em MP4 saiu na F8.4 (a TV mostrou HDR10) |
 | `hdr10-on-tv`, `hlg-on-tv`, `sdr-on-tv` | HDR10 nesta TV… | O arquivo tem DV (ou HDR10+), mas a C8 mostra a camada base: DV em MKV P7/P8.x, DV em MP4 fora da lista acima, HDR10+ |
 | `hdr10`, `hlg` | HDR10, HLG | HDR10 ou HLG puro |
 | `atmos` | Atmos | A faixa inicial é DD+ Atmos (E-AC-3 JOC). TrueHD Atmos não ganha o rótulo (não toca) |
+| `dts-hd-ma`, `dts-hd`, `dts` | DTS-HD MA, DTS-HD, DTS | A faixa inicial (do probe) é DTS, pela variante lida: DTS-HD MA (o DTS:X também, porque a C8 toca a parte DTS-HD MA), outro DTS-HD (HRA), ou só o núcleo. Nota 0: informa, não reordena (F8.4) |
 
 ### Avisos
 
@@ -111,11 +112,11 @@ O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os doi
 | `DV_BASE_LAYER_UNKNOWN` | info | −10 | DV de perfil conhecido (não P5) com camada base desconhecida |
 | `AUDIO_UNSUPPORTED` | demote | −200 | Probe: nenhuma faixa toca (TrueHD-only, DTS sem núcleo, FLAC com mais de 2 canais) |
 | `AUDIO_UNSUPPORTED_POSSIBLE` | demote | −60 | Nome: só cita codecs que não tocam (TrueHD) |
-| `AUDIO_UNCONFIRMED` | demote | −40 | Probe: a única opção é DTS (D8: a confirmar) |
-| `AUDIO_UNCONFIRMED_POSSIBLE` | demote | −20 | Nome: o melhor codec citado é DTS |
+| `AUDIO_UNCONFIRMED` | demote | −40 | Probe: a única opção tem status `unconfirmed`. No perfil padrão nenhum codec está assim desde a F8.4 (era o DTS, D8) |
+| `AUDIO_UNCONFIRMED_POSSIBLE` | demote | −20 | Nome: o melhor codec citado tem status `unconfirmed` |
 | `AUDIO_UNKNOWN` | demote | −40 | Probe: a única opção é um codec de suporte desconhecido (Opus, Vorbis) |
 | `AUDIO_ONLY_SECONDARY` | demote | −200 | Probe: a faixa principal não toca, e só sobra um comentário ou audiodescrição |
-| `AUDIO_TRACK_SKIPPED` | info | 0 | A faixa que um player comum escolheria (idioma preferido ou faixa padrão) não toca ou é DTS, e o motor escolheu outra |
+| `AUDIO_TRACK_SKIPPED` | info | 0 | A faixa que um player comum escolheria (idioma preferido ou faixa padrão) não toca ou tem suporte não confirmado, e o motor escolheu outra |
 | `SUBTITLES_HIDDEN` | info | 0 | Há legendas bitmap (PGS, VobSub, DVB), que ficam ocultas |
 | `PROBE_IGNORED` | info | 0 | Saída do probe em outra versão de formato |
 
@@ -128,7 +129,9 @@ O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os doi
 - `dolby-vision`: DV ativo.
 - `base-layer`: a C8 mostra a camada base. HDR10 ou HLG viram rótulo "nesta TV"; `none` (P5) vira `wrong-colors`, com aviso.
 - MKV e WebM são sempre `base-layer`. Num contêiner desconhecido (só nome, sem extensão), vale o de `unknownContainer` (`mkv`), por ser o caso mais conservador.
-- Pelo nome, sem perfil citado: em MP4, onde P5 e P8.1 são ativos, conta como DV ativo. No resto, se o nome ou a cor PQ/HLG do probe indicar a camada base, ela é usada; senão, "pode ser P5".
+- Sem perfil conhecido (nome com `DV` sozinho), a camada base indica o perfil provável: nenhuma ou desconhecida é o P5 das releases de streaming, HDR10 é o P8.1 (HLG 8.4, SDR 8.2). Num MP4, `DV` sozinho conta então como DV ativo (P5), e `DV HDR10` como "HDR10 nesta TV" (P8.1). No resto, se o nome ou a cor PQ/HLG do probe indicar a camada base, ela é usada; senão, "pode ser P5".
+
+**DV P8.1 em MP4 vira HDR10 na C8 (F8.4).** Na Fase 8 a TV mostrou HDR10, e não DV, em dois MP4 P8.1 (`hvc1` + `dvvC`) tocados pelo `<video src>`. Não há como o web app pedir o DV ao pipeline do webOS 4: o `mediaOption` só é lido do `type` de um `<source>`, nenhuma das chaves que o pipeline aceita trata de DV, e o `codecs` do `type` não chega ao pipeline (detalhes e fontes no relatório da F8.4). O perfil passou o `8.1` em MP4 para `base-layer`. O P5 em MP4 continua `dolby-vision`, porque é o único caso de DV relatado na C8 (`dvhe`), mas ainda não foi visto pelo app na TV. Se a TV mostrar DV num P8.1, basta voltar `video.dolbyVision.mp4['8.1']` para `dolby-vision`.
 
 **Probe ambíguo: o nome só decide quando o probe não tem evidência.** No MP4, a configuração DV fica na sample entry, e o probe decide sozinho. No MKV HEVC, o probe pode deixar o DV passar: com `DV_UNKNOWN` (1º quadro não lido) ou com uma NAL malformada lida como "sem RPU" (sem aviso). Por isso, quando o probe não achou DV num MKV com HEVC (ou sem vídeo identificado), o DV citado no nome só entra na conta se o probe for **ambíguo**:
 
@@ -155,14 +158,16 @@ Se o probe leu o 1º quadro e a cor é PQ ou HLG, existe uma camada base HDR10/H
 
 1. Tocável: `unsupported` (TrueHD, AC-4, DTS Express, DTS-UHD, FLAC com mais de 2 canais) nunca é escolhida.
 2. Faixa principal antes de comentário ou audiodescrição. Isso vem do flag do MKV (`commentary`, `visualImpaired`) ou do nome da faixa (`comment`, `comentário`, `commentaire`, `kommentar`, `audio description`), porque o MP4 não tem o flag. Um DTS principal ganha de um comentário AC-3.
-3. O status do codec: `ok` antes de `unconfirmed` (DTS) antes de `unknown`.
+3. O status do codec: `ok` antes de `unconfirmed` antes de `unknown`.
 4. O idioma: a posição em `audioLanguages`; sem correspondência, vale o idioma da faixa padrão do arquivo.
-5. A preferência de codec do perfil: `eac3-atmos` (DD+ Atmos), `eac3`, `ac3`, `aac`…
+5. A preferência de codec do perfil: `eac3-atmos` (DD+ Atmos), `dts`, `eac3`, `ac3`, `aac`…
 6. A flag `default`, os canais e a ordem no arquivo.
 
-O status vem antes do idioma porque D8 manda preterir o DTS até a Fase 8, mesmo no idioma preferido. Pode acontecer de a única faixa tocável ser um comentário, enquanto a principal não toca (TrueHD principal + comentário AC-3). Isso não é alternativa (linha 7 da tabela): o comentário fica como faixa inicial, mas sai o aviso `AUDIO_ONLY_SECONDARY`, que rebaixa, e o bônus de idioma não conta. Quando o probe não leu o 1º quadro (`atmos: null`), um `Atmos` no nome junto de DD+ marca como Atmos uma única faixa E-AC-3: a padrão, ou senão a primeira (`atmosSource: 'name'`). Uma dublagem raramente é Atmos.
+O status vem antes do idioma para que um codec "a confirmar" perca até no idioma preferido (era o caso do DTS até a F8.4). Pode acontecer de a única faixa tocável ser um comentário, enquanto a principal não toca (TrueHD principal + comentário AC-3). Isso não é alternativa (linha 7 da tabela): o comentário fica como faixa inicial, mas sai o aviso `AUDIO_ONLY_SECONDARY`, que rebaixa, e o bônus de idioma não conta. Quando o probe não leu o 1º quadro (`atmos: null`), um `Atmos` no nome junto de DD+ marca como Atmos uma única faixa E-AC-3: a padrão, ou senão a primeira (`atmosSource: 'name'`). Uma dublagem raramente é Atmos.
 
 Sem probe, o status de áudio sai dos codecs citados no nome. Como um remux costuma ter uma faixa compatível que o nome não cita, o rebaixamento do áudio é menor (`*_POSSIBLE`), e `needsProbe` fica `true`.
+
+**DTS na C8 (F8.4).** Na Fase 8 a TV tocou uma faixa DTS-HD MA 5.1 (MKV, trocada pelo menu), e a plataforma declara `tv.hw.dtsType = "DTS HD"`. O DTS passou de `unconfirmed` a `ok`, e a preferência ficou **DD+ Atmos > DTS > E-AC-3 > AC-3 > AAC…**. O DD+ Atmos fica na frente porque é o único que a C8 reproduz como Atmos (selo e virtualização). O DTS vem antes do E-AC-3 e do AC-3 porque, num remux, ele costuma ser a faixa original (DTS-HD MA sem perdas, ou um núcleo de 1,5 Mbps), e o Dolby, a faixa de compatibilidade (AC-3 de 640 kbps). Nos alto-falantes da TV (P2) a diferença é pequena. Para voltar o DTS para depois dos Dolby, basta um ajuste: `{ audio: { preference: ['eac3-atmos', 'eac3', 'ac3', 'dts', 'aac', …] } }`. Como o idioma vem antes do codec, um DTS no idioma preferido ganha de um DD+ Atmos em outro idioma. DTS Express (sem núcleo) e DTS-UHD continuam `unsupported`.
 
 ## Perfil (`perfil-c8.json`)
 
@@ -181,7 +186,7 @@ Sem probe, o status de áudio sai dos codecs citados no nome. Como um remux cost
 Na Fase 8, os ajustes entram por `mergeProfile(DEFAULT_PROFILE, ajustes)`: objetos se fundem, e valores e listas são substituídos. Exemplos:
 
 ```js
-mergeProfile(DEFAULT_PROFILE, { audio: { codecs: { dts: { status: 'ok' } } } });          // DTS confirmado na TV
+mergeProfile(DEFAULT_PROFILE, { audio: { codecs: { dts: { status: 'unconfirmed' } } } }); // DTS de volta a "a confirmar" (D8)
 mergeProfile(DEFAULT_PROFILE, { warnings: { DV_WRONG_COLORS: { severity: 'hide' } } });   // ocultar P5 em MKV
 ```
 
@@ -195,7 +200,7 @@ npx eslint webos/lib/c8-rules               # o pnpm lint só cobre src/
 - `test/table.test.js`: um `describe` por linha da tabela "O que a C8 entrega" (Linhas 1 a 11) e por decisão (D6 a D8). Usa as fixtures reais do probe (`../header-probe/__fixtures__`) e o catálogo da F0.10 (`webos/tests/media/headers`). Onde não existe amostra real do formato puro (HDR10 e HLG sem DV, VobSub, P7 sem a FATE), usa uma saída real do probe com um campo trocado, e o nome do teste diz "derived". Os testes P7 com as fixtures FATE são pulados com aviso quando elas faltam (`webos/lib/header-probe/tools/fetch-fate-fixtures.sh` as grava).
 - `test/audio.test.js`: escolha da faixa inicial (ordem de idiomas, códigos 639-1/639-2/BCP 47, comentário, FLAC multicanal).
 - `test/name.test.js`: sinais do nome em formatos reais de addons e falsos positivos (`DVDRip`, "Lua de Mel", `DDP7.1`).
-- `test/profile.test.js`: valores do perfil e ajustes da Fase 8 (DTS confirmado ou descartado, P5 oculto, AV1 rebaixado, DV em MKV ativo).
+- `test/profile.test.js`: valores do perfil e ajustes da Fase 8 (DTS de volta a "a confirmar", depois dos Dolby ou descartado; P5 oculto, AV1 rebaixado, DV em MKV ativo).
 
 ## Ferramenta
 

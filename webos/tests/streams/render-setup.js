@@ -209,8 +209,8 @@ const createHarness = (variant) => {
 };
 
 const NAME_ORDER = [
-    'web-dv-p81-mp4', 'web-dv-p5-mp4', 'web-dv-hdr10-atmos-mkv', 'uncached-hdr10', 'remux-unnamed', 'web-hevc10-ddp',
-    'web-multi-mkv', 'web-unnamed-atmos', 'web-h264-aac', 'dts-hd-ma', 'truehd-only', 'remux-dv-p5-truehd', 'web-av1',
+    'web-dv-p81-mp4', 'web-dv-p5-mp4', 'web-dv-hdr10-atmos-mkv', 'uncached-hdr10', 'remux-unnamed', 'dts-hd-ma',
+    'web-hevc10-ddp', 'web-multi-mkv', 'web-unnamed-atmos', 'web-h264-aac', 'truehd-only', 'remux-dv-p5-truehd', 'web-av1',
 ];
 
 module.exports = { React, act, ranking, headerProbe, createHarness, NAME_ORDER, LIST_SETTINGS: ranking.LIST_SETTINGS };

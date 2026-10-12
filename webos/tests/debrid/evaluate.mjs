@@ -27,6 +27,9 @@ const SCENARIOS = {
     'le-host': { kind: 'host', noServer: true, label: /The TV could not connect to the server of this link/, hint: /certificate may not be accepted.*Pick another stream/ },
     // No internet: navigator.onLine is false.
     'offline-drop': { kind: 'network', noServer: true, label: /Could not reach the server of this link/, hint: /Check the internet connection of the TV, then go back and open the stream again/ },
+    // F8.4: the Torrentio-like resolver redirects to its notice video (206, does not play).
+    'torrentio-access': { kind: 'notice-access-denied', label: /The debrid service denied access to the account set in the addon/, hint: /API key.*configure the addon again/, notice: 'failed_access_v3' },
+    'torrentio-downloading': { kind: 'notice-downloading', label: /still downloading this file/, hint: /Wait a few minutes/, notice: 'downloading_v3' },
 };
 
 const checks = [];
@@ -46,6 +49,12 @@ if (scenario === 'redirect-ok') {
         check('the hint says what to do', typeof last.hint === 'string' && expected.hint.test(last.hint), last.hint);
         check('the check is logged with the kind and no URL', console_.some((c) => new RegExp(`link check ${expected.kind}`).test(c.text) && !/https?:/.test(c.text)), console_);
         check('the message does not send the user to the internet connection when the TV has internet', expected.kind === 'network' || !/internet/i.test(`${last.label} ${last.hint}`), last);
+        // F8.4: no external player on the TV.
+        check('no "Open in external player" button and no external player hint', !(last.buttons || []).some((text) => /external/i.test(text)) && !/external player/i.test(`${last.label} ${last.hint}`), last.buttons);
+        if (expected.notice) {
+            check(`the media server served the notice video ${expected.notice}.mp4 (after the resolver's 302)`, new RegExp(`/videos/${expected.notice}\\.mp4`).test(serverLog), null);
+            check('the debrid key never reaches the console', !console_.some((c) => /f84secret/.test(c.text)), null);
+        }
         // The source of the answer: the Player's own probe already got the HTTP status (no new request
         // then), otherwise one 1-byte Range request went through the redirect to the failing host.
         const source = (console_.map((c) => /link check \S+ \S+ (\S+)/.exec(c.text)).filter(Boolean)[0] || [])[1];

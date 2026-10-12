@@ -38,7 +38,7 @@ describe('test addon: names only (the list as it opens)', () => {
         });
     });
 
-    it('DV in MP4 first, then HDR10 nesta TV + Atmos; DTS, TrueHD and DV P5 in MKV demoted; AV1 last', () => {
+    it('DV in MP4 first, then HDR10 nesta TV + Atmos; DTS plays (F8.4); TrueHD and DV P5 in MKV demoted; AV1 last', () => {
         const ranked = ranking.createRanker({ rules }).rank(media.streams);
         expect(idsOf(ranked)).toEqual([
             'web-dv-p81-mp4',
@@ -46,11 +46,11 @@ describe('test addon: names only (the list as it opens)', () => {
             'web-dv-hdr10-atmos-mkv',
             'uncached-hdr10',
             'remux-unnamed',
+            'dts-hd-ma',
             'web-hevc10-ddp',
             'web-multi-mkv',
             'web-unnamed-atmos',
             'web-h264-aac',
-            'dts-hd-ma',
             'truehd-only',
             'remux-dv-p5-truehd',
             'web-av1',
@@ -81,10 +81,12 @@ describe('test addon: with the header probe', () => {
             .forEach((id) => expect(media.streams.some((stream) => entryOf(stream).id === id && probes.has(stream.url))).toBe(true));
     });
 
-    it('the probe moves the unnamed REMUX (DV P5 + TrueHD) down and gives the unnamed 720p its Atmos', () => {
+    it('the probe moves the unnamed REMUX (DV P5 + TrueHD) down, gives the unnamed 720p its Atmos and finds the P8.1 MP4 is HDR10 on the C8', () => {
         const ranked = ranking.createRanker({ rules }).rank(media.streams, { probeOf: (stream) => probes.get(stream.url) || null });
         const ids = idsOf(ranked);
-        expect(ids.slice(0, 4)).toEqual(['web-dv-p81-mp4', 'web-dv-p5-mp4', 'web-dv-hdr10-atmos-mkv', 'web-unnamed-atmos']);
+        expect(ids.slice(0, 4)).toEqual(['web-dv-p5-mp4', 'web-dv-hdr10-atmos-mkv', 'web-unnamed-atmos', 'web-dv-p81-mp4']);
+        const p81 = ranked.filter((entry) => entryOf(entry.stream).id === 'web-dv-p81-mp4')[0];
+        expect(ranking.describe(p81).labels.map((label) => label.text)).toEqual(['HDR10 nesta TV']);
         expect(ids.indexOf('remux-unnamed')).toBeGreaterThan(ids.indexOf('truehd-only'));
         expect(ids[ids.length - 1]).toBe('web-av1');
         const atmos = ranked.filter((entry) => entryOf(entry.stream).id === 'web-unnamed-atmos')[0];

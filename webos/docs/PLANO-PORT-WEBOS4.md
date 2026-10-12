@@ -41,7 +41,7 @@ O emulador é a **imagem oficial da LG do webOS TV 4.0**, rodando em QEMU/KVM ne
 | D4 | **Sem servidor de streaming**: no build webOS, ocultar streams de torrent (infoHash) e os avisos e telas de servidor | P3 |
 | D5 | **Probe de cabeçalho no cliente** (Range nos primeiros MB do link do debrid) para ler contêiner, codecs, idiomas, legendas e perfil Dolby Vision | Substitui o `/tracks` do servidor; permite escolher a faixa de áudio certa e evitar o DV P5 em MKV |
 | D6 | **Perfil de capacidades da C8 embutido** (vem da pesquisa), aplicado pelo app (escolha de faixas, filtro e ordenação de streams) e **ajustável por configuração** na Fase 8 | Sem TV durante o desenvolvimento, as regras precisam ser explícitas e fáceis de ajustar no fim |
-| D7 | **Dolby Vision:** stream MP4 com DV toca direto (DV ativo). Em MKV, P7 e P8.1 tocam como HDR10. **P5 em MKV é marcado e rebaixado na lista**, com aviso | Limite da C8; sem servidor não há remux |
+| D7 | **Dolby Vision:** stream MP4 com DV toca direto (DV ativo). Em MKV, P7 e P8.1 tocam como HDR10. **P5 em MKV é marcado e rebaixado na lista**, com aviso. **Fase 8 (F8.4):** o P8.1 em MP4 também tocou como HDR10 na TV, e o web app não tem como pedir o DV ao pipeline; o rótulo passou a "HDR10 nesta TV" | Limite da C8; sem servidor não há remux |
 | D8 | **Atmos:** DD+ Atmos (E-AC3 JOC) toca e a TV o decodifica com Atmos virtual nos alto-falantes. TrueHD: a faixa compatível (E-AC3, AC3 ou AAC) é escolhida sozinha; sem nenhuma, aviso. DTS conta como "a confirmar" e o app prefere outra faixa até a Fase 8 | P2 e limites da C8 |
 | D9 | Manter o layout do stremio-web com **fallbacks CSS automáticos** (PostCSS) e **manuais** (grid, `min()/max()`), usando a navegação espacial que já existe | Menos divergência do upstream |
 | D10 | **Emulador no "perfil C8":** 1 GB de RAM, orçamento de memória de 250 MB para o app e CPU limitada para estimar desempenho. Há ainda uma tela de **diagnóstico** no app (a sonda incorporada) para agilizar a Fase 8 | Aproximar a TV sem tê-la |
@@ -51,13 +51,14 @@ O emulador é a **imagem oficial da LG do webOS TV 4.0**, rodando em QEMU/KVM ne
 | Recurso | Na C8 | O que o app faz |
 |---|---|---|
 | 4K HEVC Main10, HDR10, HLG | ✅ | Toca direto |
-| Dolby Vision em **MP4** (P5, P8.1; P7 dual-track) | ✅ | Toca direto, e esses streams sobem na lista |
+| Dolby Vision em **MP4** (P5; P7 dual-track) | ✅ (P5 ainda não visto na TV) | Toca direto, e esses streams sobem na lista |
+| Dolby Vision em **MP4 P8.1** | ⚠️ toca como HDR10 (Fase 8, dois arquivos) | Toca, com o rótulo "HDR10 nesta TV" (F8.4) |
 | Dolby Vision em **MKV** P7 e P8.1 | ⚠️ toca como HDR10 | Toca, com o rótulo "HDR10 nesta TV" |
 | Dolby Vision em **MKV P5** | ❌ cores erradas | Detecta (probe ou nome) e rebaixa na lista, com aviso |
 | DD+ Atmos (E-AC3 JOC) | ✅ Atmos virtual nos alto-falantes | Prefere essa faixa quando existir |
 | E-AC3 e AC3 5.1, AAC | ✅ downmix nos alto-falantes | Toca direto |
 | TrueHD (com ou sem Atmos) | ❌ fica mudo | Escolhe outra faixa sozinho; sem alternativa, avisa e rebaixa o stream |
-| DTS e DTS-HD | ❓ fontes contraditórias | Prefere outra faixa; a Fase 8 decide |
+| DTS e DTS-HD | ✅ (Fase 8: DTS-HD MA 5.1 tocou na TV) | Aceito desde a F8.4: preferência DD+ Atmos > DTS > E-AC3 > AC3, rótulo "DTS-HD MA"/"DTS" na lista |
 | AV1 | ❌ | Oculta ou rebaixa |
 | Velocidade ≠ 1x | ❌ sem áudio | Opção escondida no webOS |
 | Legendas PGS e VobSub | ❌ | Ocultas; texto embutido via Luna e legendas de addons em overlay HTML |

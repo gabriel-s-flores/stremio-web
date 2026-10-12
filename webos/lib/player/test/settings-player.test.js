@@ -1,6 +1,7 @@
 /* global describe, it, expect, beforeEach, jest */
 // The Settings Player override (src/routes/Settings/Player/Player.webos.tsx, F5.5) rendered over the
-// real upstream Player.tsx: only the ASS subtitles styling option is dropped and the ref still
+// real upstream Player.tsx: only the ASS subtitles styling option and the external player one (F8.4,
+// with the Advanced category it leaves empty) are dropped and the ref still
 // reaches the Section. The jest transform here has no TypeScript, so both .tsx files are transpiled
 // with the typescript package and loaded with their imports mapped to the doubles below (each
 // double renders its label, so the markup shows which options are on screen).
@@ -15,6 +16,8 @@ const player = require('..');
 
 const SETTINGS_PLAYER_DIR = path.join(__dirname, '..', '..', '..', '..', 'src', 'routes', 'Settings', 'Player');
 const ASS_STYLING_LABEL = 'SETTINGS_ASS_SUBTITLES_STYLING';
+const EXTERNAL_PLAYER_LABEL = 'SETTINGS_PLAY_IN_EXTERNAL_PLAYER';
+const ADVANCED_LABEL = 'SETTINGS_SECTION_ADVANCED';
 
 const h = React.createElement;
 const received = { sectionRef: undefined };
@@ -87,15 +90,25 @@ describe('Settings Player.webos', () => {
         expect(markup).not.toContain('assSubtitlesStylingToggle');
     });
 
-    it('keeps every other upstream option, in the upstream order', () => {
+    it('drops the external player option (no external player on the TV) and the Advanced category it leaves empty', () => {
+        const upstreamMarkup = render(upstream.default);
+        expect(labels(upstreamMarkup, 'option')).toContain(EXTERNAL_PLAYER_LABEL);
+        expect(labels(upstreamMarkup, 'category')).toContain(ADVANCED_LABEL);
         const markup = render(webos.default);
-        const expected = labels(render(upstream.default), 'option').filter((label) => label !== ASS_STYLING_LABEL);
+        expect(labels(markup, 'option')).not.toContain(EXTERNAL_PLAYER_LABEL);
+        expect(labels(markup, 'category')).not.toContain(ADVANCED_LABEL);
+        expect(markup).not.toContain('playInExternalPlayerSelect');
+    });
+
+    it('keeps every other upstream option and category, in the upstream order', () => {
+        const markup = render(webos.default);
+        const expected = labels(render(upstream.default), 'option').filter((label) => label !== ASS_STYLING_LABEL && label !== EXTERNAL_PLAYER_LABEL);
         expect(labels(markup, 'option')).toEqual(expected);
         expect(labels(markup, 'option')).toEqual(expect.arrayContaining([
             'SETTINGS_SUBTITLES_LANGUAGE', 'SETTINGS_SUBTITLES_SIZE', 'SETTINGS_SUBTITLES_COLOR',
             'SETTINGS_DEFAULT_AUDIO_TRACK', 'SETTINGS_SURROUND_SOUND',
         ]));
-        expect(labels(markup, 'category')).toEqual(labels(render(upstream.default), 'category'));
+        expect(labels(markup, 'category')).toEqual(labels(render(upstream.default), 'category').filter((label) => label !== ADVANCED_LABEL));
         expect(labels(markup, 'category')).toEqual(expect.arrayContaining(['SETTINGS_SECTION_SUBTITLES', 'SETTINGS_SECTION_AUDIO']));
         expect(markup).toContain('data-value="subtitlesSizeSelect"');
         expect(markup).toContain('data-value="surroundSoundToggle"');

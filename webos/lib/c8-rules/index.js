@@ -15,8 +15,9 @@ const TIERS = { ok: 0, demoted: 1, hidden: 2 };
 const BASE_LAYER_OUTPUT = { hdr10: 'hdr10', hlg: 'hlg', sdr: 'sdr' };
 // Base layer implied by a Dolby Vision profile read from the stream name.
 const NAME_BASE_LAYER = { '5': 'none', '7': 'hdr10', '8.1': 'hdr10', '8.2': 'sdr', '8.4': 'hlg' };
-// Profiles tried when the name says "DV" without one: the usual forms of streaming releases.
-const COMMON_DV_PROFILES = ['5', '8.1'];
+// The likely profile of a DV stream whose profile is not known (a name with "DV" alone), from its
+// base layer: none or unknown is the P5 of streaming releases, an HDR10/HLG/SDR one is P8.x.
+const LIKELY_DV_PROFILE = { none: '5', unknown: '5', hdr10: '8.1', hlg: '8.4', sdr: '8.2' };
 
 const CODEC_NAMES = {
     eac3: 'E-AC-3', ac3: 'AC-3', aac: 'AAC', truehd: 'TrueHD', dts: 'DTS', flac: 'FLAC',
@@ -132,10 +133,7 @@ const dvMode = (profile, container, dvProfile, dualTrack) => {
 };
 
 const evaluateDolbyVision = (profile, container, dv, report) => {
-    let mode = dvMode(profile, container, dv.profile, dv.dualTrack);
-    if (dv.profile === null && COMMON_DV_PROFILES.every((candidate) => dvMode(profile, container, candidate, false) === 'dolby-vision')) {
-        mode = 'dolby-vision';
-    }
+    const mode = dvMode(profile, container, dv.profile !== null ? dv.profile : LIKELY_DV_PROFILE[dv.baseLayer] || null, dv.dualTrack);
     const result = { profile: dv.profile, baseLayer: dv.baseLayer, dualTrack: dv.dualTrack, mode, source: dv.source };
     if (mode === 'dolby-vision') {
         report.label('dv', dv.source);
@@ -234,6 +232,15 @@ const preferenceIndex = (profile, track) => {
     return index !== -1 ? index : order.length;
 };
 
+// The label of a DTS initial track (F8.4): the variant the probe read. DTS:X plays as its DTS-HD MA
+// part on the C8, so it gets the DTS-HD MA label; DTS-HD HRA and other DTS-HD, the DTS-HD one.
+const dtsLabel = (track) => {
+    if (track.codec !== 'dts' || track.status === 'unsupported') return null;
+    const variant = track.profile || '';
+    if (variant.indexOf('DTS-HD MA') === 0) return 'dts-hd-ma';
+    return variant.indexOf('DTS-HD') === 0 ? 'dts-hd' : 'dts';
+};
+
 const byKeys = (keyOf) => (a, b) => {
     const ka = keyOf(a);
     const kb = keyOf(b);
@@ -276,9 +283,9 @@ const evaluateProbeAudio = (profile, probe, name, languages, report) => {
     tracks.forEach((track) => {
         track.preference = preferenceIndex(profile, track);
     });
-    // Playable first; among them the main track over commentary (a "to be confirmed" DTS film
-    // track beats an AC-3 commentary), then the codec status (DTS waits for phase 8, D8), the
-    // language, the codec preference (DD+ Atmos first), the default flag, channels, file order.
+    // Playable first; among them the main track over commentary (an "unconfirmed" film track
+    // beats an AC-3 commentary), then the codec status (ok before unconfirmed and unknown), the
+    // language, the codec preference (DD+ Atmos, then DTS: F8.4), the default flag, channels, file order.
     tracks.sort(byKeys((track) => [track.status === 'unsupported' ? 1 : 0, track.secondary ? 1 : 0, AUDIO_TIERS[track.status],
         track.languageRank, track.preference, track.default ? 0 : 1, -(track.channels || 0), track.index]));
     const chosen = tracks.filter((track) => track.status !== 'unsupported')[0] || null;
@@ -303,6 +310,8 @@ const evaluateProbeAudio = (profile, probe, name, languages, report) => {
             report.warn('AUDIO_UNKNOWN', 'probe', 'A única opção de áudio é ' + describeTrack(chosen) + ', que ' + STATUS_TEXT.unknown + '.', chosen.id);
         }
         if (chosen.atmosOnTv) report.label('atmos', chosen.atmosSource === 'probe' ? 'probe' : 'probe+name');
+        const dts = dtsLabel(chosen);
+        if (dts !== null && profile.labels[dts]) report.label(dts, 'probe');
     }
     const status = chosen !== null ? chosen.status : (tracks.length > 0 ? 'unsupported' : null);
     return {
