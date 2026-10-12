@@ -3,9 +3,10 @@
 // or series id starting with "tt") whose URLs point at webos/tools/media-server.mjs, started here
 // on a media root with the kit media, the F0.10 headers and the rebuilt probe fixtures (media.js).
 //
-//   node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <media root>] [--info <file.json>] [--delay <ms>] [--set f62|e2e] [--far]
+//   node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <media root>] [--info <file.json>] [--delay <ms>] [--set f62|e2e|torrentio] [--far]
 //
-// --set picks the streams (catalog.js SETS): f62 (default, the F6.2 list) or e2e (the end-to-end run, F6.4).
+// --set picks the streams (catalog.js SETS): f62 (default, the F6.2 list), e2e (the end-to-end run, F6.4)
+// or torrentio (224 Torrentio-like streams that only get listed, torrentio.js: the slow Details of F8.6).
 // Ports default to free ones. --delay puts a proxy in front of the media server that holds every
 // request that long (debrid latency); the stream URLs then point at the proxy. --host is how the client reaches this machine (10.0.2.2 from the
 // emulator, 127.0.0.1 from a desktop browser). When ready, prints and writes (--info) a JSON with
@@ -21,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const { SETS, MANIFEST, toStreams } = require('./catalog.js');
+const { torrentioStreams } = require('./torrentio.js');
 const { prepareMedia } = require('./media.js');
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -69,11 +71,13 @@ const set = option('set', 'f62');
 // --far: the stream links redirect to another origin (a second media server on the same files), like a
 // debrid resolver sending to the file host (F8.5).
 const far = args.includes('--far');
-if (!SETS[set]) {
-    console.error(`erro: conjunto desconhecido ${set} (${Object.keys(SETS).join(', ')})`);
+// Sets generated per answer, without media files.
+const GENERATED = { torrentio: torrentioStreams };
+if (!SETS[set] && !GENERATED[set]) {
+    console.error(`erro: conjunto desconhecido ${set} (${[...Object.keys(SETS), ...Object.keys(GENERATED)].join(', ')})`);
     process.exit(1);
 }
-const STREAMS = SETS[set];
+const STREAMS = SETS[set] || [];
 
 const files = STREAMS.filter((entry) => entry.media).map((entry) => entry.media)
     .concat(...STREAMS.map((entry) => (entry.subtitles || []).map((subtitle) => subtitle.file)));
@@ -153,13 +157,13 @@ http.createServer((req, res) => {
     }
     const stream = /^\/stream\/(movie|series)\/(tt[^/]+)\.json$/.exec(url.pathname);
     if (stream) {
-        send(res, 200, { streams: toStreams(mediaUrl, set, far ? 'far' : undefined), cacheMaxAge: 0 });
+        send(res, 200, { streams: GENERATED[set] ? GENERATED[set](mediaUrl) : toStreams(mediaUrl, set, far ? 'far' : undefined), cacheMaxAge: 0 });
         return log(200);
     }
     send(res, 404, { err: 'not found' });
     return log(404);
 }).listen(port, '127.0.0.1', () => {
-    const info = { manifestUrl, mediaUrl, port, mediaPort, farPort, delay, dir, set, streams: STREAMS.length };
+    const info = { manifestUrl, mediaUrl, port, mediaPort, farPort, delay, dir, set, streams: GENERATED[set] ? GENERATED[set](mediaUrl).length : STREAMS.length };
     if (infoFile) fs.writeFileSync(infoFile, JSON.stringify(info, null, 4));
     process.stdout.write(`${JSON.stringify(info)}\n`);
 });
