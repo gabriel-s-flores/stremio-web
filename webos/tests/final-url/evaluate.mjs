@@ -157,7 +157,7 @@ if (name === 'notice-same' || name === 'notice-far') {
     check('the <video> never got a src: the notice was not loaded', firstLoad.src === null, { src: firstLoad.src });
     check('the log says the final URL is a notice video', finalLog.some((line) => /final URL is a notice video/.test(line)), finalLog);
     check('the error layer tells the notice (F8.4 message)', errorLayer && expected.test(errorText), { errorLayer, errorText: errorText.slice(0, 300) });
-    check('the notice MP4 was never downloaded: first-byte requests and the Player probe (closed range ≤ 256 KB) only, no open range', noticeRequests.length > 0 && noticeRequests.every((request) => kindOf(request) !== 'pipeline'),
+    check('the notice MP4 only gets the 1-byte request (bytes=0-0): no probe read, no pipeline', noticeRequests.length > 0 && noticeRequests.every((request) => request.range === 'bytes=0-0'),
         noticeRequests.map((request) => request.path + ' ' + request.range));
     check('the log has no URL of the resolver or of the notice (host only)', !finalLog.some((line) => /\/videos\/|notice-(same|far)/.test(line)), finalLog);
 }

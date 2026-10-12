@@ -51,10 +51,10 @@ jest.mock('../../../src/routes/MetaDetails/StreamsList/Stream/Stream.js', () => 
     const ReactModule = require('react');
     const h = ReactModule.createElement;
     const Popup = ({ renderLabel }) => renderLabel({ className: 'label-container', children: null });
-    const Stream = ({ name, description }) => {
+    const Stream = ({ addonName, name, description }) => {
         ReactModule.useState(false);
         return h(Popup, {
-            renderLabel: ({ className, children, ...props }) => h('div', Object.assign({ className: `${className} stream-container`, tabIndex: 0 }, props),
+            renderLabel: ({ className, children, ...props }) => h('div', Object.assign({ className: `${className} stream-container`, tabIndex: 0, title: addonName }, props),
                 h('div', { className: 'info-container' }, name),
                 h('div', { className: 'description-container' }, description),
                 h('span', { className: 'icon' }),

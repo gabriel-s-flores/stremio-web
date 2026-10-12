@@ -16,7 +16,8 @@
 // stream asks the resolver again (the link may have expired).
 // When the final URL is a known notice video of the resolver (source 'notice', F8.5) the load is not
 // passed on: the Player gets a critical STREAM_FAILED_TO_LOAD error for the original stream at once,
-// and the error layer (F6.3/F8.4) tells what the notice says. The notice MP4 is never downloaded.
+// and the error layer (F6.3/F8.4) tells what the notice says. The notice MP4 only gets the 1-byte request of the resolver; the Player's probe skips it too
+// (webos/lib/tracks/probe-cache.js), so its tracks are not kept for the real file.
 // The final URL has a token and the resolver's the debrid key: only the host goes to the log.
 // localStorage key (read once, when the app starts): webos.player.finalUrl = "off" loads the
 // resolver's link, as before (webos/lib/final-url: FINAL_URL_KEY, readFinalUrlSetting; the Player's

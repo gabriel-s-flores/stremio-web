@@ -29,5 +29,8 @@ describe('Stream on webOS: text for the TV', () => {
         expect(item.querySelector('.info-container').textContent).toBe('[RD+] Tom & Jerry\n4k');
         expect(item.querySelector('.description-text').textContent).toBe('Film.O\'Neill.2160p.mp4\n👤 30 💾 14 GB ⚙️ 1337x');
         expect(item.textContent).not.toContain('&apos;');
+        // The addon name only reaches the page as the title of the item (a stream without a name
+        // has no other place for it in the stand-in).
+        expect(item.title || item.getAttribute('title')).toBe('Addon & Co');
     });
 });

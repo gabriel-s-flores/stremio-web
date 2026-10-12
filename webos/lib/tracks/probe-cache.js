@@ -20,9 +20,15 @@ const probeCancellable = (url, isCancelled, createReadRange) => {
 
 // The Player's probe reads the final URL (F8.1): the resolver request is the same one the load waits
 // for (webos/lib/final-url keeps one request per link in flight), so the debrid resolver is asked
-// once per stream, and the probe's reads skip the redirect. finalUrls: injectable for the tests.
-const probeFinalUrl = (url, isCancelled, finalUrls) => (finalUrls || getFinalUrls()).resolve(url)
-    .then((resolved) => probeCancellable(resolved.url, isCancelled));
+// once per stream, and the probe's reads skip the redirect. A known notice video (source 'notice',
+// F8.5) is not read at all: the probe fails without an HTTP status, so nothing is kept (the tracks of
+// the notice would stand for the real file when the stream is opened again) and it counts as no
+// failed request. finalUrls, createReadRange: injectable for the tests.
+const probeFinalUrl = (url, isCancelled, finalUrls, createReadRange) => (finalUrls || getFinalUrls()).resolve(url)
+    .then((resolved) => {
+        if (resolved.source === 'notice') throw new ProbeError('NETWORK', 'the link is a notice video');
+        return probeCancellable(resolved.url, isCancelled, createReadRange);
+    });
 
 // probe(url, isCancelled) -> Promise<probe result>; injectable for the tests.
 const createProbeCache = (options) => {
