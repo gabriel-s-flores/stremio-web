@@ -353,7 +353,22 @@ for (let r = 1; r <= ROUNDS; r++) {
             results.push(await round(ipk, label));
         } catch (e) {
             log(`[${label}] failed: ${e.message}`);
-            results.push({ ipk: path.basename(ipk), label, error: String(e.message) });
+            // Is the page alive? (a stuck renderer, or only the inspector?) And what is on the screen.
+            const diag = {};
+            try {
+                diag.page = await session.evaluate("JSON.stringify({ hash: location.hash, ready: document.readyState, active: document.activeElement && document.activeElement.className })", 15000);
+            } catch (x) {
+                diag.page = `no answer: ${x.message}`;
+            }
+            try {
+                const shot = await session.send('Page.captureScreenshot', {}, 20000);
+                fs.writeFileSync(path.join(OUT, `${label}.failed.png`), Buffer.from(shot.data, 'base64'));
+                diag.screenshot = `${label}.failed.png`;
+            } catch (x) {
+                diag.screenshot = `none: ${x.message}`;
+            }
+            log(`[${label}] diagnostics`, JSON.stringify(diag));
+            results.push({ ipk: path.basename(ipk), label, error: String(e.message), diag });
             try { session && session.close(); } catch (x) { /* closed */ }
         }
         save();
