@@ -4,6 +4,7 @@
 // request is (failureOf, F6.3), so the Player's error layer can say "expired" without asking again.
 
 const { probe: probeHeader, createFetchReadRange, ProbeError } = require('../header-probe');
+const { getFinalUrls } = require('../final-url');
 
 const MAX_ENTRIES = 16;
 
@@ -16,6 +17,12 @@ const probeCancellable = (url, isCancelled, createReadRange) => {
         Promise.reject(new ProbeError('NETWORK', 'cancelled')) :
         readRange(offset, length)));
 };
+
+// The Player's probe reads the final URL (F8.1): the resolver request is the same one the load waits
+// for (webos/lib/final-url keeps one request per link in flight), so the debrid resolver is asked
+// once per stream, and the probe's reads skip the redirect. finalUrls: injectable for the tests.
+const probeFinalUrl = (url, isCancelled, finalUrls) => (finalUrls || getFinalUrls()).resolve(url)
+    .then((resolved) => probeCancellable(resolved.url, isCancelled));
 
 // probe(url, isCancelled) -> Promise<probe result>; injectable for the tests.
 const createProbeCache = (options) => {
@@ -76,6 +83,7 @@ module.exports = {
     MAX_ENTRIES,
     createProbeCache,
     probeCancellable,
+    probeFinalUrl,
     // The one the app uses (the video decorator writes it, the useAudio hook reads it).
-    probeCache: createProbeCache(),
+    probeCache: createProbeCache({ probe: probeFinalUrl }),
 };
