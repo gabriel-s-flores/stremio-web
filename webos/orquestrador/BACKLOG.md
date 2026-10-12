@@ -448,3 +448,13 @@ orquestrador** antes do merge (os agentes não usam a TV).
   player" no webOS.
 - **Aceite:** testes das regras e das mensagens; no emulador, os cenários de faixas e de erro; na TV
   (orquestrador): DV em MP4 com selo DV (ou limitação documentada), DTS escolhido quando for o melhor.
+
+### F8.5 · Integração F8.1 × F8.4 e testes que faltaram na F8.3
+- **Depende de:** F8.1, F8.3, F8.4 (merge das três)  · **Modelo:** S (medium)
+- **Escopo:** (1) `final-url` `isKeepable` também recusa `debridLink.noticeOf(finalUrl)` (aviso servido de outro
+  host não fica guardado; achado B1 da revisão c2 da F8.1); se o link final for um aviso conhecido, falhar logo com
+  a mensagem da F8.4 em vez de tocar o MP4 do aviso; (2) cenário de emulador em que o `/redirect/` vai para **outra**
+  origem, cobrindo o `known` vindo do probe da lista (B2 da c2 da F8.1); (3) testes da F8.3: o ramo "bandeira sem
+  ligadura" sem colisão no fake do `measureText` e a ligação `tvText`/`decodeMetaItem` com a tela (B1 e B2 da revisão
+  c1 da F8.3).
+- **Aceite:** testes com mutações que caem; cenário novo no emulador; e2e da F6.4 sem regressão.
