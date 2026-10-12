@@ -69,7 +69,9 @@ describe('createGlyphCheck', () => {
                 const missing = last === '\u0378' || last === '\uDB3F\uDFFD' || boxes.indexOf(last) !== -1;
                 if (blank.indexOf(last) === -1) {
                     const seed = missing ? 7 : Array.from(last).reduce((sum, char) => sum + char.codePointAt(0), 0);
-                    for (let i = 0; i < width * height; i++) data[i * 4 + 3] = (i * 31 + seed) % 5 === 0 ? 255 : 0;
+                    // A hash of the pixel and the seed: texts never share a mask by chance (a `% 5` pattern
+                    // gave 🇧🇷 the box's mask, and the flag branch of the check went untested).
+                    for (let i = 0; i < width * height; i++) data[i * 4 + 3] = ((Math.imul(i + 1, 2654435761) ^ Math.imul(seed, 40503)) >>> 0) % 3 === 0 ? 255 : 0;
                 }
                 return { data };
             },
@@ -82,8 +84,9 @@ describe('createGlyphCheck', () => {
         const hasGlyph = createGlyphCheck(doc, 'PlusJakartaSans, sans-serif');
         expect(hasGlyph('💾')).toBe(true);
         expect(hasGlyph('🇬🇧')).toBe(true);
-        // Drawn, but as two boxed letters (no ligature): plain letters instead.
+        // Drawn, with a mask of its own, but as two boxed letters (no ligature): plain letters instead.
         expect(hasGlyph('🇧🇷')).toBe(false);
+        expect(doc.drawn).toContain('🇧🇷');
         expect(hasGlyph('⚙️')).toBe(false);
         expect(hasGlyph('🧲')).toBe(false);
         expect(hasGlyph('🇷🇺')).toBe(false);

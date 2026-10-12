@@ -77,6 +77,23 @@ describe('withFinalUrl', () => {
         expect(logs.join('\n')).not.toMatch(/t1_h264/);
     });
 
+    it('a notice video as the final URL fails the load at once, without loading it (F8.5)', async () => {
+        const { video, record, pending, logs, summary, finalUrls } = setup();
+        const errors = [];
+        video.on('error', (error) => errors.push(error));
+        video.dispatch(load(RESOLVER));
+        video.dispatch(setProp('paused', false));
+        pending[0].answer('http://cdn.other.example/videos/downloading_v2.mp4', 'notice');
+        await flush();
+        expect(summary()).toEqual(['setProp:paused']);
+        expect(errors).toHaveLength(1);
+        expect(errors[0]).toMatchObject({ critical: true, code: 3, stream: { url: RESOLVER, name: 'RD' } });
+        expect(record.actions.some((action) => action.commandName === 'load')).toBe(false);
+        expect(logs).toEqual(['[webos] player: final URL is a notice video (10.0.2.2:8099): the load fails without playing it']);
+        expect(logs.join('\n')).not.toMatch(/downloading_v2/);
+        expect(finalUrls.forget).not.toHaveBeenCalled();
+    });
+
     it('a final URL already known (a probe followed the redirect) loads at once', () => {
         const { video, finalUrls, summary, logs } = setup({ [RESOLVER]: FINAL });
         video.dispatch(load(RESOLVER));

@@ -71,9 +71,6 @@ importers:
       magnet-uri:
         specifier: 6.2.0
         version: 6.2.0
-      postcss-focus-within:
-        specifier: 10.0.1
-        version: 10.0.1(postcss@8.5.14)
       prop-types:
         specifier: 15.8.1
         version: 15.8.1

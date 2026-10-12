@@ -21,6 +21,10 @@
 #   rate-noprobe   the same with the Player's probe refused (A/B: does the probe delay the start?)
 #   switch         play one stream, then open another by route (in-Player switch): how long the quiet
 #                  release of F5.6 holds the second load
+#   notice-same    the resolver redirects to Torrentio's own notice file (/videos/downloading_v2.mp4) on its
+#                  origin: the load fails at once with the F8.4 message; the notice MP4 is never downloaded
+#   notice-far     the redirect goes to a notice served from another host (/videos/failed_access_v3.mp4):
+#                  same result, and nothing is kept (review c2 of F8.1, B1; F8.5)
 #   notice         the resolver answers with its own notice video on its origin (Torrentio's "downloading"
 #                  while Real-Debrid caches the torrent), then with the file on another origin: opened
 #                  again, the stream must ask the resolver again and play the file (review c1, M1); opened
@@ -71,6 +75,8 @@ case "$SCENARIO" in
     rate-probe|rate-noprobe)    URL="$BASE/redirect/moov_end_1080p.mp4" ;;
     switch)                     URL="$BASE/redirect/t1_h264_aac.mp4"; SECOND_URL="$BASE/redirect/t6_h264_aac.mkv" ;;
     notice)                     URL="$BASE/pending/t1_h264_aac.mp4" ;;
+    notice-same)                URL="$BASE/notice-same/t1_h264_aac.mp4" ;;
+    notice-far)                 URL="$BASE/notice-far/t1_h264_aac.mp4" ;;
     *) echo "error: unknown scenario $SCENARIO" >&2; exit 1 ;;
 esac
 printf '{"scenario":"%s","url":"%s","second":"%s","base":"%s","realBase":"%s","rateMbps":%s}\n' "$SCENARIO" "$URL" "$SECOND_URL" "$BASE" "http://10.0.2.2:$REAL_PORT" "$RATE" > "$OUT/scenario.json"
@@ -159,6 +165,7 @@ if [[ "$SCENARIO" == notice ]]; then
 fi
 
 sleep 2
+cdp_eval "(function(){ var layer = document.querySelector('[class*=\"error-layer\"]'); return layer ? layer.textContent : ''; })()" > "$OUT/error-text.txt" 2>/dev/null || true
 cdp_eval "JSON.stringify(window.__f81)" > "$OUT/page.json"
 cdp_eval "JSON.stringify(window.__f51.console.filter(function(c){ return /\\[webos\\] (player|tracks)/.test(c.text); }))" > "$OUT/console.json"
 cdp_eval "JSON.stringify(window.__f51.errors)" > "$OUT/page-errors.json"

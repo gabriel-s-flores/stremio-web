@@ -14,11 +14,15 @@
 // errors carry the URL the Player loaded (the error layer of F6.3, the probe cache and the core's
 // stream state are keyed on it). A critical error forgets the final URL, so the next load of the
 // stream asks the resolver again (the link may have expired).
+// When the final URL is a known notice video of the resolver (source 'notice', F8.5) the load is not
+// passed on: the Player gets a critical STREAM_FAILED_TO_LOAD error for the original stream at once,
+// and the error layer (F6.3/F8.4) tells what the notice says. The notice MP4 is never downloaded.
 // The final URL has a token and the resolver's the debrid key: only the host goes to the log.
 // localStorage key (read once, when the app starts): webos.player.finalUrl = "off" loads the
 // resolver's link, as before (webos/lib/final-url: FINAL_URL_KEY, readFinalUrlSetting; the Player's
 // probe goes back to the resolver's link too).
 
+const ERROR = require('@stremio/stremio-video/src/error');
 const { hostOf } = require('../debrid-link');
 const { FINAL_URL_KEY, readFinalUrlSetting } = require('../final-url');
 
@@ -45,6 +49,7 @@ const withFinalUrl = (Video, deps) => {
         // The last stream mapped back to the original URL, so the `stream` prop keeps its identity.
         let mappedFrom = null;
         let mappedTo = null;
+        const errorListeners = [];
 
         const info = (message) => {
             if (log) log.info('[webos] player: ' + message);
@@ -88,6 +93,14 @@ const withFinalUrl = (Video, deps) => {
             finalUrls.resolve(url).then((resolved) => {
                 if (destroyed || pending !== entry) return;
                 pending = null;
+                if (resolved.source === 'notice') {
+                    info('final URL is a notice video' + (resolved.host ? ' (' + resolved.host + ')' : '') + ': the load fails without playing it');
+                    current = null;
+                    const stream = load.commandArgs.stream;
+                    errorListeners.slice().forEach((listener) => listener(Object.assign({}, ERROR.STREAM_FAILED_TO_LOAD, { critical: true, stream })));
+                    entry.queue.forEach((action) => video.dispatch(action));
+                    return;
+                }
                 info('final URL ' + resolved.source + ' in ' + resolved.ms + ' ms' + (resolved.host ? ' (' + resolved.host + ')' : ''));
                 pass(load, resolved.url);
                 entry.queue.forEach((action) => video.dispatch(action));
@@ -103,6 +116,7 @@ const withFinalUrl = (Video, deps) => {
                 return;
             }
             if (eventName === 'error') {
+                errorListeners.push(listener);
                 video.on(eventName, (error) => listener(error && error.stream ? Object.assign({}, error, { stream: mapStream(error.stream) }) : error));
                 return;
             }

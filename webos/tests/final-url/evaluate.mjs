@@ -19,12 +19,16 @@ const page = read('page.json', { events: [], marks: [] });
 const consoleLines = read('console.json', []).map((entry) => entry.text);
 const samples = fs.existsSync(path.join(OUT, 'samples.jsonl')) ?
     fs.readFileSync(path.join(OUT, 'samples.jsonl'), 'utf8').split('\n').filter(Boolean).map((line) => JSON.parse(line)) : [];
-const serverLines = fs.existsSync(path.join(OUT, 'media-server.log')) ? fs.readFileSync(path.join(OUT, 'media-server.log'), 'utf8').split('\n') : [];
+const logLines = (file) => (fs.existsSync(path.join(OUT, file)) ? fs.readFileSync(path.join(OUT, file), 'utf8').split('\n') : []);
+const serverLines = logLines('media-server.log');
+// The other origin (real-host.log) is read for the notice served from another host.
+const farLines = logLines('real-host.log');
+const errorText = fs.existsSync(path.join(OUT, 'error-text.txt')) ? fs.readFileSync(path.join(OUT, 'error-text.txt'), 'utf8') : '';
 
 // "<iso> GET /path bytes=0-0 -> 206 0-0"
 const requests = serverLines.map((line) => /^(\S+) (GET|HEAD) (\S+) (\S*) -> (\S+)/.exec(line)).filter(Boolean)
     .map((m) => ({ at: Date.parse(m[1]), method: m[2], path: m[3], range: m[4], status: m[5] }));
-const isResolverPath = (p) => /^\/(redirect|slow|hang|pending)\//.test(p);
+const isResolverPath = (p) => /^\/(redirect|slow|hang|pending|far|notice-same|notice-far)\//.test(p);
 // The first-byte request of the app (resolver and F6.3 check), a probe read (closed range, at most
 // 256 KB) and the rest: the pipeline (open range, or none).
 const kindOf = (request) => {
@@ -144,6 +148,18 @@ if (name === 'notice') {
     check('opened a third time: the file\'s final URL (another origin) is reused', opened.open3 === fileUrl && finalLog.some((line) => /final URL known/.test(line)), { opened, finalLog });
     check('two requests to the resolver in all (1st and 2nd openings)', pending.length === 2, pending.map((request) => request.range));
     check('every opening plays', ['first', 'open2', 'open3'].every(moved) && !errorLayer, { errorLayer });
+}
+if (name === 'notice-same' || name === 'notice-far') {
+    const expected = name === 'notice-same' ? /still downloading/ : /denied access/;
+    const noticeRequests = requests.concat(farLines.map((line) => /^(\S+) (GET|HEAD) (\S+) (\S*) -> (\S+)/.exec(line)).filter(Boolean)
+        .map((m) => ({ at: Date.parse(m[1]), method: m[2], path: m[3], range: m[4], status: m[5] })))
+        .filter((request) => /^\/videos\/[a-z_]+_v\d+\.mp4$/.test(request.path));
+    check('the <video> never got a src: the notice was not loaded', firstLoad.src === null, { src: firstLoad.src });
+    check('the log says the final URL is a notice video', finalLog.some((line) => /final URL is a notice video/.test(line)), finalLog);
+    check('the error layer tells the notice (F8.4 message)', errorLayer && expected.test(errorText), { errorLayer, errorText: errorText.slice(0, 300) });
+    check('the notice MP4 was never downloaded: first-byte requests and the Player probe (closed range ≤ 256 KB) only, no open range', noticeRequests.length > 0 && noticeRequests.every((request) => kindOf(request) !== 'pipeline'),
+        noticeRequests.map((request) => request.path + ' ' + request.range));
+    check('the log has no URL of the resolver or of the notice (host only)', !finalLog.some((line) => /\/videos\/|notice-(same|far)/.test(line)), finalLog);
 }
 if (name === 'switch') {
     check('the second stream got its final URL too', secondLoad && secondLoad.src === finalOf(scenario.second), { src: secondLoad && secondLoad.src });
