@@ -137,6 +137,23 @@ const episodes = (base, id, seasons = 3, perSeason = 6) => {
     return videos;
 };
 
+// The cast and crew, as Cinemeta sends them: one name escaped ("Josh O&apos;Connor" in tt15047880, F8.3).
+const CAST = ['Ana Moreira', 'Sean O&apos;Neill', 'Mei Tanaka'];
+const DIRECTOR = 'Lena Voss';
+
+// The links of the details column as Cinemeta has them (F8.3): IMDb rating, three genres (Discover of
+// this addon), the cast (Search), a writer (not shown) and the director. Before F8.3 the fixture had none,
+// and the regression never saw the column with them (on the TV it cut the directors in half).
+const links = (base, type, id) => {
+    const manifestUrl = encodeURIComponent(`${base}/manifest.json`);
+    const search = (name) => `stremio:///search?search=${encodeURIComponent(name)}`;
+    const genres = [0, 2, 4].map((offset) => GENRES[(hash(id) + offset) % GENRES.length]);
+    return [{ name: itemOf(base, id, type).imdbRating, category: 'imdb', url: `https://imdb.com/title/${id}` }]
+        .concat(genres.map((genre) => ({ name: genre, category: 'Genres', url: `stremio:///discover/${manifestUrl}/${type}/top?genre=${encodeURIComponent(genre)}` })))
+        .concat(CAST.map((name) => ({ name, category: 'Cast', url: search(name) })))
+        .concat([{ name: DIRECTOR, category: 'Writers', url: search(DIRECTOR) }, { name: DIRECTOR, category: 'Directors', url: search(DIRECTOR) }]);
+};
+
 const meta = (base, type, id) => {
     const item = itemOf(base, id, type);
     const result = Object.assign({}, item, {
@@ -144,23 +161,26 @@ const meta = (base, type, id) => {
         runtime: type === 'series' ? '45 min' : `${100 + (hash(id) % 50)} min`,
         year: item.releaseInfo,
         released: `${item.releaseInfo}-01-01T00:00:00.000Z`,
-        cast: ['Ana Moreira', 'Jonas Keller', 'Mei Tanaka', 'Omar Haddad'],
-        director: ['Lena Voss'],
+        cast: CAST,
+        director: [DIRECTOR],
         country: 'Portugal',
-        links: [],
+        links: links(base, type, id),
     });
     if (type === 'series') result.videos = episodes(base, id);
     return { meta: result };
 };
 
-// Names like the ones of a debrid addon; the URLs answer 404 (the Player scene of the error screen opens
+// Names and descriptions like the ones of a debrid addon (Torrentio: file name, seeders, size, source and
+// the audio languages as flags, F8.3); the URLs answer 404 (the Player scene of the error screen opens
 // "/status/404/…" itself). Nothing here is ever played.
 const streams = (base) => ({
     streams: [
-        { name: '[RD+] Fixture\n4k DV | HDR', description: 'Fixture.Movie.2160p.WEB-DL.DV.HDR.DDP5.1.Atmos.mkv', url: `${base}/status/404/fixture-2160p.mkv` },
-        { name: '[RD+] Fixture\n1080p', description: 'Fixture.Movie.1080p.BluRay.x264.DTS.mkv', url: `${base}/status/404/fixture-1080p.mkv` },
-        { name: '[RD+] Fixture\n720p', description: 'Fixture.Movie.720p.WEB.h264.AAC.mp4', url: `${base}/status/404/fixture-720p.mp4` },
-        { name: '[RD download] Fixture\n1080p', description: 'Fixture.Movie.1080p.REMUX.mkv', url: `${base}/status/404/fixture-remux.mkv` },
+        { name: '[RD+] Fixture\n4k DV | HDR', description: 'Fixture.Movie.2026.2160p.WEB-DL.DV.HDR.DDP5.1.Atmos-FIXTURE.mkv\n👤 30 💾 37.41 GB ⚙️ FixtureTracker\nMulti Audio / 🇬🇧 / 🇷🇺 / 🇧🇷', url: `${base}/status/404/fixture-2160p.mkv` },
+        { name: '[RD+] Fixture\n1080p', description: 'Fixture.Movie.2026.1080p.BluRay.x264.DTS-FIXTURE.mkv\n👤 1283 💾 12.8 GB ⚙️ FixtureTracker', url: `${base}/status/404/fixture-1080p.mkv` },
+        { name: '[RD+] Fixture\n720p', description: 'Fixture.Movie.720p.WEB.h264.AAC.mp4\n👤 6 💾 1.9 GB ⚙️ FixtureTracker', url: `${base}/status/404/fixture-720p.mp4` },
+        { name: '[RD download] Fixture\n1080p', description: 'Fixture.Movie.1080p.REMUX.mkv\n👤 3 💾 25.5 GB ⚙️ FixtureTracker\n🇬🇧 / 🇵🇹', url: `${base}/status/404/fixture-remux.mkv` },
+        { name: '[RD+] Fixture\n4k HDR', description: 'Fixture.Movie.2026.2160p.UHD.BluRay.REMUX.HDR10.HEVC.TrueHD.7.1.Atmos-FIXTURE.mkv\n👤 12 💾 58.4 GB ⚙️ FixtureTracker', url: `${base}/status/404/fixture-remux-4k.mkv` },
+        { name: '[RD+] Fixture\n4k', description: 'Fixture.Movie.2026.2160p.WEB-DL.HEVC-FIXTURE.mkv\n👤 42 💾 15.0 GB ⚙️ FixtureTracker', url: `${base}/status/404/fixture-web-4k.mkv` },
     ],
 });
 
