@@ -5,7 +5,8 @@
 //
 //   node webos/tests/soak/analyze.mjs <run-dir>... [--json out.json] [--skip 1]
 //
-// A metric "grows" when the fit over the samples at the same place of the cycle (the Board for the navigation,
+// A metric "grows" (GROWS) when its drift over the run passes 3 % AND the slope is >= 3 sigma; "slow growth" is >= 3 sigma under that bar; "flat" is < 3 sigma, and says
+// only that the fit cannot tell it from zero (a slope with its error is the number to quote, not the word). A metric "grows" when the fit over the samples at the same place of the cycle (the Board for the navigation,
 // the sample ticks for the playback) has a slope above its own noise (the residual standard deviation times
 // the span): a staircase from the cache filling up in the first minutes is told apart from a straight line by
 // the --skip option (the samples after the baseline that are left out of the fit, 1 by default).
@@ -81,7 +82,10 @@ for (const dir of dirs) {
         rows.push({
             metric, n: values.length, first, last, drift: round(last - first), per10: round(per10, 2), se10: f ? round(f.se * 10, 2) : null,
             min: round(Math.min(...values.map((p) => p[1]))), max: round(Math.max(...values.map((p) => p[1]))), span: round(span),
-            verdict: !f ? '?' : (sig >= 3 && Math.abs(f.slope * span) >= Math.max(1, 0.03 * (first || 1))) ? (f.slope > 0 ? 'GROWS' : 'shrinks') : 'flat',
+            // sigma: the slope in standard errors. 'slow growth': clearly not zero (>= 3 sigma) but the drift over the run is under
+            // the 'GROWS' bar (3 % of the first value, 1 unit): a leak of a few MB an hour on a 90 MB number is this, not 'flat'.
+            sigma: f ? round(sig === Infinity ? 999 : sig, 1) : null,
+            verdict: !f ? '?' : sig >= 3 ? (Math.abs(f.slope * span) >= Math.max(1, 0.03 * (first || 1)) ? (f.slope > 0 ? 'GROWS' : 'shrinks') : (f.slope > 0 ? 'slow growth' : 'slow shrink')) : 'flat',
         });
     }
     // The peak of the guest sampler: the app's renderer (the WebAppMgr with the biggest RSS) and the pipeline.
@@ -113,9 +117,9 @@ for (const dir of dirs) {
     console.log(`## ${name} (${soak.scenario || '?'}, ${soak.profile || '?'}${soak.cycles ? `, ${soak.cycles} cycles` : ''}, ${soak.minutes ?? soak.playedMinutes ?? '?'} min)\n`);
     console.log(`Restarts of the page: **${restarts}**; renderer PID changes: **${pidChanges}**; OOM kills in dmesg: **${oom.length}**; steps failed: **${failedSteps.length}/${steps.length}**. Samples used for the fit: ${fitted.length} of ${all.length} (baseline and the first ${skip} left out).\n`);
     if (peak) console.log(`Guest sampler (${peak.samples} samples): peak WebAppMgr RSS **${peak.maxWebAppMgrRssMB} MB**, lowest MemAvailable ${peak.minMemAvailableMB} MB, media pipeline peak ${peak.maxPipelineRssMB} MB.\n`);
-    console.log('| metric | n | first third | last third | drift | slope / 10 min | ±se | min–max | verdict |');
-    console.log('|---|---|---|---|---|---|---|---|---|');
-    for (const r of rows) console.log(`| ${r.metric} | ${r.n} | ${r.first} | ${r.last} | ${r.drift} | ${r.per10} | ${r.se10} | ${r.min}–${r.max} | ${r.verdict} |`);
+    console.log('| metric | n | first third | last third | drift | slope / 10 min | ±se | σ | min–max | verdict |');
+    console.log('|---|---|---|---|---|---|---|---|---|---|');
+    for (const r of rows) console.log(`| ${r.metric} | ${r.n} | ${r.first} | ${r.last} | ${r.drift} | ${r.per10} | ${r.se10} | ${r.sigma} | ${r.min}–${r.max} | ${r.verdict} |`);
     console.log('');
     const by = {};
     for (const s of failedSteps) by[s.name] = (by[s.name] || 0) + 1;

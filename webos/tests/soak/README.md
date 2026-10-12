@@ -43,7 +43,7 @@ Também: `events.jsonl` (reinício da página, troca de PID do renderer), `steps
 | `--no-subtitle` | `soak-play` | sem a legenda de addon (o overlay HTML) |
 | `--sampling` | `soak-play` | *sampling heap profiler* da página durante a reprodução; no fim, `heap-sampling.json` tem as alocações ainda vivas com a pilha de cada uma |
 
-Para ler os números: `analyze.mjs` ajusta uma reta por métrica sobre as amostras (a partir de `--skip N`, para deixar de fora o preenchimento do começo) e marca `GROWS` quando a inclinação passa de 3× o erro dela. **O heap do JS da página** (`performance.memory`) é um contador grosseiro do Chromium 53, que só atualiza em GC e anda em degraus: um degrau vira `GROWS` sem ser vazamento de objetos (confira com os nós do DOM, os *listeners* e o heap do worker).
+Para ler os números: `analyze.mjs` ajusta uma reta por métrica sobre as amostras (a partir de `--skip N`, para deixar de fora o preenchimento do começo) e marca `GROWS` quando a inclinação passa de 3× o erro dela (σ ≥ 3) **e** a deriva da rodada passa de 3 % do valor inicial; com σ ≥ 3 e deriva menor sai `slow growth` (um vazamento de poucos MB/h sobre um número de ~90 MB é isso, não "flat"); `flat` só diz que o ajuste não distingue a inclinação de zero. Cite a inclinação ± erro, não a palavra. **O heap do JS da página** (`performance.memory`) é um contador grosseiro do Chromium 53, que só atualiza em GC e anda em degraus: um degrau vira `GROWS` sem ser vazamento de objetos (confira com os nós do DOM, os *listeners* e o heap do worker).
 
 ## Limites conhecidos
 

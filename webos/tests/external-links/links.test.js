@@ -69,11 +69,13 @@ describe('classify', () => {
         expect(classify(url, win)).toBe('web');
     });
 
-    test('a warning page inside a warning page is looked through too (up to two wrappers)', () => {
+    test('a warning page inside a warning page is looked through too (up to two wrappers; deeper is disabled)', () => {
         const wrap = (url) => `https://www.stremio.com/warning#${encodeURIComponent(url)}`;
         const proxy = 'http://127.0.0.1:47443/proxy?t=SECRET';
         expect(classify(wrap(wrap(proxy)), win)).toBe('blocked');
-        expect(classify(wrap(wrap(wrap(proxy))), win)).toBe('web');
+        // Past two wrappers it is not looked at any more, and not shown as a QR code either: disabled.
+        expect(classify(wrap(wrap(wrap(proxy))), win)).toBe('blocked');
+        expect(classify(wrap(wrap(wrap('https://example.com/configure'))), win)).toBe('blocked');
         expect(classify(wrap(wrap('https://example.com/configure')), win)).toBe('web');
     });
 

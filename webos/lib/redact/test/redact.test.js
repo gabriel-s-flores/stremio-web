@@ -137,7 +137,7 @@ describe('redactValue', () => {
         }
         redactValue(big);
         expect(reads).toBeGreaterThan(0);
-        expect(reads).toBeLessThanOrEqual(2000); // MAX_NODES is 1000
+        expect(reads).toBeLessThanOrEqual(1000); // MAX_NODES is 1000 (500 reads today)
     });
 
     it('looks as deep as asked for (the diagnostics report)', () => {

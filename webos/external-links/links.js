@@ -148,7 +148,11 @@ const classify = (url, win, depth = 0) => {
             return 'blocked';
         }
         // The link behind the warning page counts too: it is what the phone ends up opening.
-        if (depth < MAX_WARNING_DEPTH && parsed.pathname === WARNING_PATH && parsed.hash.length > 1) {
+        if (parsed.pathname === WARNING_PATH && parsed.hash.length > 1) {
+            // Wrapped deeper than it is looked into: what it ends in is unknown, and a token could be in it. Disable.
+            if (depth >= MAX_WARNING_DEPTH) {
+                return 'blocked';
+            }
             let inner = null;
             try {
                 // Absolute only: a relative text after the # is not a link.
