@@ -5,7 +5,7 @@
 // overlay), and the memory sampled every few minutes. One media scenario per boot is the emulator's limit
 // (docs/PESQUISA.md, section 7), so this is its own reservation; stream switches are the `play` scenario of F7.1.
 //
-//   webos/tools/emu-run --profile c8 --timeout 100 -- webos/tests/perf/run.sh <out> soak-play --ipk <ipk> --minutes 50 [--no-subtitle]
+//   webos/tools/emu-run --profile c8 --timeout 100 -- webos/tests/perf/run.sh <out> soak-play --ipk <ipk> --minutes 50 [--no-subtitle] [--sampling] [--worker-heap]
 //
 // Output: samples.jsonl (every --sample-every minutes, default 3, after a GC), video.jsonl (the element's state
 // every 30 s: currentTime against the wall clock, paused, readyState, dropped frames), steps.jsonl (the
@@ -143,6 +143,12 @@ try {
 const inPlayer = await soak.evaluate(`/^#\\/player\\//.test(location.hash)`).catch(() => false);
 if (!inPlayer) record('left-player-by-subtitle-step', { ok: false });
 await soak.sample('play+1', { video: await video() });
+// --sampling: the sampling heap profiler on the page during the whole playback: what it reports at the end is the
+// allocations still alive (who holds the JS heap that grows), with the call stack of each.
+let sampling = false;
+if (args.sampling) {
+    sampling = await soak.send('HeapProfiler.startSampling', { samplingInterval: 4096 }, 20000).then(() => true, (e) => { log('sampling heap profiler unavailable:', e.message); return false; });
+}
 if (args['worker-heap']) await soak.workerSnapshot('start').then((r) => { if (r.error) log('worker snapshot failed', r.error); }, (e) => log('worker snapshot failed', e.message));
 
 // The interactions, in turn. Each one is followed by a check that the video plays on.
@@ -189,6 +195,12 @@ while (minutesSince(mediaStart) < MINUTES) {
 summary.playedMinutes = Math.round(minutesSince(mediaStart) * 10) / 10;
 summary.stalls = stalls;
 
+if (sampling) {
+    await soak.send('HeapProfiler.collectGarbage', {}, 30000).catch(() => {});
+    const profile = await soak.send('HeapProfiler.stopSampling', {}, 60000).catch((e) => ({ error: String(e.message) }));
+    fs.writeFileSync(path.join(OUT, 'heap-sampling.json'), JSON.stringify(profile));
+    log('sampling profile saved', profile.error || '');
+}
 phase('leave');
 await soak.sample('before-leave', { video: await video() });
 await soak.key('BACK'); // the first Back hides the bar if it is shown (F5.7)
