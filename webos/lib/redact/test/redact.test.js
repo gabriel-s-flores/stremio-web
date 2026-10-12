@@ -128,11 +128,16 @@ describe('redactValue', () => {
     });
 
     it('is bounded: a huge object costs a bounded amount of work', () => {
+        // Counted, not timed: a wall-clock limit failed on a loaded host (F7.3). Every value of the big object is a
+        // getter that counts its reads; the walk stops at its node budget, far from the 100000 entries.
+        let reads = 0;
         const big = {};
-        for (let i = 0; i < 100000; i++) big[`k${i}`] = { v: i };
-        const start = Date.now();
+        for (let i = 0; i < 100000; i++) {
+            Object.defineProperty(big, `k${i}`, { enumerable: true, get() { reads++; return { v: i }; } });
+        }
         redactValue(big);
-        expect(Date.now() - start).toBeLessThan(250);
+        expect(reads).toBeGreaterThan(0);
+        expect(reads).toBeLessThanOrEqual(1000); // MAX_NODES is 1000 (500 reads today)
     });
 
     it('looks as deep as asked for (the diagnostics report)', () => {

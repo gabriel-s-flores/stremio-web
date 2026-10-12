@@ -31,6 +31,14 @@
             color: var(--primary-foreground-color);
         }
 
+        // The code and, below it, the link and Close (below a small code), or beside it (a large code).
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
         // Fixed side (Chromium 53 has no min()); the modules are not a whole number of pixels, which
         // crispEdges makes sharp enough for a phone camera. Long links have denser codes: larger.
         .qr {
@@ -44,6 +52,13 @@
                 width: 26rem;
                 height: 26rem;
             }
+        }
+
+        .side {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
         }
 
         // Long links (addon pages, signed URLs) are cut after a few lines; the QR code has all of it.
@@ -75,6 +90,32 @@
 
             &:focus {
                 border-color: var(--webos-focus-color);
+            }
+        }
+
+        // A large code (version 14 or more, 26 rem) in the column would make the dialog taller than the
+        // screen: 1.75 zoom, 1080 px = 44 rem, 41 rem inside the overscan margin. Beside the link and
+        // Close it is 31 rem tall.
+        &.wide {
+            width: auto;
+            max-width: 100%;
+
+            .content {
+                flex-direction: row;
+                width: auto;
+            }
+
+            .qr {
+                margin-right: 3rem;
+                margin-bottom: 0;
+            }
+
+            .side {
+                width: 22rem;
+            }
+
+            .url {
+                max-height: 8rem;
             }
         }
     }

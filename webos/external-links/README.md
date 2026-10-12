@@ -18,7 +18,7 @@ Só entra no build webOS (`src/App/index.webos.js`); o desktop não muda.
 | `window.open(url)` com `http(s)` (`Platform.openExternal`: login social, reset de senha, "configure" de addon, exportar dados, legendas) | QR code do link |
 | Clique (OK) num `<a href>` `http(s)` (`target="_blank"` ou não): Help, Terms, Privacy, Share, IMDb, trailer, Settings | QR code do link (a navegação é cancelada) |
 | `magnet:`, `stremio:`, `mailto:`, `intent:` e qualquer outro esquema externo | **Desativado**: o clique é cancelado e nada acontece |
-| Links para a própria TV: `127.x.x.x`, `localhost`, `*.localhost`, `0.0.0.0`, `[::1]` (inclusive dentro de `stremio.com/warning#<url>`), como a URL do proxy de certificados da F3.7 (`http://127.0.0.1:<porta>/proxy?t=<token>…`) | **Desativado**: o celular não abriria e a URL leva o token. O link nunca é mostrado, guardado nem registrado em log |
+| Links para a própria TV: `127.x.x.x`, `localhost`, `*.localhost` (com ou sem ponto final), `0.0.0.0`, `[::1]` e as formas numéricas do mesmo endereço (`2130706433`, `0x7f000001`, `127.1`, `[::ffff:127.0.0.1]`, `user@127.0.0.1`…) (inclusive dentro de `stremio.com/warning#<url>`, até dois aninhados), como a URL do proxy de certificados da F3.7 (`http://127.0.0.1:<porta>/proxy?t=<token>…`) | **Desativado**: o celular não abriria e a URL leva o token. O link nunca é mostrado, guardado nem registrado em log |
 | `#/rota`, `file:`, `blob:`, `data:` | Intocado |
 
 - Links com `download` (o "Download subtitle" do menu de legendas) também são pegos na fase de captura: o menu de contexto do upstream
@@ -34,7 +34,7 @@ Só entra no build webOS (`src/App/index.webos.js`); o desktop não muda.
 
 - Texto: `LOGIN_SCAN_QR_CODE` ("Scan the QR code or go to") e `BUTTON_CLOSE`, traduzidos pelo i18next do app.
 - O QR code é um SVG (um `<path>` com uma barra por sequência de módulos escuros, zona silenciosa de 4
-  módulos, 20 rem de lado, 26 rem a partir da versão 14, `shape-rendering: crispEdges`; os módulos não são um número
+  módulos, 20 rem de lado, 26 rem a partir da versão 14 (aí o código fica ao lado do link e do Fechar, não acima: em coluna o diálogo teria 1120 px numa tela de 1080, medido no emulador com o zoom 1,75), `shape-rendering: crispEdges`; os módulos não são um número
   inteiro de pixels). Só é calculado quando um link é aberto, num chunk carregado nessa hora: nada roda no boot
   além de dois listeners.
 - O foco vai para **Fechar** e fica lá. Enquanto o diálogo está aberto ele é dono do controle: setas e
@@ -64,5 +64,5 @@ que a do `qrencode`: o código é igualmente válido, só não é sempre o mesmo
 - `pnpm exec jest webos/tests/external-links`: gerador (80 vetores do `qrencode`, versões 1 a 40 em M e L e as 8
   máscaras, em `qr-fixtures.json`; `gen-qr-fixtures.js` os regenera), classificação e interceptação,
   diálogo renderizado em jsdom com o despachante real.
-- Emulador: `webos/tests/keyboard/emulator/run.mjs <pasta> links` (dentro do `emu-run`, depois de
+- Emulador: `webos/tests/keyboard/emulator/run.mjs <pasta> links` (ou `qr`: o diálogo para links de 27 a 2900 bytes, com a geometria medida em px de tela; dentro do `emu-run`, depois de
   `pnpm webos:package`).

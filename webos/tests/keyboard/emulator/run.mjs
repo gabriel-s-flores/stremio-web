@@ -2,7 +2,7 @@
 // System keyboard and external links on the emulator (F3.4): real remote keys
 // (webos/tools/remote.mjs, port 19001) on the packaged app, the state read over CDP after each
 // step. Run from the repo root, inside an emu-run reservation, after `pnpm webos:package`:
-//   webos/tools/emu-run --timeout 15 -- node webos/tests/keyboard/emulator/run.mjs <out-dir> [keyboard|links]
+//   webos/tools/emu-run --timeout 15 -- node webos/tests/keyboard/emulator/run.mjs <out-dir> [keyboard|links|qr]
 // Writes <out-dir>/f34-<scenario>.json (every step with its state) and screenshots; the folder must
 // be under $HOME (the VM screenshots are written by QEMU, in a flatpak).
 //
@@ -13,6 +13,8 @@
 //   keyboard" is the same keyCode injected over CDP while the keyboard is up (webos/keyboard/README.md).
 // - links: a link of the profile menu (OK on it), window.open, a magnet link, the QR code read back
 //   from the screenshot with zbarimg, Back and the focus, clipboard and mediaSession.
+// - qr: the dialog for links of growing length (up to version 40): the QR code and the dialog inside the
+//   screen with room around them, and the code still readable (F7.3).
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -198,10 +200,16 @@ const click = (name, expression) => {
 const keyboardScenario = async () => {
     // The system only opens the keyboard for focus() after the app got a key from the remote.
     // Measured, not asserted: the focus the search route takes by itself does not open it yet.
-    // The Board has links (placeholders) before the nav bar exists: wait for the bar itself.
-    await waitFor('return !!document.querySelector("[class*=search-bar-container]") && !!document.querySelector("a[href=\\"#/addons\\"]");', 60000, 500);
-    click('01-open-search', 'document.querySelector("[class*=search-bar-container]")');
-    await waitFor('return location.hash.indexOf("#/search") === 0;', 30000);
+    // Until the core is ready the nav bar shows a placeholder, a <label> with the same class prefix that does
+    // nothing on a click (it lasts about a second after the app starts; waiting for any element with that
+    // class took the placeholder for the bar and the click went nowhere: step 02 then had no input).
+    // The real bar is a <div>. And the click is confirmed by the route, and repeated while it did not take.
+    await waitFor('return !!document.querySelector("div[class*=search-bar-container]") && !!document.querySelector("a[href=\\"#/addons\\"]");', 60000, 500);
+    let searchRoute = null;
+    for (let attempt = 1; attempt <= 3 && searchRoute === null; attempt++) {
+        click(attempt === 1 ? '01-open-search' : `01-open-search (try ${attempt})`, 'document.querySelector("div[class*=search-bar-container]")');
+        searchRoute = await waitFor('return location.hash.indexOf("#/search") === 0;', attempt === 3 ? 30000 : 8000);
+    }
     await sleep(2500);
     const before = state();
     record('02-search-before-any-key', { data: before, note: `keyboard events: ${JSON.stringify(before.kbEvents)}`, screenshot: screenshot('02-search-before-any-key'), vm: vmScreenshot('02-search-before-any-key') });
@@ -456,7 +464,87 @@ const linksScenario = async () => {
     record('16-clipboard-outcome', { note: String(evaluate('return window.__clip;')), outcome });
 };
 
-const SCENARIOS = { keyboard: keyboardScenario, links: linksScenario };
+// The QR code dialog by link length (F7.3): the QR code, with its quiet zone, and the whole dialog have to
+// fit in the screen with room around them at the TV zoom (1.75), from a short link to the longest one a
+// code can hold (version 40-L, 2953 bytes). Rects are in screen pixels (1920x1080).
+const longLink = (bytes) => {
+    let text = 'https://example.com/configure?data=';
+    let seed = 12345;
+    while (text.length < bytes) {
+        seed = (seed * 1103515245 + 12345) % 2147483648;
+        text += 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_'.charAt(seed % 64);
+    }
+    return text;
+};
+
+const qrGeometry = () => evaluate(`
+    var dialog = document.querySelector('[role="dialog"][aria-labelledby="webos-external-link-title"]');
+    if (!dialog) return null;
+    var zoom = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+    // The app patches getBoundingClientRect to report screen pixels (src/common/interfaceScale.webos.ts).
+    var rect = function (element) {
+        if (!element) return null;
+        var r = element.getBoundingClientRect();
+        return { left: Math.round(r.left), top: Math.round(r.top), right: Math.round(r.right), bottom: Math.round(r.bottom), width: Math.round(r.width), height: Math.round(r.height) };
+    };
+    var svg = dialog.querySelector('svg');
+    var viewBox = svg ? svg.getAttribute('viewBox').split(' ').map(Number) : null;
+    var container = dialog.querySelector('[class*="container"]');
+    var style = getComputedStyle(document.documentElement);
+    return {
+        zoom: zoom,
+        inner: { width: window.innerWidth, height: window.innerHeight },
+        safe: { top: style.getPropertyValue('--safe-area-inset-top'), left: style.getPropertyValue('--safe-area-inset-left') },
+        modules: viewBox ? viewBox[2] : null,
+        container: rect(container),
+        qr: rect(svg),
+        url: rect(dialog.querySelector('[class*="url"]')),
+        close: rect(dialog.querySelector('button')),
+        qrClass: svg ? String(svg.getAttribute('class')) : null
+    };
+`);
+
+const qrScenario = async () => {
+    await waitFor('return !!document.querySelector("a[href=\\"#/settings\\"]");', 60000, 500);
+    remote('INFO');
+    await sleep(500);
+    const cases = [['short', 'https://www.stremio.com/tos'], ['v13', longLink(300)], ['v20', longLink(600)], ['v27', longLink(1100)], ['v40', longLink(2900)]];
+    for (const [name, link] of cases) {
+        evaluate(`window.open(${JSON.stringify(link)}, '_blank'); return true;`);
+        await sleep(800);
+        const drawn = await waitQr();
+        await sleep(1500);
+        const geometry = qrGeometry();
+        const file = screenshot(`qr-${name}`);
+        let decoded = '';
+        try {
+            decoded = run('zbarimg', ['--raw', '-q', path.join(OUT, `qr-${name}.png`)]).replace(/\n$/, '');
+        } catch (error) {
+            decoded = `zbarimg failed: ${String(error.stdout || error.message).slice(0, 80)}`;
+        }
+        const g = geometry || {};
+        const screen = { width: 1920, height: 1080 };
+        // The overscan margin of the TV (33 px at the top and bottom, 48 px at the sides) is kept clear.
+        const room = g.container ? {
+            top: g.container.top, bottom: screen.height - g.container.bottom, left: g.container.left, right: screen.width - g.container.right,
+        } : {};
+        const qrRoom = g.qr && g.container ? {
+            top: g.qr.top - g.container.top, bottom: g.container.bottom - g.qr.bottom, left: g.qr.left - g.container.left, right: g.container.right - g.qr.right,
+        } : {};
+        const modulePx = g.qr && g.modules ? g.qr.width / g.modules : 0;
+        check(`qr-${name}`, {
+            'QR code drawn': drawn !== null,
+            'dialog inside the safe area (33 px top/bottom, 48 px sides)': !!g.container && room.top >= 33 && room.bottom >= 33 && room.left >= 48 && room.right >= 48,
+            'QR code inside the dialog with room (>= 24 px)': !!g.qr && Math.min(qrRoom.top, qrRoom.bottom, qrRoom.left, qrRoom.right) >= 24,
+            'Close button inside the dialog': !!g.close && !!g.container && g.close.bottom <= g.container.bottom,
+            'at least 3 screen px per module': modulePx >= 3,
+        }, { data: { geometry, room, qrRoom, modulePx: Math.round(modulePx * 100) / 100, bytes: link.length }, note: `decoded ${decoded === link ? 'ok' : decoded.slice(0, 40)}`, decoded: decoded === link, screenshot: file });
+        remote('BACK');
+        await sleep(1000);
+    }
+};
+
+const SCENARIOS = { keyboard: keyboardScenario, links: linksScenario, qr: qrScenario };
 
 try {
     if (!SCENARIOS[SCENARIO]) {

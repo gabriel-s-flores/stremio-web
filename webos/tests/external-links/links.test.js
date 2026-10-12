@@ -4,7 +4,7 @@
 // webos/external-links/links.js: what counts as an external link, the store, and the two ways the
 // app has to open one (window.open and a click on a link).
 
-const { classify, absoluteUrl, createStore, install } = require('../../external-links/links');
+const { classify, isLoopbackHost, absoluteUrl, createStore, install } = require('../../external-links/links');
 
 describe('classify', () => {
     const win = { location: { href: 'file:///media/developer/apps/usr/palm/applications/stremio/index.html#/', origin: 'file://' } };
@@ -37,6 +37,56 @@ describe('classify', () => {
         ['javascript:void(0)', 'local'],
     ])('%s is %s', (url, expected) => {
         expect(classify(url, win)).toBe(expected);
+    });
+
+    // The forms of the TV's own address (F3.4 debt, F7.3). The Chromium 53 of the TV writes the numeric
+    // ones the canonical way in `new URL` (measured on the emulator: evidencias/d2/b1-chromium53-url.txt);
+    // the ones it leaves (trailing dot, IPv6 with an IPv4 inside) are covered by the parsing in links.js.
+    test.each([
+        'http://127.0.0.1/', 'http://127.255.255.254/', 'http://user@127.0.0.1/', 'http://user:pw@127.0.0.1:47443/proxy?t=S',
+        'http://127.0.0.1@127.0.0.1/', 'http://example.com@127.0.0.1/',
+        'http://2130706433/', 'http://0x7f000001/', 'http://0X7F000001/', 'http://017700000001/', 'http://0x7f.0.0.1/', 'http://0177.0.0.1/',
+        'http://127.1/', 'http://127.0.1/', 'http://127.0.0.0x1/', 'http://0/', 'http://0x0/', 'http://00/', 'http://0.0.0.0/',
+        'http://[::1]/', 'http://[0:0:0:0:0:0:0:1]/', 'http://[0000:0000:0000:0000:0000:0000:0000:0001]/', 'http://[::0001]/',
+        'http://[::]/', 'http://[0::0]/', 'http://[::ffff:127.0.0.1]/', 'http://[::ffff:7f00:1]/', 'http://[::FFFF:7F00:1]/',
+        'http://[::ffff:0.0.0.0]/', 'http://[::127.0.0.1]/', 'http://[::7f00:1]/', 'http://[0:0:0:0:0:ffff:7f00:1]/',
+        'http://localhost/', 'http://LOCALHOST:8080/', 'http://localhost./', 'http://a.b.localhost/', 'http://a.localhost./',
+        'http://127.0.0.1./', 'http://127.0.0.1:80#@example.com',
+    ])('the TV itself, %s, is blocked', (url) => {
+        expect(classify(url, win)).toBe('blocked');
+        expect(classify(`https://www.stremio.com/warning#${encodeURIComponent(url)}`, win)).toBe('blocked');
+    });
+
+    test.each([
+        'http://example.com@evil.example.com/', 'http://127.0.0.1@example.com/', 'http://localhost@example.com/',
+        'http://127.0.0.1.example.com/', 'http://127.example.com/', 'http://0x7f.example.com/', 'http://2130706433.example.com/',
+        'http://notlocalhost/', 'http://localhost.example.com/', 'http://mylocalhost.com/', 'http://example.localhost.example.com/',
+        'http://128.0.0.1/', 'http://126.255.255.255/', 'http://1.1.1.1/', 'http://8.8.8.8/', 'http://10.0.0.5/',
+        'http://192.168.1.20:7000/configure', 'http://169.254.1.1/', 'http://1/', 'http://16777217/',
+        'http://[::2]/', 'http://[2001:db8::1]/', 'http://[::ffff:8.8.8.8]/', 'http://[::ffff:808:808]/', 'http://[::ffff:128.0.0.1]/',
+        'http://[2606:4700:4700::1111]/', 'https://www.stremio.com/', 'https://stremio.zendesk.com/hc/en-us',
+    ])('a public or LAN host, %s, is not blocked', (url) => {
+        expect(classify(url, win)).toBe('web');
+    });
+
+    test('a warning page inside a warning page is looked through too (up to two wrappers; deeper is disabled)', () => {
+        const wrap = (url) => `https://www.stremio.com/warning#${encodeURIComponent(url)}`;
+        const proxy = 'http://127.0.0.1:47443/proxy?t=SECRET';
+        expect(classify(wrap(wrap(proxy)), win)).toBe('blocked');
+        // Past two wrappers it is not looked at any more, and not shown as a QR code either: disabled.
+        expect(classify(wrap(wrap(wrap(proxy))), win)).toBe('blocked');
+        expect(classify(wrap(wrap(wrap('https://example.com/configure'))), win)).toBe('blocked');
+        expect(classify(wrap(wrap('https://example.com/configure')), win)).toBe('web');
+    });
+
+    test('the host is read here too, not only as `new URL` writes it', () => {
+        // Hostnames as a platform that does not canonicalize would hand them over.
+        ['2130706433', '0x7f000001', '017700000001', '127.1', '0177.0.1', '0', '0x0', '127.0.0.1.', 'localhost.', 'LocalHost',
+            '[0:0:0:0:0:0:0:1]', '[::ffff:127.0.0.1]', '[::FFFF:7F00:0001]', '[::127.0.0.1]', '[0:0:0:0:0:0:0:0]', '[0::0:0]',
+        ].forEach((host) => expect([host, isLoopbackHost(host)]).toEqual([host, true]));
+        ['example.com', '127.example.com', '0x7f.example.com', '1.2.3.4', '256.0.0.1', '4294967296', '1.2.3.4.5', '128.1', '0x80000001',
+            'localhost.example.com', '', '[::2]', '[::ffff:1.2.3.4]', '[1:2:3:4:5:6:7:8]', '[1:2:3:4:5:6:7]', '[:::1]', '[1::2::3]', '[::1.2.3]', '[zz::1]', '[::12345]',
+        ].forEach((host) => expect([host, isLoopbackHost(host)]).toEqual([host, false]));
     });
 
     test('a web URL of the page\'s own origin is the app\'s (the app served from the web)', () => {

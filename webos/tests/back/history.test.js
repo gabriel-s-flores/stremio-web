@@ -50,10 +50,24 @@ let openExitDialog;
 
 const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 20)));
 
+// jsdom does a history traversal (history.go, navigate(-n)) in two nested setTimeout(0) tasks and then
+// fires popstate; on a busy host (the whole suite in parallel) 20 ms is not always enough, and the
+// test read the route before the Back had landed. So a move is awaited until the router location
+// changes, not for a fixed time (F7.3).
+const MOVE_TIMEOUT_MS = 5000;
+const untilLocationChanges = async (key) => {
+    const deadline = Date.now() + MOVE_TIMEOUT_MS;
+    while (app.location.key === key && Date.now() < deadline) {
+        await act(() => new Promise((resolve) => setTimeout(resolve, 5)));
+    }
+};
+
 const step = async (action) => {
+    const key = app.location.key;
     await act(async () => {
         action(app);
     });
+    await untilLocationChanges(key);
     await settle();
 };
 
@@ -64,11 +78,16 @@ const keydown = (keyCode) => {
     return event;
 };
 
-// One Back press; returns where the app is after it settles.
-const back = async () => {
+// One Back press; returns where the app is after it settles. `moves: false` is for a press that is
+// expected to leave the route where it is (the quit dialog): there is no move to wait for.
+const back = async ({ moves = true } = {}) => {
+    const key = app.location.key;
     await act(async () => {
         window.dispatchEvent(keydown(461));
     });
+    if (moves) {
+        await untilLocationChanges(key);
+    }
     await settle();
     return where();
 };
@@ -115,7 +134,7 @@ describe('each Back leaves one screen (F3.2b)', () => {
         expect(lastDetail()).toBe('navigate:-1');
         expect(await back()).toEqual({ path: '/', idx: 0 });
         expect(openExitDialog).not.toHaveBeenCalled();
-        await back();
+        await back({ moves: false });
         expect(openExitDialog).toHaveBeenCalledTimes(1);
         expect(where()).toEqual({ path: '/', idx: 0 });
     });
@@ -171,10 +190,12 @@ describe('each Back leaves one screen (F3.2b)', () => {
     test('two quick presses still move one screen', async () => {
         await step(({ navigate }) => navigate(DISCOVER));
         await step(({ navigateWithOrigin }) => navigateWithOrigin('/metadetails/movie/tt0133093'));
+        const key = app.location.key;
         await act(async () => {
             window.dispatchEvent(keydown(461));
             window.dispatchEvent(keydown(461));
         });
+        await untilLocationChanges(key);
         await settle();
         expect(where()).toEqual({ path: DISCOVER, idx: 1 });
         expect(lastDetail()).toBe('pending');

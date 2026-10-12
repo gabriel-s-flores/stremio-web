@@ -15,6 +15,9 @@ jest.mock('react-i18next', () => ({
 jest.mock('../../external-links/ExternalLinkDialog.less', () => ({
     'external-link-dialog': 'external-link-dialog',
     container: 'container',
+    wide: 'wide',
+    content: 'content',
+    side: 'side',
     title: 'title',
     qr: 'qr',
     large: 'large',
@@ -129,6 +132,34 @@ describe('ExternalLinkDialog', () => {
         expect(dialog().querySelector('svg').getAttribute('class')).toBe('qr');
         await render(React.createElement(ExternalLinkDialog, { url: `https://example.com/${'a'.repeat(400)}`, onClose: jest.fn() }));
         expect(dialog().querySelector('svg').getAttribute('class')).toBe('qr large');
+    });
+
+    test('a large code goes beside the link and Close (wide dialog); a small one stays in one column', async () => {
+        await render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
+        expect(dialog().querySelector('.container').className).toBe('container');
+        expect(dialog().querySelector('.content').firstChild.tagName.toLowerCase()).toBe('svg');
+        expect(dialog().querySelector('.side').children).toHaveLength(2);
+        const long = `https://example.com/${'a'.repeat(400)}`;
+        await render(React.createElement(ExternalLinkDialog, { url: long, onClose: jest.fn() }));
+        expect(dialog().querySelector('.container').className).toBe('container wide');
+        expect(dialog().querySelector('.side .url').textContent).toBe(long);
+        expect(dialog().querySelector('.side button.close')).not.toBeNull();
+        // Back to a short link: one column again. Too long for a code: no wide layout either.
+        await render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
+        expect(dialog().querySelector('.container').className).toBe('container');
+        await render(React.createElement(ExternalLinkDialog, { url: `https://example.com/${'a'.repeat(3000)}`, onClose: jest.fn() }));
+        expect(dialog().querySelector('.container').className).toBe('container');
+    });
+
+    test('the wide layout is not kept when the dialog is closed and opened again', async () => {
+        await render(React.createElement(ExternalLinkDialog, { url: `https://example.com/${'a'.repeat(400)}`, onClose: jest.fn() }));
+        expect(dialog().querySelector('.container').className).toBe('container wide');
+        await render(React.createElement(ExternalLinkDialog, { url: null, onClose: jest.fn() }));
+        expect(dialog()).toBeNull();
+        await act(async () => {
+            root.render(React.createElement(ExternalLinkDialog, { url: 'https://example.com/', onClose: jest.fn() }));
+        });
+        expect(dialog().querySelector('.container').className).toBe('container');
     });
 
     test('too long for a QR code: still shows the link and Close', async () => {

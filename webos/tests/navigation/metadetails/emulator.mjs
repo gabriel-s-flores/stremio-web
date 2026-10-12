@@ -326,8 +326,19 @@ const walk = async () => {
     check('pointer: an arrow hides the pointer and the remote takes over from the page', focused.section === 'list' && evaluate('window.__f41c.pointer()') !== 'visible', { focused, pointer: evaluate('window.__f41c.pointer()') });
 };
 
+// The details column is there once the page has its action buttons (metaReady) and the genre links.
+// (The placeholder elements of the page do not go away when it has loaded: 3 stay, so they say nothing.)
+const COLUMN_READY = 'JSON.parse(window.__f41c.counts()).metaReady && document.querySelectorAll(".route-container:last-child [class*=metadetails-container] a[href^=\'#/discover\']").length > 0';
+
 const restoreRun = async () => {
     await openMovieFromBoard();
+    // The streams (and so the list panel) come from the addon; the column (genre and cast links)
+    // comes from Cinemeta and takes up to ~6 s longer in the C8 profile. A LEFT before it is there
+    // finds nothing to its left and the walk up looks for a link in the wrong place (2 of 3 runs on a
+    // calm host, F7.3): wait for the column before the first key.
+    const columnStarted = Date.now();
+    const columnReady = await waitFor(COLUMN_READY, 60);
+    check('restore: the details column has loaded (action buttons, genre links)', columnReady, { ms: Date.now() - columnStarted });
     for (let round = 1; round <= 2; round++) {
         let focused = await key('LEFT');
         // A genre link (Discover), the reviewer's case: Search focuses its field, and with F3.4 the
@@ -351,10 +362,14 @@ const restoreRun = async () => {
         }
         const timeline = [];
         let restored = null;
-        while (Date.now() - started < 20000) {
-            const sample = json('JSON.stringify({ f: JSON.parse(window.__f41c.focus()), p: document.querySelectorAll(".route-container:last-child [class*=metadetails-container] [class*=placeholder]").length })');
+        // 20 s (the 15 s guard of the page plus the margin); while the column has not arrived the page
+        // still promises the focus back when it does, so the wait goes on (45 s at most).
+        let loading = true;
+        while (Date.now() - started < 20000 || (loading && Date.now() - started < 45000)) {
+            const sample = json('JSON.stringify({ f: JSON.parse(window.__f41c.focus()), p: document.querySelectorAll(".route-container:last-child [class*=metadetails-container] [class*=placeholder]").length, ready: JSON.parse(window.__f41c.counts()).metaReady })');
             if (sample) {
-                timeline.push({ ms: Date.now() - started, kind: sample.f.kind, text: sample.f.text, placeholders: sample.p });
+                loading = !sample.ready;
+                timeline.push({ ms: Date.now() - started, kind: sample.f.kind, text: sample.f.text, placeholders: sample.p, columnReady: sample.ready });
                 if (sample.f.kind === 'link' && sample.f.text === link) {
                     restored = sample.f;
                     break;

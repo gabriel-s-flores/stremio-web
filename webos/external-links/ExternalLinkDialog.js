@@ -25,7 +25,7 @@ const h = React.createElement;
 
 // The generator (qr.js) is a lazy chunk: it is not in the boot bundle, and the dialog loads it when
 // the first link is opened. Until it arrives, and for a link too long for a code, only the text shows.
-const QrCode = ({ url, onSize }) => {
+const QrCode = ({ url, onLarge }) => {
     const [qr, setQr] = React.useState(null);
     React.useEffect(() => {
         let cancelled = false;
@@ -40,12 +40,18 @@ const QrCode = ({ url, onSize }) => {
             cancelled = true;
         };
     }, [url]);
+    const large = qr !== null && qr.version >= LARGE_FROM_VERSION;
+    // The dialog lays out differently around a large code (see ExternalLinkDialog.less).
+    React.useEffect(() => {
+        onLarge(large);
+        return () => onLarge(false);
+    }, [large, onLarge]);
     if (qr === null) {
         return null;
     }
     const side = qr.size + QUIET_ZONE * 2;
     return h('svg', {
-        className: classnames(styles['qr'], { [styles['large']]: qr.version >= LARGE_FROM_VERSION }),
+        className: classnames(styles['qr'], { [styles['large']]: large }),
         viewBox: `0 0 ${side} ${side}`,
         shapeRendering: 'crispEdges',
         role: 'img',
@@ -59,6 +65,7 @@ const ExternalLinkDialog = ({ url, onClose }) => {
     const { t } = useTranslation();
     const closeRef = React.useRef(null);
     const open = typeof url === 'string';
+    const [large, setLarge] = React.useState(false);
 
     useBackHandler(() => {
         onClose();
@@ -105,11 +112,14 @@ const ExternalLinkDialog = ({ url, onClose }) => {
                 }
             },
         },
-        h('div', { className: styles['container'] },
+        h('div', { className: classnames(styles['container'], { [styles['wide']]: large }) },
             h('div', { id: 'webos-external-link-title', className: styles['title'] }, t('LOGIN_SCAN_QR_CODE')),
-            h(QrCode, { url }),
-            h('div', { className: styles['url'] }, url),
-            h('button', { ref: closeRef, type: 'button', className: styles['close'], onClick: onClose }, t('BUTTON_CLOSE')))),
+            // Below a small code, one column; beside a large one (too tall for the screen otherwise), two.
+            h('div', { className: styles['content'] },
+                h(QrCode, { url, onLarge: setLarge }),
+                h('div', { className: styles['side'] },
+                    h('div', { className: styles['url'] }, url),
+                    h('button', { ref: closeRef, type: 'button', className: styles['close'], onClick: onClose }, t('BUTTON_CLOSE')))))),
         document.body
     );
 };
