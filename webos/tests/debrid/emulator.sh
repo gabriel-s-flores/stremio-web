@@ -10,7 +10,10 @@
 # Scenarios (SCENARIOS in evaluate.mjs): redirect-ok, redirect-403, expired-410, not-found-404,
 # rate-limited-429, server-error-503, network-drop, network-refused (the TV has internet, the link
 # host does not answer), le-host (a Let's Encrypt host the Chromium 53 fetch() refuses, with
-# internet), offline-drop (navigator.onLine false: the TV has no internet).
+# internet), offline-drop (navigator.onLine false: the TV has no internet); F8.4: torrentio-access and
+# torrentio-downloading (a Torrentio-like resolver answers 302 to its notice video,
+# /videos/failed_access_v3.mp4 or /videos/downloading_v3.mp4, which does not play: on the C8 the
+# notice did not play either).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 OUT="${1:?usage: emulator.sh <output-dir> <scenario>}"
@@ -24,10 +27,33 @@ EMU=("$ROOT/webos/tools/emulator-qemu.sh" -i "$EMU_INSTANCE")
 cdp_eval() { "${CDP[@]}" eval "$1"; }
 
 [[ -f "$MEDIA_DIR/$FILE" ]] || { echo "error: $MEDIA_DIR/$FILE not found (webos/tools/gen-media.sh)" >&2; exit 1; }
-PORT="$(node -e "const s=require('net').createServer().listen(0,'127.0.0.1',()=>{console.log(s.address().port);s.close()})")"
+free_port() { node -e "const s=require('net').createServer().listen(0,'127.0.0.1',()=>{console.log(s.address().port);s.close()})"; }
+PORT="$(free_port)"
+RESOLVER_PID=''
+if [[ "$SCENARIO" == torrentio-* ]]; then
+    # The notice videos, as bytes the pipeline cannot play, next to the media file.
+    NOTICE_DIR="$OUT/media"
+    mkdir -p "$NOTICE_DIR/videos"
+    ln -sf "$MEDIA_DIR/$FILE" "$NOTICE_DIR/$FILE"
+    head -c 65536 /dev/urandom > "$NOTICE_DIR/videos/failed_access_v3.mp4"
+    cp "$NOTICE_DIR/videos/failed_access_v3.mp4" "$NOTICE_DIR/videos/downloading_v3.mp4"
+    MEDIA_DIR="$NOTICE_DIR"
+    # The resolver: /resolve/<notice>/<key>/… answers 302 to the media server's /videos/<notice>_v3.mp4.
+    RESOLVER_PORT="$(free_port)"
+    node -e "require('http').createServer((req, res) => {
+        const notice = req.url.split('/')[2];
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Headers', 'Range');
+        if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+        res.writeHead(302, { Location: 'http://10.0.2.2:$PORT/videos/' + notice + '_v3.mp4' });
+        res.end();
+        console.log(new Date().toISOString(), req.method, req.url.replace(/KEY-[^/]+/, 'KEY-***'), req.headers.range || '', '-> 302', notice);
+    }).listen($RESOLVER_PORT, '127.0.0.1')" > "$OUT/resolver.log" 2>&1 &
+    RESOLVER_PID=$!
+fi
 node "$ROOT/webos/tools/media-server.mjs" "$MEDIA_DIR" "$PORT" > "$OUT/media-server.log" 2>&1 &
 SERVER_PID=$!
-trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+trap 'kill "$SERVER_PID" $RESOLVER_PID 2>/dev/null || true' EXIT
 # A port nobody listens on: connection refused (the network is "down" for that host).
 DEAD_PORT="$(node -e "const s=require('net').createServer().listen(0,'127.0.0.1',()=>{console.log(s.address().port);s.close()})")"
 BASE="http://10.0.2.2:$PORT"
@@ -42,6 +68,8 @@ case "$SCENARIO" in
     network-refused)    URL="http://10.0.2.2:$DEAD_PORT/$FILE" ;;
     le-host)            URL="https://letsencrypt.org/robots.txt" ;;
     offline-drop)       URL="$BASE/drop/$FILE" ;;
+    torrentio-access)   URL="http://10.0.2.2:$RESOLVER_PORT/resolve/failed_access/KEY-f84secret/hash/null/0/$FILE" ;;
+    torrentio-downloading) URL="http://10.0.2.2:$RESOLVER_PORT/resolve/downloading/KEY-f84secret/hash/null/0/$FILE" ;;
     *) echo "error: unknown scenario $SCENARIO" >&2; exit 1 ;;
 esac
 echo "$SCENARIO" > "$OUT/scenario.txt"
@@ -81,6 +109,7 @@ snapshot() {
             label: label ? label.textContent : null,
             hint: hint ? hint.textContent : null,
             kind: layer ? layer.getAttribute('data-link-problem') : null,
+            buttons: layer ? Array.prototype.map.call(layer.querySelectorAll('[class*=\"button\"], a, [tabindex]'), function(b) { return (b.getAttribute('title') || b.textContent || '').slice(0, 60); }) : [],
         });
     })()" 2>/dev/null || echo null
 }
