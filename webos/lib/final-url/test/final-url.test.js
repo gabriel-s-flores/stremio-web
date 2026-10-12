@@ -84,11 +84,11 @@ describe('final URL', () => {
     // (/videos/downloading_v2.mp4, failed_access_v3.mp4…), on the resolver's origin.
     const NOTICE = 'https://torrentio.example/videos/downloading_v2.mp4';
 
-    it('a redirect on the resolver\'s own origin (its notice video) plays now and is not kept', async () => {
+    it('a redirect on the resolver\'s own origin (its notice video) is told as a notice and not kept', async () => {
         const { net, urls } = setup();
         const first = urls.resolve(RESOLVER);
         net.requests[0].answer(206, NOTICE);
-        expect(await first).toMatchObject({ url: NOTICE, source: 'redirect' });
+        expect(await first).toMatchObject({ url: NOTICE, source: 'notice' });
         expect(urls.peek(RESOLVER)).toBeNull();
         // Opened again once the debrid service has the file: the resolver is asked again.
         const again = urls.resolve(RESOLVER);
@@ -105,6 +105,19 @@ describe('final URL', () => {
         expect(urls.peek(RESOLVER)).toBeNull();
         urls.note(RESOLVER, FINAL);
         expect(urls.peek(RESOLVER)).toBe(FINAL);
+    });
+
+    it('a notice video served from another host is a notice too, and not kept (F8.5, B1)', async () => {
+        const { net, urls } = setup();
+        const other = 'https://cdn.other.example/videos/failed_access_v3.mp4';
+        const first = urls.resolve(RESOLVER);
+        net.requests[0].answer(206, other);
+        expect(await first).toMatchObject({ url: other, source: 'notice' });
+        expect(urls.peek(RESOLVER)).toBeNull();
+        urls.note(RESOLVER, other);
+        expect(urls.peek(RESOLVER)).toBeNull();
+        expect(isKeepable(RESOLVER, other)).toBe(false);
+        expect(isKeepable(RESOLVER, 'https://cdn.other.example/videos/film.mp4')).toBe(true);
     });
 
     it('isKeepable: the same link, or another origin (scheme, host or port)', () => {

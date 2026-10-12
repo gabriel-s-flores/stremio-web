@@ -78,6 +78,30 @@ describe('focus-within polyfill', () => {
         expect(marked()).toEqual([]);
     });
 
+    test('a focus moved inside a focus handler leaves the chain of the final element only', () => {
+        $('a1').addEventListener('focus', () => $('c1').focus());
+        $('b1').focus();
+        $('a1').focus();
+        jest.runAllTimers();
+        expect(marked()).toEqual(['HTML', 'BODY', 'list', 'row2', 'c', 'c1']);
+        expect(document.activeElement).toBe($('c1'));
+    });
+
+    test('the focused element removed from the page leaves no attribute on the ancestors that stay', () => {
+        $('a1').focus();
+        expect(marked()).toContain('row1');
+        // Chromium fires the blur of the removed node (the capture listener of the document sees it
+        // while the node is still in the tree); jsdom does not, so the test fires it.
+        $('a1').dispatchEvent(new FocusEvent('blur'));
+        $('a1').remove();
+        jest.runAllTimers();
+        expect(document.activeElement).toBe(document.body);
+        expect(marked()).toEqual([]);
+        // The next focus starts from a clean chain.
+        $('b1').focus();
+        expect(marked()).toEqual(['HTML', 'BODY', 'list', 'row1', 'b', 'b1']);
+    });
+
     test('uninstall removes the attributes and the listeners', () => {
         $('a1').focus();
         polyfill.uninstall();

@@ -136,8 +136,8 @@ os pôsteres da página. Isso forçava um recálculo inteiro dentro do `focus()`
 depois dele (o `align` do Board). Hoje o polyfill é o `webos/polyfills/focus-within.js`, que só mexe nos
 nós que entram ou saem da cadeia. O resto vinha da transição de 100 ms do zoom do pôster: animar o
 `transform` repintava ~25 pôsteres por quadro (sem transição desde a F8.2, `webos/styles/app.less`). No
-perfil c8 do emulador, a seta foi de ~1,3 s a ~60 ms até o quadro e de ~600 ms a ~10 ms até o foco.
-Medição: `webos/tests/perf/keys.mjs`.
+perfil c8 do emulador (A/B intercalado, medianas finais de todas as rodadas), a seta foi de 697 a 32 ms até
+o 2º quadro e de 297 a 7 ms até o foco. Medição: `webos/tests/perf/keys.mjs`.
 
 ## As telas
 

@@ -203,15 +203,16 @@ const MANIFEST = {
 const fileNameOf = (entry) => entry.description.split('\n')[0];
 
 // The addon stream objects; `mediaUrl` is the media server as the client sees it; `set` is a key
-// of SETS (default: the F6.2 one).
-const toStreams = (mediaUrl, set) => (set ? SETS[set] : STREAMS).map((entry) => {
+// of SETS (default: the F6.2 one); `redirect` is the media server's resolver path ('redirect' by default,
+// 'far': a 302 to another origin, F8.5).
+const toStreams = (mediaUrl, set, redirect) => (set ? SETS[set] : STREAMS).map((entry) => {
     const stream = { name: entry.name, description: entry.description, behaviorHints: { filename: fileNameOf(entry), bingeGroup: `teste-${entry.id}` } };
     if (entry.infoHash) {
         stream.infoHash = entry.infoHash;
         stream.fileIdx = entry.fileIdx;
     } else {
         // /redirect/ answers 302, like a debrid link.
-        stream.url = `${mediaUrl}/redirect/${entry.path || entry.media}`;
+        stream.url = `${mediaUrl}/${redirect || 'redirect'}/${entry.path || entry.media}`;
     }
     if (entry.subtitles) {
         stream.subtitles = entry.subtitles.map((subtitle) => ({ id: `${entry.id}-${subtitle.lang}`, lang: subtitle.lang, url: `${mediaUrl}/${subtitle.file}` }));

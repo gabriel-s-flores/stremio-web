@@ -9,6 +9,9 @@
 //   Resolvedor lento (F8.1): /slow/<ms>/<resto> responde <resto> depois de <ms> (/slow/3000/redirect/<arquivo>:
 //   o 302 chega em 3 s); /hang/<resto> nunca responde; /rate/<kbit/s>/<resto> manda o arquivo de <resto> a essa
 //   taxa (os dados chegam, devagar: um início de vários minutos sem evento de mídia, como o MP4 de 75 GB na TV).
+//   Outra origem (F8.5): /far/<arquivo> responde 302 para MEDIA_REAL_BASE/<arquivo>, sempre. /notice-same/<x> e
+//   /notice-far/<x> respondem 302 para o aviso do Torrentio (/videos/downloading_v2.mp4 na própria origem;
+//   MEDIA_REAL_BASE/videos/failed_access_v3.mp4 em outra); qualquer /videos/<nome>_vN.mp4 serve MEDIA_NOTICE_FILE.
 //   Resolvedor com vídeo-aviso (F8.1 c1): /pending/<arquivo> responde 302 para o aviso na mesma origem
 //   (/videos/notice.mkv = o arquivo MEDIA_NOTICE_FILE, como o /videos/downloading_v2.mp4 do Torrentio enquanto o RD
 //   baixa) até um GET /ready; daí em diante, 302 para MEDIA_REAL_BASE/<arquivo> (o host do debrid, outra origem).
@@ -64,7 +67,8 @@ const send = (stream, res, own, log) => {
 const notice = { file: process.env.MEDIA_NOTICE_FILE || 't6_h264_aac.mkv', realBase: process.env.MEDIA_REAL_BASE || '', ready: false };
 
 const handle = (req, res, pathname, own) => {
-    const log = (status, extra = '') => console.log(`${new Date().toISOString()} ${req.method} ${pathname} ${req.headers.range || ''} -> ${status} ${extra}`);
+    const shown = pathname;
+    const log = (status, extra = '') => console.log(`${new Date().toISOString()} ${req.method} ${shown} ${req.headers.range || ''} -> ${status} ${extra}`);
     const limited = /^\/rate\/(\d+)(\/.*)$/.exec(pathname);
     if (limited) return handle(req, res, limited[2], { rate: Number(limited[1]) * 1000 / 8 / 1000, freeAt: 0 });
     const slow = /^\/slow\/(\d+)(\/.*)$/.exec(pathname);
@@ -84,7 +88,21 @@ const handle = (req, res, pathname, own) => {
         res.writeHead(302, { Location: target }); res.end();
         return log(302, target);
     }
-    if (pathname === '/videos/notice.mkv') pathname = '/' + notice.file;
+    // A resolver that sends the link to another origin (the debrid file host), always (F8.5).
+    if (pathname.startsWith('/far/')) {
+        const target = notice.realBase + '/' + pathname.slice('/far/'.length);
+        res.writeHead(302, { Location: target }); res.end();
+        return log(302, target);
+    }
+    // The resolver's notice with Torrentio's own file name, on its own origin (/notice-same/) or
+    // served from the other origin (/notice-far/): known notices (debridLink.noticeOf), F8.5.
+    if (pathname.startsWith('/notice-same/') || pathname.startsWith('/notice-far/')) {
+        const same = pathname.startsWith('/notice-same/');
+        const target = (same ? '' : notice.realBase) + '/videos/' + (same ? 'downloading_v2.mp4' : 'failed_access_v3.mp4');
+        res.writeHead(302, { Location: target }); res.end();
+        return log(302, target);
+    }
+    if (pathname === '/videos/notice.mkv' || /^\/videos\/[a-z_]+_v\d+\.mp4$/.test(pathname)) pathname = '/' + notice.file;
 
     if (pathname.startsWith('/redirect/')) {
         const target = '/' + pathname.slice('/redirect/'.length);

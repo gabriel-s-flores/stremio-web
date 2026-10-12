@@ -4,7 +4,7 @@
 // final one to WebOsVideo (webos/lib/player/withFinalUrl.js). API and measurements: README.md.
 // The final link carries a token and the resolver link the debrid key: neither is ever logged.
 
-const { hostOf } = require('../debrid-link');
+const { hostOf, noticeOf } = require('../debrid-link');
 
 const HTTP_URL = /^https?:\/\//i;
 const ORIGIN = /^(https?:\/\/[^/?#]+)/i;
@@ -26,8 +26,9 @@ const originOf = (url) => {
 // another origin (the debrid file host). A redirect that stays on the resolver's origin is the
 // resolver's own notice video (Torrentio's /videos/downloading_v2.mp4 while the debrid service
 // caches the torrent, failed_access_v3.mp4, limits_exceeded…): it plays for this load only, so that
-// opening the stream again asks the resolver again and gets the file once it is ready.
-const isKeepable = (url, finalUrl) => finalUrl === url || originOf(finalUrl) !== originOf(url);
+// opening the stream again asks the resolver again and gets the file once it is ready. A known
+// notice video (debridLink.noticeOf) is never kept either, whichever host serves it.
+const isKeepable = (url, finalUrl) => noticeOf(finalUrl) === null && (finalUrl === url || originOf(finalUrl) !== originOf(url));
 
 // One Range request for the first byte, following the redirects like the <video> would. The body is
 // dropped as soon as the headers are in. Resolves { status, url } (url: where the request ended).
@@ -103,7 +104,9 @@ const createFinalUrls = (options) => {
 
     // Resolves { url, source, ms, host } and never rejects: url is the final URL, or the original one
     // when there is no redirect or the resolver failed or took longer than the timeout. source:
-    // 'known' (resolved before, or by a probe), 'redirect', 'direct' (no redirect), 'failed' (HTTP
+    // 'known' (resolved before, or by a probe), 'redirect', 'direct' (no redirect), 'notice' (the final
+    // URL is a known notice video: the Player fails the load with its message instead of playing it,
+    // F8.5), 'failed' (HTTP
     // error status or network), 'timeout' (the request goes on and its answer is kept), 'skipped'
     // (not an HTTP link, or no fetch). host: the final URL's host, for the log.
     const resolve = (url) => {
@@ -118,6 +121,7 @@ const createFinalUrls = (options) => {
             request(url, fetchImpl).then((answer) => {
                 cancel(timer);
                 if (answer === null || answer.status >= 400) done(result(url, 'failed'));
+                else if (noticeOf(answer.url) !== null) done(result(answer.url, 'notice'));
                 else if (answer.url !== url) done(result(answer.url, 'redirect'));
                 else done(result(url, 'direct'));
             });

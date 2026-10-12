@@ -1,6 +1,6 @@
 /* global describe, it, expect, jest */
 
-const { createProbeCache, probeCancellable } = require('../probe-cache');
+const { createProbeCache, probeCancellable, probeFinalUrl } = require('../probe-cache');
 const fs = require('fs');
 const path = require('path');
 const { bufferReadRange } = require('../../header-probe/test/replay');
@@ -135,5 +135,16 @@ describe('probeCancellable', () => {
         const reads = counting();
         await expect(probeCancellable('http://x/a.mkv', () => true, reads.create)).rejects.toMatchObject({ code: 'NETWORK', message: 'cancelled' });
         expect(reads.calls).toEqual([]);
+    });
+
+    it('a known notice video is not read and nothing is kept (F8.5)', async () => {
+        const createReadRange = jest.fn(() => jest.fn());
+        const finalUrls = { resolve: jest.fn(() => Promise.resolve({ url: 'https://cdn.example/videos/downloading_v2.mp4', source: 'notice' })) };
+        const cache = createProbeCache({ probe: (url, isCancelled) => probeFinalUrl(url, isCancelled, finalUrls, createReadRange) });
+        await expect(cache.get('https://torrentio.example/resolve/a')).rejects.toMatchObject({ name: 'ProbeError' });
+        expect(createReadRange).not.toHaveBeenCalled();
+        expect(cache.peek('https://torrentio.example/resolve/a')).toBeNull();
+        // Not an HTTP failure either: the error layer asks again instead of reading a stale status.
+        expect(cache.failureOf('https://torrentio.example/resolve/a')).toBeNull();
     });
 });

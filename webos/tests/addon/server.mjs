@@ -3,7 +3,7 @@
 // or series id starting with "tt") whose URLs point at webos/tools/media-server.mjs, started here
 // on a media root with the kit media, the F0.10 headers and the rebuilt probe fixtures (media.js).
 //
-//   node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <media root>] [--info <file.json>] [--delay <ms>] [--set f62|e2e]
+//   node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <media root>] [--info <file.json>] [--delay <ms>] [--set f62|e2e] [--far]
 //
 // --set picks the streams (catalog.js SETS): f62 (default, the F6.2 list) or e2e (the end-to-end run, F6.4).
 // Ports default to free ones. --delay puts a proxy in front of the media server that holds every
@@ -66,6 +66,9 @@ const dir = path.resolve(ownDir ? fs.mkdtempSync(path.join(os.tmpdir(), 'webos-t
 const infoFile = option('info', null);
 const delay = Number(option('delay', 0)) || 0;
 const set = option('set', 'f62');
+// --far: the stream links redirect to another origin (a second media server on the same files), like a
+// debrid resolver sending to the file host (F8.5).
+const far = args.includes('--far');
 if (!SETS[set]) {
     console.error(`erro: conjunto desconhecido ${set} (${Object.keys(SETS).join(', ')})`);
     process.exit(1);
@@ -79,15 +82,19 @@ if (missing.length > 0) {
     console.warn(`aviso: mídias ausentes (rode webos/tools/gen-media.sh com GOP=24 ou webos/tests/e2e/make-media.sh): ${missing.join(', ')}`);
 }
 
+const farPort = far ? await freePort() : 0;
 const media = spawn(process.execPath, [path.join(ROOT, 'webos', 'tools', 'media-server.mjs'), dir, String(mediaPort)], {
     stdio: ['ignore', 'inherit', 'inherit'],
+    env: far ? Object.assign({}, process.env, { MEDIA_REAL_BASE: `http://${host}:${farPort}` }) : process.env,
 });
+const farMedia = far ? spawn(process.execPath, [path.join(ROOT, 'webos', 'tools', 'media-server.mjs'), dir, String(farPort)], { stdio: ['ignore', 'inherit', 'inherit'] }) : null;
 // The temporary media root (sparse fixtures, links) goes away with the server.
 const removeDir = () => {
     if (ownDir) fs.rmSync(dir, { recursive: true, force: true });
 };
 const stop = () => {
     media.kill('SIGTERM');
+    if (farMedia) farMedia.kill('SIGTERM');
     removeDir();
     process.exit(0);
 };
@@ -99,6 +106,7 @@ media.on('exit', (code) => {
     process.exit(1);
 });
 await waitForPort(mediaPort);
+if (far) await waitForPort(farPort);
 
 // Debrid latency: every media request waits `delay` ms before reaching the media server.
 let urlPort = mediaPort;
@@ -145,13 +153,13 @@ http.createServer((req, res) => {
     }
     const stream = /^\/stream\/(movie|series)\/(tt[^/]+)\.json$/.exec(url.pathname);
     if (stream) {
-        send(res, 200, { streams: toStreams(mediaUrl, set), cacheMaxAge: 0 });
+        send(res, 200, { streams: toStreams(mediaUrl, set, far ? 'far' : undefined), cacheMaxAge: 0 });
         return log(200);
     }
     send(res, 404, { err: 'not found' });
     return log(404);
 }).listen(port, '127.0.0.1', () => {
-    const info = { manifestUrl, mediaUrl, port, mediaPort, delay, dir, set, streams: STREAMS.length };
+    const info = { manifestUrl, mediaUrl, port, mediaPort, farPort, delay, dir, set, streams: STREAMS.length };
     if (infoFile) fs.writeFileSync(infoFile, JSON.stringify(info, null, 4));
     process.stdout.write(`${JSON.stringify(info)}\n`);
 });
