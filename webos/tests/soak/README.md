@@ -33,8 +33,21 @@ Uma **amostra** (`samples.jsonl`) é tirada sempre no mesmo lugar (o Board quiet
 
 Também: `events.jsonl` (reinício da página, troca de PID do renderer), `steps.jsonl` (cada passo/interação e se deu certo), `video.jsonl` (o estado do `<video>` a cada 30 s), `mem.log` (o amostrador do convidado, 2 s), `dmesg-oom.txt` (o kernel matou algo?), `soak.json` (o resumo). Um **reinício** é detectado por um identificador que muda a cada documento (`window.__soak.id`) ou por uma página que não responde; o roteiro reconecta, espera o Board e conta.
 
+## Opções
+
+| Opção | Cenário | O que faz |
+|---|---|---|
+| `--worker-heap` | os dois | *snapshot* do heap V8 do **worker do core** (domínio `Worker` do inspetor: `Worker.sendMessageToWorker` com `HeapProfiler.takeHeapSnapshot`, sem `connectToWorker`) depois da 1ª volta/amostra e no fim; grava `worker-heap-<rótulo>.json` (total e os maiores construtores) e o `.heapsnapshot.gz`. Soma ~20 MB de RSS por um tempo: compare os dois *snapshots* entre si, não com as amostras |
+| `--idle` | `soak-nav` | controle: as mesmas amostras sem navegar (o roteiro não deve mexer na memória) |
+| `--only catalog\|local` | `soak-nav` | só as telas que carregam catálogo e pôsteres da rede (Board, Detalhes, Discover, Busca) ou só as locais (Library, Calendar, Addons, Settings, diagnóstico): o A/B de **o que cresce** |
+| `--no-subtitle` | `soak-play` | sem a legenda de addon (o overlay HTML) |
+| `--sampling` | `soak-play` | *sampling heap profiler* da página durante a reprodução; no fim, `heap-sampling.json` tem as alocações ainda vivas com a pilha de cada uma |
+
+Para ler os números: `analyze.mjs` ajusta uma reta por métrica sobre as amostras (a partir de `--skip N`, para deixar de fora o preenchimento do começo) e marca `GROWS` quando a inclinação passa de 3× o erro dela. **O heap do JS da página** (`performance.memory`) é um contador grosseiro do Chromium 53, que só atualiza em GC e anda em degraus: um degrau vira `GROWS` sem ser vazamento de objetos (confira com os nós do DOM, os *listeners* e o heap do worker).
+
 ## Limites conhecidos
 
-- O heap do JS do *worker* do core não é legível: `performance.memory` não existe em worker no Chromium 53, e o domínio `Worker` do inspetor aceita `Runtime.evaluate`, mas não `HeapProfiler`. O que se vê do worker é o RSS anônimo do processo, o tamanho da memória do wasm2js e os ticks de CPU por *thread* (`PERF_THREADS=1`).
-- `HeapProfiler.takeHeapSnapshot` da página não terminou em 5 min no emulador (sem *chunks*): a bissecção de um vazamento é por A/B de builds (`webos/tests/perf/ab-boot.sh`, `build-ipk.sh`) e por contadores, não por *snapshot*.
+- O heap do JS do *worker* só se lê por *snapshot* (`performance.memory` não existe em worker no Chromium 53); a página não: `HeapProfiler.takeHeapSnapshot` dela parou depois de ~39 eventos de progresso no emulador (testado 2×, > 5 min). A página é medida por contadores, GC forçado e o *sampling heap profiler*; a bissecção de um vazamento é por A/B de builds (`webos/tests/perf/ab-boot.sh`, `build-ipk.sh`) e por `--only`.
 - Mídia no emulador: um cenário por boot; no perfil C8 a imagem do vídeo é intermitente (Fase 8). A reprodução é medida por `currentTime` e `readyState`, não pela imagem.
+- `Input.dispatchMouseEvent` do Chromium 53 não tem `mouseWheel`: a roda é um `Input.synthesizeScrollGesture` (que o app recebe, mas o contêiner do Board não rola no emulador).
+- O amostrador do convidado (`mem.log`) lista vários `WebAppMgr`; o do app é o do PID que o `statusSnapshot` acha (o de maior RSS).
