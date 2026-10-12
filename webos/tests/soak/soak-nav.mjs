@@ -3,7 +3,7 @@
 // remote keys (webos/tools/remote.mjs) and the Magic Remote pointer (CDP mouse events + cursorStateChange),
 // and the memory taken at the Board after every cycle.
 //
-//   webos/tools/emu-run --profile c8 --timeout 90 -- webos/tests/perf/run.sh <out> soak-nav --ipk <ipk> --minutes 60 [--worker-heap] [--idle]
+//   webos/tools/emu-run --profile c8 --timeout 90 -- webos/tests/perf/run.sh <out> soak-nav --ipk <ipk> --minutes 60 [--worker-heap] [--idle] [--only catalog|local]
 //   (run.sh finds this script in webos/tests/soak; it adds the guest memory sampler, the phases and the OOM check)
 //
 // A cycle: Board (arrows) -> Details (OK, the stream list of the test addon, arrows) -> Back -> Discover (pointer
@@ -24,6 +24,7 @@ const args = parseArgs(process.argv.slice(2));
 const IPK = path.resolve(args.ipk || '');
 const OUT = path.resolve(args.out || 'soak-nav');
 const MINUTES = Number(args.minutes || 60);
+const ONLY = args.only || null; // 'catalog' | 'local'
 const SLOW = process.env.EMU_PROFILE === 'c8' ? 2 : 1;
 fs.mkdirSync(OUT, { recursive: true });
 const phase = phaseWriter(path.join(OUT, 'phases.jsonl'));
@@ -136,59 +137,66 @@ async function wheel(selector, deltaY) {
 
 async function oneCycle() {
     phase(`cycle-${cycle}`);
-    // Board: the arrows through the rows (the rows load as the focus gets there).
-    await step('board-arrows', () => soak.keys(['DOWN', 'DOWN', 'RIGHT', 'RIGHT', 'RIGHT', 'UP', 'LEFT', 'DOWN', 'DOWN', 'DOWN', 'UP']), COND.board);
-    // OK on a poster opens Details; with the focus anywhere else (the bar), arrows first.
-    for (let i = 0; i < 4 && !(await soak.evaluate(`!!(document.activeElement && document.activeElement.closest('[class*="board-content"] [class*="meta-item-container"]'))`).catch(() => false)); i++) {
-        await soak.keys(['DOWN'], 500);
-    }
-    await step('details-open', () => soak.key('OK'), COND.details, 60);
-    await step('details-arrows', () => soak.keys(['DOWN', 'DOWN', 'DOWN', 'UP', 'DOWN', 'UP', 'UP']), COND.details);
-    await step('details-back', () => soak.key('BACK'), COND.board, 45);
-    await step('discover-open', () => pointerLink('#/discover'), COND.discover);
-    await step('discover-items', () => sleep(500), COND.discoverItems, 60);
-    await step('discover-arrows', () => soak.keys(['DOWN', 'DOWN', 'RIGHT', 'RIGHT', 'DOWN', 'UP']), COND.discover); // the grid may have two rows only: not above the first (the filters)
-    // A movie of the Discover grid (the default catalog is movies): Details with the stream list of the test addon
-    // (the probe on demand), and back, one screen at a time.
-    for (let i = 0; i < 4 && !(await soak.evaluate(`!!(document.activeElement && document.activeElement.closest('[class*="meta-items-container"] [class*="meta-item-container"]'))`).catch(() => false)); i++) {
-        await soak.keys([i % 2 ? 'RIGHT' : 'DOWN'], 500); // from the side bar RIGHT enters the grid
-    }
-    await step('movie-open', () => soak.key('OK'), COND.details, 60);
-    await step('streams-list', () => sleep(500), COND.streams, 90);
-    await step('streams-arrows', () => soak.keys(['DOWN', 'DOWN', 'DOWN', 'UP', 'DOWN', 'UP', 'UP', 'UP']), COND.details);
-    await sleep(3000);
-    await step('streams-back', () => soak.key('BACK'), COND.discover, 45);
-    await step('discover-back', () => soak.key('BACK'), COND.board);
-
-    await step('search-open', () => soak.pointerClick('[class*="search-bar-container"]'), COND.search);
-    await step('search-results', () => typeInSearch('matrix'), COND.searchResults, 90);
-    await step('search-arrows', () => soak.keys(['DOWN', 'RIGHT', 'DOWN', 'UP']), COND.search);
-    await step('search-back', () => soak.key('BACK'), COND.board);
-
-    await step('library-open', () => pointerLink('#/library'), COND.library);
-    await step('calendar-open', () => pointerLink('#/calendar'), COND.calendar);
-    await step('addons-open', () => pointerLink('#/addons'), COND.addons);
-    await step('addons-arrows', () => soak.keys(['DOWN', 'DOWN', 'DOWN', 'UP']), COND.addons);
-    await step('settings-open', () => pointerLink('#/settings'), COND.settings);
-    await step('settings-arrows', () => soak.keys(['DOWN', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'UP', 'UP', 'UP', 'UP']), COND.settings);
-
-    // The diagnostics screen by the colour keys (F3.6), and back.
-    await step('diagnostics-open', () => soak.keys(['RED', 'GREEN', 'YELLOW', 'BLUE'], 500), COND.diagnostics, 30);
-    await sleep(3000);
-    await step('diagnostics-back', () => soak.key('BACK'), `!/^#\\/webos-diagnostics/.test(location.hash)`, 30);
-
-    // Back to the Board by the pointer, then the pointer over the posters and the wheel; an arrow ends it.
-    await step('board-pointer', () => pointerLink('#/'), COND.board);
-    await step('pointer-sweep', async () => {
-        for (let i = 0; i < 8; i++) {
-            const point = await soak.centerOf('[class*="board-content"] [class*="meta-item-container"]', i * 3);
-            if (point) { await soak.moveTo(point); await sleep(250); }
+    // --only catalog | local: the A/B of what grows (F7.3): the screens that load posters and catalogs from the network, or the local ones.
+    if (ONLY !== 'local') {
+        // Board: the arrows through the rows (the rows load as the focus gets there).
+        await step('board-arrows', () => soak.keys(['DOWN', 'DOWN', 'RIGHT', 'RIGHT', 'RIGHT', 'UP', 'LEFT', 'DOWN', 'DOWN', 'DOWN', 'UP']), COND.board);
+        // OK on a poster opens Details; with the focus anywhere else (the bar), arrows first.
+        for (let i = 0; i < 4 && !(await soak.evaluate(`!!(document.activeElement && document.activeElement.closest('[class*="board-content"] [class*="meta-item-container"]'))`).catch(() => false)); i++) {
+            await soak.keys(['DOWN'], 500);
         }
-        await wheel('[class*="board-content"]', 400);
-        await sleep(400);
-        await wheel('[class*="board-content"]', -400);
-        await soak.key('RIGHT');
-    }, COND.board);
+        await step('details-open', () => soak.key('OK'), COND.details, 60);
+        await step('details-arrows', () => soak.keys(['DOWN', 'DOWN', 'DOWN', 'UP', 'DOWN', 'UP', 'UP']), COND.details);
+        await step('details-back', () => soak.key('BACK'), COND.board, 45);
+        await step('discover-open', () => pointerLink('#/discover'), COND.discover);
+        await step('discover-items', () => sleep(500), COND.discoverItems, 60);
+        await step('discover-arrows', () => soak.keys(['DOWN', 'DOWN', 'RIGHT', 'RIGHT', 'DOWN', 'UP']), COND.discover); // the grid may have two rows only: not above the first (the filters)
+        // A movie of the Discover grid (the default catalog is movies): Details with the stream list of the test addon
+        // (the probe on demand), and back, one screen at a time.
+        for (let i = 0; i < 4 && !(await soak.evaluate(`!!(document.activeElement && document.activeElement.closest('[class*="meta-items-container"] [class*="meta-item-container"]'))`).catch(() => false)); i++) {
+            await soak.keys([i % 2 ? 'RIGHT' : 'DOWN'], 500); // from the side bar RIGHT enters the grid
+        }
+        await step('movie-open', () => soak.key('OK'), COND.details, 60);
+        await step('streams-list', () => sleep(500), COND.streams, 90);
+        await step('streams-arrows', () => soak.keys(['DOWN', 'DOWN', 'DOWN', 'UP', 'DOWN', 'UP', 'UP', 'UP']), COND.details);
+        await sleep(3000);
+        await step('streams-back', () => soak.key('BACK'), COND.discover, 45);
+        await step('discover-back', () => soak.key('BACK'), COND.board);
+
+        await step('search-open', () => soak.pointerClick('[class*="search-bar-container"]'), COND.search);
+        await step('search-results', () => typeInSearch('matrix'), COND.searchResults, 90);
+        await step('search-arrows', () => soak.keys(['DOWN', 'RIGHT', 'DOWN', 'UP']), COND.search);
+        await step('search-back', () => soak.key('BACK'), COND.board);
+
+    }
+    if (ONLY !== 'catalog') {
+        await step('library-open', () => pointerLink('#/library'), COND.library);
+        await step('calendar-open', () => pointerLink('#/calendar'), COND.calendar);
+        await step('addons-open', () => pointerLink('#/addons'), COND.addons);
+        await step('addons-arrows', () => soak.keys(['DOWN', 'DOWN', 'DOWN', 'UP']), COND.addons);
+        await step('settings-open', () => pointerLink('#/settings'), COND.settings);
+        await step('settings-arrows', () => soak.keys(['DOWN', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'UP', 'UP', 'UP', 'UP']), COND.settings);
+
+        // The diagnostics screen by the colour keys (F3.6), and back.
+        await step('diagnostics-open', () => soak.keys(['RED', 'GREEN', 'YELLOW', 'BLUE'], 500), COND.diagnostics, 30);
+        await sleep(3000);
+        await step('diagnostics-back', () => soak.key('BACK'), `!/^#\\/webos-diagnostics/.test(location.hash)`, 30);
+
+    }
+    if (ONLY !== 'local') {
+        // Back to the Board by the pointer, then the pointer over the posters and the wheel; an arrow ends it.
+        await step('board-pointer', () => pointerLink('#/'), COND.board);
+        await step('pointer-sweep', async () => {
+            for (let i = 0; i < 8; i++) {
+                const point = await soak.centerOf('[class*="board-content"] [class*="meta-item-container"]', i * 3);
+                if (point) { await soak.moveTo(point); await sleep(250); }
+            }
+            await wheel('[class*="board-content"]', 400);
+            await sleep(400);
+            await wheel('[class*="board-content"]', -400);
+            await soak.key('RIGHT');
+        }, COND.board);
+    }
     // Back to where the cycle starts: the first poster of the first row (the rows do not keep the old focus).
     await sleep(4000);
 }
