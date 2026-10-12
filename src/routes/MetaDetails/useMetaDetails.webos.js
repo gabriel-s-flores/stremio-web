@@ -1,13 +1,16 @@
 // webOS TV 4.x build only (resolved instead of useMetaDetails.js by webos/webpack/app.js, F6.1).
 // Same hook, without the streams that need the streaming server (torrents): both the streams list
 // and the Live TV playback read MetaDetails#streams from here. F8.3: the HTML entities of the meta
-// item decoded (decodeMetaEntities.js).
+// item decoded (decodeMetaEntities.js). F8.6: while the core has no meta yet (null or Loading), the
+// streams page of a movie or an episode shows the name, logo and background of the poster that was
+// opened (webos/lib/meta-preview): on the TV the core took tens of seconds to answer.
 
 const React = require('react');
 // The explicit extension resolves to the upstream hook, not to this file.
 const useUpstreamMetaDetails = require('./useMetaDetails.js');
 const { hideTorrentStreams } = require('./hideTorrentStreams');
 const { decodeMetaEntities } = require('./decodeMetaEntities');
+const { findPreview, optimisticMetaItem } = require('../../../webos/lib/meta-preview');
 
 const decodeMetaItem = (metaItem) => {
     if (metaItem === null || metaItem.content.type !== 'Ready') return metaItem;
@@ -17,11 +20,22 @@ const decodeMetaItem = (metaItem) => {
 
 const useMetaDetails = (urlParams) => {
     const metaDetails = useUpstreamMetaDetails(urlParams);
+    // Only the streams page (a video in the path): the episodes list of a series has nothing to show
+    // without the meta. Not Live TV (its own page).
+    const preview = React.useMemo(() => (
+        typeof document !== 'undefined' && urlParams.type !== 'tv' && typeof urlParams.videoId === 'string' && urlParams.videoId !== '' ?
+            findPreview(document, urlParams.type, urlParams.id)
+            :
+            null
+    ), [urlParams.type, urlParams.id, urlParams.videoId]);
     return React.useMemo(() => {
         const streams = hideTorrentStreams(metaDetails.streams);
-        const metaItem = decodeMetaItem(metaDetails.metaItem);
+        // The state may still be the one of the page opened before (the Load not processed yet).
+        const selected = metaDetails.selected;
+        const current = selected === null || (selected.metaPath && selected.metaPath.id === urlParams.id && selected.metaPath.type === urlParams.type);
+        const metaItem = optimisticMetaItem(decodeMetaItem(metaDetails.metaItem), current ? preview : null);
         return streams === metaDetails.streams && metaItem === metaDetails.metaItem ? metaDetails : { ...metaDetails, streams, metaItem };
-    }, [metaDetails]);
+    }, [metaDetails, preview]);
 };
 
 module.exports = useMetaDetails;
