@@ -1,7 +1,7 @@
 {
     "version": 1,
     "device": "LG OLED55C8PSA (webOS TV 4.0, Chromium 53)",
-    "basis": "Plano do port, seção 2 e decisões D6 a D8; PESQUISA.md, seção 4. A Fase 8 ajusta este arquivo na TV real: F8.4 confirmou o DTS (DTS-HD MA 5.1 tocou na C8, firmware 05.50.70).",
+    "basis": "Plano do port, seção 2 e decisões D6 a D8; PESQUISA.md, seção 4. A Fase 8 ajusta este arquivo na TV real: F8.4 confirmou o DTS (DTS-HD MA 5.1 tocou na C8, firmware 05.50.70) e passou o DV P8.1 em MP4 para a camada base (a TV mostrou HDR10 em dois arquivos; o web app não tem como ativar o DV).",
     "video": {
         "codecs": {
             "hevc": "ok",
@@ -21,7 +21,7 @@
         "dolbyVision": {
             "mp4": {
                 "5": "dolby-vision",
-                "8.1": "dolby-vision",
+                "8.1": "base-layer",
                 "7-dual": "dolby-vision",
                 "default": "base-layer"
             },

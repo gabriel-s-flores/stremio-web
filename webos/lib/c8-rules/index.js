@@ -15,8 +15,9 @@ const TIERS = { ok: 0, demoted: 1, hidden: 2 };
 const BASE_LAYER_OUTPUT = { hdr10: 'hdr10', hlg: 'hlg', sdr: 'sdr' };
 // Base layer implied by a Dolby Vision profile read from the stream name.
 const NAME_BASE_LAYER = { '5': 'none', '7': 'hdr10', '8.1': 'hdr10', '8.2': 'sdr', '8.4': 'hlg' };
-// Profiles tried when the name says "DV" without one: the usual forms of streaming releases.
-const COMMON_DV_PROFILES = ['5', '8.1'];
+// The likely profile of a DV stream whose profile is not known (a name with "DV" alone), from its
+// base layer: none or unknown is the P5 of streaming releases, an HDR10/HLG/SDR one is P8.x.
+const LIKELY_DV_PROFILE = { none: '5', unknown: '5', hdr10: '8.1', hlg: '8.4', sdr: '8.2' };
 
 const CODEC_NAMES = {
     eac3: 'E-AC-3', ac3: 'AC-3', aac: 'AAC', truehd: 'TrueHD', dts: 'DTS', flac: 'FLAC',
@@ -132,10 +133,7 @@ const dvMode = (profile, container, dvProfile, dualTrack) => {
 };
 
 const evaluateDolbyVision = (profile, container, dv, report) => {
-    let mode = dvMode(profile, container, dv.profile, dv.dualTrack);
-    if (dv.profile === null && COMMON_DV_PROFILES.every((candidate) => dvMode(profile, container, candidate, false) === 'dolby-vision')) {
-        mode = 'dolby-vision';
-    }
+    const mode = dvMode(profile, container, dv.profile !== null ? dv.profile : LIKELY_DV_PROFILE[dv.baseLayer] || null, dv.dualTrack);
     const result = { profile: dv.profile, baseLayer: dv.baseLayer, dualTrack: dv.dualTrack, mode, source: dv.source };
     if (mode === 'dolby-vision') {
         report.label('dv', dv.source);

@@ -93,7 +93,7 @@ O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os doi
 
 | `code` | Texto padrão | Quando |
 |---|---|---|
-| `dv` | DV | Dolby Vision ativo na C8: MP4 com P5, P8.1 ou P7 dual-track |
+| `dv` | DV | Dolby Vision ativo na C8: MP4 com P5 ou P7 dual-track. O P8.1 em MP4 saiu na F8.4 (a TV mostrou HDR10) |
 | `hdr10-on-tv`, `hlg-on-tv`, `sdr-on-tv` | HDR10 nesta TV… | O arquivo tem DV (ou HDR10+), mas a C8 mostra a camada base: DV em MKV P7/P8.x, DV em MP4 fora da lista acima, HDR10+ |
 | `hdr10`, `hlg` | HDR10, HLG | HDR10 ou HLG puro |
 | `atmos` | Atmos | A faixa inicial é DD+ Atmos (E-AC-3 JOC). TrueHD Atmos não ganha o rótulo (não toca) |
@@ -129,7 +129,9 @@ O Atmos é atribuído ao E-AC-3 ou ao TrueHD conforme o codec citado. Com os doi
 - `dolby-vision`: DV ativo.
 - `base-layer`: a C8 mostra a camada base. HDR10 ou HLG viram rótulo "nesta TV"; `none` (P5) vira `wrong-colors`, com aviso.
 - MKV e WebM são sempre `base-layer`. Num contêiner desconhecido (só nome, sem extensão), vale o de `unknownContainer` (`mkv`), por ser o caso mais conservador.
-- Pelo nome, sem perfil citado: em MP4, onde P5 e P8.1 são ativos, conta como DV ativo. No resto, se o nome ou a cor PQ/HLG do probe indicar a camada base, ela é usada; senão, "pode ser P5".
+- Sem perfil conhecido (nome com `DV` sozinho), a camada base indica o perfil provável: nenhuma ou desconhecida é o P5 das releases de streaming, HDR10 é o P8.1 (HLG 8.4, SDR 8.2). Num MP4, `DV` sozinho conta então como DV ativo (P5), e `DV HDR10` como "HDR10 nesta TV" (P8.1). No resto, se o nome ou a cor PQ/HLG do probe indicar a camada base, ela é usada; senão, "pode ser P5".
+
+**DV P8.1 em MP4 vira HDR10 na C8 (F8.4).** Na Fase 8 a TV mostrou HDR10, e não DV, em dois MP4 P8.1 (`hvc1` + `dvvC`) tocados pelo `<video src>`. Não há como o web app pedir o DV ao pipeline do webOS 4: o `mediaOption` só é lido do `type` de um `<source>`, nenhuma das chaves que o pipeline aceita trata de DV, e o `codecs` do `type` não chega ao pipeline (detalhes e fontes no relatório da F8.4). O perfil passou o `8.1` em MP4 para `base-layer`. O P5 em MP4 continua `dolby-vision`, porque é o único caso de DV relatado na C8 (`dvhe`), mas ainda não foi visto pelo app na TV. Se a TV mostrar DV num P8.1, basta voltar `video.dolbyVision.mp4['8.1']` para `dolby-vision`.
 
 **Probe ambíguo: o nome só decide quando o probe não tem evidência.** No MP4, a configuração DV fica na sample entry, e o probe decide sozinho. No MKV HEVC, o probe pode deixar o DV passar: com `DV_UNKNOWN` (1º quadro não lido) ou com uma NAL malformada lida como "sem RPU" (sem aviso). Por isso, quando o probe não achou DV num MKV com HEVC (ou sem vídeo identificado), o DV citado no nome só entra na conta se o probe for **ambíguo**:
 

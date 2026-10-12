@@ -46,7 +46,9 @@ const STREAMS = [
         name: '[RD+] Teste\n4k DV',
         description: `${TITLE}.2160p.WEB-DL.DV.HEVC-GRP.mp4\n💾 14.2 GB ⚙️ Teste`,
         media: 'fixtures/dv-p81-mp4.mp4',
-        expect: { name: ['ok', 'dv'], probe: ['ok', 'dv'] },
+        // "DV" alone in the name reads as P5 (DV active in MP4); the probe finds P8.1, which the C8
+        // shows as HDR10 (F8.4).
+        expect: { name: ['ok', 'dv'], probe: ['ok', 'hdr10-on-tv'] },
     },
     {
         id: 'web-dv-p5-mp4',

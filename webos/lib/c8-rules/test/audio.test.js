@@ -85,6 +85,6 @@ describe('initial audio track', () => {
     it('a file without audio tracks has no initial track and no audio warning', async () => {
         const result = evaluate({ probe: await probeFixture('dv-p81-mp4') });
         expect(result.audio).toEqual({ status: null, initialTrack: null, tracks: [], atmos: false });
-        expect(result.warnings).toEqual([]);
+        expect(result.warnings.filter((warning) => /^AUDIO_/.test(warning.code))).toEqual([]);
     });
 });

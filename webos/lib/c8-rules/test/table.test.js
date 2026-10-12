@@ -58,7 +58,7 @@ describe('Linha 1 · 4K HEVC Main10, HDR10, HLG (✅ toca direto)', () => {
     });
 });
 
-describe('Linha 2 · Dolby Vision em MP4: P5, P8.1, P7 dual-track (✅ toca direto e sobe na lista)', () => {
+describe('Linha 2 · Dolby Vision em MP4: P5 e P7 dual-track (✅ toca direto e sobe na lista); P8.1 vira HDR10 na C8 (F8.4)', () => {
     it('P5 in MP4: DV active, "DV" label', async () => {
         const result = rate(await probeFixture('dv-p5-mp4'));
         expect(result.video).toMatchObject({ format: 'dolby-vision', output: 'dolby-vision' });
@@ -68,11 +68,13 @@ describe('Linha 2 · Dolby Vision em MP4: P5, P8.1, P7 dual-track (✅ toca dire
         expect(result.tier).toBe('ok');
     });
 
-    it('P8.1 in MP4: DV active, "DV" label', async () => {
+    it('P8.1 in MP4: the TV showed HDR10 (phase 8, two files), so "HDR10 nesta TV" and no DV label', async () => {
         const result = rate(await probeFixture('dv-p81-mp4'));
-        expect(result.video.output).toBe('dolby-vision');
-        expect(result.video.dolbyVision).toMatchObject({ profile: '8.1', mode: 'dolby-vision' });
-        expect(labelsOf(result)).toEqual(['dv']);
+        expect(result.video.output).toBe('hdr10');
+        expect(result.video.dolbyVision).toMatchObject({ profile: '8.1', baseLayer: 'hdr10', mode: 'base-layer' });
+        expect(labelsOf(result)).toEqual(['hdr10-on-tv']);
+        expect(warningsOf(result)).toEqual(['DV_BASE_LAYER']);
+        expect(result.tier).toBe('ok');
     });
 
     itFate('fate-dv-p7-dual-mp4')('P7 dual-track in MP4 (FATE): DV active', async () => {
@@ -91,24 +93,31 @@ describe('Linha 2 · Dolby Vision em MP4: P5, P8.1, P7 dual-track (✅ toca dire
         expect(labelsOf(rate(probe))).toEqual(['hdr10-on-tv']);
     });
 
-    it('a DV MP4 sorts above the same stream as HDR10 and as DV in MKV', async () => {
-        const mp4 = rate(await probeFixture('dv-p81-mp4'));
+    it('an active DV MP4 (P5) sorts above HDR10 and DV in MKV; a P8.1 MP4 ties with them (all HDR10 on the TV)', async () => {
+        const p5 = rate(await probeFixture('dv-p5-mp4'));
+        const p81 = rate(await probeFixture('dv-p81-mp4'));
         const hdr10 = rate(withoutDolbyVision(await probeFixture('dv-p81-mp4')));
         const mkv = rate(await probeFixture('dv-p81-mkvmerge-mkv'));
-        expect(mp4.score).toBeGreaterThan(hdr10.score);
-        expect(mp4.score).toBeGreaterThan(mkv.score);
-        expect([mkv, hdr10, mp4].sort(compare)[0]).toBe(mp4);
+        expect(p5.score).toBeGreaterThan(hdr10.score);
+        expect(p5.score).toBeGreaterThan(mkv.score);
+        expect([mkv, hdr10, p81, p5].sort(compare)[0]).toBe(p5);
+        expect(compare(p81, hdr10)).toBe(0);
+        expect(compare(p81, mkv)).toBe(0);
     });
 
     it('name only: "DV P5" or "DV" in an .mp4 file name', () => {
         const p5 = rate(null, { name: 'Addon\n4k DV', behaviorHints: { filename: 'Movie.2160p.WEB-DL.DV.P5.H265.mp4' } });
         expect(p5.video.dolbyVision).toMatchObject({ profile: '5', mode: 'dolby-vision', source: 'name' });
         expect(labelsOf(p5)).toEqual(['dv']);
-        // Without a profile: both P5 and P8.1 are active in MP4, so DV is assumed active.
+        // Without a profile, the base layer tells the likely one: none named is P5 (active in MP4)…
         expect(labelsOf(rate(null, { title: 'Movie 2160p DV', behaviorHints: { filename: 'movie.mp4' } }))).toEqual(['dv']);
+        // …and "DV HDR10" is a P8.1 hybrid, which the C8 shows as HDR10 (F8.4)
+        const hybrid = rate(null, { title: 'Movie 2160p DV HDR10 HEVC', behaviorHints: { filename: 'movie.mp4' } });
+        expect(hybrid.video.dolbyVision).toMatchObject({ profile: null, baseLayer: 'hdr10', mode: 'base-layer' });
+        expect(labelsOf(hybrid)).toEqual(['hdr10-on-tv']);
         // "P8" alone is read as 8.1 (8.4 with HLG in the name)
         const p8 = rate(null, { title: 'Movie 2160p DV P8 HDR10 HEVC', behaviorHints: { filename: 'movie.mp4' } });
-        expect(p8.video.dolbyVision).toMatchObject({ profile: '8.1', mode: 'dolby-vision' });
+        expect(p8.video.dolbyVision).toMatchObject({ profile: '8.1', mode: 'base-layer' });
         expect(rate(null, 'Clip DV P8 HLG HEVC.mkv').video.dolbyVision).toMatchObject({ profile: '8.4', baseLayer: 'hlg' });
     });
 });
@@ -605,7 +614,7 @@ describe('D6 · perfil da C8 embutido e ajustável por configuração', () => {
     // Profile overrides are tested in profile.test.js.
 });
 
-describe('D7 · Dolby Vision: MP4 toca direto, MKV P7/P8.1 como HDR10, MKV P5 rebaixado com aviso', () => {
+describe('D7 · Dolby Vision: P5 em MP4 ativo; P8.1 (MP4 ou MKV) e P7 em MKV como HDR10 (F8.4); MKV P5 rebaixado com aviso', () => {
     it('the same P5 stream: active in MP4, demoted in MKV', async () => {
         const mp4 = rate(await probeFixture('dv-p5-mp4'));
         const mkv = rate(await probeFixture('dv-p5-truehd-atmos-mkv'));
@@ -613,10 +622,11 @@ describe('D7 · Dolby Vision: MP4 toca direto, MKV P7/P8.1 como HDR10, MKV P5 re
         expect([mp4.tier, mkv.tier]).toEqual(['ok', 'demoted']);
     });
 
-    it('the same P8.1 stream: active in MP4, HDR10 in MKV', async () => {
+    it('the same P8.1 stream: HDR10 on the C8 in MP4 (phase 8, F8.4) and in MKV; P5 in MP4 stays active', async () => {
         const mp4 = rate(await probeFixture('dv-p81-mp4'));
         const mkv = rate(await probeFixture('dv-p81-mkvmerge-mkv'));
-        expect([mp4.video.output, mkv.video.output]).toEqual(['dolby-vision', 'hdr10']);
+        expect([mp4.video.output, mkv.video.output]).toEqual(['hdr10', 'hdr10']);
+        expect(rate(await probeFixture('dv-p5-mp4')).video.output).toBe('dolby-vision');
     });
 });
 
