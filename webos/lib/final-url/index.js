@@ -7,11 +7,27 @@
 const { hostOf } = require('../debrid-link');
 
 const HTTP_URL = /^https?:\/\//i;
+const ORIGIN = /^(https?:\/\/[^/?#]+)/i;
 // How long the Player waits for the resolver before it gives the original link to the pipeline.
 const RESOLVE_TIMEOUT_MS = 5000;
 // How long a final URL is reused (debrid file links last hours; the resolver gives the same one).
 const REUSE_MS = 10 * 60 * 1000;
 const MAX_ENTRIES = 32;
+// localStorage key (read once, when the app starts): "off" loads the resolver's link and probes it,
+// as before F8.1.
+const FINAL_URL_KEY = 'webos.player.finalUrl';
+
+const originOf = (url) => {
+    const match = ORIGIN.exec(url);
+    return match ? match[1].toLowerCase() : null;
+};
+
+// Whether a final URL can be kept for the next loads: a link without a redirect, or a redirect to
+// another origin (the debrid file host). A redirect that stays on the resolver's origin is the
+// resolver's own notice video (Torrentio's /videos/downloading_v2.mp4 while the debrid service
+// caches the torrent, failed_access_v3.mp4, limits_exceeded…): it plays for this load only, so that
+// opening the stream again asks the resolver again and gets the file once it is ready.
+const isKeepable = (url, finalUrl) => finalUrl === url || originOf(finalUrl) !== originOf(url);
 
 // One Range request for the first byte, following the redirects like the <video> would. The body is
 // dropped as soon as the headers are in. Resolves { status, url } (url: where the request ended).
@@ -46,9 +62,10 @@ const createFinalUrls = (options) => {
     const inFlight = new Map();
 
     // A final URL learned elsewhere (a header probe followed the same redirect). The same URL means a
-    // link without a redirect: kept too, so its next load does not wait for a request.
+    // link without a redirect: kept too, so its next load does not wait for a request. A redirect on
+    // the resolver's own origin is not kept (isKeepable).
     const note = (url, finalUrl) => {
-        if (typeof url !== 'string' || typeof finalUrl !== 'string' || !HTTP_URL.test(finalUrl)) return;
+        if (typeof url !== 'string' || typeof finalUrl !== 'string' || !HTTP_URL.test(finalUrl) || !isKeepable(url, finalUrl)) return;
         entries.delete(url);
         entries.set(url, { url: finalUrl, at: now() });
         while (entries.size > maxEntries) entries.delete(entries.keys().next().value);
@@ -110,6 +127,15 @@ const createFinalUrls = (options) => {
     return { resolve, note, peek, forget, clear: () => entries.clear() };
 };
 
+// Whether the localStorage key leaves the feature on. storage: localStorage-like, or null.
+const readFinalUrlSetting = (storage) => {
+    try {
+        return !storage || storage.getItem(FINAL_URL_KEY) !== 'off';
+    } catch (_error) {
+        return true;
+    }
+};
+
 // The one the app uses: the Player's load (withFinalUrl) and its probe (probe-cache) resolve through
 // it, and the stream list's probes note what they followed.
 let shared = null;
@@ -122,6 +148,9 @@ module.exports = {
     RESOLVE_TIMEOUT_MS,
     REUSE_MS,
     MAX_ENTRIES,
+    FINAL_URL_KEY,
+    isKeepable,
+    readFinalUrlSetting,
     createFinalUrls,
     getFinalUrls,
 };

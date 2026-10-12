@@ -24,7 +24,7 @@ const serverLines = fs.existsSync(path.join(OUT, 'media-server.log')) ? fs.readF
 // "<iso> GET /path bytes=0-0 -> 206 0-0"
 const requests = serverLines.map((line) => /^(\S+) (GET|HEAD) (\S+) (\S*) -> (\S+)/.exec(line)).filter(Boolean)
     .map((m) => ({ at: Date.parse(m[1]), method: m[2], path: m[3], range: m[4], status: m[5] }));
-const isResolverPath = (p) => /^\/(redirect|slow|hang)\//.test(p);
+const isResolverPath = (p) => /^\/(redirect|slow|hang|pending)\//.test(p);
 // The first-byte request of the app (resolver and F6.3 check), a probe read (closed range, at most
 // 256 KB) and the rest: the pipeline (open range, or none).
 const kindOf = (request) => {
@@ -74,7 +74,8 @@ const finalEntries = read('console.json', []).filter((entry) => /final URL/.test
 const srcEvents = page.events.filter((event) => event.event === 'src');
 const afterFinalUrl = finalEntries.map((entry) => {
     const src = srcEvents.filter((event) => event.t >= entry.t)[0];
-    return { resolve: /final URL (\w+) in (\d+) ms/.exec(entry.text).slice(1, 3).join(' '), srcAfterMs: src ? src.t - entry.t : null };
+    const resolved = /final URL (\w+)(?: in (\d+) ms)?/.exec(entry.text);
+    return { resolve: resolved[1] + (resolved[2] ? ' ' + resolved[2] : ''), srcAfterMs: src ? src.t - entry.t : null };
 });
 const guardLog = consoleLines.filter((line) => /loadedmetadata|no sign of the load|still loading/.test(line));
 const lastSample = samples.length ? samples[samples.length - 1].sample : null;
@@ -121,10 +122,28 @@ if (name === 'off') {
     playsFirst();
 }
 if (name === 'slow-load') {
-    check('the file came slowly and the load went on: metadata after more than 60 s, no error', firstLoad.loadedmetadataMs !== null &&
-        firstLoad.loadedmetadataMs - firstLoad.srcMs > 60000 && !errorLayer && firstLoad.errors === 0,
+    const slowOk = firstLoad.loadedmetadataMs !== null && firstLoad.loadedmetadataMs - firstLoad.srcMs > 60000 && !errorLayer && firstLoad.errors === 0;
+    check('the file came slowly and the load went on: metadata after more than 60 s, no error', slowOk,
         { srcMs: firstLoad.srcMs, loadedmetadataMs: firstLoad.loadedmetadataMs, errorLayer, errors: firstLoad.errors });
     check('the guard waited because the element was still loading', guardLog.some((line) => /still loading/.test(line)), guardLog);
+}
+if (name === 'notice') {
+    // The src of each opening: from its mark to the next 'back'.
+    const srcOf = (markName) => {
+        const from = mark(markName);
+        const until = page.marks.filter((entry) => entry.name === 'back' && from !== null && entry.t > from).map((entry) => entry.t)[0] || Infinity;
+        const src = page.events.filter((event) => event.event === 'src' && from !== null && event.t >= from && event.t < until)[0];
+        return src ? src.url : null;
+    };
+    const fileUrl = (scenario.realBase || '') + '/t1_h264_aac.mp4';
+    const noticeUrl = scenario.base + '/videos/notice.mkv';
+    const opened = { open: srcOf('open'), open2: srcOf('open2'), open3: srcOf('open3') };
+    const pending = resolverHits.filter((request) => request.path.indexOf('/pending/') === 0);
+    check('1st opening: the resolver\'s notice video on its own origin', opened.open === noticeUrl, opened);
+    check('opened again once the file is ready: the resolver is asked again and the file plays (the notice was not kept)', opened.open2 === fileUrl, opened);
+    check('opened a third time: the file\'s final URL (another origin) is reused', opened.open3 === fileUrl && finalLog.some((line) => /final URL known/.test(line)), { opened, finalLog });
+    check('two requests to the resolver in all (1st and 2nd openings)', pending.length === 2, pending.map((request) => request.range));
+    check('every opening plays', ['first', 'open2', 'open3'].every(moved) && !errorLayer, { errorLayer });
 }
 if (name === 'switch') {
     check('the second stream got its final URL too', secondLoad && secondLoad.src === finalOf(scenario.second), { src: secondLoad && secondLoad.src });

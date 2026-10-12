@@ -4,7 +4,7 @@
 // request is (failureOf, F6.3), so the Player's error layer can say "expired" without asking again.
 
 const { probe: probeHeader, createFetchReadRange, ProbeError } = require('../header-probe');
-const { getFinalUrls } = require('../final-url');
+const { getFinalUrls, readFinalUrlSetting } = require('../final-url');
 
 const MAX_ENTRIES = 16;
 
@@ -84,6 +84,7 @@ module.exports = {
     createProbeCache,
     probeCancellable,
     probeFinalUrl,
-    // The one the app uses (the video decorator writes it, the useAudio hook reads it).
-    probeCache: createProbeCache({ probe: probeFinalUrl }),
+    // The one the app uses (the video decorator writes it, the useAudio hook reads it). With
+    // webos.player.finalUrl = off, the probe reads the resolver's link, as before F8.1.
+    probeCache: createProbeCache({ probe: readFinalUrlSetting(typeof window !== 'undefined' ? window.localStorage : null) ? probeFinalUrl : probeCancellable }),
 };

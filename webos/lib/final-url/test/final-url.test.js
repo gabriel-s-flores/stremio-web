@@ -3,7 +3,7 @@
 // shared by whoever asks at the same time, kept for a while, and the original link whenever the
 // request fails or takes too long. Plus the probes that note the redirect they followed.
 
-const { createFinalUrls, RESOLVE_TIMEOUT_MS, REUSE_MS } = require('../index');
+const { createFinalUrls, isKeepable, readFinalUrlSetting, FINAL_URL_KEY, RESOLVE_TIMEOUT_MS, REUSE_MS } = require('../index');
 const { createFetchReadRange } = require('../../header-probe');
 
 const RESOLVER = 'https://torrentio.example/resolve/realdebrid/KEY/hash/null/0/file.mkv';
@@ -78,6 +78,41 @@ describe('final URL', () => {
         net.requests[0].answer(206, FINAL);
         expect((await load).url).toBe(FINAL);
         expect((await probe).url).toBe(FINAL);
+    });
+
+    // Torrentio answers /resolve/… with its own notice video while Real-Debrid caches the torrent
+    // (/videos/downloading_v2.mp4, failed_access_v3.mp4…), on the resolver's origin.
+    const NOTICE = 'https://torrentio.example/videos/downloading_v2.mp4';
+
+    it('a redirect on the resolver\'s own origin (its notice video) plays now and is not kept', async () => {
+        const { net, urls } = setup();
+        const first = urls.resolve(RESOLVER);
+        net.requests[0].answer(206, NOTICE);
+        expect(await first).toMatchObject({ url: NOTICE, source: 'redirect' });
+        expect(urls.peek(RESOLVER)).toBeNull();
+        // Opened again once the debrid service has the file: the resolver is asked again.
+        const again = urls.resolve(RESOLVER);
+        expect(net.requests).toHaveLength(2);
+        net.requests[1].answer(206, FINAL);
+        expect(await again).toMatchObject({ url: FINAL, source: 'redirect' });
+        expect(urls.peek(RESOLVER)).toBe(FINAL);
+    });
+
+    it('note() keeps neither a redirect on the resolver\'s origin (the list probe saw the notice video)', () => {
+        const { urls } = setup();
+        urls.note(RESOLVER, NOTICE);
+        urls.note(RESOLVER, 'HTTPS://TORRENTIO.EXAMPLE/videos/failed_access_v3.mp4');
+        expect(urls.peek(RESOLVER)).toBeNull();
+        urls.note(RESOLVER, FINAL);
+        expect(urls.peek(RESOLVER)).toBe(FINAL);
+    });
+
+    it('isKeepable: the same link, or another origin (scheme, host or port)', () => {
+        expect(isKeepable(FINAL, FINAL)).toBe(true);
+        expect(isKeepable(RESOLVER, FINAL)).toBe(true);
+        expect(isKeepable(RESOLVER, NOTICE)).toBe(false);
+        expect(isKeepable('http://10.0.2.2:8099/resolve/a', 'http://10.0.2.2:8100/a.mp4')).toBe(true);
+        expect(isKeepable('http://10.0.2.2:8099/resolve/a', 'http://10.0.2.2:8099/videos/a.mp4')).toBe(false);
     });
 
     it('a link without a redirect is played as it is, and its next load does not wait', async () => {
@@ -200,6 +235,37 @@ describe('the header probe notes the redirect it followed (onFinalUrl)', () => {
             expect(read.mock.calls.every((call) => call[0] === FINAL)).toBe(true);
         } finally {
             global.fetch = original;
+        }
+    });
+});
+
+describe('webos.player.finalUrl = off', () => {
+    it('readFinalUrlSetting: on unless the key is "off"', () => {
+        const storage = (value) => ({ getItem: (key) => (key === FINAL_URL_KEY ? value : null) });
+        expect(readFinalUrlSetting(null)).toBe(true);
+        expect(readFinalUrlSetting(storage('off'))).toBe(false);
+    });
+
+    it('the Player\'s probe goes back to the resolver\'s link (probeCancellable, no first-byte request)', async () => {
+        const reads = [];
+        const original = global.fetch;
+        // The app reads window.localStorage when the module loads (this suite runs in Node: no window).
+        global.window = { localStorage: { getItem: (key) => (key === FINAL_URL_KEY ? 'off' : null) } };
+        global.fetch = jest.fn((url, init) => {
+            reads.push([url, init.headers.Range]);
+            return new Promise(() => null);
+        });
+        try {
+            let probeCache = null;
+            jest.isolateModules(() => {
+                probeCache = require('../../tracks/probe-cache').probeCache;
+            });
+            probeCache.get(RESOLVER);
+            await flush();
+            expect(reads).toEqual([[RESOLVER, 'bytes=0-262143']]);
+        } finally {
+            global.fetch = original;
+            delete global.window;
         }
     });
 });

@@ -43,6 +43,10 @@ urls.forget(url)   // o link falhou no Player: a próxima carga pergunta de novo
 
 Um pedido por link em voo: quem pede junto (a carga e o probe do Player) recebe a mesma resposta.
 
+**O que não é guardado (revisão c1):** um redirect que termina na **mesma origem do resolvedor** (`isKeepable`). É o vídeo-aviso do próprio addon: o Torrentio responde o `/resolve/…` com `/videos/downloading_v2.mp4` enquanto o Real-Debrid baixa um torrent que não estava em cache (e `failed_access_v3.mp4`, `limits_exceeded…` etc.), no host dele; o link de debrid fica em outro host. A carga atual recebe o aviso (é o que o resolvedor mandou tocar), mas a próxima abertura do stream pergunta ao resolvedor de novo e pega o arquivo quando ele fica pronto. Guardar o aviso por 10 min mostraria "baixando" mesmo com o arquivo pronto (antes da F8.1, toda abertura perguntava). Vale também para o `note` dos probes. O link sem redirect (`direct`) e o redirect para outra origem são guardados.
+
+**Desligar:** `webos.player.finalUrl = off` (localStorage, lido ao abrir o app; `FINAL_URL_KEY`, `readFinalUrlSetting`) faz a carga e o probe do Player usarem o link do resolvedor, como antes da F8.1.
+
 ## Quem usa
 
 | Arquivo | Papel |
@@ -54,5 +58,5 @@ Um pedido por link em voo: quem pede junto (a carga e o probe do Player) recebe 
 
 ## Testes
 
-- `test/final-url.test.js` (`pnpm test`): redirect, pedido único em voo, sem redirect, erro HTTP e de rede, timeout com a resposta tardia guardada, validade e `forget`, e os probes que anotam o redirect.
+- `test/final-url.test.js` (`pnpm test`): redirect, pedido único em voo, sem redirect, o vídeo-aviso na mesma origem (não guardado, nem pelo `note`), erro HTTP e de rede, timeout com a resposta tardia guardada, validade e `forget`, os probes que anotam o redirect e a chave `off` (o probe do Player volta ao link do resolvedor).
 - Emulador: `webos/tests/final-url/emulator.sh` (ver `webos/lib/player/README.md`, "Link final").

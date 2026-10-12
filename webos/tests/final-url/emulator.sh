@@ -21,6 +21,10 @@
 #   rate-noprobe   the same with the Player's probe refused (A/B: does the probe delay the start?)
 #   switch         play one stream, then open another by route (in-Player switch): how long the quiet
 #                  release of F5.6 holds the second load
+#   notice         the resolver answers with its own notice video on its origin (Torrentio's "downloading"
+#                  while Real-Debrid caches the torrent), then with the file on another origin: opened
+#                  again, the stream must ask the resolver again and play the file (review c1, M1); opened
+#                  a third time, the file's final URL is reused
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 OUT="${1:?usage: emulator.sh <output-dir> <scenario>}"
@@ -47,10 +51,15 @@ RATE=0
 case "$SCENARIO" in
     rate-probe|rate-noprobe) RATE=16 ;;
 esac
-PORT="$(node -e "const s=require('net').createServer().listen(0,'127.0.0.1',()=>{console.log(s.address().port);s.close()})")"
-MEDIA_RATE_MBPS="$RATE" node "$ROOT/webos/tools/media-server.mjs" "$MEDIA_DIR" "$PORT" > "$OUT/media-server.log" 2>&1 &
+freeport() { node -e "const s=require('net').createServer().listen(0,'127.0.0.1',()=>{console.log(s.address().port);s.close()})"; }
+PORT="$(freeport)"
+# Another origin, for the file a resolver sends to once it is ready (the debrid file host).
+REAL_PORT="$(freeport)"
+MEDIA_RATE_MBPS="$RATE" MEDIA_REAL_BASE="http://10.0.2.2:$REAL_PORT" node "$ROOT/webos/tools/media-server.mjs" "$MEDIA_DIR" "$PORT" > "$OUT/media-server.log" 2>&1 &
 SERVER_PID=$!
-trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+node "$ROOT/webos/tools/media-server.mjs" "$MEDIA_DIR" "$REAL_PORT" > "$OUT/real-host.log" 2>&1 &
+REAL_PID=$!
+trap 'kill "$SERVER_PID" "$REAL_PID" 2>/dev/null || true' EXIT
 BASE="http://10.0.2.2:$PORT"
 SECOND_URL=''
 case "$SCENARIO" in
@@ -61,9 +70,10 @@ case "$SCENARIO" in
     slow-load)                  URL="$BASE/redirect/rate/10/t1_h264_aac.mp4" ;;
     rate-probe|rate-noprobe)    URL="$BASE/redirect/moov_end_1080p.mp4" ;;
     switch)                     URL="$BASE/redirect/t1_h264_aac.mp4"; SECOND_URL="$BASE/redirect/t6_h264_aac.mkv" ;;
+    notice)                     URL="$BASE/pending/t1_h264_aac.mp4" ;;
     *) echo "error: unknown scenario $SCENARIO" >&2; exit 1 ;;
 esac
-printf '{"scenario":"%s","url":"%s","second":"%s","base":"%s","rateMbps":%s}\n' "$SCENARIO" "$URL" "$SECOND_URL" "$BASE" "$RATE" > "$OUT/scenario.json"
+printf '{"scenario":"%s","url":"%s","second":"%s","base":"%s","realBase":"%s","rateMbps":%s}\n' "$SCENARIO" "$URL" "$SECOND_URL" "$BASE" "http://10.0.2.2:$REAL_PORT" "$RATE" > "$OUT/scenario.json"
 
 cd "$ROOT"
 pnpm webos:install
@@ -132,6 +142,20 @@ if [[ -n "$SECOND_URL" ]]; then
     wait_playing 40 second
     "${CDP[@]}" screenshot "$OUT/tela-player-2.png" || true
     "${EMU[@]}" screenshot "$OUT/tela-vm-player-2.png" || true
+fi
+
+if [[ "$SCENARIO" == notice ]]; then
+    # The debrid service has the file now; the user goes back and opens the stream again, twice.
+    curl -s "http://127.0.0.1:$PORT/ready" > /dev/null
+    for again in open2 open3; do
+        cdp_eval "(window.__f81.mark('back'), location.hash = '#/', true)" > /dev/null
+        sleep 8
+        cdp_eval "(window.__f81.mark('$again'), location.hash = '#/player/' + encodeURIComponent('$ENCODED'), true)" > /dev/null
+        start="$(date +%s)"
+        wait_playing 40 "$again"
+        "${CDP[@]}" screenshot "$OUT/tela-player-$again.png" || true
+        "${EMU[@]}" screenshot "$OUT/tela-vm-player-$again.png" || true
+    done
 fi
 
 sleep 2

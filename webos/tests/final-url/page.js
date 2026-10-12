@@ -57,4 +57,6 @@
     };
 
     return 'installed';
+// cdp.mjs evaluates an expression: a trailing semicolon is a syntax error there.
+// eslint-disable-next-line @stylistic/semi
 })()

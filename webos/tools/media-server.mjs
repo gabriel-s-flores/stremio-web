@@ -9,6 +9,9 @@
 //   Resolvedor lento (F8.1): /slow/<ms>/<resto> responde <resto> depois de <ms> (/slow/3000/redirect/<arquivo>:
 //   o 302 chega em 3 s); /hang/<resto> nunca responde; /rate/<kbit/s>/<resto> manda o arquivo de <resto> a essa
 //   taxa (os dados chegam, devagar: um início de vários minutos sem evento de mídia, como o MP4 de 75 GB na TV).
+//   Resolvedor com vídeo-aviso (F8.1 c1): /pending/<arquivo> responde 302 para o aviso na mesma origem
+//   (/videos/notice.mkv = o arquivo MEDIA_NOTICE_FILE, como o /videos/downloading_v2.mp4 do Torrentio enquanto o RD
+//   baixa) até um GET /ready; daí em diante, 302 para MEDIA_REAL_BASE/<arquivo> (o host do debrid, outra origem).
 //   MEDIA_RATE_MBPS=<n>: as respostas com arquivo dividem uma banda de n Mbit/s (o Wi-Fi da TV), para medir
 //   se leituras concorrentes (o probe e o pipeline) atrasam o início.
 import http from 'node:http';
@@ -58,6 +61,8 @@ const send = (stream, res, own, log) => {
     });
 };
 
+const notice = { file: process.env.MEDIA_NOTICE_FILE || 't6_h264_aac.mkv', realBase: process.env.MEDIA_REAL_BASE || '', ready: false };
+
 const handle = (req, res, pathname, own) => {
     const log = (status, extra = '') => console.log(`${new Date().toISOString()} ${req.method} ${pathname} ${req.headers.range || ''} -> ${status} ${extra}`);
     const limited = /^\/rate\/(\d+)(\/.*)$/.exec(pathname);
@@ -69,6 +74,17 @@ const handle = (req, res, pathname, own) => {
         return;
     }
     if (pathname.startsWith('/hang/')) return log('hang');
+    if (pathname === '/ready') {
+        notice.ready = true;
+        res.writeHead(200, { 'Content-Type': 'text/plain' }); res.end('ready');
+        return log(200, 'ready');
+    }
+    if (pathname.startsWith('/pending/')) {
+        const target = notice.ready ? notice.realBase + '/' + pathname.slice('/pending/'.length) : '/videos/notice.mkv';
+        res.writeHead(302, { Location: target }); res.end();
+        return log(302, target);
+    }
+    if (pathname === '/videos/notice.mkv') pathname = '/' + notice.file;
 
     if (pathname.startsWith('/redirect/')) {
         const target = '/' + pathname.slice('/redirect/'.length);

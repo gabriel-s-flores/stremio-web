@@ -502,6 +502,21 @@ describe('withPipelineGuard', () => {
         expect(logs.join('\n')).toMatch(/no sign of the load for 300 s \(readyState 0, networkState 2/);
     });
 
+    it('the long time counts from the last sign, not from the load', () => {
+        const { element, errors } = watched();
+        element.networkState = 2;
+        // A sign 250 s into the load: 300 s after the load is only 50 s after it.
+        clock.advance(250000 - 300);
+        element.fire('progress');
+        clock.advance(50000);
+        expect(errors).toEqual([]);
+        clock.advance(LOADING_TIMEOUT_MS - 50000 - 1);
+        expect(errors).toEqual([]);
+        clock.advance(1);
+        expect(errors).toHaveLength(1);
+        expect(logs.join('\n')).toMatch(/no sign of the load for 300 s \(readyState 0, networkState 2, 550 s after the load\)/);
+    });
+
     it('a sign while it waits restarts the short time; an element that stops loading fails at the next check', () => {
         const { element, errors } = watched();
         element.networkState = 2;

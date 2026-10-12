@@ -16,11 +16,11 @@
 // stream asks the resolver again (the link may have expired).
 // The final URL has a token and the resolver's the debrid key: only the host goes to the log.
 // localStorage key (read once, when the app starts): webos.player.finalUrl = "off" loads the
-// resolver's link, as before.
+// resolver's link, as before (webos/lib/final-url: FINAL_URL_KEY, readFinalUrlSetting; the Player's
+// probe goes back to the resolver's link too).
 
 const { hostOf } = require('../debrid-link');
-
-const FINAL_URL_KEY = 'webos.player.finalUrl';
+const { FINAL_URL_KEY, readFinalUrlSetting } = require('../final-url');
 
 const isCommand = (action, commandName) => action !== null && typeof action === 'object' &&
     action.type === 'command' && action.commandName === commandName;
@@ -133,15 +133,6 @@ const withFinalUrl = (Video, deps) => {
     VideoWithFinalUrl.manifest = Video.manifest;
 
     return VideoWithFinalUrl;
-};
-
-// Whether the localStorage key leaves the feature on. storage: localStorage-like, or null.
-const readFinalUrlSetting = (storage) => {
-    try {
-        return !storage || storage.getItem(FINAL_URL_KEY) !== 'off';
-    } catch (_error) {
-        return true;
-    }
 };
 
 module.exports = {
