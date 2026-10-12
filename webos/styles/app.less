@@ -24,6 +24,12 @@ html:root {
     --safe-area-inset-bottom: calc(33px / var(--interface-scale));
     --safe-area-inset-left: calc(48px / var(--interface-scale));
 
+    // The font list of src/App/styles.less without TwemojiFlags (F8.3): its flags are COLR color glyphs,
+    // which Chromium 53 does not paint, so on the TV a flag in a stream description ("Multi Audio /
+    // 🇬🇧 / 🇷🇺") drew nothing at all. Without it the flags come from the fonts of the TV, and the ones
+    // these lack become their two letters (webos/lib/tv-text). The font file is no longer fetched.
+    font-family: 'PlusJakartaSans', 'Arial', 'Helvetica', sans-serif;
+
     // Focus seen from 3 m (F2.6). The upstream ring is 2px; the html zoom of the TV scale
     // (src/common/interfaceScale.webos.ts) draws this one ~5px wide.
     --focus-outline-size: 3px;
