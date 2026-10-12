@@ -14,6 +14,9 @@ webos/tools/emu-run --profile c8 --timeout 40 -- webos/tests/perf/run.sh <saída
 webos/tools/emu-run --profile c8 --timeout 50 -- webos/tests/perf/run.sh <saída> play --ipk <ipk> --switches 5
 webos/tools/emu-run --profile c8 --timeout 45 -- webos/tests/perf/run.sh <saída> streams-cycle --ipk <ipk> [--no-addon] [--variant wasm]
 
+# Latência das setas no Board e abertura de Detalhes (F8.2), A/B de IPKs intercalados (ABBA) na mesma reserva:
+webos/tools/emu-run --profile c8 --timeout 60 -- node webos/tests/perf/keys.mjs --out <saída> --rounds 2 [--details 4] [--profile-details N] [--trace-details N] <a.ipk> <b.ipk>
+
 # A/B (ou bisect) de dois ou mais IPKs, intercalados NA MESMA reserva (a única comparação justa num host compartilhado):
 webos/tests/perf/build-ipk.sh [--keep] <commit> <saída.ipk>    # IPK de qualquer commit; a worktree é removida no fim
 webos/tools/emu-run --profile c8 --timeout 58 -- webos/tests/perf/ab-boot.sh <saída> <rodadas> <a.ipk> <b.ipk> ...
@@ -38,6 +41,7 @@ node webos/tests/perf/mem-chart.mjs <pasta>/mem.log <pasta>/phases.jsonl <saída
 | `nav` (`nav.mjs`) | Um boot e a navegação: Board → Detalhes (OK) → Back → Discover → Back → Busca ("matrix") → Back → Library, Calendar, Addons, Settings → Board → Detalhes → Back. Cada passo é cronometrado **na linha do tempo da página**, do evento de entrada (tecla ou clique) até o primeiro quadro com a tela pronta, e ainda o tempo até o DOM assentar | `nav.json` |
 | `play` (`play.mjs`) | Um boot com o addon de teste local (`webos/tests/addon`): lista de streams, OK num stream até o vídeo estar tocando, N trocas de stream (Back, outro stream), Back até o Board. Um cenário de mídia por boot (limite do emulador) | `play.json` |
 | `streams-cycle` | Detalhes com a lista de streams e de volta ao Board, vários ciclos, só a memória (a busca do estouro de memória) | `streams-cycle.json` |
+| `keys.mjs` (F8.2) | Por IPK e rodada: 24 setas no Board enviadas como na TV (`Input.dispatchKeyEvent`), cada uma medida na página da tecla ao `focusin` e ao 2º quadro; um perfil de CPU e um trace (estilo, layout, pintura, layout forçado com a pilha do JS) de mais algumas setas; N aberturas de Detalhes (rota, coluna, título, lista, o `Load` e a meta pronta no core, o download do logo, as chamadas ao core no meio) | `keys.json`, `*.cpuprofile`, `*.trace.json` |
 | `ab-boot.sh` | Lançamentos a frio de vários IPKs intercalados na mesma reserva | uma pasta por lançamento |
 
 Em todos: `mem.log` (amostrador do convidado, a cada 2 s: RSS do renderer do app, anon/file/shmem, pipeline de mídia, MemAvailable), `phases.jsonl` (marcas de fase, relógio do host), `mem.json` (a análise por fase, `mem-analyze.mjs`), `dmesg-oom.txt` (o kernel matou algo?), `context-*.json` (estado do host). Os cenários `nav`/`play` também guardam *snapshots* de memória (RSS por tipo, heap do V8, DOM, imagens, camadas do compositor, ticks de CPU por thread) e a linha do tempo da página; uma rodada que morre no meio (renderer morto pelo OOM) grava o que já mediu (`"incomplete": true`).
