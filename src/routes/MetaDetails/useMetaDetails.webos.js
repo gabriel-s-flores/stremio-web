@@ -36,7 +36,7 @@ const useMetaDetails = (urlParams) => {
         const current = !selected || (selected.metaPath && selected.metaPath.id === id && selected.metaPath.type === type);
         const metaItem = optimisticMetaItem(decodeMetaItem(metaDetails.metaItem), current ? preview : null);
         return streams === metaDetails.streams && metaItem === metaDetails.metaItem ? metaDetails : { ...metaDetails, streams, metaItem };
-    }, [metaDetails, preview]);
+    }, [metaDetails, preview, id, type]);
 };
 
 module.exports = useMetaDetails;
