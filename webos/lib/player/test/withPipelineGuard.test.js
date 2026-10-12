@@ -3,7 +3,7 @@
 // one) and of the <video> element, on a manual clock: when the pipeline is released, how many
 // pipelines a load creates, and the start watchdog.
 
-const { withPipelineGuard, holdVideosInPlace, LEAVE_DELAY_MS, RELEASE_SETTLE_MS, START_TIMEOUT_MS, SUBTITLE_SELECT_SETTLE_MS, DISPLAY_NUDGE_MS } = require('../withPipelineGuard');
+const { withPipelineGuard, holdVideosInPlace, LEAVE_DELAY_MS, RELEASE_SETTLE_MS, START_TIMEOUT_MS, LOADING_TIMEOUT_MS, LOADING_CHECK_MS, SUBTITLE_SELECT_SETTLE_MS, DISPLAY_NUDGE_MS } = require('../withPipelineGuard');
 
 const URL_A = 'http://10.0.2.2:8099/redirect/t1_h264_aac.mp4';
 const URL_B = 'http://10.0.2.2:8099/redirect/t6_h264_aac.mkv';
@@ -472,6 +472,48 @@ describe('withPipelineGuard', () => {
         expect(element.log).toEqual(['pause', 'release']);
         expect(record.actions.filter((action) => action === 'unload')).toHaveLength(1);
         clock.advance(10 * START_TIMEOUT_MS);
+        expect(errors).toHaveLength(1);
+    });
+
+    // F8.1: on the C8 a 31-75 GB MP4 with the moov at the end shows no event for minutes and plays
+    // after about 3 min. The element says it is still loading meanwhile.
+    it('the element still loading: no error at START_TIMEOUT_MS, the moov-at-end file plays after 3 min', () => {
+        const { element, errors } = watched();
+        element.networkState = 2;
+        clock.advance(START_TIMEOUT_MS);
+        expect(errors).toEqual([]);
+        expect(logs.join('\n')).toMatch(/no sign of the load for 60 s, but the element is still loading: waiting up to 300 s/);
+        clock.advance(3 * 60000 - START_TIMEOUT_MS);
+        expect(errors).toEqual([]);
+        element.started();
+        clock.advance(10 * LOADING_TIMEOUT_MS);
+        expect(errors).toEqual([]);
+        expect(element.log).toEqual([]);
+        expect(logs.join('\n')).toMatch(/loadedmetadata 180300 ms after the load/);
+    });
+
+    it('still loading without a sign for LOADING_TIMEOUT_MS: the error', () => {
+        const { element, errors } = watched();
+        element.networkState = 2;
+        clock.advance(LOADING_TIMEOUT_MS - 301);
+        expect(errors).toEqual([]);
+        clock.advance(1);
+        expect(errors).toHaveLength(1);
+        expect(logs.join('\n')).toMatch(/no sign of the load for 300 s \(readyState 0, networkState 2/);
+    });
+
+    it('a sign while it waits restarts the short time; an element that stops loading fails at the next check', () => {
+        const { element, errors } = watched();
+        element.networkState = 2;
+        clock.advance(START_TIMEOUT_MS + 30000);
+        element.fire('progress');
+        clock.advance(START_TIMEOUT_MS);
+        expect(errors).toEqual([]);
+        // Idle (or no source) now: nothing more will come.
+        element.networkState = 1;
+        clock.advance(LOADING_CHECK_MS - 1);
+        expect(errors).toEqual([]);
+        clock.advance(1);
         expect(errors).toHaveLength(1);
     });
 
