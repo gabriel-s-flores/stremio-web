@@ -36,6 +36,11 @@ threads, os PRs e os arquivos de revisão e aponta PRONTOs/revisões que chegara
 mensagens** — uma tarefa `implementando`/`corrigindo` com a thread `ready` e PR atualizado, ou `em revisão` com
 `revisao-cN.md` escrito, é para processar na mesma iteração.
 
+**Caixa de entrada:** os agentes avisam com `bin/avisar "..."` (arquivo em `inbox/`). Mantenha armado o
+monitor `bin/vigia.sh` (Monitor, 30 min, re-armar a cada iteração): ele emite uma linha por aviso novo
+(e move o arquivo para `inbox/lidos/`) e por sinal novo do `varrer.sh`. Nas mensagens que você mandar aos
+agentes (devolutivas, re-revisões, rebases), peça sempre o aviso por `bin/avisar`.
+
 ### 0a. (antigo) Publicar o nome da sessão
 `ListAgents` → grave o nome atual da sua sessão em `~/webos-tv-sdk/orquestrador/SESSAO` (só o nome,
 ex.: `stremio-web-07`) e no `PAINEL.md`. O nome **muda quando a sessão é retomada**; os agentes leem

@@ -47,7 +47,8 @@ Head revisado: <sha>
 ```
 
 Aprove só se todos os critérios de aceite passarem e não houver achado de severidade alta ou média.
-Depois avise o orquestrador com `SendMessage` para o nome que está em `~/webos-tv-sdk/orquestrador/SESSAO`
-(se falhar, siga: ele confere esta thread pela API):
-`REVISÃO {ID} c{CICLO} — APROVAR` ou `REVISÃO {ID} c{CICLO} — MUDANÇAS (<n> achados)`, e termine o
+Depois avise o orquestrador pela caixa de entrada (obrigatório; não depende do nome da sessão dele):
+`~/webos-tv-sdk/orquestrador/bin/avisar "REVISÃO {ID} c{CICLO} — APROVAR"` ou
+`~/webos-tv-sdk/orquestrador/bin/avisar "REVISÃO {ID} c{CICLO} — MUDANÇAS (<n> achados)"`
+(opcionalmente também `SendMessage` para o nome em `~/webos-tv-sdk/orquestrador/SESSAO`), e termine o
 turno. Se o orquestrador pedir nova rodada (novo head), repita com o ciclo seguinte.

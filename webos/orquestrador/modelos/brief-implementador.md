@@ -56,10 +56,11 @@ a conversa.
    `gh pr create --repo gabriel-s-flores/stremio-web --base webos --head {BRANCH} --title "[{ID}] <resumo>" --body-file <corpo>`
    (corpo: resumo + link para o relatório + como validar). Depois vincule o PR a esta thread com a
    ferramenta `link_pull_request`.
-9. **Avise o orquestrador:** leia o nome atual da sessão dele em `~/webos-tv-sdk/orquestrador/SESSAO`
-   (o nome muda quando a sessão é retomada) e use `SendMessage` para esse nome:
-   `PRONTO {ID} — PR <url> — <1 linha do resultado>` ou `BLOQUEADO {ID} — <motivo e o que tentou>`.
-   Se o envio falhar, siga: o orquestrador também confere esta thread pela API a cada iteração.
+9. **Avise o orquestrador pela caixa de entrada (obrigatório):**
+   `~/webos-tv-sdk/orquestrador/bin/avisar "PRONTO {ID} — PR <url> — <1 linha do resultado>"`
+   (ou `"BLOQUEADO {ID} — <motivo e o que tentou>"`). É isso que acorda o orquestrador; não depende do
+   nome da sessão dele. Opcionalmente, mande também `SendMessage` para o nome em
+   `~/webos-tv-sdk/orquestrador/SESSAO` (pode estar desatualizado; se falhar, ignore).
    Termine o turno logo depois.
 10. Se depois chegar uma devolutiva do orquestrador (mensagem nesta thread), corrija, rode de novo
     as checagens afetadas, atualize o relatório (seção "Ciclos"), faça push e avise de novo.
