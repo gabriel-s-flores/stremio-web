@@ -23,6 +23,7 @@
 //   thread is the one that tells how busy the core was;
 // - --profile-opening N: a CPU profile of the worker (CDP Worker domain, like tarefas/F8/bin/perfil-worker.mjs)
 //   over the Nth opening, saved as <label>.worker.cpuprofile (symbolize with webos/tests/perf/symbolize.mjs).
+//   It works on the TV; on the emulator (c8 or not) the worker's Profiler.stop never came back (F8.6).
 // Writes <dir>/details.json and prints the medians per IPK.
 import { execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -40,6 +41,9 @@ const ROUNDS = Number(args.rounds || 1);
 const OPENINGS = Number(args.openings || 3);
 const PROFILE_OPENING = Number(args['profile-opening'] || 0);
 const QUIET_S = Number(args.quiet || 45);
+const IDLE_WAIT_S = Number(args['idle-wait'] || 120);
+// The worker profiler's sampling interval (µs): 1000 like the TV profile.
+const PROFILE_INTERVAL_US = Number(args['profile-interval'] || 1000);
 const HASH = args.hash || '#/detail/movie/tt15047880/tt15047880';
 const { EMU_DEVICE: DEVICE, EMU_CDP_PORT: CDP_PORT } = process.env;
 if (!DEVICE || !CDP_PORT || IPKS.length === 0) {
@@ -122,6 +126,7 @@ const HOOK = `(function () {
     return 'installed';
 })()`;
 
+const results = [];
 let session;
 const evaluate = (expr, ms = 60000) => session.evaluate(expr, ms);
 
@@ -131,7 +136,9 @@ let wid = 0;
 const wsend = async (method, params = {}, timeoutMs = 120000) => {
     const id = ++wid;
     const from = session.events.length;
-    await session.send('Worker.sendMessageToWorker', { workerId, message: JSON.stringify({ id, method, params }) });
+    // Chromium 53 may never answer the command itself: only the worker's answer is awaited (as
+    // tarefas/F8/bin/perfil-worker.mjs does on the TV).
+    session.send('Worker.sendMessageToWorker', { workerId, message: JSON.stringify({ id, method, params }) }, timeoutMs).catch(() => {});
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
         for (let i = from; i < session.events.length; i++) {
@@ -154,7 +161,8 @@ const attachWorker = async () => {
         else await sleep(100);
     }
     if (!workerId) throw new Error('no worker');
-    await session.send('Worker.connectToWorker', { workerId }).catch(() => {});
+    session.send('Worker.connectToWorker', { workerId }, 10000).catch(() => {});
+    await sleep(500);
 };
 
 const ticks = () => {
@@ -210,13 +218,15 @@ async function round(ipk, label) {
     await sleep(QUIET_S * 1000);
     await evaluate(HOOK);
     const result = { ipk: path.basename(ipk), label, boardS, fixture: check, openings: [] };
+    // Saved after every opening (a stuck opening keeps the ones before it).
+    results.push(result);
     for (let i = 1; i <= OPENINGS; i++) {
         const workerRttMs = await evaluate(`(function () { var t = performance.now(); return window.core.getState('streaming_server').then(function () { return Math.round(performance.now() - t); }); })()`).catch(() => null);
         const profiling = PROFILE_OPENING === i;
         if (profiling) {
             await attachWorker();
             await wsend('Profiler.enable');
-            await wsend('Profiler.setSamplingInterval', { interval: 1000 });
+            await wsend('Profiler.setSamplingInterval', { interval: PROFILE_INTERVAL_US });
             await wsend('Profiler.start');
         }
         const before = ticks();
@@ -228,21 +238,24 @@ async function round(ipk, label) {
             m = JSON.parse(await evaluate('JSON.stringify(window.__f86.m)').catch(() => 'null'));
             if (m && m.doneMs !== undefined) break;
         }
-        // Until the worker is idle again (a small getState answers fast), for the CPU ticks of the whole opening.
-        let idleMs = null;
-        for (let k = 0; k < 60; k++) {
-            const rtt = await evaluate(`(function () { var t = performance.now(); return window.core.getState('streaming_server').then(function () { return Math.round(performance.now() - t); }); })()`).catch(() => 9999);
-            if (rtt < 150) { idleMs = Date.now() - start; break; }
-            await sleep(1000);
-        }
-        const after = ticks();
+        // The profile ends with the opening (meta and first stream on screen): the Chromium 53 worker takes
+        // long to serialize a long profile, and on the emulator Profiler.stop may never come back.
         let profile = null;
         if (profiling) {
-            const r = await wsend('Profiler.stop');
+            const r = await wsend('Profiler.stop', {}, 600000);
             profile = r && r.profile;
             if (profile) fs.writeFileSync(path.join(OUT, `${label}.worker.cpuprofile`), JSON.stringify(profile));
             await wsend('Profiler.disable').catch(() => null);
         }
+        // Until the worker is idle again (a small getState answers fast), for the CPU ticks of the whole opening.
+        // At most IDLE_WAIT_S (the profiler slows the worker a lot on the c8).
+        let idleMs = null;
+        while (Date.now() - start < (95 + IDLE_WAIT_S) * 1000) {
+            const rtt = await evaluate(`(function () { var t = performance.now(); return window.core.getState('streaming_server').then(function () { return Math.round(performance.now() - t); }); })()`, 15000).catch(() => 9999);
+            if (rtt < 150) { idleMs = Date.now() - start; break; }
+            await sleep(1000);
+        }
+        const after = ticks();
         const page = JSON.parse(await evaluate(`JSON.stringify({ calls: window.__f86.calls, streams: document.querySelectorAll('[class*="stream-container"]').length })`));
         const calls = page.calls;
         const count = (side, p, model) => calls.filter((c) => c[0] === side && c[1] === p && (model === undefined || c[3] === model)).length;
@@ -256,6 +269,7 @@ async function round(ipk, label) {
             profiled: profiling ? `${label}.worker.cpuprofile` : undefined,
         };
         result.openings.push(opening);
+        save();
         log(`[${label}] opening ${i}`, JSON.stringify({ metaMs: opening.metaMs, titleMs: opening.titleMs, streamMs: opening.streamMs, idleMs, streamsAt: opening.streamsAt, getState: opening.getState, newState: opening.newState, setItem: opening.setItem, ticks: opening.ticks }));
         if (i === 1) {
             try {
@@ -272,21 +286,21 @@ async function round(ipk, label) {
     return result;
 }
 
-const results = [];
 const save = () => fs.writeFileSync(path.join(OUT, 'details.json'), `${JSON.stringify({ profile: process.env.EMU_PROFILE || null, instance: process.env.EMU_INSTANCE, hash: HASH, results }, null, 1)}\n`);
 for (let r = 1; r <= ROUNDS; r++) {
     const order = r % 2 ? IPKS : [...IPKS].reverse();
     for (const ipk of order) {
         const label = `r${r}-${path.basename(ipk, '.ipk')}`;
         try {
-            results.push(await round(ipk, label));
+            await round(ipk, label);
         } catch (e) {
             log(`[${label}] failed: ${e.message}`);
             try {
                 const shot = await session.send('Page.captureScreenshot', {}, 20000);
                 fs.writeFileSync(path.join(OUT, `${label}.failed.png`), Buffer.from(shot.data, 'base64'));
             } catch (x) { /* no screenshot */ }
-            results.push({ ipk: path.basename(ipk), label, error: String(e.message) });
+            const partial = results.find((x) => x.label === label);
+            if (partial) partial.error = String(e.message); else results.push({ ipk: path.basename(ipk), label, error: String(e.message) });
             await close();
         }
         save();
@@ -299,7 +313,7 @@ const workerTicks = (o) => {
     return worker ? worker[1] : null;
 };
 for (const ipk of IPKS) {
-    const mine = results.filter((x) => x.ipk === path.basename(ipk) && !x.error);
+    const mine = results.filter((x) => x.ipk === path.basename(ipk) && x.openings && x.openings.length > 0);
     const all = (pick) => median(mine.flatMap((x) => x.openings.map(pick)).filter((v) => typeof v === 'number'));
     log(path.basename(ipk), JSON.stringify({
         rounds: mine.length,
