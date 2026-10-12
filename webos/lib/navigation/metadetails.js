@@ -16,8 +16,9 @@
 // - Initial focus and restoration. Opening the page focuses the selected episode (or the first
 //   one), or, for a streams list, the list panel itself: a stream item with the focus freezes the
 //   order of the C8 ranking (F6.2), whose probes may still reorder the top of the list until the
-//   first key. From the panel, DOWN, RIGHT or OK enters the first stream, UP the list header (the
-//   addon filter; with one addon there is none and the focus stays) and LEFT the column. Coming back to the page (Back from a route above, the Player closing, the
+//   first key. The panel is drawn as its first stream focused (F8.3): from it, OK plays that stream,
+//   DOWN goes to the second, RIGHT focuses the first, UP the list header (the addon filter; with
+//   one addon there is none and the focus stays) and LEFT the column. Coming back to the page (Back from a route above, the Player closing, the
 //   streams list going back to the episodes) focuses the element focused there last, waiting while
 //   its section is still loading (RESTORE_GUARD). Never while the Magic Remote pointer is in use
 //   (F4.2). An OK while the page opens is kept from the poster of the Board, which still has the
@@ -398,13 +399,17 @@ const createMetaDetailsNavigation = ({ root, window: win, hub = getInputHub(win)
         const active = doc.activeElement;
         if (!root.contains(active)) return;
 
-        // The streams list panel (initial focus): enters the list.
+        // The streams list panel (initial focus): enters the list. The panel is drawn as its first
+        // stream focused (styles.webos.less, F8.3), so the keys act as if it were: OK plays it, DOWN
+        // goes to the second one, RIGHT shows the focus on the first.
         if (active === parts.list) {
+            const items = listItems(parts);
             let target = null;
-            if (key === 'down' || key === 'right' || key === 'ok') target = listItems(parts)[0] || firstFocusable(parts.list);
+            if (key === 'ok' || key === 'right') target = items[0] || firstFocusable(parts.list);
+            else if (key === 'down') target = items[1] || items[0] || firstFocusable(parts.list);
             else if (key === 'up') target = firstFocusable(parts.list.querySelector(SELECTORS.listHeader));
             else if (key === 'left') target = metaTarget(parts);
-            if (target) focus(target);
+            if (target && focus(target) && key === 'ok' && target === items[0]) target.click();
             consume(event);
             return;
         }

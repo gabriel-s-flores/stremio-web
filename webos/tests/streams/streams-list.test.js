@@ -43,9 +43,12 @@ describe('StreamsList on webOS', () => {
         expect(av1.className).toContain('tier-hidden');
         expect(av1.getAttribute('data-c8-tier')).toBe('hidden');
         expect(list.items()[0].getAttribute('data-c8-source')).toBe('name');
-        // The labels come after the play icon (a row of their own under the upstream row).
+        // F8.3: the labels come right under the text, in the description's column; the upstream row
+        // keeps its children.
         const children = Array.from(list.items()[0].children).map((child) => child.className);
-        expect(children).toEqual(['info-container', 'description-container', 'icon', 'c8-labels']);
+        expect(children).toEqual(['info-container', 'description-container', 'icon']);
+        const description = Array.from(list.items()[0].querySelector('.description-container').children).map((child) => child.className);
+        expect(description).toEqual(['description-text', 'c8-labels']);
         // The rest of the upstream render is kept.
         expect(list.container.querySelector('.install-button-container')).not.toBeNull();
         expect(list.readerSpy).not.toHaveBeenCalled();

@@ -178,8 +178,11 @@ const walk = async () => {
     check('movie: initial focus on the streams list panel (not a stream: the C8 order stays free)', focused.kind === 'list-panel' && focused.focusVisible, focused);
     shot('01-movie-initial');
 
+    // F8.3: the panel is drawn as its first stream focused; DOWN goes on to the second, UP back.
     focused = await key('DOWN');
-    check('movie: DOWN enters the first stream', focused.kind === 'stream' && focused.index === 0, focused);
+    check('movie: DOWN from the panel goes to the second stream (the panel shows the first)', focused.kind === 'stream' && focused.index === 1, focused);
+    focused = await key('UP');
+    check('movie: UP comes back to the first stream', focused.kind === 'stream' && focused.index === 0, focused);
     const order = evaluate('window.__f41c.order()');
     let moves = true;
     for (let i = 1; i <= 4; i++) {
