@@ -12,7 +12,8 @@
 // 2. wasm2js -O and the build's wrapper, then the build's terser (wasm2js-finish.js options) with a
 //    source map; the code must be the vendored .wasm2js.js (before the parentheses of wasm2js-finish);
 // 3. for every `function X(` of the minified code, the source map gives the wasm2js name ($N, N the
-//    function index), and the name section of step 1 gives the symbol.
+//    index among the defined functions, imports not counted), and the name section of step 1 gives the
+//    symbol (its index counts the imported functions first).
 // Writes { sha256, functions: { <minified>: <symbol> } }. ~2 min and ~6 GB of memory (the terser).
 const fs = require('fs');
 const os = require('os');
@@ -54,6 +55,44 @@ const sections = (d) => {
     }
     return out;
 };
+// How many functions the module imports: they come first in the function index space.
+const importedFunctions = (d) => {
+    const imports = sections(d).find((s) => s.id === 2);
+    if (!imports) return 0;
+    const b = imports.body;
+    let [count, i] = leb(b, 0);
+    let functions = 0;
+    const skipName = () => {
+        let len;
+        [len, i] = leb(b, i);
+        i += len;
+    };
+    const skipLimits = () => {
+        const flags = b[i++];
+        [, i] = leb(b, i);
+        if (flags & 1) [, i] = leb(b, i);
+    };
+    while (count-- > 0) {
+        skipName();
+        skipName();
+        const kind = b[i++];
+        if (kind === 0) {
+            functions++;
+            [, i] = leb(b, i);
+        } else if (kind === 1) {
+            i++;
+            skipLimits();
+        } else if (kind === 2) {
+            skipLimits();
+        } else if (kind === 3) {
+            i += 2;
+        } else {
+            fail(`importação de tipo desconhecido ${kind}`);
+        }
+    }
+    return functions;
+};
+
 const functionNames = (d) => {
     const names = new Map();
     for (const { id, body } of sections(d)) {
@@ -99,6 +138,8 @@ async function main() {
         const namedBytes = fs.readFileSync(named);
         if (code(namedBytes) !== code(vendored)) fail('o wasm com -g tem outro código');
         const names = functionNames(namedBytes);
+        // wasm2js calls the defined functions $0, $1... (imports not counted).
+        const imported = importedFunctions(namedBytes);
 
         // The build's wasm2js and wrapper (webos/core/build), then its terser with a source map.
         const mjs = path.join(tmp, 'w2js.mjs');
@@ -148,7 +189,7 @@ async function main() {
             const original = originalPositionFor(map, { line: line + 1, column: pos - starts[line] });
             const name = original && original.name;
             const index = name && /^\$(\d+)$/.exec(name);
-            const symbol = index ? names.get(Number(index[1])) : name;
+            const symbol = index ? names.get(Number(index[1]) + imported) : name;
             if (!symbol) {
                 unknown++;
                 continue;
