@@ -1,9 +1,10 @@
-# Perfil C8: baseline do app no emulador (F7.1), as otimizações (F7.2) e o perfil de CPU (F0.9)
+# Perfil C8: baseline do app no emulador (F7.1), as otimizações (F7.2), a resistência (F7.3) e o perfil de CPU (F0.9)
 
-Este documento tem três partes:
+Este documento tem quatro partes:
 
 - **Parte 1, medições do app no perfil C8 (F7.1)**: boot até o Board, navegação, memória (e o estouro de memória que mata o renderer), trocas de stream, o core em wasm2js × WASM e o tamanho do build. É a linha de base da F7.2 (otimizações), da F7.3 (resistência) e do G7.
 - **Parte 1b, otimizações (F7.2)**: a causa e a correção do estouro de memória, o WASM em segundo plano (inviável no Chromium 53), o boot depois das mudanças e por que a meta de 10 s não cabe no emulador. **É o estado atual**; a parte 1 fica como a linha de base.
+- **Parte 1c, resistência (F7.3)**: 1 h e meia de navegação contínua e uma reprodução longa por boot, sem reinício nem vazamento de objetos; o `shmem` é um preenchimento até ~90 MB e não crescimento, e sobra um crescimento lento de memória nativa (~3–5 MB/h) nas telas de catálogo, sem causa localizada.
 - **Parte 2, o perfil C8 (F0.9)**: como a cota de CPU do emulador é aplicada, por que 40 %, e o baseline de CPU do próprio emulador.
 
 Base medida: `origin/webos` em `99936d365` (F4.1c; sem a F4.3 e sem a F5.6 mergeadas), IPK do `pnpm webos:package`; as rodadas do ciclo 1 da revisão (A/B de variantes do core e a hipótese do OOM) são da base `608aee79c` (com F4.3, F5.6 e F3.7b mergeadas), emulador webOS TV 4.0 com `--profile c8` (2 vCPUs, 1 GB, CPU limitada a 40 % de um núcleo do host). **O perfil estima, não reproduz a C8** (parte 2): trate todo tempo daqui como um limite inferior do que a TV vai mostrar; a calibração é da Fase 8. A rede é a de verdade (Cinemeta pela internet), então os tempos que esperam catálogo carregam a variância dela.
@@ -448,6 +449,58 @@ Os roteiros de UI sobre o IPK final não mudam em relação à base: e2e da F6.4
 | `main.js` | 8,94 MB (2,65 MB gzip) | **1,99 MB** (0,58 MB gzip) |
 | chunks de idioma | – | um por língua (~0,1–0,25 MB), carregado só quando o idioma do perfil não é o en-US |
 | IPK | 10,13 MB | 10,15 MB |
+
+# Parte 1c: resistência (F7.3)
+
+Duas perguntas: o app aguenta **1 h de navegação contínua e uma reprodução longa por boot** sem vazamento nem reinício? E, se algo cresce, o que é? Medido no perfil c8, no IPK do `pnpm webos:package` (base `origin/webos` em `0a2ab5bc3`, mais os commits da F7.3, que só mexem em testes, roteiros e no diálogo de QR grande). O roteiro, o método e as limitações estão em [`webos/tests/soak/README.md`](../tests/soak/README.md); dados brutos em `~/webos-tv-sdk/orquestrador/tarefas/F7.3/evidencias/soak/`.
+
+## Resultado
+
+**Sem reinício, sem OOM e sem vazamento de objetos.** Em nenhuma rodada a página reiniciou, o PID do renderer mudou ou o kernel matou algo (`dmesg`: 0 OOM em todas as rodadas, mais de 14 h de emulador somadas). DOM, *listeners* (±1), imagens, rotas montadas, a memória do core e o heap do worker ficam constantes de um ciclo ao outro. **Resta um crescimento lento de memória nativa** (`RssAnon`, ~3–5 MB por hora de navegação contínua, vindo das telas de catálogo e pôsteres) que não consegui atribuir a um objeto: está documentado abaixo, com os números e o A/B.
+
+| Rodada (c8) | Duração | O que fez | Reinício / OOM | RSS do renderer | Tendência |
+|---|---|---|---|---|---|
+| `nav-2` | 77 min, 38 ciclos, 988 passos | todas as telas, setas + ponteiro do Magic Remote | 0 / 0 | Board em quieto 252–270 MB, **pico 316 MB** | anon: +5 MB nos primeiros ~50 min, depois **+0,3 ± 0,3 MB/10 min** (plano) |
+| `nav-4` | **152 min**, 72 ciclos, 1872 passos | o mesmo, mais longo | 0 / 0 | Board em quieto 254–269 MB, pico 311 MB | anon **+0,5 ± 0,04 MB/10 min** (86 → 90 MB entre o 1º e o último terço); `shmem` plano (+0,03 ± 0,05) |
+| `only-catalog` | 76 min, 55 ciclos | só Board, Detalhes, Discover, Busca (rede e pôsteres) | 0 / 0 | 253–268 MB | anon **+0,8 ± 0,1 MB/10 min** |
+| `only-local` | 76 min, 56 ciclos | só Library, Calendar, Addons, Settings, diagnóstico | 0 / 0 | 185–246 MB | anon **+0,36 ± 0,03 MB/10 min** (72 → 74 MB) |
+| `nav-3` | 72 min, 33 ciclos (com dois *snapshots* do heap do worker) | o mesmo | 0 / 0 | pico 359 MB (*snapshots* somam ~20 MB) | worker: **17,9 → 18,1 MB** |
+| `play-1` | 50 min de um arquivo de 60 min (720p H.264, 3 faixas, legenda de addon) | pausa/retoma, seek, barra, ponteiro, FF; 31 interações | 0 / 0 | **186,9 → 186,9 MB** (185–190), pico 240,7 MB, pipeline 28,6 MB | plano (+0,3 MB/10 min de anon) |
+| `play-2` | 50 min, **sem** a legenda de addon | o mesmo | 0 / 0 | 181 → 183 MB, pico 221,9 MB | plano |
+| `play-3` | 45 min, com o *sampling heap profiler* e *snapshots* do worker | o mesmo | 0 / 0 | ~202 MB (os *snapshots* somam ~20 MB) | worker: 17,6 → 23,6 MB, só **código compilado** (abaixo) |
+| `switch-2` | 31 reproduções (30 trocas de stream, 10 s cada) | Back + outro stream, MP4 AAC e MKV multi-faixa alternados | 0 / 0 | oscila 191–218 MB, plano depois da 12ª troca; pico 245 MB | plano; heap JS, nós do DOM (855–858) e rotas (3) constantes |
+| `idle-1` | 61 min parado no Board, as mesmas amostras | controle: o roteiro mede sem navegar | 0 / 0 | 147,9 → 148,6 MB | plano: **o roteiro não vaza** |
+
+## O que cresce, e por quê
+
+1. **`shmem`: ~11 → ~85–92 MB, e para.** A F7.1 viu "~36 MB por passeio" e suspeitou de vazamento. Com 38 a 72 ciclos, é um preenchimento até um teto: 11 MB no Board, 51 MB ao fim do 1º ciclo, ~85 MB no 2º e **85–92 MB depois**, para sempre (nav-4: +0,03 ± 0,05 MB/10 min em 152 min). Só as telas locais chegam ao mesmo teto mais devagar (39 MB no 5º ciclo, 88 MB no 31º). É memória compartilhada de composição (o emulador não tem GPU); o teto não depende de quantas vezes se visita.
+2. **`RssAnon`: 62 → 77 → 81 MB nas duas primeiras voltas e depois sobe devagar**: ~0,5 ± 0,04 MB/10 min em 152 min (nav-4; 0,7 ± 0,09 só na 2ª metade), ~3–4 MB por hora. O A/B por tela localiza o grosso nas **telas de catálogo e pôsteres** (+0,8 ± 0,1 MB/10 min) contra +0,36 ± 0,03 nas telas locais e ~+0,2 parado (`idle-1`: 59,1 → 59,8 MB em 61 min). Não é DOM (1827 nós, sempre), nem *listeners* (391 ± 1), nem imagens do DOM (55), nem o heap do JS, nem o worker (abaixo), nem a memória do core (4,4 MB): é memória nativa, e a hipótese que sobra são os *caches* de imagem e de rede do Blink e fragmentação do `malloc`, que o emulador não deixa fotografar (item 6). **Não achei a causa**; com a folga do convidado (menor `MemAvailable` visto: 266–330 MB) a 4 MB/h isso são dezenas de horas de navegação ininterrupta, e a TV real (Fase 8) tem outra política de memória.
+3. **Heap do JS da página** (`performance.memory` depois de um GC): degraus de 10,1 → 11,3 → 15,4 → 20,7 MB e de volta a 16,3 MB, **num único degrau por vez, sem relação com o número de ciclos**. É o contador grosseiro do Chromium 53 (só atualiza em GC) mais código compilado: não é um vazamento de objetos (nós do DOM e *listeners* ficam parados; o *sampling heap profiler* de 45 min de reprodução termina com só 730 KB de alocações vivas). A marca "GROWS" que o `analyze.mjs` põe nessa linha é esse degrau (veja o README do `soak`).
+6. **Sem *snapshot* do heap da página** (limite do emulador, abaixo): por isso o item 2 fica sem causa.
+4. **Heap do worker do core** (V8 *snapshot* pelo domínio `Worker` do inspetor; `performance.memory` não existe em worker): **17,9 → 18,1 MB em 72 min de navegação** (nav-3). Em 45 min de reprodução o heap vai de 17,6 a 23,6 MB, mas os 6 MB são **código** (`code for get_state`, tabelas de posição de fonte e de realocação: o wasm2js compilando funções que nunca tinham rodado); dados (arrays, strings) não mudam.
+5. **Reprodução**: nada. RSS plano em 50 min, o pipeline de mídia (`starfish`) em ~29 MB, `currentTime` andando, 0 *stalls*; a legenda de addon (um *cue* a cada 2 s, ~1100 no total) não muda a tendência (`play-2` sem ela é igual).
+
+## O que fica acima das metas
+
+- **Pico do renderer na navegação: 307–316 MB** (nav-1/2/4; 359 MB na rodada com *snapshots*), contra a meta do G7 de ≤ 250 MB e os "picos ~220–230 MB" da F7.2. O pico é o **estado de trabalho do ciclo** (RSS fica em 295–316 MB durante todos os passos, inclusive os de pouco movimento) e cai ~45 MB quando o amostrador força o GC: é lixo ainda não coletado mais o *cache* acima, e **não cresce** de ciclo a ciclo (picos 306,5 / 307,7 / 306,0 / 307,1 / 306,4 MB nos ciclos 8–12 de nav-1). A F7.2 media um passeio mais curto, sem diagnóstico, busca nem ponteiro. Fica como dívida do G7 para a Fase 8 (RSS real da TV), não como vazamento.
+- Reprodução: pico 222–241 MB (e 245 MB com 30 trocas), dentro de 250 MB.
+
+## Limites do que foi medido
+
+- **O heap da página não pode ser fotografado**: `HeapProfiler.takeHeapSnapshot` da página para depois de ~39 eventos de progresso no emulador (testado 2×, > 5 min). O do worker funciona (~10 MB de JSON, 2–20 s). Por isso a página é medida por contadores, GC forçado e o *sampling heap profiler*, e uma busca por bissecção seria por A/B de builds (`perf/ab-boot.sh`).
+- Sem GPU, o `shmem` do emulador não é o da TV; a Fase 8 mede de verdade.
+- Mídia: um cenário por boot; no c8 a *imagem* do vídeo é intermitente (as checagens de imagem do e2e falham nas duas rodadas c8 da base e do build final, 44/46 nos dois). A reprodução foi medida por `currentTime`, `readyState` e RSS, não pela imagem.
+- 1 h de navegação + 50 min de reprodução cobrem o aceite; um filme de 3 h não foi tocado (o arquivo gerado tem 60 min). A extrapolação do `play-1` é +0,3 MB/10 min de anon, ~5 MB por 3 h.
+
+## Como refazer
+
+```bash
+webos/tests/soak/make-media.sh        # uma vez
+webos/tools/emu-run --profile c8 --timeout 100 -- webos/tests/perf/run.sh <saída> soak-nav  --ipk <ipk> --minutes 60 [--worker-heap] [--idle]
+webos/tools/emu-run --profile c8 --timeout 100 -- webos/tests/perf/run.sh <saída> soak-play --ipk <ipk> --minutes 50 [--no-subtitle] [--sampling] [--worker-heap]
+webos/tools/emu-run --profile c8 --timeout 90  -- webos/tests/perf/run.sh <saída> play --ipk <ipk> --switches 30 --hold 10     # trocas de stream (F7.1)
+node webos/tests/soak/analyze.mjs <saída>... [--skip N]
+```
 
 # Parte 2: o perfil C8 (F0.9)
 
