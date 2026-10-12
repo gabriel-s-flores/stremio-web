@@ -3,7 +3,7 @@
 // get_state and each addon answer costs inside the core, without the emulator.
 //
 //   node webos/tests/perf/core-bench.js [--variant wasm2js|wasm] [--wasm2js <file>] [--vendor <dir>]
-//        [--no-library] [--streams N] [--repeat N] [--json <out.json>]
+//        [--no-library] [--streams N] [--repeat N] [--json <out.json>] [--dump <meta_details.json>]
 //   node --cpu-prof --cpu-prof-dir <dir> webos/tests/perf/core-bench.js --wasm2js <named.wasm2js.js> ...
 //
 // - The storage starts with the large library of the TV (library-fixture.js) unless --no-library, and
@@ -193,6 +193,9 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const openMs = Math.round(performance.now() - load);
     const streams = state.streams.find((s) => s.addon.manifest.id === MANIFEST.id);
     note({ step: 'open', ms: openMs, streams: streams && streams.content.type === 'Ready' ? streams.content.content.length : null });
+
+    // --dump: the state of the page at the end (to compare two builds of the core: same answer?).
+    if (option('dump', null)) fs.writeFileSync(option('dump', null), JSON.stringify(state));
 
     // The cost of one answer of each model, repeated.
     const repeated = {};
