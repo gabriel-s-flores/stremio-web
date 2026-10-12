@@ -88,7 +88,8 @@ const subtitleLanguages = ffprobe.streams.filter((stream) => stream.codec_type =
 check('the embedded subtitles are listed by language in the subtitles menu', subtitleLanguages.every((lang) => subtitlesMenu.some((entry) => entry.lang === lang)),
     { menu: subtitlesMenu, file: subtitleLanguages });
 check('the probe read the header by Range (media server log)', /bytes=0-262143/.test(serverLog), null);
-check('the probe result was used (console)', consoleLog.some((entry) => /\[webos\] tracks: probe mkv, 3 audio, 2 subtitles/.test(entry.text)),
+const probeLine = new RegExp(`\\[webos\\] tracks: probe mkv, ${audioStreams.length} audio, ${ffprobe.streams.filter((stream) => stream.codec_type === 'subtitle').length} subtitles`);
+check('the probe result was used (console)', consoleLog.some((entry) => probeLine.test(entry.text)),
     consoleLog.filter((entry) => /\[webos\] tracks/.test(entry.text)).map((entry) => entry.text));
 check('no request to the streaming server /tracks', !requests.some((url) => /11470/.test(url)) &&
     !consoleLog.some((entry) => /11470/.test(entry.text)), requests);
