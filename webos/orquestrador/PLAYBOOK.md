@@ -29,7 +29,14 @@ servidor de streaming, torrents, contas Stremio (usar o app **sem conta**).
 
 ## Iteração
 
-### 0. Toda iteração: publicar o nome da sessão
+### 0. Toda iteração: publicar o nome da sessão e varrer o estado
+`ListAgents` → se o nome da sessão mudou, atualize `SESSAO` e `PAINEL.md` **antes de qualquer outra coisa**
+(agentes que mandam para o nome antigo perdem o PRONTO). Depois rode `bin/varrer.sh`: ele cruza o PAINEL com as
+threads, os PRs e os arquivos de revisão e aponta PRONTOs/revisões que chegaram sem mensagem. **Nunca dependa só das
+mensagens** — uma tarefa `implementando`/`corrigindo` com a thread `ready` e PR atualizado, ou `em revisão` com
+`revisao-cN.md` escrito, é para processar na mesma iteração.
+
+### 0a. (antigo) Publicar o nome da sessão
 `ListAgents` → grave o nome atual da sua sessão em `~/webos-tv-sdk/orquestrador/SESSAO` (só o nome,
 ex.: `stremio-web-07`) e no `PAINEL.md`. O nome **muda quando a sessão é retomada**; os agentes leem
 esse arquivo para te avisar via `SendMessage`. As mensagens são um atalho: a fonte da verdade é o
