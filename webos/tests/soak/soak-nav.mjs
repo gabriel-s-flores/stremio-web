@@ -66,6 +66,8 @@ async function step(name, action, expectation, seconds = 45) {
         error = String(e.message).slice(0, 160);
     }
     const entry = { cycle, name, ok, ms: Date.now() - t0, error, t0, t: Date.now() }; // host clock, to line the steps up with mem.log
+    // Where the page was when the expectation did not come true (a click that went nowhere, a screen that did not render).
+    if (!ok) entry.where = await soak.evaluate(`JSON.stringify({ hash: location.hash, focus: window.__soak.focus(), pointer: document.documentElement.getAttribute('data-webos-pointer'), routes: document.querySelectorAll('.routes-container > .route-container').length, last: (function(){ var r = ${ROUTE}; return r ? String(r.firstElementChild && r.firstElementChild.className).slice(0, 80) : null; })() })`, 10000).then(JSON.parse).catch(() => null);
     fs.appendFileSync(stepsFile, `${JSON.stringify(entry)}\n`);
     stats.steps++;
     const by = stats.byName[name] = stats.byName[name] || { runs: 0, failed: 0, ms: [] };
