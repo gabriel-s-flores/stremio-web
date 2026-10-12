@@ -32,6 +32,11 @@
 //    Every sign of progress restarts the time, the time stops while the app is hidden, and nothing is
 //    aborted before the error: a slow link (a debrid resolve answering the 302 late) keeps its request.
 //    A wedged pipeline in the emulator does not recover anyway (the state outlives the app).
+//    A load the element still reports as loading (networkState NETWORK_LOADING) gets up to
+//    LOADING_TIMEOUT_MS without a sign instead (F8.1): on the C8 a large MP4 with the moov at the end
+//    (31 to 75 GB, 4K remux) shows no event for minutes while the pipeline reads it, and played after
+//    about 3 min with the watchdog off. The element is checked every LOADING_CHECK_MS meanwhile, and the
+//    error comes at the first check that finds it idle.
 // 4. Display window (F5.6b). In the emulator, a load after the first one of the page can play with a
 //    black screen: the pipeline decodes (the clock moves) but the video plane never gets the place of
 //    the <video> on the screen, which goes to the pipeline only when the element's geometry changes,
@@ -54,8 +59,12 @@ const RELEASE_SETTLE_MS = 1000;
 const LOAD_GAP_MS = 0;
 // WebOsVideo's selectTrack delay (500 ms) and a margin.
 const SUBTITLE_SELECT_SETTLE_MS = 600;
-// Without any sign of progress for this long, a load is a failed one.
+// Without any sign of progress for this long, a load is a failed one…
 const START_TIMEOUT_MS = 60000;
+// …unless the element is still loading: then this long (F8.1), checked this often.
+const LOADING_TIMEOUT_MS = 5 * 60000;
+const LOADING_CHECK_MS = 10000;
+const NETWORK_LOADING = 2;
 // The element events that show a load is alive.
 const PROGRESS_EVENTS = ['loadstart', 'progress', 'durationchange'];
 
@@ -124,7 +133,7 @@ const PIPELINE_COMMANDS = ['load', 'unload', 'destroy'];
 const UNLOAD = Object.freeze({ type: 'command', commandName: 'unload' });
 
 // deps (all optional): log (console-like), now, setTimeout, clearTimeout, document (visibility),
-// shared (state shared by the guarded videos), releaseSettleMs, loadGapMs, startTimeoutMs,
+// shared (state shared by the guarded videos), releaseSettleMs, loadGapMs, startTimeoutMs, loadingTimeoutMs,
 // dropExtraLoad (default true), watchdog (default true), holdInPlace (default true: holdVideosInPlace
 // holds this video's nodes), displayNudge (default true).
 const withPipelineGuard = (Video, deps) => {
@@ -137,6 +146,7 @@ const withPipelineGuard = (Video, deps) => {
     const releaseSettleMs = option('releaseSettleMs', RELEASE_SETTLE_MS);
     const loadGapMs = option('loadGapMs', LOAD_GAP_MS);
     const startTimeoutMs = option('startTimeoutMs', START_TIMEOUT_MS);
+    const loadingTimeoutMs = option('loadingTimeoutMs', LOADING_TIMEOUT_MS);
     const dropExtraLoad = deps.dropExtraLoad !== false;
     const useWatchdog = deps.watchdog !== false;
     const holdInPlace = deps.holdInPlace !== false;
@@ -175,6 +185,10 @@ const withPipelineGuard = (Video, deps) => {
         // Between a load and its loadedmetadata.
         let starting = false;
         let watchdog = null;
+        // The last sign of life of the load (the watchdog's time starts there), and whether the
+        // watchdog already waited past startTimeoutMs because the element was still loading.
+        let lastSignAt = 0;
+        let extended = false;
         let droppedLoads = 0;
         // A load whose first `playing` still has to send the element's place to the pipeline.
         let nudgePending = false;
@@ -206,6 +220,7 @@ const withPipelineGuard = (Video, deps) => {
         const armWatchdog = () => {
             clearWatchdog();
             if (!useWatchdog || !starting || (doc && doc.hidden)) return;
+            lastSignAt = now();
             watchdog = schedule(onStartTimeout, startTimeoutMs);
         };
 
@@ -239,7 +254,17 @@ const withPipelineGuard = (Video, deps) => {
         function onStartTimeout() {
             watchdog = null;
             if (innerDestroyed || stream === null || videoElement === null || !starting) return;
-            warn('no sign of the load for ' + Math.round(startTimeoutMs / 1000) + ' s (readyState ' + videoElement.readyState +
+            const quietFor = now() - lastSignAt;
+            if (videoElement.networkState === NETWORK_LOADING && quietFor < loadingTimeoutMs) {
+                if (!extended) {
+                    extended = true;
+                    info('no sign of the load for ' + Math.round(quietFor / 1000) + ' s, but the element is still loading: waiting up to ' +
+                        Math.round(loadingTimeoutMs / 1000) + ' s');
+                }
+                watchdog = schedule(onStartTimeout, Math.min(LOADING_CHECK_MS, loadingTimeoutMs - quietFor));
+                return;
+            }
+            warn('no sign of the load for ' + Math.round(quietFor / 1000) + ' s (readyState ' + videoElement.readyState +
                 ', networkState ' + videoElement.networkState + ', ' + Math.round((now() - loadedAt) / 1000) +
                 ' s after the load): stream failed to load');
             const failed = stream;
@@ -357,6 +382,7 @@ const withPipelineGuard = (Video, deps) => {
                 stream = args.stream;
                 loadedAt = now();
                 starting = true;
+                extended = false;
                 droppedLoads = 0;
                 quietSince = null;
                 nudgePending = displayNudge;
@@ -426,4 +452,6 @@ module.exports = {
     RELEASE_SETTLE_MS,
     LOAD_GAP_MS,
     START_TIMEOUT_MS,
+    LOADING_TIMEOUT_MS,
+    LOADING_CHECK_MS,
 };

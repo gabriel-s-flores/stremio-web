@@ -100,12 +100,15 @@ const createCancellableFetch = (fetchImpl) => {
 };
 
 // The probe of one stream for the list: LIST_PROBE_OPTIONS, the addon's request headers, and a
-// promise with cancel() (the queue calls it when the list goes away).
-const probeStream = (url, stream, fetchImpl) => {
+// promise with cancel() (the queue calls it when the list goes away). The final URL it reaches (the
+// debrid redirect it followed) is kept for the Player's load (F8.1). finalUrls: injectable for the tests.
+const probeStream = (url, stream, fetchImpl, finalUrls) => {
     const headerProbe = require('../header-probe');
     const transfer = createCancellableFetch(fetchImpl || ((input, init) => fetch(input, init)));
     const headers = rank.probeHeadersOf(stream);
-    const options = Object.assign({}, queue.LIST_PROBE_OPTIONS, headers !== null ? { headers } : {}, { fetch: transfer.fetch });
+    const urls = finalUrls || require('../final-url').getFinalUrls();
+    const onFinalUrl = (finalUrl) => urls.note(url, finalUrl);
+    const options = Object.assign({}, queue.LIST_PROBE_OPTIONS, headers !== null ? { headers } : {}, { fetch: transfer.fetch, onFinalUrl });
     const promise = headerProbe.probe(headerProbe.createFetchReadRange(url, options), options);
     promise.cancel = transfer.cancel;
     return promise;

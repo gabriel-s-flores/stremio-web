@@ -64,6 +64,8 @@ const withTimeout = (promise, timeout, url) => {
 
 // options.fetch (default: global fetch), options.headers, options.timeout (ms, default 15000),
 // options.maxSkipBytes: bytes a server without Range support may send before the wanted offset.
+// options.onFinalUrl(url): called once with the URL the first answer came from (after the debrid
+// redirect, if any), so the Player can load that one (webos/lib/final-url, F8.1).
 const createFetchReadRange = (url, options) => {
     const opts = options || {};
     const fetchImpl = opts.fetch || (typeof fetch === 'function' ? fetch : null);
@@ -71,6 +73,7 @@ const createFetchReadRange = (url, options) => {
     const maxSkipBytes = opts.maxSkipBytes === undefined ? 1024 * 1024 : opts.maxSkipBytes;
     if (fetchImpl === null) throw new ProbeError('NETWORK', 'fetch is not available');
     let currentUrl = url;
+    let finalUrlTold = false;
 
     return (offset, length) => {
         const headers = Object.assign({}, opts.headers, { Range: 'bytes=' + offset + '-' + (offset + length - 1) });
@@ -86,6 +89,10 @@ const createFetchReadRange = (url, options) => {
             }
             // Later reads go straight to the final URL instead of repeating the debrid redirect.
             if (response.url && response.redirected !== false) currentUrl = response.url;
+            if (!finalUrlTold && typeof opts.onFinalUrl === 'function') {
+                finalUrlTold = true;
+                opts.onFinalUrl(currentUrl);
+            }
             if (response.status === 206) {
                 const start = parseRangeStart(response);
                 if (start !== null && start > offset) {
