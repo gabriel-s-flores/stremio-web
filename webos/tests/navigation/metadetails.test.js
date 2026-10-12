@@ -215,15 +215,20 @@ describe('initial focus', () => {
 });
 
 describe('the streams list panel', () => {
-    it('DOWN, RIGHT and OK enter the first stream; UP the list header; LEFT the column', () => {
+    it('acts as its first stream, which it is drawn as (F8.3): RIGHT focuses it, OK plays it, DOWN goes to the second; UP the list header; LEFT the column', () => {
         open();
         expect(key(KEY.DOWN).defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe($('s2'));
+        $('list').focus();
+        key(KEY.RIGHT);
         expect(document.activeElement).toBe($('s1'));
-        [KEY.RIGHT, KEY.OK].forEach((code) => {
-            $('list').focus();
-            key(code);
-            expect(document.activeElement).toBe($('s1'));
-        });
+        const clicks = [];
+        $('s1').addEventListener('click', () => clicks.push('s1'));
+        $('s2').addEventListener('click', () => clicks.push('s2'));
+        $('list').focus();
+        expect(key(KEY.OK).defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe($('s1'));
+        expect(clicks).toEqual(['s1']);
         $('list').focus();
         key(KEY.UP);
         expect(document.activeElement).toBe($('filter'));
@@ -507,10 +512,10 @@ describe('reaching the summary and restoring while loading', () => {
         navigation.tick();
         expect(document.activeElement).toBe($('list'));
         key(KEY.DOWN);
-        expect(document.activeElement).toBe($('s1'));
+        expect(document.activeElement).toBe($('s2'));
         loadColumn();
         navigation.tick();
-        expect(document.activeElement).toBe($('s1'));
+        expect(document.activeElement).toBe($('s2'));
         now.mockRestore();
     });
 

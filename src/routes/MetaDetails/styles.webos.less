@@ -19,14 +19,29 @@
             }
         }
 
+        // F8.3: the list is wider (30rem upstream): the file names of a debrid addon need the room,
+        // and the column on the left has more than it uses. Both lists, so the column does not move
+        // when the episodes give way to the streams of one.
+        .videos-list, .streams-list {
+            flex-basis: 36rem;
+        }
+
         // With the TV zoom the column showed the logo, the release info and the genres, cut the cast
         // in half and left the summary out of view. A shorter logo, and less of the room the action
         // buttons keep above them for the hover labels, bring the cast into view; the summary is
         // reached with the remote (the module makes it focusable while the column overflows).
+        // F8.3: with the links of a real Cinemeta title (genres, cast, directors) the column still
+        // ended in the middle of the directors, cut by the action buttons, and the summary was never
+        // in view. Each group of links is now one row (the label beside the links, smaller pills) and
+        // the summary's lines are closer; what still overflows fades out at the bottom of the column
+        // instead of being cut, and is scrolled into view with the remote as before.
         // The MetaPreview classes are matched by prefix (CSS modules); the attribute selectors outrank
         // the rules of src/components/MetaPreview/styles.less and the logo rule of webos/styles/app.less.
         .meta-preview {
             [class*='meta-info-container'] {
+                padding-bottom: 1.5rem;
+                -webkit-mask-image: linear-gradient(to top, transparent, #000 1.5rem);
+
                 img[class*='logo'][class*='logo'] {
                     height: 6.5rem;
                     margin-bottom: 1rem;
@@ -37,13 +52,36 @@
                 }
 
                 [class*='meta-links'] {
-                    margin-top: 1rem;
+                    display: flex;
+                    flex-direction: row;
+                    align-items: flex-start;
+                    margin-top: 0.75rem;
+
+                    // MetaLinks: the label (GENRES, CAST, DIRECTORS) on the left of its links.
+                    > [class*='label-container'] {
+                        flex: none;
+                        width: 7rem;
+                        margin: 0;
+                        padding-top: 0.45rem;
+                    }
+
+                    > [class*='links-container'] {
+                        flex: 1;
+                        min-width: 0;
+
+                        > [class*='link-container'] {
+                            margin: 0 0.5rem 0.5rem 0;
+                            padding: 0.2rem 0.9rem;
+                        }
+                    }
                 }
 
                 // The summary takes the focus (the ring is drawn inside the box): room for the ring
                 // so it does not run over the first letters.
                 [class*='description-container'] {
+                    margin-top: 0.75rem;
                     padding: 0.25rem 0.6rem;
+                    line-height: 1.5em;
                 }
             }
 
@@ -69,5 +107,20 @@ html:root body .metadetails-container {
             outline: none !important;
             box-shadow: inset 0 0 0 var(--focus-outline-size) var(--webos-focus-color), var(--webos-focus-glow) !important;
         }
+    }
+}
+
+// The streams list panel is the page's initial focus (webos/lib/navigation/metadetails.js: a stream
+// with the focus would freeze the C8 order while the probes may still change it). On the TV its ring
+// went around the whole list, far from anything to choose (F8.3): the panel draws no ring, and its
+// first stream looks focused instead, the one OK plays from there. The selectors outrank the
+// app.less rule (both !important).
+html:root body .metadetails-container [class*='streams-list'][data-focus-visible-added] {
+    outline: none !important;
+
+    [class*='streams-container'] > [class*='stream-container']:first-child {
+        background-color: var(--overlay-color);
+        outline: var(--focus-outline-size) solid var(--webos-focus-color) !important;
+        outline-offset: calc(-1 * var(--focus-outline-size)) !important;
     }
 }

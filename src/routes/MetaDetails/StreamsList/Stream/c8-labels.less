@@ -1,15 +1,15 @@
-// webOS TV 4.x build only (Stream.webos.js, F6.2): the LG C8 labels of a stream item. A full-width
-// row (the item is a wrapping flex row) under the description, small and translucent.
+// webOS TV 4.x build only (Stream.webos.js, F6.2): the LG C8 labels of a stream item, small and
+// translucent. F8.3: inside the description column, right under its text (they were a row of their
+// own across the item, a line away from the text they describe).
 
 .c8-labels {
-    flex: 0 0 100%;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
-    // Under the description: the addon name column (7rem) plus the item gap.
-    padding-left: 8rem;
-    margin-top: -0.5rem;
+    // The description breaks its own lines (pre-wrap); the labels do not take that.
+    white-space: normal;
+    margin-top: 0.1rem;
 
     .label,
     .warning {

@@ -1,0 +1,43 @@
+// webOS TV 4.x build only (resolved instead of styles.less by webos/webpack/app.js, F8.3): the upstream
+// stream item, laid out for the TV.
+//
+// Upstream keeps the description on its lines (`white-space: pre`): on the TV the file name of a debrid
+// addon ("Disclosure.Day.2026.2160p.REMUX…") was cut in the middle by the edge of the list, and the
+// play icon, shown only on hover or focus, kept 4rem of each row empty. Here the text breaks (inside a
+// word when it has to: file names have no spaces), the icon is gone (the focused item already stands
+// out, and OK plays it) and the name column and the text start at the same height. The C8 labels
+// (c8-labels.less) come right under the text, in its column (Stream.webos.js).
+
+@import './styles.less';
+
+.stream-container {
+    align-items: flex-start;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.4rem;
+
+    .info-container {
+        .addon-name {
+            line-height: 1.3;
+        }
+    }
+
+    .description-container {
+        // flex: 1 alone does not shrink a flex item below its longest line.
+        min-width: 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        line-height: 1.3;
+    }
+
+    // At most 5 lines (a long name broken in two, the size and seeders line, the languages line).
+    .description-text {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 5;
+        overflow: hidden;
+    }
+
+    .icon {
+        display: none;
+    }
+}

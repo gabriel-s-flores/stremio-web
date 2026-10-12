@@ -466,8 +466,9 @@ const pipelines = () => ssh('echo $(pgrep starfish-media)').split(/\s+/).filter(
 
 let played = null;
 const play = async () => {
+    // F8.3: the panel is drawn as its first stream focused, and DOWN goes on to the second one.
     let focused = await key('DOWN');
-    check('DOWN from the panel enters the first stream (F4.1c)', focused.cls && /stream-container/.test(focused.cls), focused, 'F4.1c');
+    check('DOWN from the panel enters the list (F4.1c, F8.3)', focused.cls && /stream-container/.test(focused.cls), focused, 'F4.1c');
     const reached = await focusStream(fileOf('e2e-multi-subs'));
     check('the remote reaches the MKV with several audio tracks and subtitles', reached, active(), 'F4.1c');
     played = evaluate('document.activeElement && document.activeElement.getAttribute("href")');

@@ -1,4 +1,4 @@
-/* global jest */
+/* global jest, HTMLCanvasElement */
 // F6.2: shared setup of the jsdom tests of the streams list overrides (streams-list*.test.js).
 // Require it first in the test file (its jest.mock calls apply to the test's module registry).
 //
@@ -35,9 +35,13 @@ jest.mock('stremio/common/useRouteFocused', () => {
     };
 }, { virtual: true });
 
+// jsdom has no 2D canvas (and logs it): the emoji check of webos/lib/tv-text (F8.3) then keeps every
+// emoji as it came.
+HTMLCanvasElement.prototype.getContext = () => null;
+
 // webpack resolves ./Stream to Stream.webos.js in the webOS build; Jest to Stream.js.
 jest.mock('../../../src/routes/MetaDetails/StreamsList/Stream/index.js', () => jest.requireActual('../../../src/routes/MetaDetails/StreamsList/Stream/Stream.webos.js'));
-jest.mock('../../../src/routes/MetaDetails/StreamsList/Stream/styles', () => ({ 'description-container': 'description-container', icon: 'icon' }), { virtual: true });
+jest.mock('../../../src/routes/MetaDetails/StreamsList/Stream/styles', () => ({ 'description-container': 'description-container', 'description-text': 'description-text', icon: 'icon' }), { virtual: true });
 jest.mock('../../../src/routes/MetaDetails/StreamsList/Stream/c8-labels.less', () => ({
     'c8-labels': 'c8-labels', label: 'c8-label', warning: 'c8-warning', demote: 'demote', hide: 'hide', 'tier-hidden': 'tier-hidden',
 }));
@@ -184,7 +188,7 @@ const createHarness = (variant) => {
         root.render(React.createElement(StreamsList, { streams, video: { id: videoId || 'tt0111161' }, type: 'movie' }));
     });
     const items = () => Array.from(container.querySelectorAll('.stream-container'));
-    const idOf = (item) => entryOf({ description: item.querySelector('.description-container').textContent }).id;
+    const idOf = (item) => entryOf({ description: item.querySelector('.description-container .description-text').textContent }).id;
     const itemOf = (id) => items().filter((element) => idOf(element) === id)[0];
     const order = () => items().map(idOf);
     const chipsOf = (id) => Array.from(itemOf(id).querySelectorAll('.c8-labels span')).map((span) => span.textContent);

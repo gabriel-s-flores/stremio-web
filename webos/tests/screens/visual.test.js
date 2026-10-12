@@ -101,7 +101,8 @@ describe('fixture addon', () => {
 
     test('has no URL outside the fixture host', () => {
         const text = JSON.stringify([answer('/manifest.json'), answer('/catalog/series/top.json'), answer('/meta/series/tt0903747.json'), answer('/stream/series/tt0903747%3A1%3A1.json')]);
-        const urls = text.match(/https?:\/\/[^"]+/g);
+        // The IMDb link of the details column (F8.3) is never fetched: only a click would open it.
+        const urls = text.match(/https?:\/\/[^"]+/g).filter((url) => !url.startsWith('https://imdb.com/title/'));
         expect(urls.length).toBeGreaterThan(0);
         urls.forEach((url) => expect(url.startsWith(`${base}/`)).toBe(true));
     });
