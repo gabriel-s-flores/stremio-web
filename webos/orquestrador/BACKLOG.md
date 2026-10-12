@@ -461,11 +461,21 @@ orquestrador** antes do merge (os agentes não usam a TV).
   e remover a dependência direta `postcss-focus-within`, que ficou sem uso.
 - **Aceite:** testes com mutações que caem; cenário novo no emulador; e2e da F6.4 sem regressão.
 
-### F8.6 · Detalhes otimista
-- **Depende de:** F8.2, F8.3 (merge)  · **Modelo:** O (high)
-- **Escopo:** na TV o título de Detalhes leva ~3 s porque espera o core wasm2js (Load → meta pronta 1–3 s; relatório
-  da F8.2). Sem mexer em `webos/core`: mostrar já na abertura o que o item do catálogo tem (nome, pôster/logo, ano,
-  tipo) na coluna de Detalhes, e trocar pela meta completa quando ela chegar, sem salto de layout nem perda de foco.
-  Nada de pré-carregar a meta no foco do pôster.
-- **Aceite:** no emulador c8, tempo até o nome visível < 0,8 s após o OK (A/B); visual e e2e sem regressão; na TV
-  (orquestrador): nome em ≲ 1,5 s.
+### F8.6 · Detalhes rápido na TV (core no worker e lista de streams)
+- **Depende de:** F8.2 (mesclada)  · **Modelo:** O (high)
+- **Escopo:** na TV, abrir um filme com ~224 streams (Torrentio AD) leva **25–47 s** até a meta e os streams aparecerem
+  (juntos), com ou sem as F8. Rede descartada: os addons respondem à TV em 33–152 ms. O **worker do core (wasm2js) fica
+  100 % ocupado por ~28 s**: ~13 s atendendo mensagens da página (dispatch/get_state), ~12 s em futures do core
+  (respostas dos addons), 3,8 s de GC. Depois, a página gasta ~4,5 s renderizando os streams. O localStorage da TV tem
+  `library` com 198 KB e `library_recent` com 118 KB (hipótese: o `ctx` com a biblioteca grande é serializado a cada
+  mudança). (1) Reproduzir no emulador c8 com um perfil parecido (biblioteca grande e ~224 streams de fixture) e
+  perfilar o worker. Use `~/webos-tv-sdk/orquestrador/tarefas/F8/bin/perfil-worker.mjs` (domínio `Worker` do CDP) e
+  símbolos do build do core para dar nome às funções. (2) Cortar o trabalho do lado do app: `getState` redundantes,
+  `ctx` pedido sem necessidade, renderização incremental e virtualizada da lista de streams, e mostrar já o
+  nome/pôster do item do catálogo (UI otimista). (3) **Mexer no core está autorizado** pelo Gabriel (2026-10-12)
+  se o perfil mostrar que o gargalo é lá (por exemplo, serialização do `ctx`/biblioteca a cada mudança, ou o
+  processamento dos streams). Faça isso como patch reprodutível na receita do `webos/core` (como o
+  `recipe-a.patch`), mínimo e documentado, mantendo os dois caminhos (wasm2js e WASM) e o gate `check-wasm`.
+- **Aceite:** A/B no emulador c8 (antes e depois, com o mesmo fixture): meta visível e 1º stream, CPU do worker por
+  abertura; testes; e2e da F6.4 e regressão visual sem regressão; nada muda no desktop. Na TV (orquestrador):
+  meta em ≲ 3 s e streams em ≲ 8 s no mesmo filme.
