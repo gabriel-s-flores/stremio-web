@@ -9,6 +9,7 @@
 // --under keeps only the samples with a frame whose name contains <name> (for example get_state).
 // --any-url maps frames of any script (the core loaded without a URL, as core-bench.js does in Node);
 // by default only the frames of *.wasm2js.js are mapped.
+// symbols.json "-": the names are already in the profile (a core built with webos/core/build --profiling, F8.7).
 // Reads both profile formats: Chromium 53 (head tree, startTime/endTime in seconds) and newer (nodes).
 import fs from 'node:fs';
 import { parseArgs } from './lib.mjs';
@@ -21,7 +22,7 @@ if (!file || !symbolsFile) {
 }
 const TOP = Number(args.top || 30);
 const profile = JSON.parse(fs.readFileSync(file, 'utf8'));
-const { functions } = JSON.parse(fs.readFileSync(symbolsFile, 'utf8'));
+const { functions } = symbolsFile === '-' ? { functions: {} } : JSON.parse(fs.readFileSync(symbolsFile, 'utf8'));
 
 const flat = [];
 const walk = (n) => {
@@ -42,7 +43,7 @@ const nameOf = (n) => {
     const name = cf.functionName || '(anon)';
     const url = String(cf.url || '');
     const symbol = (args['any-url'] || /wasm2js/.test(url)) && Object.prototype.hasOwnProperty.call(functions, name) ? functions[name] : name;
-    return symbol.replace(/(__|::)h[0-9a-f]{16}E?$/, '').replace(/^_ZN.*?(\d+)/, '');
+    return symbol.replace(/^\$/, '').replace(/(__|::)h[0-9a-f]{16}E?(_\d+_)?$/, '').replace(/^_ZN.*?(\d+)/, '');
 };
 
 // What the worker was doing, from the outermost frames.

@@ -3,11 +3,17 @@
 // recently modified items in `library_recent` (LIBRARY_RECENT_COUNT) and the rest in `library`, both as
 // a LibraryBucket ({ uid, items: { [id]: LibraryItem } }, uid null for a guest).
 //
-// libraryFixture({ items, now }) -> { library, library_recent } (JSON strings, ready for localStorage).
+// libraryFixture({ items, now, ids }) -> { library, library_recent } (JSON strings, ready for localStorage).
 // About 40 % series (with a watched bitfield, the biggest field), the rest movies; some removed, some
 // in progress (Continue Watching). Deterministic for the same arguments.
+//
+// The ids are real IMDb ids (fixtures/library-ids.json, F8.7): the core pulls the notifications of the
+// library's series (Ctx PullNotifications: Cinemeta's lastVideosIds catalog, full metas with the last
+// episodes), and with invented ids Cinemeta answered nothing, so that work never showed up here.
+// ids: false keeps the invented ids of F8.6.
 
 const zlib = require('zlib');
+const REAL_IDS = require('./fixtures/library-ids.json');
 
 const RECENT = 200;
 const DAY = 86400000;
@@ -15,9 +21,12 @@ const DAY = 86400000;
 // The watched bitfield as the core stores it: base64 of the zlib of the bits, one per episode.
 const bitfield = (index) => zlib.deflateSync(Buffer.from(Array.from({ length: 8 + (index % 40) }, (_, i) => (i * 37 + index) & 0xff))).toString('base64');
 
-const libraryItem = (index, now) => {
-    const id = `tt${String(9100000 + index * 7)}`;
+const libraryItem = (index, now, ids) => {
     const series = index % 5 < 2;
+    // The n-th series (or movie) of the list gets the n-th real id of its type.
+    const own = series ? Math.floor(index / 5) * 2 + (index % 5) : Math.floor(index / 5) * 3 + (index % 5) - 2;
+    const real = ids && (series ? ids.series : ids.movies)[own];
+    const id = real || `tt${String(9100000 + index * 7)}`;
     const mtime = new Date(now - index * DAY / 3).toISOString();
     const progress = index % 4 === 0;
     const duration = series ? 2700000 : 7200000;
@@ -49,8 +58,8 @@ const libraryItem = (index, now) => {
     };
 };
 
-const libraryFixture = ({ items = 520, now = Date.UTC(2026, 9, 12) } = {}) => {
-    const all = Array.from({ length: items }, (_, index) => libraryItem(index, now));
+const libraryFixture = ({ items = 520, now = Date.UTC(2026, 9, 12), ids = REAL_IDS } = {}) => {
+    const all = Array.from({ length: items }, (_, index) => libraryItem(index, now, ids || null));
     // Most recent first: the first RECENT go to library_recent, like the core does.
     const bucket = (list) => JSON.stringify({ uid: null, items: Object.fromEntries(list.map((item) => [item._id, item])) });
     return { library: bucket(all.slice(RECENT)), library_recent: bucket(all.slice(0, RECENT)) };
