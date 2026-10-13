@@ -1,0 +1,111 @@
+--- a/stremio-core-web/src/model/serialize_meta_details.rs
++++ b/stremio-core-web/src/model/serialize_meta_details.rs
+@@ -7,7 +7,7 @@
+ 
+ use stremio_core::runtime::EnvError;
+ use stremio_core::{
+-    deep_links::{MetaItemDeepLinks, StreamDeepLinks, VideoDeepLinks},
++    deep_links::{ExternalPlayerLink, MetaItemDeepLinks, StreamDeepLinks, VideoDeepLinks},
+     models::{
+         common::{Loadable, ResourceError, ResourceLoadable},
+         ctx::Ctx,
+@@ -46,6 +46,25 @@
+         /// Find out more about how we select it from the StreamsBucket in the core's model.
+         pub last_used: Option<bool>,
+     }
++    /// webOS port (F8.7): the deep links of a stream of the list without `player`. The web app builds
++    /// that link itself for the streams it shows (webos/lib/player-link: the same bytes); here it was
++    /// built for every stream of the list on every get_state (224 from Torrentio + a debrid: a third of
++    /// the bytes of the answer and of the time of a get_state in wasm2js).
++    #[derive(Serialize)]
++    #[serde(rename_all = "camelCase")]
++    pub struct ListStreamDeepLinks {
++        pub external_player: ExternalPlayerLink,
++    }
++    #[derive(Serialize)]
++    #[serde(rename_all = "camelCase")]
++    pub struct ListStream<'a> {
++        #[serde(flatten)]
++        pub stream: &'a stremio_core::types::resource::Stream,
++        /// Watch progress percentage
++        pub progress: Option<f64>,
++        pub deep_links: ListStreamDeepLinks,
++        pub last_used: Option<bool>,
++    }
+     #[derive(Serialize)]
+     #[serde(rename_all = "camelCase")]
+     pub struct Video<'a> {
+@@ -81,7 +100,7 @@
+         pub selected: &'a Option<MetaDetailsSelected>,
+         pub meta_item: Option<ResourceLoadable<'a, MetaItem<'a>>>,
+         pub library_item: &'a Option<LibraryItem>,
+-        pub streams: Vec<ResourceLoadable<'a, Vec<Stream<'a>>>>,
++        pub streams: Vec<ResourceLoadable<'a, Vec<ListStream<'a>>>>,
+         pub title: Option<String>,
+         pub rating_info: &'a Option<Loadable<RatingInfo, EnvError>>,
+     }
+@@ -236,7 +255,7 @@
+                     } => Loadable::Ready(
+                         streams
+                             .iter()
+-                            .map(|stream| model::Stream {
++                            .map(|stream| model::ListStream {
+                                 stream,
+                                 progress: meta_details.library_item.as_ref().and_then(
+                                     |library_item| {
+@@ -244,23 +263,23 @@
+                                             .items
+                                             .values()
+                                             .find(|item| {
+-                                                item.stream == *stream
+-                                                    && Some(&item.video_id)
+-                                                        == library_item.state.video_id.as_ref()
++                                                // webOS port (F8.7): the video first, the stream (a deep
++                                                // comparison) only for it. Same result.
++                                                Some(&item.video_id)
++                                                    == library_item.state.video_id.as_ref()
++                                                    && item.stream == *stream
+                                             })
+                                             .map(|_| library_item.progress())
+                                     },
+                                 ),
+-                                deep_links: meta_item
+-                                    .map_or_else(
+-                                        || {
+-                                            StreamDeepLinks::from((
+-                                                stream,
+-                                                streaming_server.base_url.as_ref(),
+-                                                &ctx.profile.settings,
+-                                            ))
+-                                        },
+-                                        |meta_item| {
++                                deep_links: model::ListStreamDeepLinks {
++                                    // Infuse takes the callback of the details page, built with the
++                                    // player link: the whole StreamDeepLinks, as before.
++                                    external_player: match (
++                                        ctx.profile.settings.player_type.as_deref(),
++                                        meta_item,
++                                    ) {
++                                        (Some("infuse"), Some(meta_item)) => {
+                                             StreamDeepLinks::from((
+                                                 stream,
+                                                 request,
+@@ -269,9 +288,15 @@
+                                                 &ctx.profile.settings,
+                                                 meta_details.library_item.as_ref(),
+                                             ))
+-                                        },
+-                                    )
+-                                    .into_web_deep_links(),
++                                            .external_player
++                                        }
++                                        _ => ExternalPlayerLink::from((
++                                            stream,
++                                            streaming_server.base_url.as_ref(),
++                                            &ctx.profile.settings,
++                                        )),
++                                    },
++                                },
+                                 last_used: meta_details.last_used_stream.as_ref().and_then(
+                                     |resource| match resource.content.as_ref() {
+                                         Some(Loadable::Ready(Some(suggested_stream))) => {
