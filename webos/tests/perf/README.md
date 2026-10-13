@@ -22,8 +22,20 @@ webos/tools/emu-run --profile c8 --timeout 70 -- node webos/tests/perf/details.m
 #   --profile-opening N: perfil do worker do core (domínio Worker) na N-ésima abertura. Na TV funciona; no emulador o Profiler.stop do worker não volta (F8.6)
 # O core no Node, sem emulador: quanto custa cada get_state com 224 streams e a biblioteca da TV (F8.6):
 node webos/tests/perf/core-bench.js [--variant wasm|wasm2js] [--vendor <pasta>] [--json <saída>] [--dump <meta_details.json>]
-# Nomes nos perfis do worker (o wasm2js é minificado; o mapa sai de webos/core/symbols.js):
-node webos/tests/perf/symbolize.mjs <perfil> <symbols.json> [--under get_state] [--any-url]
+# Nomes nos perfis do worker (o wasm2js é minificado; o mapa sai de webos/core/symbols.js; "-" para um perfil
+# que já tem os nomes, como o do core de `webos/core/build --profiling`):
+node webos/tests/perf/symbolize.mjs <perfil> <symbols.json|-> [--under get_state] [--any-url]
+
+# F8.7: Detalhes aberto pelo Board (clique no 1º filme da 1ª linha de catálogo, com o pôster embaixo) logo depois do
+# Board (+8 s) e com o app parado (+90 s), um lançamento por valor, cada um com o estado semeado de novo (sem o bucket
+# de notificações: o boot as puxa, como na TV); o addon local responde em 150 ms (--addon-delay), como o Torrentio na TV:
+webos/tools/emu-run --profile c8 --timeout 120 -- node webos/tests/perf/details.mjs --out <saída> --rounds 2 --openings 2 --quiet 8,90 --from-board 1 [--page-profile-opening 1] <a.ipk> <b.ipk>
+# O core no Node do boot à abertura (as ações do App.js, o Board, o pull de notificações com metas reais), a rede gravada
+# uma vez em ~/webos-tv-sdk/run/f87/net-cache e repetida; --serial mede cada resposta de addon sozinha:
+node webos/tests/perf/boot-bench.js [--app upstream|webos] [--open-after board|idle|<ms>] [--serial] [--repeat N] [--offline] [--json <saída>]
+# O mesmo no motor da TV: Node 8.2 (V8 5.8.283; a TV tem o V8 5.8.301 da LG) com o --no-crankshaft do appinfo.json,
+# onde o core é tão lento quanto na TV (~45× o Node atual), com perfil de CPU (--prof):
+node webos/tests/perf/v58.mjs [--v8 "<flags>"] [--prof <saída.cpuprofile>] -- --offline [args do boot-bench]
 
 # A/B (ou bisect) de dois ou mais IPKs, intercalados NA MESMA reserva (a única comparação justa num host compartilhado):
 webos/tests/perf/build-ipk.sh [--keep] <commit> <saída.ipk>    # IPK de qualquer commit; a worktree é removida no fim
@@ -51,6 +63,8 @@ node webos/tests/perf/mem-chart.mjs <pasta>/mem.log <pasta>/phases.jsonl <saída
 | `streams-cycle` | Detalhes com a lista de streams e de volta ao Board, vários ciclos, só a memória (a busca do estouro de memória) | `streams-cycle.json` |
 | `keys.mjs` (F8.2) | Por IPK e rodada: 24 setas no Board enviadas como na TV (`Input.dispatchKeyEvent`), cada uma medida na página da tecla ao `focusin` e ao 2º quadro; um perfil de CPU e um trace (estilo, layout, pintura, layout forçado com a pilha do JS) de mais algumas setas; N aberturas de Detalhes (rota, coluna, título, lista, o `Load` e a meta pronta no core, o download do logo, as chamadas ao core no meio) | `keys.json`, `*.cpuprofile`, `*.trace.json` |
 | `details.mjs` (F8.6) | Por IPK e rodada: instala, põe no `localStorage` a biblioteca da TV (`library-fixture.js`: ~200 KB + ~125 KB) e instala o addon local `--set torrentio` (224 streams parecidos com os do Torrentio + AllDebrid), relança e abre `#/detail/movie/tt15047880/tt15047880` por hash N vezes (como o `abrir-detalhes.sh` da TV). Por abertura, no relógio da página e só na rota de Detalhes de cima: o título (o preview do pôster aberto ou a meta real), a **meta real** (o resumo da coluna na tela), o 1º stream, quantos streams no DOM, quando o worker volta a ficar ocioso; e, à parte, o critério do script da TV (`tvMetaMs`: a primeira coluna de informações do documento com texto, que também conta o preview); na 1ª abertura, uma captura durante o preview; toda chamada entre a página e o worker (`Worker.prototype.postMessage`: `getState`/`dispatch` com modelo, envio e resposta; e o que o worker pede à página: `onCoreEvent`, `localStorage.setItem` com tamanho); os ticks de CPU das threads do renderer (a `DedicatedWorker` é o core) | `details.json`, `<rótulo>.details.png`, `*.worker.cpuprofile` |
+| `details.mjs --quiet 8,90 --from-board 1` (F8.7) | Como acima, mas um lançamento por valor de `--quiet`, com a biblioteca de novo e sem o bucket `notifications` antes de cada um; a abertura é um clique no 1º filme da 1ª linha de catálogo do Board (o título otimista conta); toda chamada página↔worker desde o lançamento (`at` < 0: antes da abertura), com o resumo de cada resposta de `getState('meta_details')` (estado da meta e, por addon, dos streams); `--page-profile-opening N`: perfil da thread principal | `details.json`, `*.page.cpuprofile` |
+| `boot-bench.js` / `v58.mjs` (F8.7) | O core vendorizado no Node do boot à abertura de um título: o storage com a biblioteca (ids reais, então o `PullNotifications` traz as metas de verdade), o perfil de convidado com o addon local de 224 streams, a rede gravada/repetida, as ações do `App.js`, o Board e a abertura; o worker do webOS na frente do `fetch` (`catalog-trim`, `meta-first`). `--serial`: cada resposta de addon entra no core sozinha e é medida sozinha (sem os `get_state` da página que caem no meio). `v58.mjs` roda no Node 8.2 (V8 5.8) com o `--no-crankshaft` da TV | JSON |
 | `core-bench.js` (F8.6) | O core vendorizado no Node com a mesma biblioteca e os mesmos 224 streams (rede local falsa): a linha do tempo de uma abertura (eventos, `get_state` com tempo e tamanho) e o custo de um `get_state` de cada modelo, repetido. `--dump` grava o `meta_details` final para comparar dois builds do core | JSON |
 | `ab-boot.sh` | Lançamentos a frio de vários IPKs intercalados na mesma reserva | uma pasta por lançamento |
 

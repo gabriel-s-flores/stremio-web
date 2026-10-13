@@ -4,7 +4,7 @@
 //
 //   node webos/tests/perf/boot-bench.js [--vendor <dir>] [--wasm2js <file>] [--app upstream|webos]
 //        [--open-after board|idle|<ms>] [--latency <ms>] [--cache <dir>] [--offline] [--notifications fresh]
-//        [--serial] [--repeat N] [--json <out.json>]
+//        [--serial] [--repeat N] [--openings N] [--json <out.json>]
 //   node --cpu-prof --cpu-prof-dir <dir> webos/tests/perf/boot-bench.js --vendor <core built with --profiling> ...
 //
 // - Storage: the TV-like library (library-fixture.js, real IMDb ids, so the notifications pull gets real
@@ -232,12 +232,23 @@ const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
         return state;
     };
     let onState = () => {};
+    const asked = new Set();
     await glue.initialize_runtime((event) => {
         if (event.name === 'NewState') {
             note({ newState: event.args });
-            // The page asks on a later task (postMessage), one get_state per watched model.
+            // The page asks on a later task (postMessage), one get_state per watched model; NewState events that
+            // come before that task share it (webos/lib/core-calls, F7.2).
             const models = event.args.filter((m) => watched.has(m));
-            if (models.length) setTimeout(() => { models.forEach((m) => getState(m, 'NewState')); onState(); }, 0);
+            const first = asked.size === 0;
+            models.forEach((m) => asked.add(m));
+            if (models.length && first) {
+                setTimeout(() => {
+                    const all = [...asked];
+                    asked.clear();
+                    all.forEach((m) => getState(m, 'NewState'));
+                    onState();
+                }, 0);
+            }
         } else if (event.name === 'CoreEvent') {
             note({ coreEvent: event.args && event.args.event });
         }
@@ -308,38 +319,53 @@ const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
     Object.keys(bootBusy).forEach((k) => { if (typeof bootBusy[k] === 'number') bootBusy[k] = Math.round(bootBusy[k]); });
     Object.keys(bootBusy.futuresBy).forEach((k) => { bootBusy.futuresBy[k] = Math.round(bootBusy.futuresBy[k]); });
 
-    // The opening (useMetaDetails on Details): the page now watches meta_details too.
-    const id = firstMovie();
-    const hash = `#/detail/movie/${id}/${id}`;
-    const open = performance.now();
-    const before = { ...busy };
-    note({ step: 'open', id });
-    watched.add('meta_details');
-    const marks = {};
-    onState = () => {
-        const s = last.meta_details;
-        if (!s) return;
-        const t = Math.round(performance.now() - open);
-        if (marks.metaMs === undefined && s.metaItem && s.metaItem.content && s.metaItem.content.type === 'Ready') marks.metaMs = t;
-        const streams = s.streams && s.streams.find((x) => x.addon.manifest.id === MANIFEST.id);
-        if (marks.streamMs === undefined && streams && streams.content && streams.content.type === 'Ready') marks.streamMs = t;
+    // The opening (useMetaDetails on Details): the page now watches meta_details too. --openings N: N
+    // different movies of the Board, one after the other (the first one pays the lazy compilation).
+    const movies = () => {
+        const out = [];
+        ((last.board && last.board.catalogs) || []).forEach((catalog) => {
+            const content = catalog && catalog.content;
+            if (content && content.type === 'Ready') content.content.forEach((m) => { if (m.type === 'movie' && out.indexOf(m.id) === -1) out.push(m.id); });
+        });
+        return out;
     };
-    dispatch({
-        action: 'Load',
-        args: {
-            model: 'MetaDetails',
+    watched.add('meta_details');
+    const openings = [];
+    const openOne = async (id) => {
+        const hash = `#/detail/movie/${id}/${id}`;
+        const open = performance.now();
+        const before = { ...busy };
+        note({ step: 'open', id });
+        const marks = {};
+        onState = () => {
+            const s = last.meta_details;
+            if (!s || !s.selected || !s.selected.metaPath || s.selected.metaPath.id !== id) return;
+            const t = Math.round(performance.now() - open);
+            if (marks.metaMs === undefined && s.metaItem && s.metaItem.content && s.metaItem.content.type === 'Ready') marks.metaMs = t;
+            const streams = s.streams && s.streams.find((x) => x.addon.manifest.id === MANIFEST.id);
+            if (marks.streamMs === undefined && streams && streams.content && streams.content.type === 'Ready') marks.streamMs = t;
+        };
+        dispatch({
+            action: 'Load',
             args: {
-                metaPath: { resource: 'meta', type: 'movie', id, extra: [] },
-                streamPath: { resource: 'stream', type: 'movie', id, extra: [] },
-                guessStream: true,
+                model: 'MetaDetails',
+                args: {
+                    metaPath: { resource: 'meta', type: 'movie', id, extra: [] },
+                    streamPath: { resource: 'stream', type: 'movie', id, extra: [] },
+                    guessStream: true,
+                },
             },
-        },
-    }, 'meta_details', hash);
-    getState('meta_details', 'mount');
-    for (let i = 0; i < 3000 && (marks.metaMs === undefined || marks.streamMs === undefined); i++) await sleep(10);
-    const openBusy = fromEntries(Object.keys(before).map((k) => [k, Math.round(busy[k] - before[k])]));
-    // Until idle, for the total.
-    await sleep(Math.max(1500, LATENCY * 4));
+        }, 'meta_details', hash);
+        getState('meta_details', 'mount');
+        for (let i = 0; i < 3000 && (marks.metaMs === undefined || marks.streamMs === undefined); i++) await sleep(10);
+        // Until idle, for the whole opening's core time.
+        await sleep(Math.max(1500, LATENCY * 4));
+        const core = fromEntries(Object.keys(before).map((k) => [k, Math.round(busy[k] - before[k])]));
+        openings.push({ id, openAtMs: Math.round(open - boot), metaMs: marks.metaMs, streamMs: marks.streamMs, coreMs: core });
+    };
+    const ids = movies().slice(0, Number(option('openings', 1)));
+    for (const id of ids) await openOne(id);
+    const { id, openAtMs, metaMs, streamMs, coreMs: openBusy } = openings[0];
     // --repeat N: the cost of one get_state of the opened Details (meta and 224 streams), N times.
     const repeated = [];
     for (let i = 0; i < Number(option('repeat', 0)); i++) {
@@ -354,10 +380,11 @@ const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
         openAfter: OPEN_AFTER,
         latency: LATENCY,
         boardMs: boardAt,
-        openAtMs: Math.round(open - boot),
+        openAtMs,
         movie: id,
-        metaMs: marks.metaMs,
-        streamMs: marks.streamMs,
+        metaMs,
+        streamMs,
+        openings,
         getStateMetaDetailsMs: repeated.length ? Math.round(repeated[repeated.length >> 1] * 10) / 10 : undefined,
         getStateMetaDetailsBytes: repeated.length ? JSON.stringify(glue.get_state('meta_details')).length : undefined,
         coreBeforeOpenMs: bootBusy,

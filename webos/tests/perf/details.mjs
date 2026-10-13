@@ -54,6 +54,48 @@ const OPENINGS = Number(args.openings || 3);
 const PROFILE_OPENING = Number(args['profile-opening'] || 0);
 // --page-profile-opening N: a CPU profile of the page (main thread) over the Nth opening of each launch (F8.7).
 const PAGE_PROFILE_OPENING = Number(args['page-profile-opening'] || 0);
+// --worker-trace (F8.7): what the core worker does during each opening, recorded inside the worker (its CPU
+// profiler does not work on the emulator): every fetch (asked, answered, text read by the core), the page's
+// calls as they arrive, and every stretch of more than 40 ms in which the worker did not get back to its
+// timers (busy). Times in Date.now(), like the page's `atDate`.
+const WORKER_TRACE = !!args['worker-trace'];
+const WORKER_TRACE_SCRIPT = `(function () {
+    if (self.__wt) { self.__wt.length = 0; return 'reset'; }
+    var t = self.__wt = [];
+    var inner = self.fetch;
+    self.fetch = function (input, init) {
+        var url = typeof input === 'string' ? input : input && input.url;
+        var e = { fetch: String(url).replace(/\/\/[^/]*@/, '//').slice(0, 100), at: Date.now() };
+        t.push(e);
+        return inner.apply(this, arguments).then(function (r) {
+            e.answered = Date.now(); e.status = r && r.status;
+            if (r && typeof r.text === 'function') {
+                var text = r.text;
+                r.text = function () { e.textAsked = Date.now(); return text.apply(r, arguments).then(function (b) { e.textRead = Date.now(); e.bytes = b.length; return b; }); };
+            }
+            return r;
+        }, function (error) { e.failed = Date.now(); throw error; });
+    };
+    self.addEventListener('message', function (event) {
+        var r = event.data && event.data.request;
+        if (r && r.path) t.push({ call: r.path.join('.'), arg: typeof r.args[0] === 'string' ? r.args[0] : (r.args[0] && r.args[0].action ? r.args[0].action + (r.args[0].args && (r.args[0].args.model || r.args[0].args.action) ? ':' + (r.args[0].args.model || r.args[0].args.action) : '') : ''), at: Date.now() });
+    });
+    var post = self.postMessage;
+    self.postMessage = function (message) {
+        var r = message && message.request;
+        if (r && r.path && r.path[0] === 'onCoreEvent' && r.args[0]) t.push({ event: r.args[0].name + (r.args[0].name === 'NewState' ? ':' + r.args[0].args.join('+') : ':' + (r.args[0].args && r.args[0].args.event)), at: Date.now() });
+        else if (message && message.response) t.push({ answer: message.response.id, at: Date.now() });
+        return post.apply(this, arguments);
+    };
+    var last = Date.now();
+    (function beat() {
+        var now = Date.now();
+        if (now - last > 40) t.push({ busyFrom: last, busyTo: now });
+        last = now;
+        setTimeout(beat, 10);
+    })();
+    return 'installed';
+})()`;
 const QUIETS = String(args.quiet || 45).split(',').map(Number);
 const FROM_BOARD = !!args['from-board'];
 const IDLE_WAIT_S = Number(args['idle-wait'] || 120);
@@ -151,6 +193,7 @@ const HOOK = `(function () {
         var before = f.calls.map(function (c) { return [c[0], c[1], c[2] - Math.round(performance.now() - f.t0)].concat(c.slice(3)); });
         f.calls = before;
         f.t0 = performance.now();
+        m.atDate = Date.now();
         if (hash) location.hash = hash;
         else {
             var poster = f.firstPoster();
@@ -275,6 +318,11 @@ async function measuredLaunch(result, label, quiet) {
             await wsend('Profiler.setSamplingInterval', { interval: PROFILE_INTERVAL_US });
             await wsend('Profiler.start');
         }
+        if (WORKER_TRACE) {
+            if (!workerId) await attachWorker();
+            const r = await wsend('Runtime.evaluate', { expression: WORKER_TRACE_SCRIPT, returnByValue: true }, 30000).catch((e) => ({ error: String(e) }));
+            if (!r || r.error || !r.result) log(`[${label}] worker trace: ${JSON.stringify(r)}`);
+        }
         const pageProfiling = PAGE_PROFILE_OPENING === i;
         if (pageProfiling) {
             await session.send('Profiler.enable');
@@ -322,6 +370,11 @@ async function measuredLaunch(result, label, quiet) {
             await sleep(1000);
         }
         const after = ticks();
+        let workerTrace = null;
+        if (WORKER_TRACE) {
+            const r = await wsend('Runtime.evaluate', { expression: 'JSON.stringify(self.__wt || null)', returnByValue: true }, 60000).catch(() => null);
+            workerTrace = r && r.result ? JSON.parse(r.result.value) : null;
+        }
         const page = JSON.parse(await evaluate(`JSON.stringify({ calls: window.__f86.calls, rtt: window.__f86.rtt, streams: document.querySelectorAll('[class*="stream-container"]').length })`));
         const workerRttMs = page.rtt;
         const calls = page.calls;
@@ -334,6 +387,7 @@ async function measuredLaunch(result, label, quiet) {
             setItem: calls.filter((c) => c[1] === 'localStorage.setItem').map((c) => c[3]),
             calls,
             profiled: profiling ? `${label}.worker.cpuprofile` : undefined,
+            workerTrace,
         };
         result.openings.push(opening);
         if (!launchInfo.fixture) {
