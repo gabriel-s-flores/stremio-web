@@ -1,0 +1,116 @@
+// The Ctx pulls of App.js, for the webOS TV (F8.7).
+//
+// App.js dispatches, at boot and on every `focus` of the window, PullAddonsFromAPI, PullUserFromAPI,
+// SyncLibraryWithAPI and PullNotifications. On the TV the core (wasm2js, not optimized: "--no-crankshaft")
+// handles one message at a time, and a title opened while the answers of these pulls were being read
+// waited for them (F8.6 on the TV: 21 s for the meta, opened 8 s after the Board).
+// - The three API pulls need a session: for a guest the core does nothing with them, but each one still
+//   goes through every model of the core. They are dropped while the profile is known to be a guest (the
+//   last `ctx` the page got has no `auth`); with a session, or before any `ctx`, they go as they came.
+// - PullNotifications asks Cinemeta for the last episodes of every series of the library (~1.2 MB for 100
+//   series; webos/lib/catalog-trim trims it). It is never sent right away: it waits until the app has been
+//   idle for `idleMs` (no key, pointer or route change, and not in the Player), and goes at most once per
+//   `intervalMs` (the core's own interval, REQUEST_LAST_VIDEOS_EVERY: 6 h), counted across launches
+//   (localStorage), since the core only keeps its time when the notifications change. The repeated asks
+//   (every focus of the window) only keep the one that is waiting.
+//
+// wrap(transport, options) -> the transport with getState (to see the `ctx`) and dispatch wrapped.
+
+const API_PULLS = ['PullAddonsFromAPI', 'PullUserFromAPI', 'SyncLibraryWithAPI'];
+const PULL_NOTIFICATIONS = 'PullNotifications';
+const STORAGE_KEY = 'webos.pullNotifications.at';
+const IDLE_MS = 20 * 1000;
+const INTERVAL_MS = 6 * 60 * 60 * 1000;
+const ACTIVITY_EVENTS = ['keydown', 'mousemove', 'wheel', 'hashchange'];
+
+const ctxAction = (action) => (
+    action && action.action === 'Ctx' && action.args && typeof action.args.action === 'string' ? action.args.action : null
+);
+
+const wrap = (transport, options = {}) => {
+    const win = options.window || (typeof window !== 'undefined' ? window : null);
+    const storage = options.storage || (win && win.localStorage) || null;
+    const now = options.now || (() => Date.now());
+    const idleMs = options.idleMs === undefined ? IDLE_MS : options.idleMs;
+    const intervalMs = options.intervalMs === undefined ? INTERVAL_MS : options.intervalMs;
+    const setTimer = options.setTimeout || ((fn, ms) => setTimeout(fn, ms));
+    const clearTimer = options.clearTimeout || ((id) => clearTimeout(id));
+
+    // null: no ctx seen yet; true/false: whether the last one had a session.
+    let signedIn = null;
+    let lastActivity = now();
+    let wanted = false;
+    let timer = null;
+
+    const readPulledAt = () => {
+        try {
+            const value = Number(storage && storage.getItem(STORAGE_KEY));
+            return Number.isFinite(value) && value > 0 ? value : 0;
+        } catch (_e) {
+            return 0;
+        }
+    };
+    const writePulledAt = (value) => {
+        try {
+            if (storage) storage.setItem(STORAGE_KEY, String(value));
+        } catch (_e) { /* storage full or unavailable: the next launch pulls again */ }
+    };
+    const inPlayer = () => !!win && !!win.location && /^#\/player\//.test(win.location.hash || '');
+
+    // When the pull can go: idle long enough and the interval since the last one has passed.
+    const dueIn = () => Math.max(lastActivity + idleMs - now(), readPulledAt() + intervalMs - now(), 0);
+    const schedule = () => {
+        if (timer !== null) clearTimer(timer);
+        timer = null;
+        if (!wanted) return;
+        timer = setTimer(fire, dueIn());
+    };
+    function fire() {
+        timer = null;
+        if (!wanted) return;
+        if (dueIn() > 0 || inPlayer()) {
+            // Activity meanwhile, or watching a video: wait for the next idle stretch.
+            if (inPlayer()) lastActivity = now();
+            schedule();
+            return;
+        }
+        wanted = false;
+        writePulledAt(now());
+        transport.dispatch({ action: 'Ctx', args: { action: PULL_NOTIFICATIONS } });
+    }
+    const onActivity = () => {
+        lastActivity = now();
+    };
+    if (win && typeof win.addEventListener === 'function') {
+        ACTIVITY_EVENTS.forEach((name) => win.addEventListener(name, onActivity, true));
+    }
+
+    const getState = (model) => {
+        const answer = transport.getState(model);
+        if (model !== 'ctx' || !answer || typeof answer.then !== 'function') return answer;
+        return answer.then((state) => {
+            const profile = state && state.profile;
+            if (profile && typeof profile === 'object') signedIn = !!profile.auth;
+            return state;
+        });
+    };
+
+    const dispatch = (action, ...rest) => {
+        const name = ctxAction(action);
+        if (name !== null && API_PULLS.indexOf(name) !== -1 && signedIn === false) {
+            return Promise.resolve();
+        }
+        if (name === PULL_NOTIFICATIONS) {
+            if (!wanted) {
+                wanted = true;
+                schedule();
+            }
+            return Promise.resolve();
+        }
+        return transport.dispatch(action, ...rest);
+    };
+
+    return { ...transport, getState, dispatch };
+};
+
+module.exports = { wrap, STORAGE_KEY, IDLE_MS, INTERVAL_MS };
