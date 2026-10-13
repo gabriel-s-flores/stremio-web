@@ -4,9 +4,12 @@
 // SyncLibraryWithAPI and PullNotifications. On the TV the core (wasm2js, not optimized: "--no-crankshaft")
 // handles one message at a time, and a title opened while the answers of these pulls were being read
 // waited for them (F8.6 on the TV: 21 s for the meta, opened 8 s after the Board).
-// - The three API pulls need a session: for a guest the core does nothing with them, but each one still
-//   goes through every model of the core. They are dropped while the profile is known to be a guest (the
-//   last `ctx` the page got has no `auth`); with a session, or before any `ctx`, they go as they came.
+// - PullUserFromAPI and SyncLibraryWithAPI need a session: for a guest the core only answers them with a
+//   "not logged in" error event, after a pass through every model. They are dropped while the profile is
+//   known to be a guest (the last `ctx` the page got has no `auth`); with a session, or before any `ctx`, they
+//   go as they came.
+// - PullAddonsFromAPI, for a guest, upgrades the official addons of the profile to the versions bundled with
+//   the core: it goes once per launch, when the app is idle (as below); with a session, as it came.
 // - PullNotifications asks Cinemeta for the last episodes of every series of the library (~1.2 MB for 100
 //   series; webos/lib/catalog-trim trims it). It is never sent right away: it waits until the app has been
 //   idle for `idleMs` (no key, pointer or route change, and not in the Player), and goes at most once per
@@ -16,7 +19,8 @@
 //
 // wrap(transport, options) -> the transport with getState (to see the `ctx`) and dispatch wrapped.
 
-const API_PULLS = ['PullAddonsFromAPI', 'PullUserFromAPI', 'SyncLibraryWithAPI'];
+const SESSION_PULLS = ['PullUserFromAPI', 'SyncLibraryWithAPI'];
+const PULL_ADDONS = 'PullAddonsFromAPI';
 const PULL_NOTIFICATIONS = 'PullNotifications';
 const STORAGE_KEY = 'webos.pullNotifications.at';
 const IDLE_MS = 20 * 1000;
@@ -41,6 +45,8 @@ const wrap = (transport, options = {}) => {
     let lastActivity = now();
     let wanted = false;
     let timer = null;
+    // The guest's PullAddonsFromAPI of this launch was taken (the next ones, every focus, are dropped).
+    let addonsSent = false;
 
     const readPulledAt = () => {
         try {
@@ -57,26 +63,35 @@ const wrap = (transport, options = {}) => {
     };
     const inPlayer = () => !!win && !!win.location && /^#\/player\//.test(win.location.hash || '');
 
-    // When the pull can go: idle long enough and the interval since the last one has passed.
-    const dueIn = () => Math.max(lastActivity + idleMs - now(), readPulledAt() + intervalMs - now(), 0);
+    // The idle tasks: PullNotifications (at most every intervalMs, across launches) and, for a guest, one
+    // PullAddonsFromAPI per launch.
+    let addonsWanted = false;
+    const notificationsDueIn = () => Math.max(lastActivity + idleMs - now(), readPulledAt() + intervalMs - now(), 0);
+    const addonsDueIn = () => Math.max(lastActivity + idleMs - now(), 0);
+    const dueIn = () => Math.min(wanted ? notificationsDueIn() : Infinity, addonsWanted ? addonsDueIn() : Infinity);
     const schedule = () => {
         if (timer !== null) clearTimer(timer);
         timer = null;
-        if (!wanted) return;
+        if (!wanted && !addonsWanted) return;
         timer = setTimer(fire, dueIn());
     };
     function fire() {
         timer = null;
-        if (!wanted) return;
-        if (dueIn() > 0 || inPlayer()) {
-            // Activity meanwhile, or watching a video: wait for the next idle stretch.
-            if (inPlayer()) lastActivity = now();
-            schedule();
-            return;
+        if (inPlayer()) {
+            // Watching a video: wait for the next idle stretch.
+            lastActivity = now();
+        } else {
+            if (addonsWanted && addonsDueIn() === 0) {
+                addonsWanted = false;
+                transport.dispatch({ action: 'Ctx', args: { action: PULL_ADDONS } });
+            }
+            if (wanted && notificationsDueIn() === 0) {
+                wanted = false;
+                writePulledAt(now());
+                transport.dispatch({ action: 'Ctx', args: { action: PULL_NOTIFICATIONS } });
+            }
         }
-        wanted = false;
-        writePulledAt(now());
-        transport.dispatch({ action: 'Ctx', args: { action: PULL_NOTIFICATIONS } });
+        schedule();
     }
     const onActivity = () => {
         lastActivity = now();
@@ -97,7 +112,15 @@ const wrap = (transport, options = {}) => {
 
     const dispatch = (action, ...rest) => {
         const name = ctxAction(action);
-        if (name !== null && API_PULLS.indexOf(name) !== -1 && signedIn === false) {
+        if (name !== null && SESSION_PULLS.indexOf(name) !== -1 && signedIn === false) {
+            return Promise.resolve();
+        }
+        if (name === PULL_ADDONS && signedIn === false) {
+            if (!addonsSent) {
+                addonsSent = true;
+                addonsWanted = true;
+                schedule();
+            }
             return Promise.resolve();
         }
         if (name === PULL_NOTIFICATIONS) {

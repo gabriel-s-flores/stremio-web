@@ -4,7 +4,7 @@
 //
 //   node webos/tests/perf/boot-bench.js [--vendor <dir>] [--wasm2js <file>] [--app upstream|webos]
 //        [--open-after board|idle|<ms>] [--latency <ms>] [--cache <dir>] [--offline] [--notifications fresh]
-//        [--serial] [--repeat N] [--openings N] [--json <out.json>]
+//        [--serial] [--repeat N] [--passes N] [--openings N] [--json <out.json>]
 //   node --cpu-prof --cpu-prof-dir <dir> webos/tests/perf/boot-bench.js --vendor <core built with --profiling> ...
 //
 // - Storage: the TV-like library (library-fixture.js, real IMDb ids, so the notifications pull gets real
@@ -375,6 +375,15 @@ const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
     const ids = movies().slice(0, Number(option('openings', 1)));
     for (const id of ids) await openOne(id);
     const { id, openAtMs, metaMs, streamMs, coreMs: openBusy } = openings[0];
+    // --passes N: the cost of one message through every model of the core (a Ctx action a guest's core does
+    // nothing with: what each addon answer pays before its own work), N times.
+    const passes = [];
+    for (let i = 0; i < Number(option('passes', 0)); i++) {
+        const start = performance.now();
+        glue.dispatch({ action: 'Ctx', args: { action: 'PullAddonsFromAPI' } }, null, '#/');
+        passes.push(performance.now() - start);
+    }
+    passes.sort((a, b) => a - b);
     // --repeat N: the cost of one get_state of the opened Details (meta and 224 streams), N times.
     const repeated = [];
     for (let i = 0; i < Number(option('repeat', 0)); i++) {
@@ -394,6 +403,7 @@ const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
         metaMs,
         streamMs,
         openings,
+        passMs: passes.length ? Math.round(passes[passes.length >> 1] * 100) / 100 : undefined,
         getStateMetaDetailsMs: repeated.length ? Math.round(repeated[repeated.length >> 1] * 10) / 10 : undefined,
         getStateMetaDetailsBytes: repeated.length ? JSON.stringify(glue.get_state('meta_details')).length : undefined,
         coreBeforeOpenMs: bootBusy,

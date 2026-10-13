@@ -54,11 +54,10 @@ const ctx = (action) => ({ action: 'Ctx', args: { action } });
 const pulls = (sent) => sent.filter(([a]) => a.args && a.args.action === 'PullNotifications').length;
 
 describe('API pulls', () => {
-    test('dropped for a guest once the ctx is known; other actions go as they came', async () => {
+    test('user and library pulls dropped for a guest once the ctx is known; other actions go as they came', async () => {
         const { transport, sent } = setup({ auth: null });
         await transport.getState('ctx');
-        await expect(transport.dispatch(ctx('PullAddonsFromAPI'))).resolves.toBeUndefined();
-        transport.dispatch({ action: 'Ctx', args: { action: 'PullUserFromAPI', args: {} } });
+        await expect(transport.dispatch({ action: 'Ctx', args: { action: 'PullUserFromAPI', args: {} } })).resolves.toBeUndefined();
         transport.dispatch(ctx('SyncLibraryWithAPI'));
         expect(sent).toEqual([]);
         await expect(transport.dispatch(ctx('InstallAddon'), null)).resolves.toBe('sent');
@@ -75,6 +74,24 @@ describe('API pulls', () => {
         signedIn.transport.dispatch(ctx('PullAddonsFromAPI'));
         signedIn.transport.dispatch(ctx('SyncLibraryWithAPI'));
         expect(signedIn.sent).toHaveLength(2);
+    });
+
+    test('a guest\'s PullAddonsFromAPI (official addons upgrade) goes once per launch, when idle', async () => {
+        const { transport, sent, advance, fireEvent } = setup({ auth: null });
+        await transport.getState('ctx');
+        const addons = () => sent.filter(([a]) => a.args.action === 'PullAddonsFromAPI').length;
+        transport.dispatch(ctx('PullAddonsFromAPI'));
+        expect(addons()).toBe(0);
+        advance(10000);
+        fireEvent('keydown');
+        advance(IDLE - 1);
+        expect(addons()).toBe(0);
+        advance(1);
+        expect(addons()).toBe(1);
+        // Every focus of the window asks again: not in this launch.
+        transport.dispatch(ctx('PullAddonsFromAPI'));
+        advance(10 * IDLE);
+        expect(addons()).toBe(1);
     });
 
     test('a login later in the session lets them through again', async () => {
