@@ -47,7 +47,12 @@ const require = createRequire(import.meta.url);
 const { libraryFixture } = require('./library-fixture.js');
 
 const args = parseArgs(process.argv.slice(2));
-const IPKS = args._.map((p) => path.resolve(p));
+// An entry may be <ipk>:<core variant> (wasm | wasm2js): the same IPK with the two cores (F8.7).
+const ENTRIES = args._.map((p) => {
+    const m = /^(.*\.ipk):(wasm|wasm2js)$/.exec(p);
+    return m ? { ipk: path.resolve(m[1]), variant: m[2] } : { ipk: path.resolve(p), variant: null };
+});
+const IPKS = ENTRIES.map((e) => e.ipk);
 const OUT = path.resolve(args.out || 'perf-details');
 const ROUNDS = Number(args.rounds || 1);
 const OPENINGS = Number(args.openings || 3);
@@ -65,7 +70,7 @@ const WORKER_TRACE_SCRIPT = `(function () {
     var inner = self.fetch;
     self.fetch = function (input, init) {
         var url = typeof input === 'string' ? input : input && input.url;
-        var e = { fetch: String(url).replace(/\/\/[^/]*@/, '//').slice(0, 100), at: Date.now() };
+        var e = { fetch: String(url).split('?')[0].slice(0, 100), at: Date.now() };
         t.push(e);
         return inner.apply(this, arguments).then(function (r) {
             e.answered = Date.now(); e.status = r && r.status;
@@ -78,7 +83,7 @@ const WORKER_TRACE_SCRIPT = `(function () {
     };
     self.addEventListener('message', function (event) {
         var r = event.data && event.data.request;
-        if (r && r.path) t.push({ call: r.path.join('.'), arg: typeof r.args[0] === 'string' ? r.args[0] : (r.args[0] && r.args[0].action ? r.args[0].action + (r.args[0].args && (r.args[0].args.model || r.args[0].args.action) ? ':' + (r.args[0].args.model || r.args[0].args.action) : '') : ''), at: Date.now() });
+        if (r && r.path) t.push({ call: r.path.join('.'), arg: !r.args ? '' : typeof r.args[0] === 'string' ? r.args[0] : (r.args[0] && r.args[0].action ? r.args[0].action + (r.args[0].args && (r.args[0].args.model || r.args[0].args.action) ? ':' + (r.args[0].args.model || r.args[0].args.action) : '') : ''), at: Date.now() });
     });
     var post = self.postMessage;
     self.postMessage = function (message) {
@@ -287,12 +292,16 @@ const close = async () => {
 };
 
 // The state before a measured launch: the TV-like library and no notifications bucket (the boot pulls them).
-const SEED = `(function () {
+// --core-variant wasm|wasm2js: the core the app loads (webos.coreVariant, webos/core/README.md).
+const CORE_VARIANT = args['core-variant'] || null;
+const seedFor = (variant) => `(function () {
+    ${variant ? `localStorage.setItem('webos.coreVariant', ${JSON.stringify(variant)});` : ''}
     localStorage.setItem('library', ${JSON.stringify(LIBRARY.library)});
     localStorage.setItem('library_recent', ${JSON.stringify(LIBRARY.library_recent)});
     localStorage.removeItem('notifications');
     return true;
 })()`;
+let SEED = seedFor(CORE_VARIANT);
 
 async function measuredLaunch(result, label, quiet) {
     const boardS = await launch();
@@ -410,6 +419,7 @@ async function measuredLaunch(result, label, quiet) {
     }
 }
 
+let currentVariant = null;
 async function round(ipk, label) {
     log(`[${label}] install ${path.basename(ipk)}`);
     try { execFileSync('ares-install', ['-d', DEVICE, '--remove', APP_ID], { stdio: 'ignore' }); } catch (e) { /* not installed */ }
@@ -424,7 +434,7 @@ async function round(ipk, label) {
     await evaluate('window.__stremioPersist && window.__stremioPersist.flush ? Promise.resolve(window.__stremioPersist.flush()).then(function () { return true; }) : true').catch(() => null);
     await sleep(2000);
     await close();
-    const result = { ipk: path.basename(ipk), label, launches: [], openings: [] };
+    const result = { ipk: path.basename(ipk), variant: currentVariant, label, launches: [], openings: [] };
     // Saved after every opening (a stuck opening keeps the ones before it).
     results.push(result);
     for (const quiet of QUIETS) {
@@ -440,9 +450,11 @@ async function round(ipk, label) {
 
 const save = () => fs.writeFileSync(path.join(OUT, 'details.json'), `${JSON.stringify({ profile: process.env.EMU_PROFILE || null, instance: process.env.EMU_INSTANCE, hash: HASH, results }, null, 1)}\n`);
 for (let r = 1; r <= ROUNDS; r++) {
-    const order = r % 2 ? IPKS : [...IPKS].reverse();
-    for (const ipk of order) {
-        const label = `r${r}-${path.basename(ipk, '.ipk')}`;
+    const order = r % 2 ? ENTRIES : [...ENTRIES].reverse();
+    for (const { ipk, variant } of order) {
+        SEED = seedFor(variant || CORE_VARIANT);
+        currentVariant = variant;
+        const label = `r${r}-${path.basename(ipk, '.ipk')}${variant ? `-${variant}` : ''}`;
         try {
             await round(ipk, label);
         } catch (e) {
@@ -464,15 +476,15 @@ const workerTicks = (o) => {
     const worker = entries.find(([k]) => /worker/i.test(k));
     return worker ? worker[1] : null;
 };
-for (const ipk of IPKS) {
+for (const { ipk, variant } of ENTRIES) {
     for (const quiet of QUIETS) {
-        const mine = results.filter((x) => x.ipk === path.basename(ipk) && x.openings && x.openings.length > 0);
+        const mine = results.filter((x) => x.ipk === path.basename(ipk) && x.variant === variant && x.openings && x.openings.length > 0);
         const pick = (fn, first) => median(mine.flatMap((x) => x.openings.filter((o) => o.quiet === quiet && (!first || o.n === 1)).map(fn)).filter((v) => typeof v === 'number'));
         const row = (first) => ({
             titleMs: pick((o) => o.titleMs, first), metaMs: pick((o) => o.metaMs, first), streamMs: pick((o) => o.streamMs, first), idleMs: pick((o) => o.idleMs, first),
             workerRttMs: pick((o) => o.workerRttMs, first), workerCpuMs: pick((o) => (workerTicks(o) === null ? null : workerTicks(o) * 10), first),
         });
-        log(path.basename(ipk), `quiet ${quiet}`, JSON.stringify({ rounds: mine.length, first: row(true), all: row(false) }));
+        log(path.basename(ipk) + (variant ? `:${variant}` : ''), `quiet ${quiet}`, JSON.stringify({ rounds: mine.length, first: row(true), all: row(false) }));
     }
 }
 addon.kill('SIGTERM');

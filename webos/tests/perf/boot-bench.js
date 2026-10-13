@@ -150,6 +150,15 @@ global.fetch = async (request) => {
     await sleep(LATENCY);
     if (entry.error) {
         note({ answer: kind, error: entry.error });
+        // The core handles the failure in the microtasks after the rejection: time them too.
+        const start = performance.now();
+        const others = busy.getState + busy.dispatch;
+        setImmediate(() => {
+            const ms = performance.now() - start - (busy.getState + busy.dispatch - others);
+            busy.futures += ms;
+            futuresBy.failed = (futuresBy.failed || 0) + ms;
+            note({ handled: 'failed', ms: Math.round(ms) });
+        });
         throw new TypeError(`Failed to fetch (${entry.error})`);
     }
     note({ answer: kind, status: entry.status, bytes: entry.body.length });
