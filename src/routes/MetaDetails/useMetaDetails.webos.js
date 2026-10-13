@@ -1,9 +1,10 @@
 // webOS TV 4.x build only (resolved instead of useMetaDetails.js by webos/webpack/app.js, F6.1).
 // Same hook, without the streams that need the streaming server (torrents): both the streams list
 // and the Live TV playback read MetaDetails#streams from here. F8.3: the HTML entities of the meta
-// item decoded (decodeMetaEntities.js). F8.6: while the core has no meta yet (null or Loading), the
-// streams page of a movie or an episode shows the name, logo and background of the poster that was
-// opened (webos/lib/meta-preview): on the TV the core took tens of seconds to answer.
+// item decoded (decodeMetaEntities.js). F8.6: while the core loads the meta (Loading) of the item of
+// this route, the streams page of a movie or an episode shows the name, logo and background of the
+// poster that was opened (webos/lib/meta-preview): on the TV the core took tens of seconds to answer.
+// A null meta item (no addon for this meta) keeps the upstream message.
 
 const React = require('react');
 // The explicit extension resolves to the upstream hook, not to this file.
@@ -31,9 +32,9 @@ const useMetaDetails = (urlParams) => {
     ), [type, id, videoId]);
     return React.useMemo(() => {
         const streams = hideTorrentStreams(metaDetails.streams);
-        // The state may still be the one of the page opened before (the Load not processed yet).
+        // Only the Loading of this route's item (not a state left by another page).
         const selected = metaDetails.selected;
-        const current = !selected || (selected.metaPath && selected.metaPath.id === id && selected.metaPath.type === type);
+        const current = !!selected && !!selected.metaPath && selected.metaPath.id === id && selected.metaPath.type === type;
         const metaItem = optimisticMetaItem(decodeMetaItem(metaDetails.metaItem), current ? preview : null);
         return streams === metaDetails.streams && metaItem === metaDetails.metaItem ? metaDetails : { ...metaDetails, streams, metaItem };
     }, [metaDetails, preview, id, type]);
