@@ -5,7 +5,7 @@
 // proxify and the hosts learned.
 
 import {
-    createTlsProxy, hostOf, isLetsEncrypt, MODE_KEY, HOSTS_KEY, SERVICE_URI, PROBE_URL, MAX_LEARNED,
+    createTlsProxy, hostOf, isLetsEncrypt, MODE_KEY, HOSTS_KEY, SERVICE_URI, PROBE_URL, MAX_LEARNED, proxyUrlFor, unproxyUrl,
 } from '../../tlsproxy/client';
 
 const POSTER = 'https://images.metahub.space/poster/medium/tt0111161/img';
@@ -366,5 +366,21 @@ describe('learned hosts', () => {
         await tick();
         expect(fetch).toHaveBeenCalledTimes(3);
         expect(tlsProxy.status().learned).toEqual(['le.example.com']);
+    });
+});
+
+describe('unproxyUrl (F8.6)', () => {
+    it('gives back the URL a proxy URL stands for, and leaves other URLs alone', () => {
+        expect(unproxyUrl(proxyUrlFor(47443, 'tok3n', POSTER))).toBe(POSTER);
+        expect(unproxyUrl(proxyUrlFor(47443, 'tok3n', 'https://x.example/a?b=1&c=%2F'))).toBe('https://x.example/a?b=1&c=%2F');
+        expect(unproxyUrl(POSTER)).toBe(POSTER);
+        expect(unproxyUrl('data:image/png;base64,AAAA')).toBe('data:image/png;base64,AAAA');
+        expect(unproxyUrl(null)).toBeNull();
+    });
+
+    it('keeps nothing of a loopback URL that is not a proxy URL', () => {
+        expect(unproxyUrl('http://127.0.0.1:47443/proxy?t=tok3n')).toBeNull();
+        expect(unproxyUrl('http://127.0.0.1:47443/other?t=tok3n&url=x')).toBeNull();
+        expect(unproxyUrl('http://127.0.0.1:47443/proxy?t=tok3n&url=%E0%A4%A')).toBeNull();
     });
 });

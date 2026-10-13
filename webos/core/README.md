@@ -18,6 +18,7 @@ webos/core/check-wasm arquivo.wasm                  # gate sozinho (--json para 
 
 1. `git archive` da tag `stremio-core-web-v0.65.0` do clone em `~/webos-tv-sdk/src/stremio-core`.
 2. `recipe-a.patch`: `gloo-utils` 0.3 → 0.2, a única dependência do lockfile que exige Rust acima de 1.77.
+   Depois, `stream-links.patch` (F8.6, desempenho; veja [abaixo](#patch-de-desempenho-stream-linkspatch-f86)).
 3. Rust 1.77.2: `cargo build --release --locked --target wasm32-unknown-unknown`. O Rust 1.77 ainda
    gera wasm32 sem reference types e sem multivalue. `--remap-path-prefix` tira os caminhos locais
    das mensagens de panic, e o binário sai igual em qualquer pasta.
@@ -71,6 +72,43 @@ webos/core/check-wasm arquivo.wasm                  # gate sozinho (--json para 
    wasm inteiro com o TurboFan antes de rodar. No emulador padrão, os dois levam ~3,8 s.
 8. Babel com as `devDependencies` e o `.babelrc` do upstream (`npm ci` do lockfile do pacote), como
    o `scripts/build.sh` oficial. O `bridge.js` e o `worker.js` saem idênticos aos do npm.
+
+## Patch de desempenho: `stream-links.patch` (F8.6)
+
+Na TV, abrir um filme com 224 streams (Torrentio + AllDebrid) deixava o worker do core ocupado por
+~28 s. O perfil do worker com nomes (`symbols.js`, abaixo) mostrou 11,2 s em `get_state`, quase tudo
+em `serialize_meta_details`, que monta os deep links de **todos** os streams a cada `get_state`:
+
+- `ExternalPlayerLink::from` compilava a regex `https?://` para cada stream (`Regex::new`: 3,8 s);
+- `Stream::encode` (o link do player) criava um `ZlibEncoder` com `Compression::none()` para cada
+  stream, e o miniz_oxide aloca e zera ~250 KB de estado do compressor a cada um (2,9 s em
+  `ZlibEncoder::new`, mais o `memset`).
+
+O patch, nos dois arquivos do `stremio-core`:
+
+1. `deep_links/mod.rs`: a regex vira um `Lazy<Regex>` estático (o `once_cell` já é dependência e o
+   próprio core usa `Lazy` em `constants.rs`). Mesma regex, mesmo resultado;
+2. `types/resource/stream.rs`: `Stream::encode` escreve direto os bytes que aquele encoder escreve
+   (cabeçalho zlib `78 01`, blocos *stored* de 31 745 bytes, um bloco final com o resto, mesmo
+   vazio, e o Adler-32), sem criar o compressor. Um teste no próprio patch
+   (`zlib_stored_is_the_none_compression_encoder`) compara com o `ZlibEncoder` em tamanhos de 0 a
+   200 000 bytes, nas bordas dos blocos; o `decode` não muda.
+
+Resultado (`webos/tests/perf/core-bench.js`, Node, 224 streams): `get_state('meta_details')` cai de
+68,6 ms para 11,4 ms no wasm2js e de 29,6 ms para 6,3 ms no WASM, e a lista de streams da resposta
+(510 KB, deep links inclusos) sai **byte a byte igual** à do core sem o patch, nas duas variantes.
+Para conferir de novo: `cargo test --lib zlib_stored deep_links stream` na fonte com os dois patches
+(91 testes) e `core-bench.js --dump` com o core antigo (`--vendor`) e o novo.
+
+## Nomes das funções do wasm2js (`symbols.js`, F8.6)
+
+O wasm2js vendorizado é minificado: um perfil de CPU do worker na TV mostra `Oe`, `XW`...
+`node --max-old-space-size=10000 webos/core/symbols.js <work> <saída.json>` (~2 min) refaz, a partir
+da pasta de trabalho do `build` (o wasm do wasm-bindgen ainda tem a seção de nomes), o `wasm-opt` e o
+terser do build, confere que saem os arquivos vendorizados byte a byte e, pelo source map do terser e
+pela seção de nomes, escreve `{ nome minificado: símbolo Rust }`. Para ler um perfil com os nomes:
+`node webos/tests/perf/symbolize.mjs <perfil> <symbols.json> [--under get_state]`. O mapa vale para
+um build só (o `sha256` do `.wasm2js.js` vai no JSON): refaça depois de cada `build`.
 
 ## Gate (`check-wasm`)
 

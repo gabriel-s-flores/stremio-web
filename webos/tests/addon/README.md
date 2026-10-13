@@ -28,10 +28,14 @@ Os streams estão em [`catalog.js`](catalog.js), na ordem do addon, com o result
 
 `--set e2e` troca a lista pela do roteiro ponta a ponta ([`../e2e/`](../e2e/README.md)): um REMUX DV P5 + TrueHD no topo (a C8 o leva para o fim), um REMUX sem nada no nome (só o probe o leva para baixo), 4K HEVC HDR10, 1080p H.264 AAC, um 720p MKV com três faixas de áudio, legendas embutidas e duas legendas de addon (no próprio stream), um link cujo resolvedor redireciona para um 410 (expirado) e um torrent. As mídias ficam em `e2e/` na raiz de mídia, ligadas de `~/webos-tv-sdk/media-tests/e2e` (`E2E_MEDIA_DIR`), geradas por [`../e2e/make-media.sh`](../e2e/make-media.sh).
 
+### Conjunto `torrentio` (F8.6)
+
+`--set torrentio` responde com 224 streams gerados por [`torrentio.js`](torrentio.js), no formato da resposta do Torrentio + AllDebrid que deixou Detalhes lento na TV (~119 KB, como os 121 KB medidos lá): `name` com a marca do debrid e a resolução, `title` (não `description`, como o Torrentio manda) com o nome do arquivo, seeders, tamanho, fonte e bandeiras, URL de *resolve* com hash de 40 hex e o nome do arquivo, e `behaviorHints` com `bingeGroup`, `filename` e `videoSize`. Determinístico. As URLs passam pelo `/redirect/` do servidor de mídia para um arquivo que não existe: servem para listar, não para tocar. Usado por `webos/tests/perf/details.mjs` e `core-bench.js`.
+
 ## Uso
 
 ```bash
-node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <raiz de mídia>] [--info addon.json] [--delay <ms>] [--set f62|e2e]
+node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <raiz de mídia>] [--info addon.json] [--delay <ms>] [--set f62|e2e|torrentio]
 ```
 
 - `--delay <ms>` põe um proxy na frente do servidor de mídia que segura cada pedido por esse tempo, para simular a latência de um debrid real. As URLs dos streams passam a apontar para o proxy.

@@ -47,6 +47,20 @@ export const proxyUrlFor = (port, token, url) => `http://127.0.0.1:${port}/proxy
 
 export const isProxyUrl = (url) => typeof url === 'string' && url.indexOf('http://127.0.0.1:') === 0;
 
+// The URL a proxy URL stands for (proxyUrlFor's inverse, F8.6): what may be kept or compared, without
+// the port and the token of this service start. Other URLs come back as they are; a loopback URL that
+// is not one of ours gives null (never kept).
+export const unproxyUrl = (url) => {
+    if (!isProxyUrl(url)) return url;
+    const match = /^http:\/\/127\.0\.0\.1:\d+\/proxy\?(?:[^#]*&)?url=([^&#]*)/.exec(url);
+    if (!match) return null;
+    try {
+        return decodeURIComponent(match[1]);
+    } catch (_e) {
+        return null;
+    }
+};
+
 // deps: storage (localStorage), fetch, getWebOS () => window.webOS, firmware (string),
 // online () => boolean, setTimeout, clearTimeout, onToken (token) => void (the token of every
 // service start, for the log redaction of webos/lib/redact).

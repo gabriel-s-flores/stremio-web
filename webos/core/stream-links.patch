@@ -1,0 +1,120 @@
+diff --git a/src/deep_links/mod.rs b/src/deep_links/mod.rs
+index a8bfa0b..6cc0ea8 100644
+--- a/src/deep_links/mod.rs
++++ b/src/deep_links/mod.rs
+@@ -1,4 +1,5 @@
+ use chrono::NaiveDate;
++use once_cell::sync::Lazy;
+ use percent_encoding::utf8_percent_encode;
+ use regex::Regex;
+ use serde::Serialize;
+@@ -143,6 +144,11 @@ impl From<(&Stream, Option<&Url>, &Settings)> for ExternalPlayerLink {
+     }
+ }
+ 
++/// webOS port (F8.6): compiled once. `ExternalPlayerLink::from` compiled it for every stream, and
++/// `serialize_meta_details` builds the links of every stream of the list on every `get_state`: in
++/// wasm2js on the TV that was 40 % of its time.
++static HTTP_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"https?://").unwrap());
++
+ impl From<(&Stream<ConvertedStreamSource>, Option<&Url>, &Settings)> for ExternalPlayerLink {
+     /// Create an [`ExternalPlayerLink`] using the [`Stream`],
+     /// the server url (from [`StreamingServer::base_url`] which indicates a running or not server)
+@@ -157,7 +163,7 @@ impl From<(&Stream<ConvertedStreamSource>, Option<&Url>, &Settings)> for Externa
+             &Settings,
+         ),
+     ) -> Self {
+-        let http_regex = Regex::new(r"https?://").unwrap();
++        let http_regex = &*HTTP_REGEX;
+ 
+         let stream_urls = StreamUrls::new(stream.clone(), streaming_server_url);
+         let download = stream_urls.download_url.as_ref().map(ToString::to_string);
+diff --git a/src/types/resource/stream.rs b/src/types/resource/stream.rs
+index a6c4190..25564a5 100644
+--- a/src/types/resource/stream.rs
++++ b/src/types/resource/stream.rs
+@@ -5,10 +5,7 @@ use tracing::trace;
+ 
+ use base64::Engine;
+ use boolinator::Boolinator;
+-use flate2::{
+-    write::{ZlibDecoder, ZlibEncoder},
+-    Compression,
+-};
++use flate2::write::ZlibDecoder;
+ use magnet_url::Magnet;
+ use percent_encoding::utf8_percent_encode;
+ use serde::{de::Error, Deserialize, Deserializer, Serialize};
+@@ -88,15 +85,49 @@ where
+     S: StreamSourceTrait + Serialize,
+ {
+     pub fn encode(&self) -> Result<String, anyhow::Error> {
+-        let mut encoder = ZlibEncoder::new(Vec::new(), Compression::none());
+         let stream = serde_json::to_string(&self)?;
+-        encoder.write_all(stream.as_bytes())?;
+-        let stream = encoder.finish()?;
++        let stream = zlib_stored(stream.as_bytes());
+         let stream = BASE64.encode(stream);
+         Ok(stream)
+     }
+ }
+ 
++/// webOS port (F8.6): the bytes that `ZlibEncoder::new(_, Compression::none())` + `write_all` +
++/// `finish` give (miniz_oxide: zlib header 78 01, stored blocks of 31745 bytes, a final stored block
++/// with the rest, even an empty one, and the Adler-32), written directly. The encoder allocated and
++/// zeroed ~250 KB of compressor state for each stream, and `serialize_meta_details` encodes every
++/// stream of the list on every `get_state`: in wasm2js on the TV that was a third of its time.
++fn zlib_stored(data: &[u8]) -> Vec<u8> {
++    const BLOCK: usize = 31745;
++    let mut out = Vec::with_capacity(data.len() + data.len() / BLOCK * 5 + 11);
++    out.extend_from_slice(&[0x78, 0x01]);
++    let mut rest = data;
++    loop {
++        let last = rest.len() < BLOCK;
++        let (block, next) = rest.split_at(if last { rest.len() } else { BLOCK });
++        let len = block.len() as u16;
++        out.push(last as u8);
++        out.extend_from_slice(&len.to_le_bytes());
++        out.extend_from_slice(&(!len).to_le_bytes());
++        out.extend_from_slice(block);
++        rest = next;
++        if last {
++            break;
++        }
++    }
++    let (mut a, mut b) = (1u32, 0u32);
++    for chunk in data.chunks(5552) {
++        for &byte in chunk {
++            a += byte as u32;
++            b += a;
++        }
++        a %= 65521;
++        b %= 65521;
++    }
++    out.extend_from_slice(&((b << 16) | a).to_be_bytes());
++    out
++}
++
+ impl<S> Stream<S>
+ where
+     S: StreamSourceTrait + Serialize + serde::de::DeserializeOwned,
+@@ -1177,6 +1208,19 @@ fn get_streaming_url(converted: &Stream<ConvertedStreamSource>) -> Option<Url> {
+ 
+ #[cfg(test)]
+ mod tests {
++    #[test]
++    fn zlib_stored_is_the_none_compression_encoder() {
++        use flate2::{write::ZlibEncoder, Compression};
++        use std::io::Write;
++        let sizes = [0, 1, 19, 1000, 5552, 5553, 31744, 31745, 31746, 63489, 63490, 63491, 200_000];
++        for size in sizes {
++            let data = (0..size).map(|i| (i * 7 + i / 300) as u8).collect::<Vec<u8>>();
++            let mut encoder = ZlibEncoder::new(Vec::new(), Compression::none());
++            encoder.write_all(&data).unwrap();
++            assert_eq!(super::zlib_stored(&data), encoder.finish().unwrap(), "size {size}");
++        }
++    }
++
+     use super::{ArchiveUrl, Stream, StreamBehaviorHints, StreamProxyHeaders, StreamSource};
+     use crate::runtime::EnvError;
+     use std::collections::HashMap;

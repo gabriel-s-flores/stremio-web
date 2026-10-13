@@ -17,6 +17,14 @@ webos/tools/emu-run --profile c8 --timeout 45 -- webos/tests/perf/run.sh <saída
 # Latência das setas no Board e abertura de Detalhes (F8.2), A/B de IPKs intercalados (ABBA) na mesma reserva:
 webos/tools/emu-run --profile c8 --timeout 60 -- node webos/tests/perf/keys.mjs --out <saída> --rounds 2 [--details 4] [--profile-details N] [--trace-details N] <a.ipk> <b.ipk>
 
+# Abrir Detalhes de um filme com 224 streams e biblioteca grande, como na TV (F8.6), A/B ABBA na mesma reserva:
+webos/tools/emu-run --profile c8 --timeout 70 -- node webos/tests/perf/details.mjs --out <saída> --rounds 2 --openings 3 <a.ipk> <b.ipk> ...
+#   --profile-opening N: perfil do worker do core (domínio Worker) na N-ésima abertura. Na TV funciona; no emulador o Profiler.stop do worker não volta (F8.6)
+# O core no Node, sem emulador: quanto custa cada get_state com 224 streams e a biblioteca da TV (F8.6):
+node webos/tests/perf/core-bench.js [--variant wasm|wasm2js] [--vendor <pasta>] [--json <saída>] [--dump <meta_details.json>]
+# Nomes nos perfis do worker (o wasm2js é minificado; o mapa sai de webos/core/symbols.js):
+node webos/tests/perf/symbolize.mjs <perfil> <symbols.json> [--under get_state] [--any-url]
+
 # A/B (ou bisect) de dois ou mais IPKs, intercalados NA MESMA reserva (a única comparação justa num host compartilhado):
 webos/tests/perf/build-ipk.sh [--keep] <commit> <saída.ipk>    # IPK de qualquer commit; a worktree é removida no fim
 webos/tools/emu-run --profile c8 --timeout 58 -- webos/tests/perf/ab-boot.sh <saída> <rodadas> <a.ipk> <b.ipk> ...
@@ -42,6 +50,8 @@ node webos/tests/perf/mem-chart.mjs <pasta>/mem.log <pasta>/phases.jsonl <saída
 | `play` (`play.mjs`) | Um boot com o addon de teste local (`webos/tests/addon`): lista de streams, OK num stream até o vídeo estar tocando, N trocas de stream (Back, outro stream), Back até o Board. Um cenário de mídia por boot (limite do emulador) | `play.json` |
 | `streams-cycle` | Detalhes com a lista de streams e de volta ao Board, vários ciclos, só a memória (a busca do estouro de memória) | `streams-cycle.json` |
 | `keys.mjs` (F8.2) | Por IPK e rodada: 24 setas no Board enviadas como na TV (`Input.dispatchKeyEvent`), cada uma medida na página da tecla ao `focusin` e ao 2º quadro; um perfil de CPU e um trace (estilo, layout, pintura, layout forçado com a pilha do JS) de mais algumas setas; N aberturas de Detalhes (rota, coluna, título, lista, o `Load` e a meta pronta no core, o download do logo, as chamadas ao core no meio) | `keys.json`, `*.cpuprofile`, `*.trace.json` |
+| `details.mjs` (F8.6) | Por IPK e rodada: instala, põe no `localStorage` a biblioteca da TV (`library-fixture.js`: ~200 KB + ~125 KB) e instala o addon local `--set torrentio` (224 streams parecidos com os do Torrentio + AllDebrid), relança e abre `#/detail/movie/tt15047880/tt15047880` por hash N vezes (como o `abrir-detalhes.sh` da TV). Por abertura, no relógio da página e só na rota de Detalhes de cima: o título (o preview do pôster aberto ou a meta real), a **meta real** (o resumo da coluna na tela), o 1º stream, quantos streams no DOM, quando o worker volta a ficar ocioso; e, à parte, o critério do script da TV (`tvMetaMs`: a primeira coluna de informações do documento com texto, que também conta o preview); na 1ª abertura, uma captura durante o preview; toda chamada entre a página e o worker (`Worker.prototype.postMessage`: `getState`/`dispatch` com modelo, envio e resposta; e o que o worker pede à página: `onCoreEvent`, `localStorage.setItem` com tamanho); os ticks de CPU das threads do renderer (a `DedicatedWorker` é o core) | `details.json`, `<rótulo>.details.png`, `*.worker.cpuprofile` |
+| `core-bench.js` (F8.6) | O core vendorizado no Node com a mesma biblioteca e os mesmos 224 streams (rede local falsa): a linha do tempo de uma abertura (eventos, `get_state` com tempo e tamanho) e o custo de um `get_state` de cada modelo, repetido. `--dump` grava o `meta_details` final para comparar dois builds do core | JSON |
 | `ab-boot.sh` | Lançamentos a frio de vários IPKs intercalados na mesma reserva | uma pasta por lançamento |
 
 Em todos: `mem.log` (amostrador do convidado, a cada 2 s: RSS do renderer do app, anon/file/shmem, pipeline de mídia, MemAvailable), `phases.jsonl` (marcas de fase, relógio do host), `mem.json` (a análise por fase, `mem-analyze.mjs`), `dmesg-oom.txt` (o kernel matou algo?), `context-*.json` (estado do host). Os cenários `nav`/`play` também guardam *snapshots* de memória (RSS por tipo, heap do V8, DOM, imagens, camadas do compositor, ticks de CPU por thread) e a linha do tempo da página; uma rodada que morre no meio (renderer morto pelo OOM) grava o que já mediu (`"incomplete": true`).
