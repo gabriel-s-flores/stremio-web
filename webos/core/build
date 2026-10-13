@@ -2,10 +2,17 @@
 # Gera o @stremio/stremio-core-web 0.65.0 como WebAssembly MVP (receita A) para o webOS TV 4.x
 # (Chromium 53 / V8 5.8 só aceita o MVP; o wasm do npm usa externref, multivalue e bulk memory).
 #
-#   webos/core/build [--out DIR] [--work DIR] [--jobs N]
+#   webos/core/build [--out DIR] [--work DIR] [--jobs N] [--profiling]
 #
-# Receita A: Rust 1.77.2 com gloo-utils 0.2 (recipe-a.patch) e os deep links dos streams mais baratos
-# (stream-links.patch, F8.6), cargo build wasm32-unknown-unknown,
+# --profiling (F8.7, só para medir; exige --out fora do vendor): o mesmo core, mas com os nomes das
+# funções e sem inlining (LLVM com -inline-threshold=0, wasm-opt e wasm2js com --no-inline=*), e o
+# wasm2js sem o terser. Um perfil de CPU do core no Node (webos/tests/perf/core-bench.js --wasm2js)
+# mostra então o tempo próprio de cada modelo, em vez de tudo dentro do WebModel::update. Mais lento
+# que o build normal: serve para atribuir, não para medir tempos absolutos.
+#
+# Receita A: Rust 1.77.2 com gloo-utils 0.2 (recipe-a.patch), os deep links dos streams mais baratos
+# (stream-links.patch, F8.6) e nada de analytics para um convidado (guest-analytics.patch, F8.7), cargo
+# build wasm32-unknown-unknown,
 # wasm-bindgen CLI 0.2.121 --target web, wasm-opt -O --signext-lowering, correções na glue (abaixo)
 # e a glue, o bridge e o worker transpilados com o Babel do próprio pacote (mesmas versões e
 # .babelrc do build oficial). Do mesmo wasm sai a variante wasm2js (fallback sem WebAssembly).
@@ -33,9 +40,13 @@ PATCH="$HERE/recipe-a.patch"
 # Desempenho no webOS (F8.6): os deep links dos streams sem recompilar uma regex e sem criar um
 # compressor zlib por stream a cada get_state (veja o README).
 PERF_PATCH="$HERE/stream-links.patch"
+# Desempenho no webOS (F8.7): sem sessão, o evento de analytics não é montado (a 1ª mudança de rota
+# compilava uma regex que não servia para nada, segundos do core na TV).
+GUEST_PATCH="$HERE/guest-analytics.patch"
 OUT="$REPO/webos/vendor/stremio-core-web"
 WORK="$SDK/run/core-build"
 JOBS=4
+PROFILING=0
 W2JS=stremio_core_web_bg.wasm2js.js
 # Nome do global que o $W2JS define quando carregado por importScripts (webos/core/loader.js).
 W2JS_GLOBAL=stremio_core_web_wasm2js
@@ -49,9 +60,23 @@ while [[ $# -gt 0 ]]; do
         --out) OUT="$2"; shift 2 ;;
         --work) WORK="$2"; shift 2 ;;
         --jobs) JOBS="$2"; shift 2 ;;
-        *) echo "uso: build [--out DIR] [--work DIR] [--jobs N]" >&2; exit 1 ;;
+        --profiling) PROFILING=1; shift ;;
+        *) echo "uso: build [--out DIR] [--work DIR] [--jobs N] [--profiling]" >&2; exit 1 ;;
     esac
 done
+if [[ "$PROFILING" == 1 && "$OUT" == "$REPO/webos/vendor/stremio-core-web" ]]; then
+    echo "erro: --profiling precisa de --out fora do vendor" >&2
+    exit 1
+fi
+# O build de perfil: nomes e nada de inlining (veja o cabeçalho).
+PROFILE_RUSTFLAGS=""
+WASM_OPT_FLAGS=(-O --signext-lowering)
+WASM2JS_FLAGS=(-O)
+if [[ "$PROFILING" == 1 ]]; then
+    PROFILE_RUSTFLAGS=" -C llvm-args=-inline-threshold=0"
+    WASM_OPT_FLAGS=(--no-inline=* -O --signext-lowering -g)
+    WASM2JS_FLAGS=(--no-inline=* -O -g)
+fi
 
 step() { echo "==> [$(date +%T)] $*"; }
 T0=$SECONDS
@@ -79,6 +104,7 @@ mkdir -p "$SRC"
 git -C "$CLONE" archive "$TAG" | tar -x -C "$SRC"
 patch -d "$SRC" -p1 --forward --quiet < "$PATCH"
 patch -d "$SRC" -p1 --forward --quiet < "$PERF_PATCH"
+patch -d "$SRC" -p1 --forward --quiet < "$GUEST_PATCH"
 
 step "cargo build (Rust $TOOLCHAIN, wasm32-unknown-unknown, release)"
 # Caminhos absolutos entram nas mensagens de panic; o remap deixa o binário igual em qualquer
@@ -88,7 +114,7 @@ CARGO_DIR="${CARGO_HOME:-$HOME/.cargo}"
     cd "$SRC/stremio-core-web"
     unset RUSTFLAGS CARGO_ENCODED_RUSTFLAGS CARGO_BUILD_RUSTFLAGS
     export RUSTUP_TOOLCHAIN="$TOOLCHAIN" CARGO_TARGET_DIR="$WORK/target" \
-        RUSTFLAGS="--remap-path-prefix=$SRC=/stremio-core --remap-path-prefix=$CARGO_DIR=/cargo"
+        RUSTFLAGS="--remap-path-prefix=$SRC=/stremio-core --remap-path-prefix=$CARGO_DIR=/cargo$PROFILE_RUSTFLAGS"
     cargo build --release --locked --target wasm32-unknown-unknown --jobs "$JOBS"
 )
 
@@ -139,8 +165,8 @@ node -e '
     fs.writeFileSync(file, src);
 ' "$SRC/stremio-core-web/wasm_build/stremio_core_web.js"
 
-step "wasm-opt -O --signext-lowering"
-"$WASM_OPT" -O --signext-lowering "$SRC/stremio-core-web/wasm_build/stremio_core_web_bg.wasm" \
+step "wasm-opt ${WASM_OPT_FLAGS[*]}"
+"$WASM_OPT" "${WASM_OPT_FLAGS[@]}" "$SRC/stremio-core-web/wasm_build/stremio_core_web_bg.wasm" \
     -o "$SRC/stremio-core-web/stremio_core_web_bg.wasm"
 
 step "wasm2js -O (variante sem WebAssembly)"
@@ -148,7 +174,7 @@ step "wasm2js -O (variante sem WebAssembly)"
 # instancia ao carregar; aqui ela vira um script clássico que só define a fábrica asmFunc(imports)
 # (no global $W2JS_GLOBAL, ou module.exports no Node), para o carregador instanciar com os imports
 # da glue quando faltar o WebAssembly.
-"$WASM2JS" "$SRC/stremio-core-web/stremio_core_web_bg.wasm" -O -o "$SRC/stremio-core-web/wasm_build/$W2JS.mjs"
+"$WASM2JS" "$SRC/stremio-core-web/stremio_core_web_bg.wasm" "${WASM2JS_FLAGS[@]}" -o "$SRC/stremio-core-web/wasm_build/$W2JS.mjs"
 node -e '
     const fs = require("fs");
     const [from, to, name] = process.argv.slice(1);
@@ -185,7 +211,12 @@ step "wasm2js: terser e fábrica eager (webos/core/wasm2js-finish.js)"
 node -e 'require.resolve("terser-webpack-plugin", { paths: [process.argv[1]] }); require.resolve("webpack", { paths: [process.argv[1]] })' "$REPO" \
     || { echo "erro: falta o node_modules do repo (pnpm install --frozen-lockfile)" >&2; exit 1; }
 mv "$SRC/stremio-core-web/$W2JS" "$SRC/stremio-core-web/wasm_build/$W2JS.wrapped"
-node --max-old-space-size=8000 "$HERE/wasm2js-finish.js" "$SRC/stremio-core-web/wasm_build/$W2JS.wrapped" "$SRC/stremio-core-web/$W2JS"
+if [[ "$PROFILING" == 1 ]]; then
+    # Os nomes ficam no arquivo: sem o terser (o Node não precisa da fábrica entre parênteses).
+    cp "$SRC/stremio-core-web/wasm_build/$W2JS.wrapped" "$SRC/stremio-core-web/$W2JS"
+else
+    node --max-old-space-size=8000 "$HERE/wasm2js-finish.js" "$SRC/stremio-core-web/wasm_build/$W2JS.wrapped" "$SRC/stremio-core-web/$W2JS"
+fi
 node --check "$SRC/stremio-core-web/$W2JS"
 
 step "Babel (devDependencies e .babelrc do upstream)"
@@ -228,7 +259,7 @@ BABEL_VERSIONS="$(cd "$SRC/stremio-core-web" && node -p '
 Gerado por \`webos/core/build\`. Não edite à mão: rode o script de novo.
 
 - **Upstream:** https://github.com/Stremio/stremio-core, tag \`$TAG\` (commit \`$COMMIT\`), pasta \`stremio-core-web\`
-- **Patch:** \`webos/core/recipe-a.patch\` (sha256 \`$(sha256sum "$PATCH" | cut -d' ' -f1)\`): \`gloo-utils\` 0.3 → 0.2, a única dependência do lockfile que exige Rust acima de 1.77; \`webos/core/stream-links.patch\` (sha256 \`$(sha256sum "$PERF_PATCH" | cut -d' ' -f1)\`): a regex dos links de player externo compilada uma vez e o zlib sem compressão do link do player escrito direto, com os mesmos bytes (F8.6)
+- **Patch:** \`webos/core/recipe-a.patch\` (sha256 \`$(sha256sum "$PATCH" | cut -d' ' -f1)\`): \`gloo-utils\` 0.3 → 0.2, a única dependência do lockfile que exige Rust acima de 1.77; \`webos/core/stream-links.patch\` (sha256 \`$(sha256sum "$PERF_PATCH" | cut -d' ' -f1)\`): a regex dos links de player externo compilada uma vez e o zlib sem compressão do link do player escrito direto, com os mesmos bytes (F8.6); \`webos/core/guest-analytics.patch\` (sha256 \`$(sha256sum "$GUEST_PATCH" | cut -d' ' -f1)\`): sem sessão, o evento de analytics não é montado (o \`Analytics::emit\` já o descartava; F8.7)
 - **Rust:** $(rustup run "$TOOLCHAIN" rustc -V), \`cargo build --release --locked --target wasm32-unknown-unknown\` com \`--remap-path-prefix\` da pasta de trabalho e do \`CARGO_HOME\`
 - **wasm-bindgen:** $("$BINDGEN" --version), \`--target web --no-typescript\`
 - **Binaryen:** $("$WASM_OPT" --version), \`wasm-opt -O --signext-lowering\`

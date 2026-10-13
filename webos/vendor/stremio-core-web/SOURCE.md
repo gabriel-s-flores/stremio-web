@@ -3,7 +3,7 @@
 Gerado por `webos/core/build`. Não edite à mão: rode o script de novo.
 
 - **Upstream:** https://github.com/Stremio/stremio-core, tag `stremio-core-web-v0.65.0` (commit `fa22c9ca8b8574fe7a72460023d05beff2b74026`), pasta `stremio-core-web`
-- **Patch:** `webos/core/recipe-a.patch` (sha256 `f156707377c68a750aa32fe953474c1b01477aaa384cf974f23612552a1b0776`): `gloo-utils` 0.3 → 0.2, a única dependência do lockfile que exige Rust acima de 1.77; `webos/core/stream-links.patch` (sha256 `8e030cf932b82240f673d0b47d129ce38e2dc225ed1b86ba1ebd122e5ffdd5ac`): a regex dos links de player externo compilada uma vez e o zlib sem compressão do link do player escrito direto, com os mesmos bytes (F8.6)
+- **Patch:** `webos/core/recipe-a.patch` (sha256 `f156707377c68a750aa32fe953474c1b01477aaa384cf974f23612552a1b0776`): `gloo-utils` 0.3 → 0.2, a única dependência do lockfile que exige Rust acima de 1.77; `webos/core/stream-links.patch` (sha256 `8e030cf932b82240f673d0b47d129ce38e2dc225ed1b86ba1ebd122e5ffdd5ac`): a regex dos links de player externo compilada uma vez e o zlib sem compressão do link do player escrito direto, com os mesmos bytes (F8.6); `webos/core/guest-analytics.patch` (sha256 `d7430dab61e328fb1302c8fd8c944b27479a56dc0ac08c383f97101611e60c98`): sem sessão, o evento de analytics não é montado (o `Analytics::emit` já o descartava; F8.7)
 - **Rust:** rustc 1.77.2 (25ef9e3d8 2024-04-09), `cargo build --release --locked --target wasm32-unknown-unknown` com `--remap-path-prefix` da pasta de trabalho e do `CARGO_HOME`
 - **wasm-bindgen:** wasm-bindgen 0.2.121, `--target web --no-typescript`
 - **Binaryen:** wasm-opt version 133 (version_133), `wasm-opt -O --signext-lowering`
@@ -22,6 +22,6 @@ Gerado por `webos/core/build`. Não edite à mão: rode o script de novo.
 | `bridge.js` | 3926 | `51c490dcde610baad20f6bf0c2cfc87e6b886830c2c6f80080ce4a7a796199d1` |
 | `worker.js` | 5122 | `455af735f709befb35ea2b66ae70059551413d39fab5154b8de94823c288ddcc` |
 | `stremio_core_web.js` | 34361 | `39bb2133b30a6775f2478ab8dfb7f20a4772df1f54dcb0f5ea77d63d45c5ded4` |
-| `stremio_core_web_bg.wasm` | 4913686 | `6c40f87bf9e990a7db57c926880846ce4c68be9c40a43dcc4a7e06c9ec792b3c` |
-| `stremio_core_web_bg.wasm2js.js` | 9421971 | `1a62957168244a22caf914ac261e58d02f4644c97095870e9c9202e7abaece2d` |
+| `stremio_core_web_bg.wasm` | 4913708 | `58536138d22b92493b05d5ab2ae55aec764614a0d2d00ae138800776d90a630a` |
+| `stremio_core_web_bg.wasm2js.js` | 9422011 | `d36cc58fe355e4c47a37975e7e26eb9eb79c0885870a9c275d2fe1ccdea03926` |
 | `package.json` | 881 | `9dc4e0e231f1ae701b30e4116e519f9c375ecc07a51a426088b8946431d7d5d8` |

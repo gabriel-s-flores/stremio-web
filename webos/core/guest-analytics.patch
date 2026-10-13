@@ -1,0 +1,16 @@
+--- a/stremio-core-web/src/env.rs
++++ b/stremio-core-web/src/env.rs
+@@ -115,6 +115,13 @@
+             .boxed_env()
+     }
+     pub fn emit_to_analytics(event: &WebEvent, model: &WebModel, path: &str) {
++        // webOS (F8.7): without a session there are no analytics (Analytics::emit drops the event
++        // when the profile has no auth key), so nothing is built for a guest. The first
++        // LocationPathChanged compiled PLAYER_REGEX for nothing: seconds of the core on the TV,
++        // right when the first title was opened.
++        if model.ctx.profile.auth_key().is_none() {
++            return;
++        }
+         let (name, data) = match event {
+             WebEvent::UIEvent(UIEvent::LocationPathChanged { prev_path }) => (
+                 "stateChange".to_owned(),
