@@ -479,3 +479,23 @@ orquestrador** antes do merge (os agentes não usam a TV).
 - **Aceite:** A/B no emulador c8 (antes e depois, com o mesmo fixture): meta visível e 1º stream, CPU do worker por
   abertura; testes; e2e da F6.4 e regressão visual sem regressão; nada muda no desktop. Na TV (orquestrador):
   meta em ≲ 3 s e streams em ≲ 8 s no mesmo filme.
+
+### F8.7 · Abrir título instantâneo na TV, a qualquer momento
+- **Depende de:** F8.6 (mesclada)  · **Modelo:** O (high)
+- **Escopo:** o Gabriel testou a F8.6 na TV: continua lento para abrir cada título, e esperar o app "se acomodar"
+  depois de abrir não é aceitável. O alvo é a sensação do Stremio oficial: snappy. Medido na TV com a F8.6 (abertura
+  ~8 s depois do Board): meta real ~21 s e 1º stream ~27 s; worker ~16 s ocupado (futures do core 9,5 s, dos quais
+  `WebModel::update` 3,0 s de self e `Ctx::update` 1,3 s; `get_state` 2,4 s; GC 2,75 s). No c8, mesmo depois da F8.6:
+  meta real 9,7 s e stream 9,7 s. Ataque tudo o que estiver no caminho, medindo cada passo: (1) **boot**: no webOS,
+  como convidado, `PullAddonsFromAPI`/`PullUserFromAPI`/`SyncLibraryWithAPI` não têm o que buscar; o
+  `PullNotifications` (metas completas das séries da biblioteca) fica para depois, em ocioso, com intervalo mínimo,
+  e nunca a cada `focus` da janela; (2) **core**: o custo por mensagem (cada ação passa pelos ~25 modelos do
+  `WebModel`; o `Ctx::update` percorre a biblioteca a cada resposta), a desserialização das respostas dos addons e o
+  GC. Use um build com nomes e sem inlining para abrir o self do `WebModel::update`. **Mexer no core está autorizado**
+  (patch reprodutível na receita, como o `stream-links.patch`); (3) **página**: `get_state` que sobram,
+  renderização; (4) qualquer outro gargalo que o perfil mostrar.
+- **Aceite:** no emulador c8, com um fixture fiel ao estado da TV e a abertura logo depois do Board (+8 s) e com o app
+  parado (+90 s): título otimista ≲ 1 s, meta real ≲ 2 s, 1º stream ≲ 4 s depois de o addon responder; A/B antes e
+  depois; testes, e2e (F6.4) e regressão visual sem regressão; desktop idêntico. Na TV (orquestrador, com
+  autorização): os mesmos alvos, a qualquer momento depois do Board.
+
