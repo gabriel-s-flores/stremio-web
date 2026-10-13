@@ -14,8 +14,11 @@
 // and `--quiet` s, then N openings of #/detail/movie/tt15047880/tt15047880 by hash (like
 // tarefas/F8/bin/abrir-detalhes.sh on the TV), back to the Board between them. Per opening, on the page's
 // clock from the hash change:
-// - metaMs (the info column with text, the TV script's criterion), titleMs (the logo or the name shown),
+// - in the details route on top only: titleMs (the logo or the name shown: the preview of the poster
+//   opened, F8.6, or the real meta), metaMs (the REAL meta: the summary of the info column shown),
 //   streamMs (the first stream in the list), streamsAt (how many streams the list had at the end);
+//   tvMetaMs: the criterion of the TV script (tarefas/F8/bin/abrir-detalhes.sh: the first info column
+//   of the document with text), kept to compare with the TV, where it counts the preview too;
 // - every call between the page and the worker (Worker.prototype.postMessage: getState/dispatch with the
 //   model, sent and answered at; and what the worker asks the page: onCoreEvent, localStorage.setItem with
 //   the key and size);
@@ -108,14 +111,18 @@ const HOOK = `(function () {
         f.t0 = performance.now();
         location.hash = hash;
         var iv = setInterval(function () {
-            var t = now(), route = ${ROUTE};
+            var t = now(), top = ${ROUTE};
+            // The details route once it is the one on top (before, the last route is still the Board).
+            var route = top && top.querySelector('[class*="metadetails-container"]') ? top : null;
             var mi = document.querySelector('[class*="meta-info-container"]');
-            if (m.metaMs === undefined && mi && mi.textContent.trim().length > 5) m.metaMs = t;
+            if (m.tvMetaMs === undefined && mi && mi.textContent.trim().length > 5) m.tvMetaMs = t;
+            var summary = route && route.querySelector('[class*="meta-preview-container"] [class*="description-container"]');
+            if (m.metaMs === undefined && summary && visible(summary) && summary.textContent.trim().length > 5) m.metaMs = t;
             if (m.titleMs === undefined && route) {
                 var logo = route.querySelector('img[class*="logo-"]'), name = route.querySelector('[class*="logo-placeholder"]');
                 if ((logo && logo.complete && logo.naturalWidth > 0 && visible(logo)) || (name && visible(name) && name.textContent)) m.titleMs = t;
             }
-            if (m.streamMs === undefined && document.querySelector('[class*="stream-container"]')) m.streamMs = t;
+            if (m.streamMs === undefined && route && route.querySelector('[class*="stream-container"]')) m.streamMs = t;
             if ((m.metaMs !== undefined && m.streamMs !== undefined) || t > 90000) {
                 m.doneMs = t;
                 clearInterval(iv);
@@ -233,10 +240,19 @@ async function round(ipk, label) {
         await evaluate(`window.__f86.open(${JSON.stringify(HASH)})`);
         const start = Date.now();
         let m = null;
+        let previewShot = i !== 1;
         while (Date.now() - start < 95000) {
             await sleep(500);
             m = JSON.parse(await evaluate('JSON.stringify(window.__f86.m)').catch(() => 'null'));
             if (m && m.doneMs !== undefined) break;
+            // The first opening, once: the screen with the title and no real meta yet (the preview, F8.6).
+            if (!previewShot && m && m.titleMs !== undefined && m.metaMs === undefined) {
+                previewShot = true;
+                try {
+                    const shot = await session.send('Page.captureScreenshot', {}, 30000);
+                    fs.writeFileSync(path.join(OUT, `${label}.preview.png`), Buffer.from(shot.data, 'base64'));
+                } catch (e) { /* no screenshot */ }
+            }
         }
         // The profile ends with the opening (meta and first stream on screen): the Chromium 53 worker takes
         // long to serialize a long profile, and on the emulator Profiler.stop may never come back.
@@ -270,7 +286,7 @@ async function round(ipk, label) {
         };
         result.openings.push(opening);
         save();
-        log(`[${label}] opening ${i}`, JSON.stringify({ metaMs: opening.metaMs, titleMs: opening.titleMs, streamMs: opening.streamMs, idleMs, streamsAt: opening.streamsAt, getState: opening.getState, newState: opening.newState, setItem: opening.setItem, ticks: opening.ticks }));
+        log(`[${label}] opening ${i}`, JSON.stringify({ titleMs: opening.titleMs, metaMs: opening.metaMs, tvMetaMs: opening.tvMetaMs, streamMs: opening.streamMs, idleMs, streamsAt: opening.streamsAt, getState: opening.getState, newState: opening.newState, setItem: opening.setItem, ticks: opening.ticks }));
         if (i === 1) {
             try {
                 const shot = await session.send('Page.captureScreenshot', {}, 30000);
@@ -317,7 +333,7 @@ for (const ipk of IPKS) {
     const all = (pick) => median(mine.flatMap((x) => x.openings.map(pick)).filter((v) => typeof v === 'number'));
     log(path.basename(ipk), JSON.stringify({
         rounds: mine.length,
-        metaMs: all((o) => o.metaMs), titleMs: all((o) => o.titleMs), streamMs: all((o) => o.streamMs), idleMs: all((o) => o.idleMs),
+        titleMs: all((o) => o.titleMs), metaMs: all((o) => o.metaMs), tvMetaMs: all((o) => o.tvMetaMs), streamMs: all((o) => o.streamMs), idleMs: all((o) => o.idleMs),
         workerCpuMs: all((o) => (workerTicks(o) === null ? null : workerTicks(o) * 10)),
         getStateMetaDetails: all((o) => o.getState.meta_details), getStateCtx: all((o) => o.getState.ctx || 0),
     }));
