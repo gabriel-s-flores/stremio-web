@@ -100,6 +100,7 @@ jest.mock('../../../src/routes/MetaDetails/StreamsList/StreamsList.js', () => {
 const React = require('react');
 const { act } = require('react');
 const { createRoot } = require('react-dom/client');
+const { MemoryRouter, Routes, Route } = require('react-router');
 const headerProbe = require('../../lib/header-probe');
 const ranking = require('../../lib/stream-ranking');
 const { setup, entryOf, MEDIA_URL } = require('./helpers');
@@ -184,8 +185,16 @@ const createHarness = (variant) => {
         await flush();
     };
     const addonEntry = (streams) => ({ addon: { transportUrl: 'http://addon/manifest.json', manifest: { name: 'Debrid de teste' } }, content: { type: 'Ready', content: streams } });
-    const render = (streams, videoId) => act(async () => {
-        root.render(React.createElement(StreamsList, { streams, video: { id: videoId || 'tt0111161' }, type: 'movie' }));
+    // options.path renders the list in a route like the app's (/detail/:type/:id/:videoId), for the hooks
+    // that read the route's params (F8.6); options.video overrides the video (null: no meta yet).
+    const render = (streams, videoId, options = {}) => act(async () => {
+        const video = options.video !== undefined ? options.video : { id: videoId || 'tt0111161' };
+        const list = React.createElement(StreamsList, { streams, video, type: options.type || 'movie' });
+        root.render(options.path ?
+            React.createElement(MemoryRouter, { initialEntries: [options.path] },
+                React.createElement(Routes, null, React.createElement(Route, { path: '/detail/:type/:id/:videoId?', element: list })))
+            :
+            list);
     });
     const items = () => Array.from(container.querySelectorAll('.stream-container'));
     const idOf = (item) => entryOf({ description: item.querySelector('.description-container .description-text').textContent }).id;

@@ -3,10 +3,14 @@
 // C8 labels) took ~4.5 s on the TV, for a list the remote walks one item at a time from the top.
 // The list starts with the first FIRST items (in the C8 order) and grows by STEP whenever the focus
 // gets within AHEAD items of the end, or the scroll (the Magic Remote's wheel) within SCROLL_AHEAD
-// pixels of the bottom. The count reached is remembered per page path, so coming back to the page
-// (Back from the Player) renders as many and the focus of F4.1c finds the stream played.
+// pixels of the bottom. The count reached is remembered per page (the route's type, id and video),
+// so coming back to the page (Back from the Player) renders as many and the focus of F4.1c finds the
+// stream played. The key comes from the route's params, not from the global location (another route on
+// top, like the Player, would change it) nor from `video` (null until the meta arrives: an episode's
+// list would shrink under the focus when the meta comes after the streams).
 
 const React = require('react');
+const { useParams } = require('react-router');
 const { replaceItems, chain } = require('../../../../webos/lib/stream-ranking');
 
 const SHOWN = { first: 24, step: 24, ahead: 8, scrollAhead: 600 };
@@ -27,10 +31,10 @@ const itemIndexOf = (container, element) => {
     return node ? Array.prototype.indexOf.call(container.children, node) : -1;
 };
 
-const useShownStreams = (video, isItem) => {
-    // The page path (the app routes by the hash) and the episode.
-    const pathname = typeof window !== 'undefined' ? window.location.hash.split('?')[0] : '';
-    const key = `${pathname}|${video && typeof video.id === 'string' ? video.id : ''}`;
+const useShownStreams = (isItem) => {
+    // The params of this page's route: each stacked view keeps its own location (src/router/Routes.tsx).
+    const { type = '', id = '', videoId = '' } = useParams();
+    const key = `${type}|${id}|${videoId}`;
     const [state, setState] = React.useState(() => ({ key, count: memory.get(key) || SHOWN.first }));
     // Another list in the same component (another episode): its own count.
     const count = state.key === key ? state.count : memory.get(key) || SHOWN.first;

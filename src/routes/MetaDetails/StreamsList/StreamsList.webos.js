@@ -17,7 +17,7 @@ const isStreamItem = (element) => element.type === Stream;
 const StreamsList = (props) => {
     const element = UpstreamStreamsList(props);
     const applyC8Ranking = useC8Ranking(props.streams, props.video, isStreamItem);
-    const applyShown = useShownStreams(props.video, isStreamItem);
+    const applyShown = useShownStreams(isStreamItem);
     return applyShown(applyC8Ranking(element));
 };
 
