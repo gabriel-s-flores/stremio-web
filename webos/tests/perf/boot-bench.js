@@ -4,7 +4,7 @@
 //
 //   node webos/tests/perf/boot-bench.js [--vendor <dir>] [--wasm2js <file>] [--app upstream|webos]
 //        [--open-after board|idle|<ms>] [--latency <ms>] [--cache <dir>] [--offline] [--notifications fresh]
-//        [--serial] [--json <out.json>]
+//        [--serial] [--repeat N] [--json <out.json>]
 //   node --cpu-prof --cpu-prof-dir <dir> webos/tests/perf/boot-bench.js --vendor <core built with --profiling> ...
 //
 // - Storage: the TV-like library (library-fixture.js, real IMDb ids, so the notifications pull gets real
@@ -130,6 +130,10 @@ const kindOf = (url) => {
 const SERIAL = flag('serial');
 let gate = Promise.resolve();
 global.self = global;
+// The page's calls reach the worker as `message` events (webos/lib/meta-first watches them).
+const messageListeners = [];
+global.addEventListener = (name, fn) => { if (name === 'message') messageListeners.push(fn); };
+const pageMessage = (path, args) => messageListeners.forEach((fn) => fn({ data: { request: { id: 'bench', path, args } } }));
 global.WorkerGlobalScope = Object;
 global.location = { href: `${BASE}worker.js` };
 global.document = { baseURI: `${BASE}worker.js` };
@@ -160,8 +164,10 @@ global.fetch = async (request) => {
         if (SERIAL) gate = new Promise((resolve) => { release = resolve; });
         return previous.then(() => text()).then((body) => {
             const start = performance.now();
+            // The page's getState and dispatch calls that ran in between are timed on their own.
+            const others = busy.getState + busy.dispatch;
             setImmediate(() => {
-                const ms = performance.now() - start;
+                const ms = performance.now() - start - (busy.getState + busy.dispatch - others);
                 busy.futures += ms;
                 futuresBy[kind] = (futuresBy[kind] || 0) + ms;
                 if (ms > 5) note({ handled: kind, ms: Math.round(ms), bytes: body.length });
@@ -194,6 +200,8 @@ const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
     // The tlsproxy itself only matters on the TV (https hosts without the Let's Encrypt chain).
     const { install: installCatalogTrim } = require('../../lib/catalog-trim/index.js');
     installCatalogTrim(global);
+    // F8.7: and the meta of a title before its streams.
+    require('../../lib/meta-first/index.js').install(global);
     const loader = require('../../core/loader');
     const glue = require(path.join(VENDOR, 'stremio_core_web.js'));
     await glue.default(loader.loadConfigured());
@@ -216,6 +224,7 @@ const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
     const watched = new Set(['ctx', 'board', 'continue_watching_preview', 'streaming_server']);
     const last = {};
     const getState = (model, reason) => {
+        pageMessage(['getState'], [model]);
         const start = performance.now();
         const state = last[model] = timed('getState', () => glue.get_state(model));
         const ms = performance.now() - start;
@@ -331,6 +340,14 @@ const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
     const openBusy = fromEntries(Object.keys(before).map((k) => [k, Math.round(busy[k] - before[k])]));
     // Until idle, for the total.
     await sleep(Math.max(1500, LATENCY * 4));
+    // --repeat N: the cost of one get_state of the opened Details (meta and 224 streams), N times.
+    const repeated = [];
+    for (let i = 0; i < Number(option('repeat', 0)); i++) {
+        const start = performance.now();
+        glue.get_state('meta_details');
+        repeated.push(performance.now() - start);
+    }
+    repeated.sort((a, b) => a - b);
     const summary = {
         vendor: path.basename(VENDOR),
         app: APP,
@@ -341,6 +358,8 @@ const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
         movie: id,
         metaMs: marks.metaMs,
         streamMs: marks.streamMs,
+        getStateMetaDetailsMs: repeated.length ? Math.round(repeated[repeated.length >> 1] * 10) / 10 : undefined,
+        getStateMetaDetailsBytes: repeated.length ? JSON.stringify(glue.get_state('meta_details')).length : undefined,
         coreBeforeOpenMs: bootBusy,
         coreDuringOpenMs: openBusy,
         coreTotalMs: fromEntries(Object.entries(busy).map(([k, v]) => [k, Math.round(v)])),

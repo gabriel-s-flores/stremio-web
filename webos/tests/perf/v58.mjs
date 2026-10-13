@@ -42,6 +42,7 @@ const FILES = [
     'webos/tests/addon/torrentio.js',
     'webos/core/loader.js',
     'webos/lib/catalog-trim/index.js',
+    'webos/lib/meta-first/index.js',
 ];
 const OUT = fs.mkdtempSync(path.join(os.tmpdir(), 'v58-'));
 for (const file of FILES) {

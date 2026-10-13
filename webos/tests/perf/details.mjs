@@ -34,7 +34,8 @@
 // - --from-board: the opening is a click on the first movie of the first catalog row of the Board (the
 //   remote's OK on a poster: the poster stays under Details, so the optimistic title of F8.6 shows), not a
 //   hash change; the movie is whatever Cinemeta's first catalog has, the local addon answers its 224 streams;
-// - every call between page and worker is recorded from the launch (at < 0: before the opening).
+// - every call between page and worker is recorded from the launch (at < 0: before the opening);
+// - --addon-delay N (default 150): the local addon answers after N ms, like Torrentio + AllDebrid on the TV.
 // Writes <dir>/details.json and prints the medians per IPK.
 import { execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -59,6 +60,8 @@ const IDLE_WAIT_S = Number(args['idle-wait'] || 120);
 // The worker profiler's sampling interval (µs): 1000 like the TV profile.
 const PROFILE_INTERVAL_US = Number(args['profile-interval'] || 1000);
 const HASH = args.hash || '#/detail/movie/tt15047880/tt15047880';
+// How long the local addon holds each answer (F8.7): ~150 ms, like Torrentio + AllDebrid on the TV.
+const ADDON_DELAY_MS = Number(args['addon-delay'] === undefined ? 150 : args['addon-delay']);
 const { EMU_DEVICE: DEVICE, EMU_CDP_PORT: CDP_PORT } = process.env;
 if (!DEVICE || !CDP_PORT || IPKS.length === 0) {
     console.error('usage (inside webos/tools/emu-run): details.mjs --out <dir> [--rounds N] <ipk>...');
@@ -70,7 +73,7 @@ const log = (...a) => console.log(`[${new Date().toTimeString().slice(0, 8)}]`, 
 // The local addon with the 224 streams (stopped at the end).
 const addonInfo = path.join(OUT, 'addon.json');
 fs.rmSync(addonInfo, { force: true });
-const addon = spawn(process.execPath, [path.join(REPO, 'webos/tests/addon/server.mjs'), '--set', 'torrentio', '--info', addonInfo],
+const addon = spawn(process.execPath, [path.join(REPO, 'webos/tests/addon/server.mjs'), '--set', 'torrentio', '--info', addonInfo, '--answer-delay', String(ADDON_DELAY_MS)],
     { stdio: ['ignore', fs.openSync(path.join(OUT, 'addon.log'), 'w'), 'inherit'] });
 process.on('exit', () => addon.kill('SIGTERM'));
 for (let i = 0; i < 100 && !fs.existsSync(addonInfo); i++) await sleep(100);
@@ -96,7 +99,20 @@ const HOOK = `(function () {
     var onMessage = function (e) {
         var d = e.data || {}, calls = f.calls;
         if (!calls) return;
-        if (d.response && pending[d.response.id]) { pending[d.response.id].push(now()); delete pending[d.response.id]; }
+        if (d.response && pending[d.response.id]) {
+            var entry0 = pending[d.response.id];
+            entry0.push(now());
+            // What a meta_details answer had: the meta's state and, per addon, the streams' state and count (F8.7).
+            var data = d.response.result && d.response.result.data;
+            if (entry0[1] === 'getState' && entry0[3] === 'meta_details' && data) {
+                try {
+                    entry0.push((data.metaItem ? data.metaItem.content.type : 'none') + ' | ' + (data.streams || []).map(function (s) {
+                        return s.addon.manifest.id.split('.').pop() + ':' + s.content.type + (s.content.type === 'Ready' ? s.content.content.length : '');
+                    }).join(' '));
+                } catch (e) { entry0.push('?'); }
+            }
+            delete pending[d.response.id];
+        }
         if (d.request) {
             var p = d.request.path.join('.'), a = d.request.args || [];
             var entry = ['worker', p, now()];
