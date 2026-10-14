@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // boot-bench.js on the JavaScript engine of the TV (F8.7): Node 8.2 has V8 5.8.283, the TV's LG V8 is 5.8.301.
-// The TV runs the app with "--no-crankshaft" (webos/app/appinfo.json, F7.2): nothing of the wasm2js core is
-// optimized there, which a current Node (where the core is ~45 times faster) does not show.
+// The TV runs the app with the v8ExtraFlags of webos/app/appinfo.json ("--no-crankshaft", F7.2: nothing of the
+// wasm2js core is optimized there, which a current Node, where the core is ~45 times faster, does not show;
+// "--no-flush-code", F8.7).
 //
 //   node webos/tests/perf/v58.mjs [--node <node 8 binary>] [--v8 "<V8 flags>"] [--prof <out.cpuprofile>] -- <boot-bench.js args>
 //
 // - --node: default ~/webos-tv-sdk/tools/node8/node-v8.2.1-linux-x64/bin/node;
-// - --v8: default "--no-crankshaft" (the TV's appinfo.json); "" for the default V8 5.8 pipeline (Crankshaft);
+// - --v8: default the v8ExtraFlags of webos/app/appinfo.json; "" for the default V8 5.8 pipeline (Crankshaft);
 // - --prof: a CPU profile of the whole run through the inspector module of Node 8 (1 ms), for symbolize.mjs.
 // The bench and what it requires are transpiled to Node 8 with the repo's Babel into a temporary folder;
 // the vendored core (ES5) is loaded as is. Node 8 has no fetch: run with --offline (the network cache of a
@@ -32,7 +33,8 @@ const option = (name, fallback) => {
     return index !== -1 && index + 1 < own.length ? own[index + 1] : fallback;
 };
 const NODE = option('node', path.join(os.homedir(), 'webos-tv-sdk/tools/node8/node-v8.2.1-linux-x64/bin/node'));
-const FLAGS = option('v8', '--no-crankshaft').split(' ').filter(Boolean);
+const APP_FLAGS = JSON.parse(fs.readFileSync(path.join(REPO, 'webos/app/appinfo.json'), 'utf8')).v8ExtraFlags || '';
+const FLAGS = option('v8', APP_FLAGS).split(' ').filter(Boolean);
 const PROF = option('prof', null);
 
 // The files of the bench, same relative paths under OUT.
