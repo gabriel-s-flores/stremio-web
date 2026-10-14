@@ -12,9 +12,9 @@
 #
 # Receita A: Rust 1.77.2 com gloo-utils 0.2 (recipe-a.patch), os deep links dos streams mais baratos
 # (stream-links.patch, F8.6), nada de analytics para um convidado (guest-analytics.patch, F8.7) e a lista de
-# streams de Detalhes sem o link do player, que a página monta (list-links.patch, F8.7) e o aquecimento das
-# funções de abrir Detalhes (warm-up.patch, F8.7) e as respostas dos addons lidas direto do texto
-# (fast-responses.patch, F8.7), cargo
+# streams de Detalhes sem o link do player, que a página monta (list-links.patch, F8.7), as respostas dos addons
+# lidas direto do texto (fast-responses.patch, F8.7) e o aquecimento das funções de abrir Detalhes (warm-up.patch,
+# F8.7), cargo
 # build wasm32-unknown-unknown,
 # wasm-bindgen CLI 0.2.121 --target web, wasm-opt -O --signext-lowering, correções na glue (abaixo)
 # e a glue, o bridge e o worker transpilados com o Babel do próprio pacote (mesmas versões e
@@ -119,8 +119,8 @@ patch -d "$SRC" -p1 --forward --quiet < "$PATCH"
 patch -d "$SRC" -p1 --forward --quiet < "$PERF_PATCH"
 patch -d "$SRC" -p1 --forward --quiet < "$GUEST_PATCH"
 patch -d "$SRC" -p1 --forward --quiet < "$LIST_PATCH"
-patch -d "$SRC" -p1 --forward --quiet < "$WARM_PATCH"
 patch -d "$SRC" -p1 --forward --quiet < "$FAST_PATCH"
+patch -d "$SRC" -p1 --forward --quiet < "$WARM_PATCH"
 
 step "cargo build (Rust $TOOLCHAIN, wasm32-unknown-unknown, release)"
 # Caminhos absolutos entram nas mensagens de panic; o remap deixa o binário igual em qualquer
@@ -275,7 +275,7 @@ BABEL_VERSIONS="$(cd "$SRC/stremio-core-web" && node -p '
 Gerado por \`webos/core/build\`. Não edite à mão: rode o script de novo.
 
 - **Upstream:** https://github.com/Stremio/stremio-core, tag \`$TAG\` (commit \`$COMMIT\`), pasta \`stremio-core-web\`
-- **Patch:** \`webos/core/recipe-a.patch\` (sha256 \`$(sha256sum "$PATCH" | cut -d' ' -f1)\`): \`gloo-utils\` 0.3 → 0.2, a única dependência do lockfile que exige Rust acima de 1.77; \`webos/core/stream-links.patch\` (sha256 \`$(sha256sum "$PERF_PATCH" | cut -d' ' -f1)\`): a regex dos links de player externo compilada uma vez e o zlib sem compressão do link do player escrito direto, com os mesmos bytes (F8.6); \`webos/core/guest-analytics.patch\` (sha256 \`$(sha256sum "$GUEST_PATCH" | cut -d' ' -f1)\`): sem sessão, o evento de analytics não é montado (o \`Analytics::emit\` já o descartava; F8.7); \`webos/core/list-links.patch\` (sha256 \`$(sha256sum "$LIST_PATCH" | cut -d' ' -f1)\`): a lista de streams de \`meta_details\` sem o \`deepLinks.player\`, que a página monta com os mesmos bytes (\`webos/lib/player-link\`), e o progresso de cada stream comparando primeiro o vídeo (F8.7); \`webos/core/warm-up.patch\` (sha256 \`$(sha256sum "$WARM_PATCH" | cut -d' ' -f1)\`): \`webos_warm_up()\`, o código de abrir Detalhes rodado num modelo à parte, sem rede nem estado, para o wasm2js compilar as funções antes do primeiro título (F8.7); \`webos/core/fast-responses.patch\` (sha256 \`$(sha256sum "$FAST_PATCH" | cut -d' ' -f1)\`): as respostas dos addons lidas direto do texto, sem o \`serde_json::Value\` intermediário nem o \`serde_path_to_error\` (o mesmo resultado; uma resposta que falha é lida de novo como antes, para o mesmo erro) (F8.7)
+- **Patch:** \`webos/core/recipe-a.patch\` (sha256 \`$(sha256sum "$PATCH" | cut -d' ' -f1)\`): \`gloo-utils\` 0.3 → 0.2, a única dependência do lockfile que exige Rust acima de 1.77; \`webos/core/stream-links.patch\` (sha256 \`$(sha256sum "$PERF_PATCH" | cut -d' ' -f1)\`): a regex dos links de player externo compilada uma vez e o zlib sem compressão do link do player escrito direto, com os mesmos bytes (F8.6); \`webos/core/guest-analytics.patch\` (sha256 \`$(sha256sum "$GUEST_PATCH" | cut -d' ' -f1)\`): sem sessão, o evento de analytics não é montado (o \`Analytics::emit\` já o descartava; F8.7); \`webos/core/list-links.patch\` (sha256 \`$(sha256sum "$LIST_PATCH" | cut -d' ' -f1)\`): a lista de streams de \`meta_details\` sem o \`deepLinks.player\`, que a página monta com os mesmos bytes (\`webos/lib/player-link\`), e o progresso de cada stream comparando primeiro o vídeo (F8.7); \`webos/core/fast-responses.patch\` (sha256 \`$(sha256sum "$FAST_PATCH" | cut -d' ' -f1)\`): as respostas dos addons lidas direto do texto, sem o \`serde_json::Value\` intermediário nem o \`serde_path_to_error\` (o mesmo resultado; uma resposta que falha é lida de novo como antes, para o mesmo erro) (F8.7); \`webos/core/warm-up.patch\` (sha256 \`$(sha256sum "$WARM_PATCH" | cut -d' ' -f1)\`): \`webos_warm_up()\`, o código de abrir Detalhes rodado num modelo à parte, sem rede nem estado, para o wasm2js compilar as funções antes do primeiro título (F8.7)
 - **Rust:** $(rustup run "$TOOLCHAIN" rustc -V), \`cargo build --release --locked --target wasm32-unknown-unknown\` com \`--remap-path-prefix\` da pasta de trabalho e do \`CARGO_HOME\`
 - **wasm-bindgen:** $("$BINDGEN" --version), \`--target web --no-typescript\`
 - **Binaryen:** $("$WASM_OPT" --version), \`wasm-opt -O --signext-lowering\`

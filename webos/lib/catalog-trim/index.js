@@ -13,16 +13,20 @@
 // F8.7: each item also keeps only the keys the core's structs read (stremio-core src/types/resource/meta_item.rs):
 // - `metas` (catalogs): MetaItemPreviewLegacy, the keys of PREVIEW_KEYS. Cinemeta sends cast, director,
 //   writer, popularities, slug, ids of other databases... that no struct reads;
-// - `meta` (the meta of Details) and `metasDetailed` (catalogs with full metas, like the Calendar's): MetaItem
-//   (the preview keys and `videos`), and in each video the keys of Video, SeriesInfo and VideoEpgInfo;
-// - `metasDetailed` of the `lastVideosIds` catalog (Ctx PullNotifications: the last episodes of the library's
-//   series, ~1.2 MB from Cinemeta for 100 series): only what update_notification_items reads (the id and type
-//   of the meta, the id, release date, season and episode of each video). These catalogs are kept in
-//   Ctx.notification_catalogs, which only update_notifications uses and the core never serializes.
+// - `meta` (the meta of Details) and `metasDetailed` (catalogs with full metas: the Calendar's and the
+//   lastVideosIds catalog of Ctx PullNotifications, ~1.2 MB from Cinemeta for 100 series): MetaItem (the preview
+//   keys and `videos`), and in each video the keys of Video, SeriesInfo and VideoEpgInfo.
+// Only keys no struct reads go: a key a struct reads stays even where its value is not used (the notifications
+// read only ids and dates, but an invalid poster or a video with both title and name makes the core drop the
+// whole meta, and the trimmed answer must be dropped the same way).
 // Objects whose keys the core keeps as they come (behaviorHints, links, trailers, streams) are not touched,
 // the top-level keys of the answer stay (the core checks there is exactly one of metas/metasDetailed/meta...),
 // and items that are not objects stay where they were (the core skips them itself). The core ends up with the
 // same state: webos/tests/catalog-trim/core-equivalence.test.js runs the vendored core with and without this.
+// More permissive, never less: the JSON goes through JSON.parse and JSON.stringify, so a value the core refuses
+// in a key it does not read (a number out of range like 1e999, a lone surrogate escape) is gone, and such a
+// number in a key it reads becomes null (which the core reads as "none"). A repeated key keeps its last value,
+// as the core's serde_json::Value does.
 //
 // install(scope) wraps scope.fetch in the core worker: the 200/201 answer to a GET of an addon catalog
 // (…/catalog/<type>/<id>[/<extra>].json) or meta (…/meta/<type>/<id>.json) with something to take out reaches
@@ -31,7 +35,6 @@
 
 const CATALOG_PATH = /\/catalog\/[^/?#]+\/[^/?#]+(?:\/[^?#]*)?\.json(?:[?#]|$)/;
 const META_PATH = /\/meta\/[^/?#]+\/[^/?#]+\.json(?:[?#]|$)/;
-const LAST_VIDEOS = /\/catalog\/[^/?#]+\/[^/?#]+\/(?:[^/?#]*&)?lastVideosIds=/;
 const READ_STATUSES = [200, 201];
 
 // MetaItemPreviewLegacy (camelCase).
@@ -42,9 +45,6 @@ const META_KEYS = PREVIEW_KEYS.concat(['videos']);
 // Video ("name" is an alias of title), SeriesInfo and VideoEpgInfo (both flattened into the video).
 const VIDEO_KEYS = ['id', 'title', 'name', 'released', 'overview', 'thumbnail', 'streams', 'stream', 'trailerStreams',
     'season', 'episode', 'startTime', 'endTime', 'runtime', 'releaseInfo', 'genres', 'cast', 'directors', 'links', 'ratings'];
-// update_notification_items: meta id (and type: MetaItem::videos_iter keeps the season > 0 videos of a series).
-const NOTIFICATION_KEYS = ['id', 'type', 'name', 'videos'];
-const NOTIFICATION_VIDEO_KEYS = ['id', 'released', 'season', 'episode'];
 
 const isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
@@ -73,9 +73,8 @@ const trimItems = (items, keys, videoKeys) => {
     return removed;
 };
 
-// The text with only what the core reads, or null when there is nothing to take out. `url` tells the
-// lastVideosIds catalog (the notifications) from the others.
-export const trimCatalogText = (text, url) => {
+// The text with only what the core reads, or null when there is nothing to take out.
+export const trimCatalogText = (text) => {
     if (typeof text !== 'string') return null;
     let value;
     try {
@@ -88,9 +87,7 @@ export const trimCatalogText = (text, url) => {
     if (Array.isArray(value.metas)) {
         removed = trimItems(value.metas, PREVIEW_KEYS, null);
     } else if (Array.isArray(value.metasDetailed)) {
-        removed = typeof url === 'string' && LAST_VIDEOS.test(url)
-            ? trimItems(value.metasDetailed, NOTIFICATION_KEYS, NOTIFICATION_VIDEO_KEYS)
-            : trimItems(value.metasDetailed, META_KEYS, VIDEO_KEYS);
+        removed = trimItems(value.metasDetailed, META_KEYS, VIDEO_KEYS);
     } else if (isPlainObject(value.meta)) {
         removed = trimItems([value.meta], META_KEYS, VIDEO_KEYS);
     }
@@ -116,7 +113,7 @@ export const install = (scope) => {
         return answer.then((response) => {
             if (READ_STATUSES.indexOf(response.status) === -1) return response;
             return response.text().then((text) => {
-                const trimmed = trimCatalogText(text, requestUrl(input));
+                const trimmed = trimCatalogText(text);
                 return new ResponseCtor(trimmed === null ? text : trimmed, {
                     status: response.status,
                     statusText: response.statusText,

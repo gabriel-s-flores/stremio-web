@@ -69,19 +69,16 @@ describe('trimCatalogText: only what the core reads (F8.7)', () => {
         const expected = { ...preview, videos: [kept, { ...epg, extra: undefined }, 7] };
         delete expected.videos[1].extra;
         expect(JSON.parse(trimCatalogText(JSON.stringify({ meta })))).toEqual({ meta: expected });
-        const url = 'https://v3-cinemeta.strem.io/catalog/series/calendar-videos/calendarVideosIds=tt1.json';
-        expect(JSON.parse(trimCatalogText(JSON.stringify({ metasDetailed: [meta] }), url))).toEqual({ metasDetailed: [expected] });
+        expect(JSON.parse(trimCatalogText(JSON.stringify({ metasDetailed: [meta] })))).toEqual({ metasDetailed: [expected] });
     });
 
-    test('the lastVideosIds catalog (notifications): id, type, name and, per video, id, released, season, episode', () => {
-        const meta = { ...preview, ...extras, videos: [cinemetaVideo('tt1:1:1'), 'x'] };
-        const url = 'https://v3-cinemeta.strem.io/catalog/series/last-videos/lastVideosIds=tt1%2Ctt2.json';
-        expect(JSON.parse(trimCatalogText(JSON.stringify({ metasDetailed: [meta, null] }), url))).toEqual({
-            metasDetailed: [{ id: 'tt1', type: 'series', name: 'S', videos: [{ id: 'tt1:1:1', released: '2019-01-01T00:00:00.000Z', season: 1, episode: 1 }, 'x'] }, null],
-        });
-        // With other extras before it, too.
-        const other = 'https://a.example/catalog/series/x/genre=Drama&lastVideosIds=tt1.json';
-        expect(JSON.parse(trimCatalogText(JSON.stringify({ metasDetailed: [meta] }), other)).metasDetailed[0]).not.toHaveProperty('poster');
+    test('the lastVideosIds catalog (notifications): the same keys as any other metasDetailed, invalid values included', () => {
+        // An invalid poster, an empty link url and a video with both title and name make the core drop the meta:
+        // the trimmed answer keeps them, so the core drops it the same way.
+        const bad = { ...preview, ...extras, poster: '/relative.jpg', links: [{ name: 'x', category: 'Genres', url: '' }], videos: [cinemetaVideo('tt1:1:1'), 'x'] };
+        const trimmed = JSON.parse(trimCatalogText(JSON.stringify({ metasDetailed: [bad, null] })));
+        const expected = { ...preview, poster: '/relative.jpg', links: bad.links, videos: [{ id: 'tt1:1:1', name: 'Pilot', title: 'Pilot', season: 1, episode: 1, released: '2019-01-01T00:00:00.000Z', overview: 'O', thumbnail: 'https://t/1.jpg' }, 'x'] };
+        expect(trimmed).toEqual({ metasDetailed: [expected, null] });
     });
 
     test('the top level stays: two kinds of items still reach the core as two (it refuses that answer)', () => {

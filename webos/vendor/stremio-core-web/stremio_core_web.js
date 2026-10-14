@@ -105,8 +105,8 @@ function start() {
  * the C8 profile, the next ones 1-2 ms), and opening the first title of a session paid it for the meta and
  * the streams answers, an addon that fails and the `get_state` of the details. Called by the page when the
  * app is idle: a copy of the runtime's model (copying it makes no effect) gets the Details of a movie and of
- * a series episode, set up as the Load leaves them (the requests loading), canned answers through the same
- * deserializer as `fetch` (one stream addon answers an error) and its `get_state('meta_details')`; the Load
+ * a series episode, set up as the Load leaves them (the requests loading), canned answers read as `fetch` reads
+ * an addon's answer (one stream addon answers an error) and its `get_state('meta_details')`; the Load
  * action is only parsed (its update would make the requests: the core's fetch starts when the effect is
  * built). The copy's effects are dropped: nothing reaches the runtime, the storage, the network or the page.
  * One request is made on purpose, through the runtime's fetch: the streaming server's local addon
