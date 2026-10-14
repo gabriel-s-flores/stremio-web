@@ -511,12 +511,12 @@ function __wbg_get_imports() {
       return addHeapObject(ret);
     },
     __wbindgen_cast_0000000000000001: function __wbindgen_cast_0000000000000001(arg0, arg1) {
-      // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2253, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+      // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2221, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
       var ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h09e5e79ae7d953ce);
       return addHeapObject(ret);
     },
     __wbindgen_cast_0000000000000002: function __wbindgen_cast_0000000000000002(arg0, arg1) {
-      // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 528, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+      // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 811, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
       var ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__hfc8fcfa0cce7baed);
       return addHeapObject(ret);
     },

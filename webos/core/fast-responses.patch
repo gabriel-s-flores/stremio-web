@@ -154,15 +154,16 @@
  };
  
  use crate::{
-@@ -562,6 +566,21 @@
+@@ -562,6 +566,20 @@
      for<'de> OUT: Deserialize<'de> + 'static,
  {
      let response = Into::<String>::into(response);
 +    // webOS port (F8.7): serde_path_to_error keeps the path of every key of every answer only to name where
 +    // an error is, and the addons' answers (ResourceResponse) were built as a whole serde_json::Value before
 +    // their one variant was read: in wasm2js on the TV that was most of the time the core spent on them.
-+    // An answer is read first without the tracking (an addon's, by resource_response_from_text), and one
-+    // that fails is read again as before, for the same error.
++    // An addon's answer is read first by resource_response_from_text, and one it cannot read is read again
++    // as before, for the same error. (The API's answers, few and small, go as before: a fast path for every
++    // type of answer made the wasm2js 240 KB bigger.)
 +    if std::any::TypeId::of::<OUT>() == std::any::TypeId::of::<ResourceResponse>() {
 +        if let Some(value) = resource_response_from_text(response.as_str()) {
 +            let value: Box<dyn std::any::Any> = Box::new(value);
@@ -170,8 +171,6 @@
 +                return Ok(*value);
 +            }
 +        }
-+    } else if let Ok(value) = serde_json::from_str::<OUT>(response.as_str()) {
-+        return Ok(value);
 +    }
      let mut deserializer = serde_json::Deserializer::from_str(response.as_str());
  
