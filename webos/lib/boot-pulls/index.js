@@ -16,6 +16,10 @@
 //   `intervalMs` (the core's own interval, REQUEST_LAST_VIDEOS_EVERY: 6 h), counted across launches
 //   (localStorage), since the core only keeps its time when the notifications change. The repeated asks
 //   (every focus of the window) only keep the one that is waiting.
+// - The core's warm-up (transport.warmUp, webos/core/warm-up.patch): in wasm2js on the TV the first run of a
+//   code path of the core costs hundreds of ms, and the first title opened paid it for every step. It runs
+//   once per launch, once the core answered a `ctx` and the app has been idle for `warmUpIdleMs` (3 s), not in
+//   the Player.
 //
 // wrap(transport, options) -> the transport with getState (to see the `ctx`) and dispatch wrapped.
 
@@ -25,6 +29,7 @@ const PULL_NOTIFICATIONS = 'PullNotifications';
 const STORAGE_KEY = 'webos.pullNotifications.at';
 const IDLE_MS = 20 * 1000;
 const INTERVAL_MS = 6 * 60 * 60 * 1000;
+const WARM_UP_IDLE_MS = 3 * 1000;
 const ACTIVITY_EVENTS = ['keydown', 'mousemove', 'wheel', 'hashchange'];
 
 const ctxAction = (action) => (
@@ -37,6 +42,7 @@ const wrap = (transport, options = {}) => {
     const now = options.now || (() => Date.now());
     const idleMs = options.idleMs === undefined ? IDLE_MS : options.idleMs;
     const intervalMs = options.intervalMs === undefined ? INTERVAL_MS : options.intervalMs;
+    const warmUpIdleMs = options.warmUpIdleMs === undefined ? WARM_UP_IDLE_MS : options.warmUpIdleMs;
     const setTimer = options.setTimeout || ((fn, ms) => setTimeout(fn, ms));
     const clearTimer = options.clearTimeout || ((id) => clearTimeout(id));
 
@@ -66,13 +72,16 @@ const wrap = (transport, options = {}) => {
     // The idle tasks: PullNotifications (at most every intervalMs, across launches) and, for a guest, one
     // PullAddonsFromAPI per launch.
     let addonsWanted = false;
+    // null: not yet asked (no ctx yet); true: waiting; false: done.
+    let warmUpWanted = null;
+    const warmUpDueIn = () => Math.max(lastActivity + warmUpIdleMs - now(), 0);
     const notificationsDueIn = () => Math.max(lastActivity + idleMs - now(), readPulledAt() + intervalMs - now(), 0);
     const addonsDueIn = () => Math.max(lastActivity + idleMs - now(), 0);
-    const dueIn = () => Math.min(wanted ? notificationsDueIn() : Infinity, addonsWanted ? addonsDueIn() : Infinity);
+    const dueIn = () => Math.min(wanted ? notificationsDueIn() : Infinity, addonsWanted ? addonsDueIn() : Infinity, warmUpWanted ? warmUpDueIn() : Infinity);
     const schedule = () => {
         if (timer !== null) clearTimer(timer);
         timer = null;
-        if (!wanted && !addonsWanted) return;
+        if (!wanted && !addonsWanted && !warmUpWanted) return;
         timer = setTimer(fire, dueIn());
     };
     function fire() {
@@ -81,6 +90,10 @@ const wrap = (transport, options = {}) => {
             // Watching a video: wait for the next idle stretch.
             lastActivity = now();
         } else {
+            if (warmUpWanted && warmUpDueIn() === 0) {
+                warmUpWanted = false;
+                Promise.resolve(transport.warmUp()).catch(() => null);
+            }
             if (addonsWanted && addonsDueIn() === 0) {
                 addonsWanted = false;
                 transport.dispatch({ action: 'Ctx', args: { action: PULL_ADDONS } });
@@ -106,6 +119,10 @@ const wrap = (transport, options = {}) => {
         return answer.then((state) => {
             const profile = state && state.profile;
             if (profile && typeof profile === 'object') signedIn = !!profile.auth;
+            if (warmUpWanted === null && typeof transport.warmUp === 'function') {
+                warmUpWanted = true;
+                schedule();
+            }
             return state;
         });
     };
@@ -136,4 +153,4 @@ const wrap = (transport, options = {}) => {
     return { ...transport, getState, dispatch };
 };
 
-module.exports = { wrap, STORAGE_KEY, IDLE_MS, INTERVAL_MS };
+module.exports = { wrap, STORAGE_KEY, IDLE_MS, INTERVAL_MS, WARM_UP_IDLE_MS };

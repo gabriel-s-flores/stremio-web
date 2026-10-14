@@ -1,7 +1,8 @@
 // webOS TV 4.x build only (F3.6): the transport that src/core/createTransport.webos.js (the localStorage
 // mirror, F3.5) wraps instead of createTransport.ts. Same as createTransport.ts plus two boot marks for the
 // diagnostics screen (core init start and core ready, just timestamps) and getCoreLoaderStatus: the status
-// of the core loader that runs in the worker (webos/core/loader.js), read on demand. A separate file name,
+// of the core loader that runs in the worker (webos/core/loader.js), read on demand; F8.7: warmUp, the core's
+// webos_warm_up (webos/core/warm-up.patch, exposed by webos/tlsproxy/worker-entry.js). A separate file name,
 // not createTransport.webos.ts, because the .webos.ts extension would win over the .webos.js of F3.5.
 // webos/tests/no-server/no-server.test.js fails when it drifts from the upstream file.
 
@@ -11,7 +12,7 @@ import { mark } from '../../webos/lib/diagnostics/registry';
 const worker = new Worker(`${process.env.COMMIT_HASH}/scripts/worker.js`);
 const bridge = new Bridge(window, worker);
 
-const createTransport = (): CoreTransport & { getCoreLoaderStatus: () => Promise<object> } => {
+const createTransport = (): CoreTransport & { getCoreLoaderStatus: () => Promise<object>, warmUp: () => Promise<number> } => {
     const init = (args: object): Promise<void> => {
         mark('coreInitStart');
         return bridge.call(['init'], [args]).then(() => {
@@ -43,8 +44,13 @@ const createTransport = (): CoreTransport & { getCoreLoaderStatus: () => Promise
         return bridge.call(['getCoreLoaderStatus'], []);
     };
 
+    const warmUp = (): Promise<number> => {
+        return bridge.call(['webosWarmUp'], []);
+    };
+
     return {
         getCoreLoaderStatus,
+        warmUp,
         init,
         getState,
         dispatch,

@@ -1,0 +1,139 @@
+--- a/stremio-core-web/src/stremio_core_web.rs
++++ b/stremio-core-web/src/stremio_core_web.rs
+@@ -15,9 +15,16 @@
+         NOTIFICATIONS_STORAGE_KEY, PROFILE_STORAGE_KEY, SEARCH_HISTORY_STORAGE_KEY,
+         STREAMING_SERVER_URLS_STORAGE_KEY, STREAMS_STORAGE_KEY,
+     },
+-    models::common::Loadable,
+-    runtime::{msg::Action, Env, EnvError, Runtime, RuntimeAction, RuntimeEvent},
++    models::{
++        common::{Loadable, ResourceLoadable},
++        meta_details::MetaDetails,
++    },
++    runtime::{
++        msg::{Action, ActionLoad, Internal, Msg},
++        Env, EnvError, Model, Runtime, RuntimeAction, RuntimeEvent,
++    },
+     types::{
++        addon::{ResourcePath, ResourceRequest, ResourceResponse},
+         events::DismissedEventsBucket,
+         library::LibraryBucket,
+         notifications::NotificationsBucket,
+@@ -357,3 +364,117 @@
+         )
+     }
+ }
++
++/// webOS port (F8.7): the code a title's Details runs, run once in advance on a copy of the model.
++///
++/// In wasm2js on the webOS TV 4.x (V8 5.8 with "--no-crankshaft") the first run of a code path of the core
++/// costs hundreds of ms (the functions are compiled when first called: the first `dispatch` took ~700 ms on
++/// the C8 profile, the next ones 1-2 ms), and opening the first title of a session paid it for the meta and
++/// the streams answers, an addon that fails and the `get_state` of the details. Called by the page when the
++/// app is idle: a copy of the runtime's model (copying it makes no effect) gets the Details of a movie and of
++/// a series episode, set up as the Load leaves them (the requests loading), canned answers through the same
++/// deserializer as `fetch` (one stream addon answers an error) and its `get_state('meta_details')`; the Load
++/// action is only parsed (its update would make the requests: the core's fetch starts when the effect is
++/// built). The copy's effects are dropped: nothing reaches the runtime, the storage, the network or the page.
++/// One request is made on purpose, through the runtime's fetch: the streaming server's local addon
++/// (127.0.0.1:11470; the core asks it on every Details, and there is no server on the TV), which fails at once
++/// and warms fetch's error path. Returns how many titles it went through (0 when the runtime is not ready).
++#[wasm_bindgen]
++pub fn webos_warm_up() -> u32 {
++    let mut model = {
++        let runtime = RUNTIME.read().expect("runtime read failed");
++        match runtime.as_ref().and_then(|runtime| runtime.ready()) {
++            Some(runtime) => match runtime.model() {
++                Ok(model) => model.to_owned(),
++                Err(_) => return 0,
++            },
++            None => return 0,
++        }
++    };
++    let bases = model
++        .ctx
++        .profile
++        .addons
++        .iter()
++        .take(2)
++        .map(|addon| addon.transport_url.to_owned())
++        .collect::<Vec<_>>();
++    if bases.is_empty() {
++        return 0;
++    }
++    let answer = |text: &str| -> Result<ResourceResponse, EnvError> {
++        serde_path_to_error::deserialize(&mut serde_json::Deserializer::from_str(text))
++            .map_err(|error| EnvError::Fetch(error.to_string()))
++    };
++    let mut titles = 0;
++    for (r#type, id, video_id, meta) in [
++        ("movie", "tt0000001", "tt0000001", WARM_UP_MOVIE),
++        ("series", "tt0000002", "tt0000002:1:1", WARM_UP_SERIES),
++    ] {
++        let action = format!(
++            r#"{{"action":"Load","args":{{"model":"MetaDetails","args":{{"metaPath":{{"resource":"meta","type":"{type}","id":"{id}","extra":[]}},"streamPath":{{"resource":"stream","type":"{type}","id":"{video_id}","extra":[]}},"guessStream":false}}}}}}"#
++        );
++        let selected = match serde_json::from_str::<Action>(&action) {
++            Ok(Action::Load(ActionLoad::MetaDetails(selected))) => selected,
++            _ => return titles,
++        };
++        let request = |base: &url::Url, path: &ResourcePath| ResourceRequest {
++            base: base.to_owned(),
++            path: path.to_owned(),
++        };
++        let meta_request = request(&bases[0], &selected.meta_path);
++        let stream_requests = match &selected.stream_path {
++            Some(path) => bases.iter().map(|base| request(base, path)).collect::<Vec<_>>(),
++            None => vec![],
++        };
++        model.meta_details = MetaDetails {
++            selected: Some(selected),
++            meta_items: vec![ResourceLoadable {
++                request: meta_request.to_owned(),
++                content: Some(Loadable::Loading),
++            }],
++            streams: stream_requests
++                .iter()
++                .map(|request| ResourceLoadable {
++                    request: request.to_owned(),
++                    content: Some(Loadable::Loading),
++                })
++                .collect(),
++            ..Default::default()
++        };
++        let _ = model.get_state(&WebModelField::MetaDetails);
++        let mut answers = vec![(meta_request, answer(meta))];
++        let count = stream_requests.len();
++        for (index, request) in stream_requests.into_iter().enumerate() {
++            // The first addon answers; the last one of several fails.
++            let result = if index + 1 == count && count > 1 {
++                Err(EnvError::Fetch("Failed to fetch".to_owned()))
++            } else {
++                answer(WARM_UP_STREAMS)
++            };
++            answers.push((request, result));
++        }
++        for (request, result) in answers {
++            let _ = model.update(&Msg::Internal(Internal::ResourceRequestResult(
++                request,
++                Box::new(result),
++            )));
++            let _ = model.get_state(&WebModelField::MetaDetails);
++        }
++        titles += 1;
++    }
++    drop(model);
++    // fetch's error path, with a request that fails at once on the TV (no streaming server).
++    if let Ok(request) = http::Request::get("http://127.0.0.1:11470/local-addon/manifest.json")
++        .body(())
++    {
++        WebEnv::exec_concurrent(
++            WebEnv::fetch::<(), ResourceResponse>(request).map(|_| ()),
++        );
++    }
++    titles
++}
++
++const WARM_UP_MOVIE: &str = r###"{"meta":{"id":"tt0000001","type":"movie","name":"Disclosure Day","poster":"https://images.metahub.space/poster/small/tt15047880/img","background":"https://images.metahub.space/background/medium/tt15047880/img","logo":"https://images.metahub.space/logo/medium/tt15047880/img","description":"If you found out we weren't alone, if someone showed you, proved it to you, would that frighten you?","releaseInfo":"2026","runtime":"146 min","released":"2026-06-12T00:00:00.000Z","imdbRating":"6.4","genres":["Action","Mystery","Sci-Fi"],"links":[{"name":"6.4","category":"imdb","url":"https://imdb.com/title/tt15047880"},{"name":"Disclosure Day","category":"share","url":"https://www.strem.io/s/movie/disclosure-day-15047880"},{"name":"Action","category":"Genres","url":"stremio:///discover/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/top?genre=Action"},{"name":"Mystery","category":"Genres","url":"stremio:///discover/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/top?genre=Mystery"},{"name":"Sci-Fi","category":"Genres","url":"stremio:///discover/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/top?genre=Sci-Fi"},{"name":"Emily Blunt","category":"Cast","url":"stremio:///search?search=Emily%20Blunt"},{"name":"Josh O&apos;Connor","category":"Cast","url":"stremio:///search?search=Josh%20O%26apos%3BConnor"},{"name":"Colin Firth","category":"Cast","url":"stremio:///search?search=Colin%20Firth"},{"name":"David Koepp","category":"Writers","url":"stremio:///search?search=David%20Koepp"},{"name":"Steven Spielberg","category":"Writers","url":"stremio:///search?search=Steven%20Spielberg"},{"name":"Steven Spielberg","category":"Directors","url":"stremio:///search?search=Steven%20Spielberg"}],"trailers":[{"source":"icDuEHSxE-w","type":"Trailer"},{"source":"SCYT8vb2siQ","type":"Trailer"}],"trailerStreams":[{"title":"Disclosure Day","ytId":"icDuEHSxE-w"},{"title":"Disclosure Day","ytId":"SCYT8vb2siQ"}],"behaviorHints":{"defaultVideoId":"tt15047880","hasScheduledVideos":false}}}"###;
++const WARM_UP_SERIES: &str = r###"{"meta":{"id":"tt0000002","type":"series","name":"Disclosure Day","poster":"https://images.metahub.space/poster/small/tt15047880/img","background":"https://images.metahub.space/background/medium/tt15047880/img","logo":"https://images.metahub.space/logo/medium/tt15047880/img","description":"If you found out we weren't alone, if someone showed you, proved it to you, would that frighten you?","releaseInfo":"2026","runtime":"146 min","released":"2026-06-12T00:00:00.000Z","imdbRating":"6.4","genres":["Action","Mystery","Sci-Fi"],"links":[{"name":"6.4","category":"imdb","url":"https://imdb.com/title/tt15047880"},{"name":"Disclosure Day","category":"share","url":"https://www.strem.io/s/movie/disclosure-day-15047880"},{"name":"Action","category":"Genres","url":"stremio:///discover/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/top?genre=Action"},{"name":"Mystery","category":"Genres","url":"stremio:///discover/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/top?genre=Mystery"},{"name":"Sci-Fi","category":"Genres","url":"stremio:///discover/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/top?genre=Sci-Fi"},{"name":"Emily Blunt","category":"Cast","url":"stremio:///search?search=Emily%20Blunt"},{"name":"Josh O&apos;Connor","category":"Cast","url":"stremio:///search?search=Josh%20O%26apos%3BConnor"},{"name":"Colin Firth","category":"Cast","url":"stremio:///search?search=Colin%20Firth"},{"name":"David Koepp","category":"Writers","url":"stremio:///search?search=David%20Koepp"},{"name":"Steven Spielberg","category":"Writers","url":"stremio:///search?search=Steven%20Spielberg"},{"name":"Steven Spielberg","category":"Directors","url":"stremio:///search?search=Steven%20Spielberg"}],"trailers":[{"source":"icDuEHSxE-w","type":"Trailer"},{"source":"SCYT8vb2siQ","type":"Trailer"}],"trailerStreams":[{"title":"Disclosure Day","ytId":"icDuEHSxE-w"},{"title":"Disclosure Day","ytId":"SCYT8vb2siQ"}],"behaviorHints":{"defaultVideoId":null,"hasScheduledVideos":false},"videos":[{"id":"tt0000002:1:1","name":"Episode 1","season":1,"episode":1,"released":"2025-01-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://episodes.metahub.space/tt0000002/1/1/w780.jpg"},{"id":"tt0000002:1:2","name":"Episode 2","season":1,"episode":2,"released":"2025-02-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://episodes.metahub.space/tt0000002/1/2/w780.jpg"},{"id":"tt0000002:1:3","name":"Episode 3","season":1,"episode":3,"released":"2025-03-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://episodes.metahub.space/tt0000002/1/3/w780.jpg"},{"id":"tt0000002:1:4","name":"Episode 4","season":1,"episode":4,"released":"2025-04-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://episodes.metahub.space/tt0000002/1/4/w780.jpg"},{"id":"tt0000002:1:5","name":"Episode 5","season":1,"episode":5,"released":"2025-05-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://episodes.metahub.space/tt0000002/1/5/w780.jpg"},{"id":"tt0000002:1:6","name":"Episode 6","season":1,"episode":6,"released":"2025-06-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://episodes.metahub.space/tt0000002/1/6/w780.jpg"},{"id":"tt0000002:1:7","name":"Episode 7","season":1,"episode":7,"released":"2025-07-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://episodes.metahub.space/tt0000002/1/7/w780.jpg"},{"id":"tt0000002:1:8","name":"Episode 8","season":1,"episode":8,"released":"2025-08-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://episodes.metahub.space/tt0000002/1/8/w780.jpg"},{"id":"tt0000002:1:9","name":"Episode 9","season":1,"episode":9,"released":"2025-09-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://episodes.metahub.space/tt0000002/1/9/w780.jpg"},{"id":"tt0000002:1:10","name":"Episode 10","season":1,"episode":10,"released":"2025-01-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://episodes.metahub.space/tt0000002/1/10/w780.jpg"}]}}"###;
++const WARM_UP_STREAMS: &str = r###"{"streams":[{"name":"[AD+] Torrentio\n4k DV | HDR","title":"Disclosure.Day.2026.2160p.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX.mkv\n👤 1 💾 18.00 GB ⚙️ TorrentGalaxy\n🇬🇧","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/4205a75c2f631b0bc550b4ee14dcf77580ad2250/null/0/Disclosure.Day.2026.2160p.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX.mkv","behaviorHints":{"bingeGroup":"torrentio|4k|WEB-DL|DV|HDR|DDP5.1.Atmos|FLUX","filename":"Disclosure.Day.2026.2160p.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-FLUX.mkv","videoSize":19327352832}},{"name":"[AD+] Torrentio\n4k HDR10+","title":"Disclosure.Day.2026.2160p.BluRay.REMUX.TrueHD.7.1.Atmos.HDR10+.HEVC-NTb.mkv\n👤 54 💾 65.70 GB ⚙️ ThePirateBay\n🇬🇧 / 🇫🇷 / 🇪🇸","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/479c5b5917760ce4b8d472f37ec09bb69f075f9d/null/1/Disclosure.Day.2026.2160p.BluRay.REMUX.TrueHD.7.1.Atmos.HDR10%2B.HEVC-NTb.mkv","behaviorHints":{"bingeGroup":"torrentio|4k|BluRay.REMUX|HDR10+|TrueHD.7.1.Atmos|NTb","filename":"Disclosure.Day.2026.2160p.BluRay.REMUX.TrueHD.7.1.Atmos.HDR10+.HEVC-NTb.mkv","videoSize":70544837837}},{"name":"[AD+] Torrentio\n4k HDR","title":"Disclosure.Day.2026.2160p.WEBRip.AAC5.1.HDR.x265.10bit-TEPES.mkv\n👤 107 💾 16.40 GB ⚙️ 1337x\nMulti Audio / 🇬🇧 / 🇮🇹","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/4d330f56ff88febdac5830f8e8a43ff7bd619cea/null/2/Disclosure.Day.2026.2160p.WEBRip.AAC5.1.HDR.x265.10bit-TEPES.mkv","behaviorHints":{"bingeGroup":"torrentio|4k|WEBRip|HDR|AAC5.1|TEPES","filename":"Disclosure.Day.2026.2160p.WEBRip.AAC5.1.HDR.x265.10bit-TEPES.mkv","videoSize":17609365914}},{"name":"[AD+] Torrentio\n1080p","title":"Disclosure.Day.2026.1080p.WEB-DL.DDP5.1.H.264-SWTYBLZ.mkv\n👤 160 💾 7.10 GB ⚙️ RARBG\n🇧🇷 / 🇵🇹","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/52c9c353e79bf0969fdbeefd5287e438dbbbda37/null/0/Disclosure.Day.2026.1080p.WEB-DL.DDP5.1.H.264-SWTYBLZ.mkv","behaviorHints":{"bingeGroup":"torrentio|1080p|WEB-DL||DDP5.1|SWTYBLZ","filename":"Disclosure.Day.2026.1080p.WEB-DL.DDP5.1.H.264-SWTYBLZ.mkv","videoSize":7623566950}},{"name":"[AD+] Torrentio\n1080p","title":"Disclosure.Day.2026.1080p.BluRay.DTS-HD.MA.5.1.x264-YIFY.mkv\n👤 213 💾 18.80 GB ⚙️ YTS\nMulti Subs / 🇬🇧","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/58607750cfaee26f935fad02bc6b8879fa161784/null/1/Disclosure.Day.2026.1080p.BluRay.DTS-HD.MA.5.1.x264-YIFY.mkv","behaviorHints":{"bingeGroup":"torrentio|1080p|BluRay||DTS-HD.MA.5.1|YIFY","filename":"Disclosure.Day.2026.1080p.BluRay.DTS-HD.MA.5.1.x264-YIFY.mkv","videoSize":20186346291}},{"name":"[AD+] Torrentio\n1080p","title":"Disclosure.Day.2026.1080p.WEBRip.AAC2.0.x265-RARBG.mkv\n👤 266 💾 10.50 GB ⚙️ MagnetDL\n🇷🇺 / 🇺🇦 / 🇬🇧","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/5df72b4db7c1d44886e36b07264f2cba187054d1/null/2/Disclosure.Day.2026.1080p.WEBRip.AAC2.0.x265-RARBG.mkv","behaviorHints":{"bingeGroup":"torrentio|1080p|WEBRip||AAC2.0|RARBG","filename":"Disclosure.Day.2026.1080p.WEBRip.AAC2.0.x265-RARBG.mkv","videoSize":11274289152}},{"name":"[AD+] Torrentio\n720p","title":"Disclosure.Day.2026.720p.WEB-DL.DDP5.1.H.264-playWEB.mkv\n👤 319 💾 5.20 GB ⚙️ Comando\n🇬🇧","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/638ddf4a9fd4c6217a67290c9032d0fb36ca921e/null/0/Disclosure.Day.2026.720p.WEB-DL.DDP5.1.H.264-playWEB.mkv","behaviorHints":{"bingeGroup":"torrentio|720p|WEB-DL||DDP5.1|playWEB","filename":"Disclosure.Day.2026.720p.WEB-DL.DDP5.1.H.264-playWEB.mkv","videoSize":5583457485}},{"name":"[AD+] Torrentio\n480p","title":"Disclosure.Day.2026.480p.HDTV.MP3.XviD-BYNDR.mkv\n👤 372 💾 6.90 GB ⚙️ BluDV\n🇬🇧 / 🇫🇷 / 🇪🇸","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/6924934787e7b7fa6deae711fa16753c5524cf6b/null/1/Disclosure.Day.2026.480p.HDTV.MP3.XviD-BYNDR.mkv","behaviorHints":{"bingeGroup":"torrentio|480p|HDTV||MP3|BYNDR","filename":"Disclosure.Day.2026.480p.HDTV.MP3.XviD-BYNDR.mkv","videoSize":7408818586}},{"name":"[AD download] Torrentio\n4k DV | HDR","title":"Disclosure.Day.2026.2160p.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-EDITH.mkv\n👤 25 💾 27.60 GB ⚙️ TorrentGalaxy\nMulti Audio / 🇬🇧 / 🇮🇹","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/6ebb47446ffaa9d3616ea51663fa197d737f0cb8/null/2/Disclosure.Day.2026.2160p.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-EDITH.mkv","behaviorHints":{"bingeGroup":"torrentio|4k|WEB-DL|DV|HDR|DDP5.1.Atmos|EDITH","filename":"Disclosure.Day.2026.2160p.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-EDITH.mkv","videoSize":29635274342}},{"name":"[AD+] Torrentio\n4k HDR10+","title":"Disclosure.Day.2026.2160p.BluRay.REMUX.TrueHD.7.1.Atmos.HDR10+.HEVC-GalaxyRG.mkv\n👤 78 💾 65.30 GB ⚙️ ThePirateBay\n🇧🇷 / 🇵🇹","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/7451fb41580d9bac54f2631bcdddbdbe91d94a05/null/0/Disclosure.Day.2026.2160p.BluRay.REMUX.TrueHD.7.1.Atmos.HDR10%2B.HEVC-GalaxyRG.mkv","behaviorHints":{"bingeGroup":"torrentio|4k|BluRay.REMUX|HDR10+|TrueHD.7.1.Atmos|GalaxyRG","filename":"Disclosure.Day.2026.2160p.BluRay.REMUX.TrueHD.7.1.Atmos.HDR10+.HEVC-GalaxyRG.mkv","videoSize":70115341107}},{"name":"[AD+] Torrentio\n4k HDR","title":"Disclosure.Day.2026.2160p.WEBRip.AAC5.1.HDR.x265.10bit-FLUX.mkv\n👤 131 💾 16.00 GB ⚙️ 1337x\nMulti Subs / 🇬🇧","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/79e8af3e40208d854876212037c161ffb0338752/null/1/Disclosure.Day.2026.2160p.WEBRip.AAC5.1.HDR.x265.10bit-FLUX.mkv","behaviorHints":{"bingeGroup":"torrentio|4k|WEBRip|HDR|AAC5.1|FLUX","filename":"Disclosure.Day.2026.2160p.WEBRip.AAC5.1.HDR.x265.10bit-FLUX.mkv","videoSize":17179869184}},{"name":"[AD+] Torrentio\n1080p","title":"Disclosure.Day.2026.1080p.WEB-DL.DDP5.1.H.264-NTb.mkv\n👤 184 💾 6.70 GB ⚙️ RARBG\n🇷🇺 / 🇺🇦 / 🇬🇧","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/7f7f633b28337f5e3bf9df25a1a50640ce8dc49f/null/2/Disclosure.Day.2026.1080p.WEB-DL.DDP5.1.H.264-NTb.mkv","behaviorHints":{"bingeGroup":"torrentio|1080p|WEB-DL||DDP5.1|NTb","filename":"Disclosure.Day.2026.1080p.WEB-DL.DDP5.1.H.264-NTb.mkv","videoSize":7194070221}},{"name":"[AD+] Torrentio\n1080p","title":"Disclosure.Day.2026.1080p.BluRay.DTS-HD.MA.5.1.x264-TEPES.mkv\n👤 237 💾 18.40 GB ⚙️ YTS\n🇬🇧","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/85161738104671372f7d9d2a0b88aa81ece801ec/null/0/Disclosure.Day.2026.1080p.BluRay.DTS-HD.MA.5.1.x264-TEPES.mkv","behaviorHints":{"bingeGroup":"torrentio|1080p|BluRay||DTS-HD.MA.5.1|TEPES","filename":"Disclosure.Day.2026.1080p.BluRay.DTS-HD.MA.5.1.x264-TEPES.mkv","videoSize":19756849562}},{"name":"[AD+] Torrentio\n1080p","title":"Disclosure.Day.2026.1080p.WEBRip.AAC2.0.x265-SWTYBLZ.mkv\n👤 290 💾 10.10 GB ⚙️ MagnetDL\n🇬🇧 / 🇫🇷 / 🇪🇸","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/8aaccb35f859631023015b2f756c4ec20b423f39/null/1/Disclosure.Day.2026.1080p.WEBRip.AAC2.0.x265-SWTYBLZ.mkv","behaviorHints":{"bingeGroup":"torrentio|1080p|WEBRip||AAC2.0|SWTYBLZ","filename":"Disclosure.Day.2026.1080p.WEBRip.AAC2.0.x265-SWTYBLZ.mkv","videoSize":10844792422}},{"name":"[AD+] Torrentio\n720p","title":"Disclosure.Day.2026.720p.WEB-DL.DDP5.1.H.264-YIFY.mkv\n👤 343 💾 4.80 GB ⚙️ Comando\nMulti Audio / 🇬🇧 / 🇮🇹","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/90437f32e06c54e916851934df4ff303299c7c86/null/2/Disclosure.Day.2026.720p.WEB-DL.DDP5.1.H.264-YIFY.mkv","behaviorHints":{"bingeGroup":"torrentio|720p|WEB-DL||DDP5.1|YIFY","filename":"Disclosure.Day.2026.720p.WEB-DL.DDP5.1.H.264-YIFY.mkv","videoSize":5153960755}},{"name":"[AD+] Torrentio\n480p","title":"Disclosure.Day.2026.480p.HDTV.MP3.XviD-RARBG.mkv\n👤 396 💾 6.50 GB ⚙️ BluDV\n🇧🇷 / 🇵🇹","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/95da332fc87f46c20a08d7394933974447f6b9d3/null/0/Disclosure.Day.2026.480p.HDTV.MP3.XviD-RARBG.mkv","behaviorHints":{"bingeGroup":"torrentio|480p|HDTV||MP3|RARBG","filename":"Disclosure.Day.2026.480p.HDTV.MP3.XviD-RARBG.mkv","videoSize":6979321856}},{"name":"[AD+] Torrentio\n4k DV | HDR","title":"Disclosure.Day.2026.2160p.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-playWEB.mkv\n👤 49 💾 27.20 GB ⚙️ TorrentGalaxy\nMulti Subs / 🇬🇧","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/9b70e72cb092389bfd8c953eb3173b856650f720/null/1/Disclosure.Day.2026.2160p.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-playWEB.mkv","behaviorHints":{"bingeGroup":"torrentio|4k|WEB-DL|DV|HDR|DDP5.1.Atmos|playWEB","filename":"Disclosure.Day.2026.2160p.WEB-DL.DDP5.1.Atmos.DV.HDR.H.265-playWEB.mkv","videoSize":29205777613}},{"name":"[AD download] Torrentio\n4k HDR10+","title":"Disclosure.Day.2026.2160p.BluRay.REMUX.TrueHD.7.1.Atmos.HDR10+.HEVC-BYNDR.mkv\n👤 102 💾 64.90 GB ⚙️ ThePirateBay\n🇷🇺 / 🇺🇦 / 🇬🇧","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/a1079b2998a52a74f11053431cfadfc684ab346d/null/2/Disclosure.Day.2026.2160p.BluRay.REMUX.TrueHD.7.1.Atmos.HDR10%2B.HEVC-BYNDR.mkv","behaviorHints":{"bingeGroup":"torrentio|4k|BluRay.REMUX|HDR10+|TrueHD.7.1.Atmos|BYNDR","filename":"Disclosure.Day.2026.2160p.BluRay.REMUX.TrueHD.7.1.Atmos.HDR10+.HEVC-BYNDR.mkv","videoSize":69685844378}},{"name":"[AD+] Torrentio\n4k HDR","title":"Disclosure.Day.2026.2160p.WEBRip.AAC5.1.HDR.x265.10bit-EDITH.mkv\n👤 155 💾 15.60 GB ⚙️ 1337x\n🇬🇧","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/a69e4f2680b81c4de494114886de8407a30571ba/null/0/Disclosure.Day.2026.2160p.WEBRip.AAC5.1.HDR.x265.10bit-EDITH.mkv","behaviorHints":{"bingeGroup":"torrentio|4k|WEBRip|HDR|AAC5.1|EDITH","filename":"Disclosure.Day.2026.2160p.WEBRip.AAC5.1.HDR.x265.10bit-EDITH.mkv","videoSize":16750372454}},{"name":"[AD+] Torrentio\n1080p","title":"Disclosure.Day.2026.1080p.WEB-DL.DDP5.1.H.264-GalaxyRG.mkv\n👤 208 💾 6.30 GB ⚙️ RARBG\n🇬🇧 / 🇫🇷 / 🇪🇸","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/ac35032368cb0e26d817cf4df0c22848c15faf07/null/1/Disclosure.Day.2026.1080p.WEB-DL.DDP5.1.H.264-GalaxyRG.mkv","behaviorHints":{"bingeGroup":"torrentio|1080p|WEB-DL||DDP5.1|GalaxyRG","filename":"Disclosure.Day.2026.1080p.WEB-DL.DDP5.1.H.264-GalaxyRG.mkv","videoSize":6764573491}},{"name":"[AD+] Torrentio\n1080p","title":"Disclosure.Day.2026.1080p.BluRay.DTS-HD.MA.5.1.x264-FLUX.mkv\n👤 261 💾 18.00 GB ⚙️ YTS\nMulti Audio / 🇬🇧 / 🇮🇹","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/b1cbb72050ddffffcb9b8d525aa5cc89dfb9ec54/null/2/Disclosure.Day.2026.1080p.BluRay.DTS-HD.MA.5.1.x264-FLUX.mkv","behaviorHints":{"bingeGroup":"torrentio|1080p|BluRay||DTS-HD.MA.5.1|FLUX","filename":"Disclosure.Day.2026.1080p.BluRay.DTS-HD.MA.5.1.x264-FLUX.mkv","videoSize":19327352832}},{"name":"[AD+] Torrentio\n1080p","title":"Disclosure.Day.2026.1080p.WEBRip.AAC2.0.x265-NTb.mkv\n👤 314 💾 9.70 GB ⚙️ MagnetDL\n🇧🇷 / 🇵🇹","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/b7626b1d38f0f1d8bf1f4b57c48970cafe1429a1/null/0/Disclosure.Day.2026.1080p.WEBRip.AAC2.0.x265-NTb.mkv","behaviorHints":{"bingeGroup":"torrentio|1080p|WEBRip||AAC2.0|NTb","filename":"Disclosure.Day.2026.1080p.WEBRip.AAC2.0.x265-NTb.mkv","videoSize":10415295693}},{"name":"[AD+] Torrentio\n720p","title":"Disclosure.Day.2026.720p.WEB-DL.DDP5.1.H.264-TEPES.mkv\n👤 367 💾 4.40 GB ⚙️ Comando\nMulti Subs / 🇬🇧","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/bcf91f1a2103e3b1b2a3095c2e6d150b1c6e66ee/null/1/Disclosure.Day.2026.720p.WEB-DL.DDP5.1.H.264-TEPES.mkv","behaviorHints":{"bingeGroup":"torrentio|720p|WEB-DL||DDP5.1|TEPES","filename":"Disclosure.Day.2026.720p.WEB-DL.DDP5.1.H.264-TEPES.mkv","videoSize":4724464026}},{"name":"[AD+] Torrentio\n480p","title":"Disclosure.Day.2026.480p.HDTV.MP3.XviD-SWTYBLZ.mkv\n👤 20 💾 6.10 GB ⚙️ BluDV\n🇷🇺 / 🇺🇦 / 🇬🇧","url":"http://10.0.2.2:1/redirect/torrentio/resolve/alldebrid/FIXTUREKEY/c28fd3170916d58aa626c7619850b94c3ac8a43b/null/2/Disclosure.Day.2026.480p.HDTV.MP3.XviD-SWTYBLZ.mkv","behaviorHints":{"bingeGroup":"torrentio|480p|HDTV||MP3|SWTYBLZ","filename":"Disclosure.Day.2026.480p.HDTV.MP3.XviD-SWTYBLZ.mkv","videoSize":6549825126}}]}"###;

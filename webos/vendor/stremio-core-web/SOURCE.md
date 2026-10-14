@@ -3,7 +3,7 @@
 Gerado por `webos/core/build`. Não edite à mão: rode o script de novo.
 
 - **Upstream:** https://github.com/Stremio/stremio-core, tag `stremio-core-web-v0.65.0` (commit `fa22c9ca8b8574fe7a72460023d05beff2b74026`), pasta `stremio-core-web`
-- **Patch:** `webos/core/recipe-a.patch` (sha256 `f156707377c68a750aa32fe953474c1b01477aaa384cf974f23612552a1b0776`): `gloo-utils` 0.3 → 0.2, a única dependência do lockfile que exige Rust acima de 1.77; `webos/core/stream-links.patch` (sha256 `8e030cf932b82240f673d0b47d129ce38e2dc225ed1b86ba1ebd122e5ffdd5ac`): a regex dos links de player externo compilada uma vez e o zlib sem compressão do link do player escrito direto, com os mesmos bytes (F8.6); `webos/core/guest-analytics.patch` (sha256 `d7430dab61e328fb1302c8fd8c944b27479a56dc0ac08c383f97101611e60c98`): sem sessão, o evento de analytics não é montado (o `Analytics::emit` já o descartava; F8.7); `webos/core/list-links.patch` (sha256 `8b09666da7445245c5c47c62dc222eeb5e63a20fb42ff00717a9f2e13b6801cc`): a lista de streams de `meta_details` sem o `deepLinks.player`, que a página monta com os mesmos bytes (`webos/lib/player-link`), e o progresso de cada stream comparando primeiro o vídeo (F8.7)
+- **Patch:** `webos/core/recipe-a.patch` (sha256 `f156707377c68a750aa32fe953474c1b01477aaa384cf974f23612552a1b0776`): `gloo-utils` 0.3 → 0.2, a única dependência do lockfile que exige Rust acima de 1.77; `webos/core/stream-links.patch` (sha256 `8e030cf932b82240f673d0b47d129ce38e2dc225ed1b86ba1ebd122e5ffdd5ac`): a regex dos links de player externo compilada uma vez e o zlib sem compressão do link do player escrito direto, com os mesmos bytes (F8.6); `webos/core/guest-analytics.patch` (sha256 `d7430dab61e328fb1302c8fd8c944b27479a56dc0ac08c383f97101611e60c98`): sem sessão, o evento de analytics não é montado (o `Analytics::emit` já o descartava; F8.7); `webos/core/list-links.patch` (sha256 `8b09666da7445245c5c47c62dc222eeb5e63a20fb42ff00717a9f2e13b6801cc`): a lista de streams de `meta_details` sem o `deepLinks.player`, que a página monta com os mesmos bytes (`webos/lib/player-link`), e o progresso de cada stream comparando primeiro o vídeo (F8.7); `webos/core/warm-up.patch` (sha256 `00806e12095a25fb20a5e5423343276dc9a5374201ca6be98dc044bb25afde9d`): `webos_warm_up()`, o código de abrir Detalhes rodado num modelo à parte, sem rede nem estado, para o wasm2js compilar as funções antes do primeiro título (F8.7)
 - **Rust:** rustc 1.77.2 (25ef9e3d8 2024-04-09), `cargo build --release --locked --target wasm32-unknown-unknown` com `--remap-path-prefix` da pasta de trabalho e do `CARGO_HOME`
 - **wasm-bindgen:** wasm-bindgen 0.2.121, `--target web --no-typescript`
 - **Binaryen:** wasm-opt version 133 (version_133), `wasm-opt -O --signext-lowering`
@@ -21,7 +21,7 @@ Gerado por `webos/core/build`. Não edite à mão: rode o script de novo.
 |---|---|---|
 | `bridge.js` | 3926 | `51c490dcde610baad20f6bf0c2cfc87e6b886830c2c6f80080ce4a7a796199d1` |
 | `worker.js` | 5122 | `455af735f709befb35ea2b66ae70059551413d39fab5154b8de94823c288ddcc` |
-| `stremio_core_web.js` | 34361 | `41603d965a7d4b7df72dbebdd45121ac33939abbdb4935e6f8330bf2564bbfc1` |
-| `stremio_core_web_bg.wasm` | 4913372 | `f5ffc66336907547cfd6a45b5f09e08d0e0e08edaac8c916c579566f1b1b7e69` |
-| `stremio_core_web_bg.wasm2js.js` | 9420612 | `649ff2ef0fe85d77fca7bace2ab7c9de11603107fc9d7e31765f4b336e03b903` |
+| `stremio_core_web.js` | 35906 | `4dc9b639bb0b4761a56d18f9e27f4e01bb31034e2ce93a3081ba6f6dcf6489ad` |
+| `stremio_core_web_bg.wasm` | 4982652 | `a4bded66cf08e441b6082f682b96dcc3de1fa0412b417be0f77b212cef1f9ffb` |
+| `stremio_core_web_bg.wasm2js.js` | 9561838 | `e6aa757f4ee01b930d9dcce8de43e9644dc2e7e4b76bf9565009d3fe5800f989` |
 | `package.json` | 881 | `9dc4e0e231f1ae701b30e4116e519f9c375ecc07a51a426088b8946431d7d5d8` |

@@ -196,3 +196,35 @@ describe('PullNotifications', () => {
         expect(() => throwing.dispatch(ctx('PullNotifications'))).not.toThrow();
     });
 });
+
+describe('warm-up of the core', () => {
+    test('once per launch: after the first ctx and 3 s without input', async () => {
+        const t = setup();
+        t.inner.warmUp = jest.fn(() => Promise.resolve(2));
+        t.advance(60000);
+        expect(t.inner.warmUp).not.toHaveBeenCalled();
+        t.fireEvent('keydown');
+        await t.transport.getState('ctx');
+        t.advance(2999);
+        expect(t.inner.warmUp).not.toHaveBeenCalled();
+        t.advance(1);
+        expect(t.inner.warmUp).toHaveBeenCalledTimes(1);
+        await t.transport.getState('ctx');
+        t.advance(10 * IDLE);
+        expect(t.inner.warmUp).toHaveBeenCalledTimes(1);
+    });
+
+    test('pushed back by input, not in the Player; a failure is ignored', async () => {
+        const t = setup({ hash: '#/player/x' });
+        t.inner.warmUp = jest.fn(() => Promise.reject(new Error('worker gone')));
+        await t.transport.getState('ctx');
+        t.advance(10000);
+        expect(t.inner.warmUp).not.toHaveBeenCalled();
+        t.win.location.hash = '#/';
+        t.fireEvent('hashchange');
+        t.advance(2999);
+        expect(t.inner.warmUp).not.toHaveBeenCalled();
+        t.advance(1);
+        expect(t.inner.warmUp).toHaveBeenCalledTimes(1);
+    });
+});

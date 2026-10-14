@@ -4,7 +4,7 @@
 //
 //   node webos/tests/perf/boot-bench.js [--vendor <dir>] [--wasm2js <file>] [--app upstream|webos]
 //        [--open-after board|idle|<ms>] [--latency <ms>] [--cache <dir>] [--offline] [--notifications fresh]
-//        [--serial] [--repeat N] [--passes N] [--openings N] [--json <out.json>]
+//        [--serial] [--repeat N] [--passes N] [--openings N] [--warm-up] [--json <out.json>]
 //   node --cpu-prof --cpu-prof-dir <dir> webos/tests/perf/boot-bench.js --vendor <core built with --profiling> ...
 //
 // - Storage: the TV-like library (library-fixture.js, real IMDb ids, so the notifications pull gets real
@@ -203,6 +203,12 @@ console.info = () => {};
 console.warn = () => {};
 if (!process.env.BENCH_TRACE) console.error = () => {};
 const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
+// A browser only logs an unhandled rejection: count them (the summary has the number).
+let unhandledRejections = 0;
+process.on('unhandledRejection', (reason) => {
+    unhandledRejections += 1;
+    note({ unhandledRejection: String(reason && reason.message ? reason.message : reason).slice(0, 120) });
+});
 
 (async () => {
     // The webOS worker entry (webos/tlsproxy/worker-entry.js) wraps fetch before the core: the catalog trim (F7.2).
@@ -328,6 +334,24 @@ const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
     Object.keys(bootBusy).forEach((k) => { if (typeof bootBusy[k] === 'number') bootBusy[k] = Math.round(bootBusy[k]); });
     Object.keys(bootBusy.futuresBy).forEach((k) => { bootBusy.futuresBy[k] = Math.round(bootBusy.futuresBy[k]); });
 
+    // --warm-up: the core's webos_warm_up (webos/core/warm-up.patch) once the boot is done, as the page does
+    // when idle; what it changed in the core (it must change nothing) and what the page saw meanwhile.
+    let warmUp;
+    if (flag('warm-up')) {
+        const models = ['ctx', 'board', 'meta_details', 'continue_watching_preview', 'library', 'player'];
+        const snapshot = () => models.map((m) => JSON.stringify(glue.get_state(m)));
+        const before = snapshot();
+        const from = timeline.length;
+        const start = performance.now();
+        const titles = option('warm-up-skip', null) ? -1 : glue.webos_warm_up();
+        const ms = Math.round(performance.now() - start);
+        await sleep(LATENCY + 200);
+        const seen = timeline.slice(from).filter((e) => e.newState || e.coreEvent || e.setItem || e.fetch);
+        const after = snapshot();
+        warmUp = { titles, ms, sameState: after.every((x, i) => x === before[i]), changed: models.filter((m, i) => after[i] !== before[i]), seen };
+        note({ step: 'warm-up', ms, titles });
+    }
+
     // The opening (useMetaDetails on Details): the page now watches meta_details too. --openings N: N
     // different movies of the Board, one after the other (the first one pays the lazy compilation).
     const movies = () => {
@@ -403,6 +427,8 @@ const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
         metaMs,
         streamMs,
         openings,
+        warmUp,
+        unhandledRejections,
         passMs: passes.length ? Math.round(passes[passes.length >> 1] * 100) / 100 : undefined,
         getStateMetaDetailsMs: repeated.length ? Math.round(repeated[repeated.length >> 1] * 10) / 10 : undefined,
         getStateMetaDetailsBytes: repeated.length ? JSON.stringify(glue.get_state('meta_details')).length : undefined,
