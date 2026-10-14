@@ -23,6 +23,9 @@
 //   once per launch, when the app is idle: `warmUpIdleMs` (3 s) without input after the Board shows its first
 //   row (a `board` state with a Ready catalog), or after `warmUpFallbackMs` (20 s) from the first `ctx` when no
 //   Board comes (a launch straight into another screen); not in the Player.
+// The idle stretch starts, at the earliest, when the Board shows its first row: until then the app is busy
+// loading (on the C8 the Board shows ~14 s after launch, and an idle stretch counted from the launch put the
+// guest's PullAddonsFromAPI right where a title opened at +8 s had to wait for it).
 // No timer is set for more than MAX_DELAY_MS (1 h): a longer wait is checked again then.
 //
 // wrap(transport, options) -> the transport with getState (to see the `ctx`) and dispatch wrapped.
@@ -85,13 +88,11 @@ const wrap = (transport, options = {}) => {
     let addonsWanted = false;
     let wantedAt = 0;
     // The warm-up: null before the first ctx; 'board' waiting for the Board's first row (or the fallback);
-    // true armed (idle from armedAt); false done.
+    // true armed; false done.
     let warmUp = null;
     let ctxAt = 0;
-    let armedAt = 0;
-    const warmUpDueIn = () => (warmUp === 'board'
-        ? Math.max(ctxAt + warmUpFallbackMs - now(), lastActivity + warmUpIdleMs - now(), 0)
-        : Math.max(armedAt + warmUpIdleMs - now(), lastActivity + warmUpIdleMs - now(), 0));
+    let boardShown = false;
+    const warmUpDueIn = () => Math.max(warmUp === 'board' ? ctxAt + warmUpFallbackMs - now() : 0, lastActivity + warmUpIdleMs - now(), 0);
     const notificationsDueIn = () => Math.max(Math.min(lastActivity + idleMs, wantedAt + maxDeferMs) - now(), readPulledAt() + intervalMs - now(), 0);
     const addonsDueIn = () => Math.max(lastActivity + idleMs - now(), 0);
     const dueIn = () => Math.min(wanted ? notificationsDueIn() : Infinity, addonsWanted ? addonsDueIn() : Infinity, warmUp ? warmUpDueIn() : Infinity);
@@ -126,10 +127,11 @@ const wrap = (transport, options = {}) => {
         }
         schedule();
     }
-    const armWarmUp = () => {
-        if (warmUp !== 'board') return;
-        warmUp = true;
-        armedAt = now();
+    const onBoardShown = () => {
+        if (boardShown) return;
+        boardShown = true;
+        lastActivity = Math.max(lastActivity, now());
+        if (warmUp === 'board') warmUp = true;
         schedule();
     };
     const onActivity = () => {
@@ -145,13 +147,13 @@ const wrap = (transport, options = {}) => {
         return answer.then((state) => {
             if (model === 'board') {
                 const catalogs = state && Array.isArray(state.catalogs) ? state.catalogs : [];
-                if (catalogs.some((catalog) => catalog && catalog.content && catalog.content.type === 'Ready')) armWarmUp();
+                if (catalogs.some((catalog) => catalog && catalog.content && catalog.content.type === 'Ready')) onBoardShown();
                 return state;
             }
             const profile = state && state.profile;
             if (profile && typeof profile === 'object') signedIn = !!profile.auth;
             if (warmUp === null && typeof transport.warmUp === 'function') {
-                warmUp = 'board';
+                warmUp = boardShown ? true : 'board';
                 ctxAt = now();
                 schedule();
             }

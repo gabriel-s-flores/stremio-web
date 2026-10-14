@@ -262,6 +262,35 @@ describe('PullNotifications', () => {
 });
 
 describe('warm-up of the core', () => {
+    test('the idle stretch starts when the Board shows its first row, not at launch', async () => {
+        const t = setup({ auth: null, board: READY_BOARD });
+        t.inner.warmUp = jest.fn(() => Promise.resolve(2));
+        const addons = () => t.sent.filter(([a]) => a.args.action === 'PullAddonsFromAPI').length;
+        await t.transport.getState('ctx');
+        t.transport.dispatch(ctx('PullAddonsFromAPI'));
+        t.transport.dispatch(ctx('PullNotifications'));
+        // The Board shows its first row 14 s after launch (the C8).
+        t.advance(14000);
+        await t.transport.getState('board');
+        t.advance(IDLE - 1);
+        expect(addons()).toBe(0);
+        expect(pulls(t.sent)).toBe(0);
+        t.advance(1);
+        expect(addons()).toBe(1);
+        expect(pulls(t.sent)).toBe(1);
+    });
+
+    test('a Board seen before the first ctx still arms it', async () => {
+        const t = setup({ board: READY_BOARD });
+        t.inner.warmUp = jest.fn(() => Promise.resolve(2));
+        await t.transport.getState('board');
+        await t.transport.getState('ctx');
+        t.advance(2999);
+        expect(t.inner.warmUp).not.toHaveBeenCalled();
+        t.advance(1);
+        expect(t.inner.warmUp).toHaveBeenCalledTimes(1);
+    });
+
     test('not at boot: once per launch, 3 s without input after the Board shows a row', async () => {
         const t = setup({ board: READY_BOARD });
         t.inner.warmUp = jest.fn(() => Promise.resolve(2));
