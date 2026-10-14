@@ -511,13 +511,13 @@ function __wbg_get_imports() {
       return addHeapObject(ret);
     },
     __wbindgen_cast_0000000000000001: function __wbindgen_cast_0000000000000001(arg0, arg1) {
-      // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2239, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+      // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2253, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
       var ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h09e5e79ae7d953ce);
       return addHeapObject(ret);
     },
     __wbindgen_cast_0000000000000002: function __wbindgen_cast_0000000000000002(arg0, arg1) {
-      // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 603, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-      var ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h178bfe27f6b730e6);
+      // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 528, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+      var ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__hfc8fcfa0cce7baed);
       return addHeapObject(ret);
     },
     __wbindgen_cast_0000000000000003: function __wbindgen_cast_0000000000000003(arg0) {
@@ -548,8 +548,8 @@ function __wbg_get_imports() {
     "./stremio_core_web_bg.js": import0
   };
 }
-function wasm_bindgen__convert__closures_____invoke__h178bfe27f6b730e6(arg0, arg1) {
-  wasm.wasm_bindgen__convert__closures_____invoke__h178bfe27f6b730e6(arg0, arg1);
+function wasm_bindgen__convert__closures_____invoke__hfc8fcfa0cce7baed(arg0, arg1) {
+  wasm.wasm_bindgen__convert__closures_____invoke__hfc8fcfa0cce7baed(arg0, arg1);
 }
 function wasm_bindgen__convert__closures_____invoke__h09e5e79ae7d953ce(arg0, arg1, arg2) {
   try {

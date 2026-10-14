@@ -1,0 +1,178 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -43,7 +43,8 @@
+ 
+ # (De)Serialization
+ serde = { version = "1", features = ["derive"] }
+-serde_json = "1.0.*"
++# webOS port (F8.7): raw_value for ResourceResponse::from_text.
++serde_json = { version = "1.0.*", features = ["raw_value"] }
+ serde_path_to_error = "0.1"
+ serde_url_params = "0.2"
+ serde_bencode = "0.2.*"
+--- a/src/types/addon/response.rs
++++ b/src/types/addon/response.rs
+@@ -227,10 +227,126 @@
+     }
+ }
+ 
++/// webOS port (F8.7): the answer of an addon read straight from its text, for `fetch`.
++///
++/// [`ResourceResponse`]'s `Deserialize` builds the whole answer as a `serde_json::Value` (every key of every
++/// item, through `serde_path_to_error`) and then converts the one variant it has. In wasm2js on the webOS
++/// TV 4.x that was most of the time the core spent on the addons' answers (catalogs of 100 items, 224
++/// streams). This reads the top-level keys as raw text (nothing is built for them) and deserializes only the
++/// variant's text. It gives the same answer as the `Deserialize` impl or none at all: anything that impl
++/// would refuse (not an object, none or more than one of the variant keys, a variant that does not
++/// deserialize, a `null` meta) gives `None`, and the caller reads the text again the usual way, for the same
++/// error. Repeated keys keep the last one, as the `Value` did.
++pub fn resource_response_from_text(text: &str) -> Option<ResourceResponse> {
++    use serde_json::value::RawValue;
++    use std::collections::HashMap;
++
++    let object = serde_json::from_str::<HashMap<String, &RawValue>>(text).ok()?;
++    let keys = [
++        "metas",
++        "metasDetailed",
++        "meta",
++        "streams",
++        "subtitles",
++        "addons",
++    ];
++    let mut present = keys.iter().filter(|key| object.contains_key(**key));
++    let key = *present.next()?;
++    if present.next().is_some() {
++        return None;
++    }
++    let raw = object.get(key)?.get();
++    let is_null = raw.trim() == "null";
++    // The whole list first, item by item straight from the text; only a list with an item that does not
++    // deserialize goes through SkipError, which buffers every item (to skip the bad ones): the same items.
++    fn list<T: for<'a> Deserialize<'a> + Serialize>(raw: &str) -> Option<Vec<T>> {
++        serde_json::from_str::<Vec<T>>(raw)
++            .ok()
++            .or_else(|| serde_json::from_str::<SkipError<T>>(raw).ok().map(|skip| skip.0))
++    }
++    match key {
++        "metas" => Some(ResourceResponse::Metas {
++            metas: if is_null {
++                vec![]
++            } else {
++                list(raw)?
++            },
++        }),
++        "metasDetailed" => Some(ResourceResponse::MetasDetailed {
++            metas_detailed: if is_null {
++                vec![]
++            } else {
++                list(raw)?
++            },
++        }),
++        "meta" => Some(ResourceResponse::Meta {
++            meta: serde_json::from_str(raw).ok()?,
++        }),
++        "streams" => Some(ResourceResponse::Streams {
++            streams: if is_null {
++                vec![]
++            } else {
++                list(raw)?
++            },
++        }),
++        "subtitles" => Some(ResourceResponse::Subtitles {
++            subtitles: if is_null {
++                vec![]
++            } else {
++                list(raw)?
++            },
++        }),
++        "addons" => Some(ResourceResponse::Addons {
++            addons: if is_null {
++                vec![]
++            } else {
++                list(raw)?
++            },
++        }),
++        _ => None,
++    }
++}
++
+ #[cfg(test)]
+ mod tests {
+     use serde_json::from_value;
+ 
++    /// webOS port (F8.7): resource_response_from_text gives what the Deserialize impl gives, or nothing
++    /// where it fails.
++    #[test]
++    fn from_text_is_the_deserialize_impl_or_nothing() {
++        let meta = r#"{"id":"tt1","type":"series","name":"A \"b\" é","poster":"https://p/1.jpg","releaseInfo":2019,"imdbRating":7.1,"genres":["Drama"],"cast":["x"],"popularities":{"a":1},"trailers":[{"source":"yt","type":"Trailer"}],"behaviorHints":{"defaultVideoId":null,"other":{"k":[1,2]}},"videos":[{"id":"tt1:1:1","name":"Pilot","season":1,"episode":1,"number":1,"released":"2019-01-01T00:00:00.000Z","overview":"o"},{"id":"tt1:0:1","title":"Extra","season":0,"episode":1},{"no_id":true}]}"#;
++        let stream = r#"{"name":"T\n4k","title":"F.mkv\n👤 4","url":"https://d.example/a%20b.mkv","behaviorHints":{"bingeGroup":"g","filename":"F.mkv","videoSize":19650000000,"notWebReady":true}}"#;
++        let cases = vec![
++            format!(r#"{{"metas":[{meta},7,null,{{"name":"no id"}},{meta}],"cacheMaxAge":3600}}"#),
++            format!(r#"{{"metasDetailed":[{meta},{{"id":1}}]}}"#),
++            format!(r#"{{"metasDetailed":[{meta},{meta}]}}"#),
++            format!(r#"{{"metas":[{meta},{meta}]}}"#),
++            format!(r#"{{"streams":[{stream},{stream}]}}"#),
++            format!(r#"{{"meta":{meta}}}"#),
++            format!(r#"{{"streams":[{stream},{{"url":"not a url"}},{{"ytId":"abc"}},{{"externalUrl":"https://e/x"}},{{"infoHash":"dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c","fileIdx":0}}]}}"#),
++            r#"{"subtitles":[{"id":"1","url":"https://s/1.srt","lang":"por"},{"bad":1}]}"#.to_owned(),
++            r#"{"addons":[]}"#.to_owned(),
++            r#"{"metas":null}"#.to_owned(),
++            r#"{"streams":null,"cacheMaxAge":1}"#.to_owned(),
++            r#"{"meta":null}"#.to_owned(),
++            r#"{"metas":[],"metas":[{"id":"tt2","type":"movie","name":"Last"}]}"#.to_owned(),
++            r#"{"metas":[],"meta":{}}"#.to_owned(),
++            r#"{"unknown":1}"#.to_owned(),
++            r#"{"metas":{"object_key":"value"}}"#.to_owned(),
++            r#"{"streams":"x"}"#.to_owned(),
++            r#"256"#.to_owned(),
++            r#"[{"metas":[]}]"#.to_owned(),
++            r#"{"metas":[1,2"#.to_owned(),
++            r#"{"some_key":{"valid_value":9999999999999999999999999,5}}"#.to_owned(),
++            r#"{"metas":[],"x":9999999999999999999999999}"#.to_owned(),
++        ];
++        for case in cases {
++            let canonical = serde_json::from_str::<super::ResourceResponse>(&case).ok();
++            assert_eq!(super::resource_response_from_text(&case), canonical, "{case}");
++        }
++    }
++
+     use super::*;
+ 
+     #[test]
+--- a/stremio-core-web/src/env.rs
++++ b/stremio-core-web/src/env.rs
+@@ -23,7 +23,11 @@
+         msg::{Action, ActionCtx, Event},
+         Env, EnvError, EnvFuture, EnvFutureExt, TryEnvFuture,
+     },
+-    types::{api::AuthRequest, resource::StreamSource},
++    types::{
++        addon::{resource_response_from_text, ResourceResponse},
++        api::AuthRequest,
++        resource::StreamSource,
++    },
+ };
+ 
+ use crate::{
+@@ -562,6 +566,21 @@
+     for<'de> OUT: Deserialize<'de> + 'static,
+ {
+     let response = Into::<String>::into(response);
++    // webOS port (F8.7): serde_path_to_error keeps the path of every key of every answer only to name where
++    // an error is, and the addons' answers (ResourceResponse) were built as a whole serde_json::Value before
++    // their one variant was read: in wasm2js on the TV that was most of the time the core spent on them.
++    // An answer is read first without the tracking (an addon's, by resource_response_from_text), and one
++    // that fails is read again as before, for the same error.
++    if std::any::TypeId::of::<OUT>() == std::any::TypeId::of::<ResourceResponse>() {
++        if let Some(value) = resource_response_from_text(response.as_str()) {
++            let value: Box<dyn std::any::Any> = Box::new(value);
++            if let Ok(value) = value.downcast::<OUT>() {
++                return Ok(*value);
++            }
++        }
++    } else if let Ok(value) = serde_json::from_str::<OUT>(response.as_str()) {
++        return Ok(value);
++    }
+     let mut deserializer = serde_json::Deserializer::from_str(response.as_str());
+ 
+     // deserialize into the final OUT struct
