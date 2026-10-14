@@ -163,3 +163,107 @@ test('a new meta of the same title (Details opened again) lets the old waiters g
     expect(t.scope.fetch).toBe(fetch);
     expect(() => install({})).not.toThrow();
 });
+
+test('a getState of the page before the meta arrived does not let the streams go', async () => {
+    const t = setup();
+    t.core(META);
+    t.core(STREAMS);
+    t.answer(STREAMS, '{}');
+    await flush();
+    t.pageGetState('meta_details');
+    jest.advanceTimersByTime(0);
+    await flush();
+    expect(t.order).toEqual([]);
+    t.answer(META, '{}');
+    await flush();
+    t.pageGetState('meta_details');
+    jest.advanceTimersByTime(0);
+    await flush();
+    expect(t.order).toEqual([META, STREAMS]);
+});
+
+test('a meta whose text fails lets the streams go at once; a POST is not a meta on its way', async () => {
+    const t = setup();
+    t.core(META);
+    t.core(STREAMS);
+    t.answer(STREAMS, '{}');
+    await flush();
+    t.answer(META, Promise.reject(new TypeError('body')));
+    await flush();
+    await flush();
+    expect(t.order).toEqual([`${META} failed`, STREAMS]);
+
+    const post = setup();
+    post.scope.fetch(META, { method: 'POST' });
+    post.core(STREAMS);
+    post.answer(STREAMS, '{}');
+    await flush();
+    expect(post.order).toEqual([STREAMS]);
+});
+
+test('two meta addons: the first meta read lets the streams go, a 404 of one does not; all failing does', async () => {
+    const other = 'http://meta.example/meta/movie/tt1.json';
+    const t = setup();
+    t.core(META);
+    t.core(other);
+    t.core(STREAMS);
+    t.answer(STREAMS, '{}');
+    t.answer(other, 'not found', 404);
+    await flush();
+    await flush();
+    expect(t.order).toEqual([other]);
+    t.answer(META, '{}');
+    await flush();
+    t.pageGetState('meta_details');
+    jest.advanceTimersByTime(0);
+    await flush();
+    expect(t.order).toEqual([other, META, STREAMS]);
+
+    const failing = setup();
+    failing.core(META);
+    failing.core(other);
+    failing.core(STREAMS);
+    failing.answer(STREAMS, '{}');
+    failing.fail(other);
+    await flush();
+    expect(failing.order).toEqual([`${other} failed`]);
+    failing.answer(META, 'gone', 500);
+    await flush();
+    await flush();
+    expect(failing.order).toEqual([`${other} failed`, META, STREAMS]);
+});
+
+test('a meta that never answers is not waited for after metaMs; held streams that gave up leave no waiter', async () => {
+    const t = setup({ metaMs: 30000, maxHoldMs: 1500 });
+    t.core(META);
+    t.core(STREAMS);
+    t.answer(STREAMS, '{}');
+    await flush();
+    jest.advanceTimersByTime(1500);
+    await flush();
+    expect(t.order).toEqual([STREAMS]);
+    jest.advanceTimersByTime(30000 - 1500);
+    const again = 'http://addon.example/stream/movie/tt1.json?again';
+    t.core(again);
+    t.answer(again, '{}');
+    await flush();
+    await flush();
+    expect(t.order).toEqual([STREAMS, again]);
+});
+
+test('streams that arrive once one meta reached the page go at once, even with another meta still on its way', async () => {
+    const other = 'http://meta.example/meta/movie/tt1.json';
+    const t = setup();
+    t.core(META);
+    t.core(other);
+    t.core(STREAMS);
+    t.answer(META, '{}');
+    await flush();
+    t.pageGetState('meta_details');
+    jest.advanceTimersByTime(0);
+    await flush();
+    t.answer(STREAMS, '{}');
+    await flush();
+    await flush();
+    expect(t.order).toEqual([META, STREAMS]);
+});

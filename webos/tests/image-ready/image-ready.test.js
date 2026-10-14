@@ -8,7 +8,7 @@
 const React = require('react');
 const { act } = require('react');
 const { createRoot } = require('react-dom/client');
-const { useImageReady, isLoaded } = require('../../lib/image-ready');
+const { useImageReady, isLoaded, remember } = require('../../lib/image-ready');
 
 global.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -77,5 +77,19 @@ describe('useImageReady', () => {
         // A late answer of an unmounted or replaced image changes nothing.
         r.unmount();
         expect(() => images[1].onload && images[1].onload()).not.toThrow();
+    });
+
+    it('remembers the last 300 URLs that loaded; one seen again moves to the end', () => {
+        remember('https://c.example/0.png');
+        remember('https://c.example/1.png');
+        for (let i = 2; i < 300; i++) remember(`https://c.example/${i}.png`);
+        remember('https://c.example/0.png');
+        remember('https://c.example/300.png');
+        expect(isLoaded('https://c.example/0.png')).toBe(true);
+        expect(isLoaded('https://c.example/300.png')).toBe(true);
+        // The oldest went: 1.png (0.png was seen again), and everything the earlier tests remembered.
+        expect(isLoaded('https://c.example/1.png')).toBe(false);
+        expect(isLoaded('https://c.example/2.png')).toBe(true);
+        expect(isLoaded('https://a.example/1.png')).toBe(false);
     });
 });
