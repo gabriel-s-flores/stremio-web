@@ -34,16 +34,18 @@ describe('encodeStream and playerLink', () => {
     });
 });
 
+const runCore = (core, scenario) => JSON.parse(execFileSync(process.execPath, [path.join(__dirname, 'core-encode.js'), '--core', core, '--scenario', scenario], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 120000 }));
+const group = (metaDetails) => metaDetails.streams.find((g) => g.addon.manifest.id === 'test.streams');
+
 describe('the same encoding as the vendored core (encode_stream)', () => {
     let run;
     beforeAll(() => {
-        run = JSON.parse(execFileSync(process.execPath, [path.join(__dirname, 'core-encode.js')], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 120000 }));
+        run = runCore('vendor', 'ready');
     }, 150000);
 
     test('the list has no player link; the trailers keep the core\'s', () => {
-        const group = run.metaDetails.streams.find((g) => g.addon.manifest.id === 'test.streams');
-        expect(group.content.type).toBe('Ready');
-        group.content.content.forEach((stream) => {
+        expect(group(run.metaDetails).content.type).toBe('Ready');
+        group(run.metaDetails).content.content.forEach((stream) => {
             expect(stream.deepLinks).not.toHaveProperty('player');
             expect(stream.deepLinks).toHaveProperty('externalPlayer');
         });
@@ -52,21 +54,39 @@ describe('the same encoding as the vendored core (encode_stream)', () => {
     });
 
     test('every stream of the list (url, debrid with emoji and numbers, YouTube, external, subtitles, a long one)', () => {
-        const group = run.metaDetails.streams.find((g) => g.addon.manifest.id === 'test.streams');
-        expect(group.content.content).toHaveLength(6);
-        group.content.content.forEach((stream, index) => {
+        const streams = group(run.metaDetails).content.content;
+        expect(streams).toHaveLength(6);
+        streams.forEach((stream, index) => {
             expect(encodeStream(stream)).toBe(run.encoded[index]);
         });
     });
+});
 
-    test('withPlayerLinks: the link of a shown stream, from the context of MetaDetails', () => {
-        const context = linkContext(run.metaDetails);
-        expect(context).toEqual({ metaTransportUrl: 'https://v3-cinemeta.strem.io/manifest.json', type: 'movie', id: 'tt1', videoId: 'tt1' });
-        const streams = withPlayerLinks(run.metaDetails.streams, context);
-        const group = streams.find((g) => g.addon.manifest.id === 'test.streams');
-        const first = group.content.content[0];
-        expect(first.deepLinks.player).toBe(`#/player/${encodeURIComponent(run.encoded[0])}/http%3A%2F%2Faddon.example%2Fmanifest.json/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/tt1/tt1`);
-        expect(first.deepLinks.externalPlayer).toBe(run.metaDetails.streams.find((g) => g.addon.manifest.id === 'test.streams').content.content[0].deepLinks.externalPlayer);
+// The oracle: the npm core (0.65.0, without the webOS patches) still builds deepLinks.player for every stream of
+// the list. The page's link, from the vendored core's meta_details, must be that one, byte for byte, whatever the
+// state of the meta (serialize_meta_details builds the whole link with the meta item it picked, loading or failed too).
+describe.each(['ready', 'loading', 'err', 'series'])('the link of the npm core, meta %s', (scenario) => {
+    let oracle;
+    let vendor;
+    beforeAll(() => {
+        oracle = runCore('npm', scenario);
+        vendor = runCore('vendor', scenario);
+    }, 300000);
+
+    test('the oracle built whole links, for the meta item it picked', () => {
+        const expected = { ready: 'Ready', loading: 'Loading', err: 'Err', series: 'Ready' }[scenario];
+        expect(oracle.metaDetails.metaItem.content.type).toBe(expected);
+        expect(vendor.metaDetails.metaItem.content.type).toBe(expected);
+        group(oracle.metaDetails).content.content.forEach((stream) => {
+            expect(stream.deepLinks.player.split('/')).toHaveLength(8);
+        });
+    });
+
+    test('the page builds the same link from the vendored core\'s meta_details', () => {
+        const page = group({ streams: withPlayerLinks(vendor.metaDetails.streams, linkContext(vendor.metaDetails)) }).content.content;
+        const core = group(oracle.metaDetails).content.content;
+        expect(page.map((stream) => stream.deepLinks.player)).toEqual(core.map((stream) => stream.deepLinks.player));
+        if (scenario === 'series') expect(page[0].deepLinks.player).toMatch(/\/series\/tt2\/tt2%3A1%3A2$/);
     });
 });
 
@@ -89,7 +109,7 @@ describe('withPlayerLinks', () => {
         expect(raw.deepLinks).not.toHaveProperty('player');
     });
 
-    test('without a Ready meta: the short link; a new context makes a new one', () => {
+    test('without a meta item: the short link; a new context makes a new one', () => {
         const raw = stream('http://a/2');
         const short = withPlayerLinks([ready([raw])], null)[0].content.content[0];
         expect(short.deepLinks.player).toBe(playerLink(raw, null));
@@ -106,9 +126,15 @@ describe('withPlayerLinks', () => {
         expect(withPlayerLinks(null, context)).toBeNull();
     });
 
-    test('linkContext: null until a meta is Ready', () => {
+    test('linkContext: the meta item the core picked, whatever its state; null without one', () => {
+        const selected = { metaPath: { type: 'series', id: 'tt1' }, streamPath: { id: 'tt1:1:2' } };
+        const context = { metaTransportUrl: 'm', type: 'series', id: 'tt1', videoId: 'tt1:1:2' };
+        ['Ready', 'Loading', 'Err'].forEach((type) => {
+            expect(linkContext({ selected, metaItem: { addon: { transportUrl: 'm' }, content: { type } } })).toEqual(context);
+        });
         expect(linkContext(null)).toBeNull();
-        expect(linkContext({ selected: { metaPath: { type: 'movie', id: 'tt1' }, streamPath: { id: 'tt1' } }, metaItem: { content: { type: 'Loading' } } })).toBeNull();
+        expect(linkContext({ selected, metaItem: null })).toBeNull();
+        expect(linkContext({ selected, metaItem: { content: { type: 'Ready' } } })).toBeNull();
         expect(linkContext({ selected: { metaPath: { type: 'movie', id: 'tt1' }, streamPath: null }, metaItem: { addon: { transportUrl: 'm' }, content: { type: 'Ready' } } })).toBeNull();
     });
 });

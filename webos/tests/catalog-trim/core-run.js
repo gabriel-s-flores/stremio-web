@@ -230,8 +230,8 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     open('movie', movie(4), movie(4));
     await settle();
     read('movie', ['meta_details']);
-    process.stdout.write(JSON.stringify(out));
-    process.exit(0);
+    // Exit once the pipe took it all (an exit right after the write cuts a long answer).
+    process.stdout.write(JSON.stringify(out), () => process.exit(0));
 })().catch((error) => {
     process.stderr.write(`${error && error.stack ? error.stack : JSON.stringify(error)}\n`);
     process.exit(1);

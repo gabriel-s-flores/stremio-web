@@ -6,7 +6,7 @@
 // same link, byte for byte, only for the streams the page renders (StreamsList shows 24 at a time):
 //
 //   #/player/<encoded stream>/<stream addon url>/<meta addon url>/<type>/<meta id>/<video id>
-//   #/player/<encoded stream>                       (while no meta addon has answered)
+//   #/player/<encoded stream>                       (no meta item at all)
 //
 // as StreamDeepLinks::from in stremio-core src/deep_links/mod.rs, each part URI-component encoded (the core's
 // URI_COMPONENT_ENCODE_SET is encodeURIComponent's), "stremio://" turned into "#" (into_web_deep_links).
@@ -92,12 +92,15 @@ export const playerLink = (stream, context) => {
     return `#/player/${encoded}/${[context.streamTransportUrl, context.metaTransportUrl, context.type, context.id, context.videoId].map((part) => encodeURIComponent(part)).join('/')}`;
 };
 
-// The parts of the link MetaDetails gives: the meta addon of the first meta that is Ready (the one the
-// page shows), the meta path and the video of the streams; null when no meta is Ready.
+// The parts of the link MetaDetails gives: the meta addon of the meta item the core serialized (the rule of
+// serialize_meta_details: the first Ready one, else the first if all failed, else the first loading; whatever
+// its state, the core built the whole link with it), the meta path and the video of the streams. null without
+// that meta item: the short link, as the core. Edge left: a meta addon that is not in the profile any more
+// leaves the serialized meta item null while the core still built the whole link with its request.
 export const linkContext = (metaDetails) => {
     const selected = metaDetails && metaDetails.selected;
     const metaItem = metaDetails && metaDetails.metaItem;
-    if (!selected || !selected.metaPath || !selected.streamPath || !metaItem || !metaItem.content || metaItem.content.type !== 'Ready' || !metaItem.addon) return null;
+    if (!selected || !selected.metaPath || !selected.streamPath || !metaItem || !metaItem.addon) return null;
     return {
         metaTransportUrl: metaItem.addon.transportUrl,
         type: selected.metaPath.type,

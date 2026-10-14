@@ -137,7 +137,8 @@ const OVERRIDES = [
             '// webOS TV 4.x build only (F3.6): the transport that src/core/createTransport.webos.js (the localStorage',
             '// mirror, F3.5) wraps instead of createTransport.ts. Same as createTransport.ts plus two boot marks for the',
             '// diagnostics screen (core init start and core ready, just timestamps) and getCoreLoaderStatus: the status',
-            '// of the core loader that runs in the worker (webos/core/loader.js), read on demand. A separate file name,',
+            '// of the core loader that runs in the worker (webos/core/loader.js), read on demand; F8.7: warmUp, the core\'s',
+            '// webos_warm_up (webos/core/warm-up.patch, exposed by webos/tlsproxy/worker-entry.js). A separate file name,',
             '// not createTransport.webos.ts, because the .webos.ts extension would win over the .webos.js of F3.5.',
             '// webos/tests/no-server/no-server.test.js fails when it drifts from the upstream file.',
             '',
@@ -149,7 +150,7 @@ const OVERRIDES = [
             ],
             [
                 'const createTransport = (): CoreTransport => {',
-                'const createTransport = (): CoreTransport & { getCoreLoaderStatus: () => Promise<object> } => {',
+                'const createTransport = (): CoreTransport & { getCoreLoaderStatus: () => Promise<object>, warmUp: () => Promise<number> } => {',
             ],
             [
                 "        return bridge.call(['init'], [args]);\n",
@@ -165,8 +166,13 @@ const OVERRIDES = [
         return bridge.call(['getCoreLoaderStatus'], []);
     };
 
+    const warmUp = (): Promise<number> => {
+        return bridge.call(['webosWarmUp'], []);
+    };
+
     return {
         getCoreLoaderStatus,
+        warmUp,
         init,`,
             ],
         ],
