@@ -223,6 +223,25 @@ describe('PullNotifications', () => {
         expect(pulls(sent)).toBe(1);
     });
 
+    test('in the Player past the deferral limit: a few timers, none under 3 s; the pull goes once idle out of the Player', () => {
+        const t = setup();
+        t.transport.dispatch(ctx('PullNotifications'));
+        // Into the Player before 20 s without a key, for the 10 min of the limit and 1 more.
+        t.advance(10000);
+        t.win.location.hash = '#/player/x';
+        t.fireEvent('hashchange');
+        const before = t.delays.length;
+        t.advance(MAX_DEFER_MS + 60000);
+        const set = t.delays.slice(before);
+        expect(pulls(t.sent)).toBe(0);
+        expect(set.length).toBeLessThan(60);
+        set.forEach((ms) => expect(ms).toBeGreaterThanOrEqual(3000));
+        t.win.location.hash = '#/';
+        t.fireEvent('hashchange');
+        t.advance(IDLE);
+        expect(pulls(t.sent)).toBe(1);
+    });
+
     test('the time is written once the core took the dispatch, not when it fails', async () => {
         const { transport, sent, advance, store, inner } = setup();
         inner.dispatch.mockImplementationOnce(() => Promise.reject(new Error('worker gone')));

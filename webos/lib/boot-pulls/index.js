@@ -105,8 +105,10 @@ const wrap = (transport, options = {}) => {
     function fire() {
         timer = null;
         if (inPlayer()) {
-            // Watching a video: wait for the next idle stretch.
+            // Watching a video: wait for the next idle stretch, the deferral limit too (past it, a 0 ms timer
+            // would be set again and again until the Player is left).
             lastActivity = now();
+            wantedAt = Math.max(wantedAt, now() - maxDeferMs + idleMs);
         } else {
             if (warmUp && warmUpDueIn() === 0) {
                 warmUp = false;
@@ -120,7 +122,8 @@ const wrap = (transport, options = {}) => {
             }
             if (wanted && notificationsDueIn() === 0) {
                 wanted = false;
-                // The time counts once the core took it (a dispatch that fails is asked again on the next focus).
+                // The time counts once the worker took it (a refused call is asked again on the next focus; a
+                // failed request of the core still counts).
                 Promise.resolve(transport.dispatch({ action: 'Ctx', args: { action: PULL_NOTIFICATIONS } }))
                     .then(() => writePulledAt(now()), () => null);
             }

@@ -16,8 +16,8 @@
 // keys the serializer adds around it (progress, deepLinks, lastUsed): its keys come in the core's order.
 // The one exception to "byte for byte": the free keys an addon puts in behaviorHints (kept by the core as
 // serde_json values) pass through JSON.parse here, so a float with no fraction (24.0 → 24), -0.0, an integer
-// beyond 2^53 or numeric keys (which JavaScript sorts first) come out written differently. The link still
-// opens the same stream; the Player's stream is then not == to the list's for the core's progress/lastUsed.
+// beyond 2^53 or numeric keys (which JavaScript sorts first) come out written differently. Only the bytes of
+// the link differ: it opens the same stream, and the Player gets the same stream as through the core's link.
 //
 // withPlayerLinks(streams, context) returns MetaDetails#streams with a lazy `deepLinks.player` on the
 // streams that have none, computed when something reads it (the Stream item, for its href) and kept; the
