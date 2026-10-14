@@ -15,10 +15,13 @@
 // Diagnostics (F3.6): window.__stremioPersist.status() has the boot reason and the last batch.
 // F7.2: getState calls for the same model that pile up before the worker answers share one answer
 // (webos/lib/core-calls): at boot the core serialized the same "ctx" for each of its subscribers.
+// F8.7: the Ctx pulls of App.js (boot and every window focus) go through webos/lib/boot-pulls: none of the
+// API pulls for a guest, and PullNotifications only when the app is idle, at most every 6 h.
 
 const createTransport = require('./createTransport.diagnostics.ts').default;
 const { createMirror } = require('../../webos/persistence/mirror');
 const { coalesceGetState } = require('../../webos/lib/core-calls');
+const bootPulls = require('../../webos/lib/boot-pulls');
 const appinfo = require('../../webos/app/appinfo.json');
 
 // PalmSystem.identifier is the running app's id (webOSTV.js fetchAppId() splits it the same way).
@@ -50,7 +53,7 @@ window.__stremioPersist = {
 };
 
 const createWebosTransport = () => {
-    const transport = coalesceGetState(createTransport());
+    const transport = bootPulls.wrap(coalesceGetState(createTransport()));
 
     const init = (args) => mirror.ready()
         .then((result) => {

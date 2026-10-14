@@ -596,3 +596,21 @@ Hipótese (não confirmada): com a cota baixa a VM inteira, inclusive a rede (sl
 - `qmp.py`: o `.ppm.tmp` de ~6 MB é apagado também quando a conversão falha.
 - Teste (sem emulador, ~5 s): `webos/tests/emu-run/tools-fixes.sh`.
 
+## `--no-flush-code` (F8.7): o código compilado do core não é mais descartado
+
+Com o `--no-crankshaft`, o V8 5.8 compila cada função do wasm2js (e do app) no compilador base na primeira
+chamada, e o `flush_code` (ligado por padrão) **descarta esse código** de funções que ficaram alguns GCs sem
+rodar. No perfil c8, a primeira execução de um caminho do core custa centenas de ms (o 1º `dispatch` ~700 ms, os
+seguintes 1–2 ms; o 1º `getState('ctx')` ~390 ms, depois 1–3 ms): com o descarte, **cada** título aberto pagava
+a compilação de novo (a queixa da TV: "lento para abrir cada título"). `"v8ExtraFlags": "--no-crankshaft
+--no-flush-code"`; o core também aquece o caminho de Detalhes no ocioso (`webos/core/warm-up.patch`).
+
+| Medida (c8, wasm2js, mesmo build) | sem a flag | `--no-flush-code` |
+|---|---|---|
+| 2ª e 3ª aberturas de Detalhes (meta real / 1º stream) | 4–6 s / 5,7–7,8 s | 0,8–1,5 s / 3,5–5,3 s |
+| Board parado depois do boot (RSS do app) | 148–152 MB | 168 MB |
+| Fim da navegação `nav`, parado | 205–212 MB | 225 MB |
+| Pico do `play --switches 5` | 218 MB, sem OOM | 239 MB, sem OOM |
+
+Custo: ~+20 MB de RSS, o código das funções já executadas. Na TV (3 GB), conferir o pico do `play --switches 5`
+como na seção da F7.2. Relatório e evidências: `tarefas/F8.7/`.

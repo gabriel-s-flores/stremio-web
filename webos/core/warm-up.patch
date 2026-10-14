@@ -1,0 +1,142 @@
+--- a/stremio-core-web/src/stremio_core_web.rs
++++ b/stremio-core-web/src/stremio_core_web.rs
+@@ -15,9 +15,16 @@
+         NOTIFICATIONS_STORAGE_KEY, PROFILE_STORAGE_KEY, SEARCH_HISTORY_STORAGE_KEY,
+         STREAMING_SERVER_URLS_STORAGE_KEY, STREAMS_STORAGE_KEY,
+     },
+-    models::common::Loadable,
+-    runtime::{msg::Action, Env, EnvError, Runtime, RuntimeAction, RuntimeEvent},
++    models::{
++        common::{Loadable, ResourceLoadable},
++        meta_details::MetaDetails,
++    },
++    runtime::{
++        msg::{Action, ActionLoad, Internal, Msg},
++        Env, EnvError, Model, Runtime, RuntimeAction, RuntimeEvent,
++    },
+     types::{
++        addon::{resource_response_from_text, ResourcePath, ResourceRequest, ResourceResponse},
+         events::DismissedEventsBucket,
+         library::LibraryBucket,
+         notifications::NotificationsBucket,
+@@ -357,3 +364,120 @@
+         )
+     }
+ }
++
++/// webOS port (F8.7): the code a title's Details runs, run once in advance on a copy of the model.
++///
++/// In wasm2js on the webOS TV 4.x (V8 5.8 with "--no-crankshaft") the first run of a code path of the core
++/// costs hundreds of ms (the functions are compiled when first called: the first `dispatch` took ~700 ms on
++/// the C8 profile, the next ones 1-2 ms), and opening the first title of a session paid it for the meta and
++/// the streams answers, an addon that fails and the `get_state` of the details. Called by the page when the
++/// app is idle: a copy of the runtime's model (copying it makes no effect) gets the Details of a movie and of
++/// a series episode, set up as the Load leaves them (the requests loading), canned answers read as `fetch` reads
++/// an addon's answer (one stream addon answers an error) and its `get_state('meta_details')`; the Load
++/// action is only parsed (its update would make the requests: the core's fetch starts when the effect is
++/// built). The copy's effects are dropped: nothing reaches the runtime, the storage, the network or the page.
++/// One request is made on purpose, through the runtime's fetch: the streaming server's local addon
++/// (127.0.0.1:11470; the core asks it on every Details, and there is no server on the TV), which fails at once
++/// and warms fetch's error path. Returns how many titles it went through (0 when the runtime is not ready).
++#[wasm_bindgen]
++pub fn webos_warm_up() -> u32 {
++    let mut model = {
++        let runtime = RUNTIME.read().expect("runtime read failed");
++        match runtime.as_ref().and_then(|runtime| runtime.ready()) {
++            Some(runtime) => match runtime.model() {
++                Ok(model) => model.to_owned(),
++                Err(_) => return 0,
++            },
++            None => return 0,
++        }
++    };
++    let bases = model
++        .ctx
++        .profile
++        .addons
++        .iter()
++        .take(2)
++        .map(|addon| addon.transport_url.to_owned())
++        .collect::<Vec<_>>();
++    if bases.is_empty() {
++        return 0;
++    }
++    // What fetch does with an addon's answer (webos/core/fast-responses.patch): the fast read, else the usual one.
++    let answer = |text: &str| -> Result<ResourceResponse, EnvError> {
++        resource_response_from_text(text).map(Ok).unwrap_or_else(|| {
++            serde_path_to_error::deserialize(&mut serde_json::Deserializer::from_str(text))
++                .map_err(|error| EnvError::Fetch(error.to_string()))
++        })
++    };
++    let mut titles = 0;
++    for (r#type, id, video_id, meta) in [
++        ("movie", "tt0000001", "tt0000001", WARM_UP_MOVIE),
++        ("series", "tt0000002", "tt0000002:1:1", WARM_UP_SERIES),
++    ] {
++        let action = format!(
++            r#"{{"action":"Load","args":{{"model":"MetaDetails","args":{{"metaPath":{{"resource":"meta","type":"{type}","id":"{id}","extra":[]}},"streamPath":{{"resource":"stream","type":"{type}","id":"{video_id}","extra":[]}},"guessStream":false}}}}}}"#
++        );
++        let selected = match serde_json::from_str::<Action>(&action) {
++            Ok(Action::Load(ActionLoad::MetaDetails(selected))) => selected,
++            _ => return titles,
++        };
++        let request = |base: &url::Url, path: &ResourcePath| ResourceRequest {
++            base: base.to_owned(),
++            path: path.to_owned(),
++        };
++        let meta_request = request(&bases[0], &selected.meta_path);
++        let stream_requests = match &selected.stream_path {
++            Some(path) => bases.iter().map(|base| request(base, path)).collect::<Vec<_>>(),
++            None => vec![],
++        };
++        model.meta_details = MetaDetails {
++            selected: Some(selected),
++            meta_items: vec![ResourceLoadable {
++                request: meta_request.to_owned(),
++                content: Some(Loadable::Loading),
++            }],
++            streams: stream_requests
++                .iter()
++                .map(|request| ResourceLoadable {
++                    request: request.to_owned(),
++                    content: Some(Loadable::Loading),
++                })
++                .collect(),
++            ..Default::default()
++        };
++        let _ = model.get_state(&WebModelField::MetaDetails);
++        let mut answers = vec![(meta_request, answer(meta))];
++        let count = stream_requests.len();
++        for (index, request) in stream_requests.into_iter().enumerate() {
++            // The first addon answers; the last one of several fails.
++            let result = if index + 1 == count && count > 1 {
++                Err(EnvError::Fetch("Failed to fetch".to_owned()))
++            } else {
++                answer(WARM_UP_STREAMS)
++            };
++            answers.push((request, result));
++        }
++        for (request, result) in answers {
++            let _ = model.update(&Msg::Internal(Internal::ResourceRequestResult(
++                request,
++                Box::new(result),
++            )));
++            let _ = model.get_state(&WebModelField::MetaDetails);
++        }
++        titles += 1;
++    }
++    drop(model);
++    // fetch's error path, with a request that fails at once on the TV (no streaming server).
++    if let Ok(request) = http::Request::get("http://127.0.0.1:11470/local-addon/manifest.json")
++        .body(())
++    {
++        WebEnv::exec_concurrent(
++            WebEnv::fetch::<(), ResourceResponse>(request).map(|_| ()),
++        );
++    }
++    titles
++}
++
++const WARM_UP_MOVIE: &str = r###"{"meta":{"id":"tt0000001","type":"movie","name":"Title tt0000001","poster":"https://example.com/warm-up/tt0000001/poster.jpg","background":"https://example.com/warm-up/tt0000001/background.jpg","logo":"https://example.com/warm-up/tt0000001/logo.jpg","description":"A title with a description of a few words, \"quotes\", accents (é) and an & sign.","releaseInfo":"2026","runtime":"146 min","released":"2026-06-12T00:00:00.000Z","imdbRating":"6.4","genres":["Action","Mystery","Sci-Fi"],"links":[{"name":"6.4","category":"imdb","url":"https://imdb.com/title/tt0000001"},{"name":"Person","category":"share","url":"https://www.strem.io/s/movie/disclosure-day-15047880"},{"name":"Action","category":"Genres","url":"stremio:///discover/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/top?genre=Action"},{"name":"Mystery","category":"Genres","url":"stremio:///discover/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/top?genre=Mystery"},{"name":"Sci-Fi","category":"Genres","url":"stremio:///discover/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/top?genre=Sci-Fi"},{"name":"Person","category":"Cast","url":"stremio:///search?search=Emily%20Blunt"},{"name":"Person","category":"Cast","url":"stremio:///search?search=Josh%20O%26apos%3BConnor"},{"name":"Person","category":"Cast","url":"stremio:///search?search=Colin%20Firth"},{"name":"Person","category":"Writers","url":"stremio:///search?search=David%20Koepp"},{"name":"Person","category":"Writers","url":"stremio:///search?search=Steven%20Spielberg"},{"name":"Person","category":"Directors","url":"stremio:///search?search=Steven%20Spielberg"}],"trailers":[{"source":"icDuEHSxE-w","type":"Trailer"},{"source":"SCYT8vb2siQ","type":"Trailer"}],"trailerStreams":[{"title":"Trailer","ytId":"icDuEHSxE-w"},{"title":"Trailer","ytId":"SCYT8vb2siQ"}],"behaviorHints":{"defaultVideoId":"tt0000001","hasScheduledVideos":false}}}"###;
++const WARM_UP_SERIES: &str = r###"{"meta":{"id":"tt0000002","type":"series","name":"Title tt0000002","poster":"https://example.com/warm-up/tt0000002/poster.jpg","background":"https://example.com/warm-up/tt0000002/background.jpg","logo":"https://example.com/warm-up/tt0000002/logo.jpg","description":"A title with a description of a few words, \"quotes\", accents (é) and an & sign.","releaseInfo":"2026","runtime":"146 min","released":"2026-06-12T00:00:00.000Z","imdbRating":"6.4","genres":["Action","Mystery","Sci-Fi"],"links":[{"name":"6.4","category":"imdb","url":"https://imdb.com/title/tt0000002"},{"name":"Person","category":"share","url":"https://www.strem.io/s/movie/disclosure-day-15047880"},{"name":"Action","category":"Genres","url":"stremio:///discover/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/top?genre=Action"},{"name":"Mystery","category":"Genres","url":"stremio:///discover/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/top?genre=Mystery"},{"name":"Sci-Fi","category":"Genres","url":"stremio:///discover/https%3A%2F%2Fv3-cinemeta.strem.io%2Fmanifest.json/movie/top?genre=Sci-Fi"},{"name":"Person","category":"Cast","url":"stremio:///search?search=Emily%20Blunt"},{"name":"Person","category":"Cast","url":"stremio:///search?search=Josh%20O%26apos%3BConnor"},{"name":"Person","category":"Cast","url":"stremio:///search?search=Colin%20Firth"},{"name":"Person","category":"Writers","url":"stremio:///search?search=David%20Koepp"},{"name":"Person","category":"Writers","url":"stremio:///search?search=Steven%20Spielberg"},{"name":"Person","category":"Directors","url":"stremio:///search?search=Steven%20Spielberg"}],"trailers":[{"source":"icDuEHSxE-w","type":"Trailer"},{"source":"SCYT8vb2siQ","type":"Trailer"}],"trailerStreams":[{"title":"Trailer","ytId":"icDuEHSxE-w"},{"title":"Trailer","ytId":"SCYT8vb2siQ"}],"behaviorHints":{"defaultVideoId":null,"hasScheduledVideos":false},"videos":[{"id":"tt0000002:1:1","name":"Episode 1","season":1,"episode":1,"released":"2025-01-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://example.com/warm-up/tt0000002:1:1.jpg"},{"id":"tt0000002:1:2","name":"Episode 2","season":1,"episode":2,"released":"2025-02-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://example.com/warm-up/tt0000002:1:2.jpg"},{"id":"tt0000002:1:3","name":"Episode 3","season":1,"episode":3,"released":"2025-03-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://example.com/warm-up/tt0000002:1:3.jpg"},{"id":"tt0000002:1:4","name":"Episode 4","season":1,"episode":4,"released":"2025-04-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://example.com/warm-up/tt0000002:1:4.jpg"},{"id":"tt0000002:1:5","name":"Episode 5","season":1,"episode":5,"released":"2025-05-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://example.com/warm-up/tt0000002:1:5.jpg"},{"id":"tt0000002:1:6","name":"Episode 6","season":1,"episode":6,"released":"2025-06-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://example.com/warm-up/tt0000002:1:6.jpg"},{"id":"tt0000002:1:7","name":"Episode 7","season":1,"episode":7,"released":"2025-07-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://example.com/warm-up/tt0000002:1:7.jpg"},{"id":"tt0000002:1:8","name":"Episode 8","season":1,"episode":8,"released":"2025-08-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://example.com/warm-up/tt0000002:1:8.jpg"},{"id":"tt0000002:1:9","name":"Episode 9","season":1,"episode":9,"released":"2025-09-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://example.com/warm-up/tt0000002:1:9.jpg"},{"id":"tt0000002:1:10","name":"Episode 10","season":1,"episode":10,"released":"2025-01-01T00:00:00.000Z","overview":"Text of the episode.","thumbnail":"https://example.com/warm-up/tt0000002:1:10.jpg"}]}}"###;
++const WARM_UP_STREAMS: &str = r###"{"streams":[{"name":"Addon\n4k HDR","title":"Title.2160p.WEB.0.mkv\n👤 10 💾 2 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/0/Title.2160p.mkv","behaviorHints":{"bingeGroup":"warm-up|2160p","filename":"Title.2160p.mkv","videoSize":1000000000}},{"name":"Addon\n1080p","title":"Title.1080p.WEB.1.mkv\n👤 11 💾 3 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/1/Title.1080p.mkv","behaviorHints":{"bingeGroup":"warm-up|1080p","filename":"Title.1080p.mkv","videoSize":1000000001}},{"name":"Addon\n720p","title":"Title.720p.WEB.2.mkv\n👤 12 💾 4 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/2/Title.720p.mkv","behaviorHints":{"bingeGroup":"warm-up|720p","filename":"Title.720p.mkv","videoSize":1000000002}},{"name":"Addon\n4k HDR","title":"Title.2160p.WEB.3.mkv\n👤 13 💾 5 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/3/Title.2160p.mkv","behaviorHints":{"bingeGroup":"warm-up|2160p","filename":"Title.2160p.mkv","videoSize":1000000003}},{"name":"Addon\n1080p","title":"Title.1080p.WEB.4.mkv\n👤 14 💾 6 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/4/Title.1080p.mkv","behaviorHints":{"bingeGroup":"warm-up|1080p","filename":"Title.1080p.mkv","videoSize":1000000004}},{"name":"Addon\n720p","title":"Title.720p.WEB.5.mkv\n👤 15 💾 7 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/5/Title.720p.mkv","behaviorHints":{"bingeGroup":"warm-up|720p","filename":"Title.720p.mkv","videoSize":1000000005}},{"name":"Addon\n4k HDR","title":"Title.2160p.WEB.6.mkv\n👤 16 💾 8 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/6/Title.2160p.mkv","behaviorHints":{"bingeGroup":"warm-up|2160p","filename":"Title.2160p.mkv","videoSize":1000000006}},{"name":"Addon\n1080p","title":"Title.1080p.WEB.7.mkv\n👤 17 💾 9 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/7/Title.1080p.mkv","behaviorHints":{"bingeGroup":"warm-up|1080p","filename":"Title.1080p.mkv","videoSize":1000000007}},{"name":"Addon\n720p","title":"Title.720p.WEB.8.mkv\n👤 18 💾 10 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/8/Title.720p.mkv","behaviorHints":{"bingeGroup":"warm-up|720p","filename":"Title.720p.mkv","videoSize":1000000008}},{"name":"Addon\n4k HDR","title":"Title.2160p.WEB.9.mkv\n👤 19 💾 11 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/9/Title.2160p.mkv","behaviorHints":{"bingeGroup":"warm-up|2160p","filename":"Title.2160p.mkv","videoSize":1000000009}},{"name":"Addon\n1080p","title":"Title.1080p.WEB.10.mkv\n👤 20 💾 12 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/10/Title.1080p.mkv","behaviorHints":{"bingeGroup":"warm-up|1080p","filename":"Title.1080p.mkv","videoSize":1000000010}},{"name":"Addon\n720p","title":"Title.720p.WEB.11.mkv\n👤 21 💾 13 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/11/Title.720p.mkv","behaviorHints":{"bingeGroup":"warm-up|720p","filename":"Title.720p.mkv","videoSize":1000000011}},{"name":"Addon\n4k HDR","title":"Title.2160p.WEB.12.mkv\n👤 22 💾 14 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/12/Title.2160p.mkv","behaviorHints":{"bingeGroup":"warm-up|2160p","filename":"Title.2160p.mkv","videoSize":1000000012}},{"name":"Addon\n1080p","title":"Title.1080p.WEB.13.mkv\n👤 23 💾 15 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/13/Title.1080p.mkv","behaviorHints":{"bingeGroup":"warm-up|1080p","filename":"Title.1080p.mkv","videoSize":1000000013}},{"name":"Addon\n720p","title":"Title.720p.WEB.14.mkv\n👤 24 💾 16 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/14/Title.720p.mkv","behaviorHints":{"bingeGroup":"warm-up|720p","filename":"Title.720p.mkv","videoSize":1000000014}},{"name":"Addon\n4k HDR","title":"Title.2160p.WEB.15.mkv\n👤 25 💾 17 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/15/Title.2160p.mkv","behaviorHints":{"bingeGroup":"warm-up|2160p","filename":"Title.2160p.mkv","videoSize":1000000015}},{"name":"Addon\n1080p","title":"Title.1080p.WEB.16.mkv\n👤 26 💾 18 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/16/Title.1080p.mkv","behaviorHints":{"bingeGroup":"warm-up|1080p","filename":"Title.1080p.mkv","videoSize":1000000016}},{"name":"Addon\n720p","title":"Title.720p.WEB.17.mkv\n👤 27 💾 19 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/17/Title.720p.mkv","behaviorHints":{"bingeGroup":"warm-up|720p","filename":"Title.720p.mkv","videoSize":1000000017}},{"name":"Addon\n4k HDR","title":"Title.2160p.WEB.18.mkv\n👤 28 💾 20 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/18/Title.2160p.mkv","behaviorHints":{"bingeGroup":"warm-up|2160p","filename":"Title.2160p.mkv","videoSize":1000000018}},{"name":"Addon\n1080p","title":"Title.1080p.WEB.19.mkv\n👤 29 💾 21 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/19/Title.1080p.mkv","behaviorHints":{"bingeGroup":"warm-up|1080p","filename":"Title.1080p.mkv","videoSize":1000000019}},{"name":"Addon\n720p","title":"Title.720p.WEB.20.mkv\n👤 30 💾 22 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/20/Title.720p.mkv","behaviorHints":{"bingeGroup":"warm-up|720p","filename":"Title.720p.mkv","videoSize":1000000020}},{"name":"Addon\n4k HDR","title":"Title.2160p.WEB.21.mkv\n👤 31 💾 23 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/21/Title.2160p.mkv","behaviorHints":{"bingeGroup":"warm-up|2160p","filename":"Title.2160p.mkv","videoSize":1000000021}},{"name":"Addon\n1080p","title":"Title.1080p.WEB.22.mkv\n👤 32 💾 24 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/22/Title.1080p.mkv","behaviorHints":{"bingeGroup":"warm-up|1080p","filename":"Title.1080p.mkv","videoSize":1000000022}},{"name":"Addon\n720p","title":"Title.720p.WEB.23.mkv\n👤 33 💾 25 GB ⚙️ Source\n🇬🇧 / Multi","url":"https://example.com/warm-up/23/Title.720p.mkv","behaviorHints":{"bingeGroup":"warm-up|720p","filename":"Title.720p.mkv","videoSize":1000000023}}]}"###;

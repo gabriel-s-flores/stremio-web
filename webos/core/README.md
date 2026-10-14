@@ -18,7 +18,8 @@ webos/core/check-wasm arquivo.wasm                  # gate sozinho (--json para 
 
 1. `git archive` da tag `stremio-core-web-v0.65.0` do clone em `~/webos-tv-sdk/src/stremio-core`.
 2. `recipe-a.patch`: `gloo-utils` 0.3 → 0.2, a única dependência do lockfile que exige Rust acima de 1.77.
-   Depois, `stream-links.patch` (F8.6, desempenho; veja [abaixo](#patch-de-desempenho-stream-linkspatch-f86)).
+   Depois, `stream-links.patch` (F8.6, desempenho; veja [abaixo](#patch-de-desempenho-stream-linkspatch-f86)) e
+   `guest-analytics.patch` e `list-links.patch` (F8.7; veja [abaixo](#analytics-de-convidado-guest-analyticspatch-f87)).
 3. Rust 1.77.2: `cargo build --release --locked --target wasm32-unknown-unknown`. O Rust 1.77 ainda
    gera wasm32 sem reference types e sem multivalue. `--remap-path-prefix` tira os caminhos locais
    das mensagens de panic, e o binário sai igual em qualquer pasta.
@@ -99,6 +100,47 @@ Resultado (`webos/tests/perf/core-bench.js`, Node, 224 streams): `get_state('met
 (510 KB, deep links inclusos) sai **byte a byte igual** à do core sem o patch, nas duas variantes.
 Para conferir de novo: `cargo test --lib zlib_stored deep_links stream` na fonte com os dois patches
 (91 testes) e `core-bench.js --dump` com o core antigo (`--vendor`) e o novo.
+
+## Analytics de convidado: `guest-analytics.patch` (F8.7)
+
+O `WebEnv::emit_to_analytics` montava o evento (nome, dados, contexto) antes de o `Analytics::emit` descartá-lo por
+falta de sessão. No primeiro `LocationPathChanged` (o primeiro título aberto depois do boot), o
+`sanitize_location_path` compilava a regex `PLAYER_REGEX` (o `Regex::new` é a maior função do wasm2js, 316 KB, e na TV
+roda sem otimização): **1,3 s do worker no perfil c8**, bem no clique (110 ms no V8 5.8 do Node 8, e 0 nas
+chamadas seguintes). O patch sai do `emit_to_analytics` quando o perfil não tem chave de sessão; com sessão, nada
+muda. O comportamento observável é o mesmo: sem sessão, nenhum evento era guardado nem enviado.
+
+## Lista de streams sem o link do player: `list-links.patch` (F8.7)
+
+Cada `get_state('meta_details')` montava os deep links de **todos** os streams da lista (224 do Torrentio + um
+debrid). No V8 5.8 com o `--no-crankshaft` da TV (Node 8, `webos/tests/perf/v58.mjs`), metade do tempo de um
+`get_state` pesado era deep link (o `ExternalPlayerLink` 24 %, o `Stream::encode` do link do player 18,5 %) e o
+resto, escrever e ler o JSON, do qual os deep links eram 75 % dos caracteres. O patch, em
+`stremio-core-web/src/model/serialize_meta_details.rs`:
+
+1. os streams da lista saem com `deepLinks` só com `externalPlayer` (o app lê `streaming` e `download` no menu do
+   stream; com o Infuse escolhido, o `externalPlayer` sai do `StreamDeepLinks` inteiro, como antes, porque o link
+   de retorno dele depende do link do player). Os trailers e os vídeos não mudam;
+2. a página monta o `deepLinks.player` só dos streams que desenha (`webos/lib/player-link`, por um getter
+   preguiçoso no `useMetaDetails.webos.js`), com os mesmos bytes: o JSON do stream sem as chaves que o serializador
+   põe em volta (`progress`, `deepLinks`, `lastUsed`, já na ordem dos campos do serde), o zlib *stored* do
+   `stream-links.patch`, base64 e `encodeURIComponent` (o `URI_COMPONENT_ENCODE_SET` do core é o mesmo conjunto);
+3. o progresso de cada stream compara primeiro o `video_id` e só depois o stream (comparação profunda contra cada
+   item do bucket `streams`). Mesmo resultado.
+
+Resultado: `get_state('meta_details')` com 224 streams de **106 → 50 ms** no V8 5.8 e de 517 → 319 KB. Os links da
+página saíram idênticos aos do core antigo nos 224 streams do `core-bench.js --dump`, e o
+`webos/tests/player-link/player-link.test.js` compara com o `encode_stream` do core vendorizado (URL, debrid com
+emoji e números, YouTube, externo, legendas, um stream de dois blocos zlib) e com o vetor do teste do próprio
+core (`stream_deep_links_http`).
+
+## Build de perfil (`build --profiling`, F8.7)
+
+`webos/core/build --profiling --out <pasta> [--work <pasta>]` gera o mesmo core com os nomes das funções e **sem
+inlining** (LLVM com `-inline-threshold=0`, `wasm-opt` e `wasm2js` com `--no-inline=*`), e o wasm2js sem o terser: num
+perfil de CPU, o tempo próprio de cada modelo aparece separado, em vez de tudo dentro do `WebModel::update`. É mais
+lento que o build normal: serve para atribuir, não para medir. Exige `--out` fora do vendor. Para ler o perfil:
+`node webos/tests/perf/symbolize.mjs <perfil> -` (os nomes já estão no arquivo).
 
 ## Nomes das funções do wasm2js (`symbols.js`, F8.6)
 

@@ -2,7 +2,7 @@
 // Opening Details of a film with 224 streams and a large library (F8.6), A/B of IPKs in ONE reservation:
 //
 //   webos/tools/emu-run --profile c8 --timeout 60 -- node webos/tests/perf/details.mjs --out <dir> [--rounds 2]
-//        [--openings 3] [--profile-opening N] [--quiet 45] <a.ipk> <b.ipk> ...
+//        [--openings 3] [--profile-opening N] [--quiet 45 | --quiet 8,90] [--from-board] <a.ipk> <b.ipk> ...
 //
 // The TV case (F8 notes, 2026-10-12): Torrentio + AllDebrid answers 224 streams (121 KB) for the film, the
 // TV has `library` 198 KB and `library_recent` 118 KB, and meta and streams showed up together after
@@ -27,6 +27,15 @@
 // - --profile-opening N: a CPU profile of the worker (CDP Worker domain, like tarefas/F8/bin/perfil-worker.mjs)
 //   over the Nth opening, saved as <label>.worker.cpuprofile (symbolize with webos/tests/perf/symbolize.mjs).
 //   It works on the TV; on the emulator (c8 or not) the worker's Profiler.stop never came back (F8.6).
+// F8.7:
+// - --quiet 8,90: one launch per value (the Board, then that many seconds, then the openings), each with the
+//   state seeded again before it: the library, and no `notifications` bucket, so that every boot pulls the
+//   notifications like the TV (Cinemeta lastVideosIds, real ids in library-fixture.js);
+// - --from-board: the opening is a click on the first movie of the first catalog row of the Board (the
+//   remote's OK on a poster: the poster stays under Details, so the optimistic title of F8.6 shows), not a
+//   hash change; the movie is whatever Cinemeta's first catalog has, the local addon answers its 224 streams;
+// - every call between page and worker is recorded from the launch (at < 0: before the opening);
+// - --addon-delay N (default 150): the local addon answers after N ms, like Torrentio + AllDebrid on the TV.
 // Writes <dir>/details.json and prints the medians per IPK.
 import { execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -38,16 +47,68 @@ const require = createRequire(import.meta.url);
 const { libraryFixture } = require('./library-fixture.js');
 
 const args = parseArgs(process.argv.slice(2));
-const IPKS = args._.map((p) => path.resolve(p));
+// An entry may be <ipk>:<core variant> (wasm | wasm2js): the same IPK with the two cores (F8.7).
+const ENTRIES = args._.map((p) => {
+    const m = /^(.*\.ipk):(wasm|wasm2js)$/.exec(p);
+    return m ? { ipk: path.resolve(m[1]), variant: m[2] } : { ipk: path.resolve(p), variant: null };
+});
+const IPKS = ENTRIES.map((e) => e.ipk);
 const OUT = path.resolve(args.out || 'perf-details');
 const ROUNDS = Number(args.rounds || 1);
 const OPENINGS = Number(args.openings || 3);
 const PROFILE_OPENING = Number(args['profile-opening'] || 0);
-const QUIET_S = Number(args.quiet || 45);
+// --page-profile-opening N: a CPU profile of the page (main thread) over the Nth opening of each launch (F8.7).
+const PAGE_PROFILE_OPENING = Number(args['page-profile-opening'] || 0);
+// --worker-trace (F8.7): what the core worker does during each opening, recorded inside the worker (its CPU
+// profiler does not work on the emulator): every fetch (asked, answered, text read by the core), the page's
+// calls as they arrive, and every stretch of more than 40 ms in which the worker did not get back to its
+// timers (busy). Times in Date.now(), like the page's `atDate`.
+const WORKER_TRACE = !!args['worker-trace'];
+const WORKER_TRACE_SCRIPT = `(function () {
+    if (self.__wt) { self.__wt.length = 0; return 'reset'; }
+    var t = self.__wt = [];
+    var inner = self.fetch;
+    self.fetch = function (input, init) {
+        var url = typeof input === 'string' ? input : input && input.url;
+        var e = { fetch: String(url).split('?')[0].slice(0, 100), at: Date.now() };
+        t.push(e);
+        return inner.apply(this, arguments).then(function (r) {
+            e.answered = Date.now(); e.status = r && r.status;
+            if (r && typeof r.text === 'function') {
+                var text = r.text;
+                r.text = function () { e.textAsked = Date.now(); return text.apply(r, arguments).then(function (b) { e.textRead = Date.now(); e.bytes = b.length; return b; }); };
+            }
+            return r;
+        }, function (error) { e.failed = Date.now(); throw error; });
+    };
+    self.addEventListener('message', function (event) {
+        var r = event.data && event.data.request;
+        if (r && r.path) t.push({ call: r.path.join('.'), arg: !r.args ? '' : typeof r.args[0] === 'string' ? r.args[0] : (r.args[0] && r.args[0].action ? r.args[0].action + (r.args[0].args && (r.args[0].args.model || r.args[0].args.action) ? ':' + (r.args[0].args.model || r.args[0].args.action) : '') : ''), at: Date.now() });
+    });
+    var post = self.postMessage;
+    self.postMessage = function (message) {
+        var r = message && message.request;
+        if (r && r.path && r.path[0] === 'onCoreEvent' && r.args[0]) t.push({ event: r.args[0].name + (r.args[0].name === 'NewState' ? ':' + r.args[0].args.join('+') : ':' + (r.args[0].args && r.args[0].args.event)), at: Date.now() });
+        else if (message && message.response) t.push({ answer: message.response.id, at: Date.now() });
+        return post.apply(this, arguments);
+    };
+    var last = Date.now();
+    (function beat() {
+        var now = Date.now();
+        if (now - last > 40) t.push({ busyFrom: last, busyTo: now });
+        last = now;
+        setTimeout(beat, 10);
+    })();
+    return 'installed';
+})()`;
+const QUIETS = String(args.quiet || 45).split(',').map(Number);
+const FROM_BOARD = !!args['from-board'];
 const IDLE_WAIT_S = Number(args['idle-wait'] || 120);
 // The worker profiler's sampling interval (µs): 1000 like the TV profile.
 const PROFILE_INTERVAL_US = Number(args['profile-interval'] || 1000);
 const HASH = args.hash || '#/detail/movie/tt15047880/tt15047880';
+// How long the local addon holds each answer (F8.7): ~150 ms, like Torrentio + AllDebrid on the TV.
+const ADDON_DELAY_MS = Number(args['addon-delay'] === undefined ? 150 : args['addon-delay']);
 const { EMU_DEVICE: DEVICE, EMU_CDP_PORT: CDP_PORT } = process.env;
 if (!DEVICE || !CDP_PORT || IPKS.length === 0) {
     console.error('usage (inside webos/tools/emu-run): details.mjs --out <dir> [--rounds N] <ipk>...');
@@ -59,7 +120,7 @@ const log = (...a) => console.log(`[${new Date().toTimeString().slice(0, 8)}]`, 
 // The local addon with the 224 streams (stopped at the end).
 const addonInfo = path.join(OUT, 'addon.json');
 fs.rmSync(addonInfo, { force: true });
-const addon = spawn(process.execPath, [path.join(REPO, 'webos/tests/addon/server.mjs'), '--set', 'torrentio', '--info', addonInfo],
+const addon = spawn(process.execPath, [path.join(REPO, 'webos/tests/addon/server.mjs'), '--set', 'torrentio', '--info', addonInfo, '--answer-delay', String(ADDON_DELAY_MS)],
     { stdio: ['ignore', fs.openSync(path.join(OUT, 'addon.log'), 'w'), 'inherit'] });
 process.on('exit', () => addon.kill('SIGTERM'));
 for (let i = 0; i < 100 && !fs.existsSync(addonInfo); i++) await sleep(100);
@@ -68,12 +129,16 @@ const LIBRARY = libraryFixture();
 
 const ROUTE = `document.querySelector('.routes-container > .route-container:last-child')`;
 const BOARD_READY = `(function () { var h = location.hash; if (h !== '' && h !== '#/') return false; var route = ${ROUTE};
-    return !!route && !!route.querySelector('[class*="board-content"] [class*="meta-item-container"]'); })()`;
+    if (!route) return false;
+    // A poster of a catalog row: Continue Watching (the library) shows before the catalogs answer.
+    var rows = route.querySelectorAll('[class*="board-content"] [class*="board-row"]');
+    for (var i = 0; i < rows.length; i++) if (!/continue-watching/.test(rows[i].className) && rows[i].querySelector('[class*="meta-item-container"]')) return true;
+    return false; })()`;
 
 // Page side: the calls between page and worker, and the opening's timer.
 const HOOK = `(function () {
     if (window.__f86) return 'already';
-    var f = window.__f86 = { calls: null, t0: 0 };
+    var f = window.__f86 = { calls: [], t0: performance.now() };
     var now = function () { return Math.round(performance.now() - f.t0); };
     var watched = new WeakSet ? new WeakSet() : null;
     var pending = {};
@@ -81,7 +146,20 @@ const HOOK = `(function () {
     var onMessage = function (e) {
         var d = e.data || {}, calls = f.calls;
         if (!calls) return;
-        if (d.response && pending[d.response.id]) { pending[d.response.id].push(now()); delete pending[d.response.id]; }
+        if (d.response && pending[d.response.id]) {
+            var entry0 = pending[d.response.id];
+            entry0.push(now());
+            // What a meta_details answer had: the meta's state and, per addon, the streams' state and count (F8.7).
+            var data = d.response.result && d.response.result.data;
+            if (entry0[1] === 'getState' && entry0[3] === 'meta_details' && data) {
+                try {
+                    entry0.push((data.metaItem ? data.metaItem.content.type : 'none') + ' | ' + (data.streams || []).map(function (s) {
+                        return s.addon.manifest.id.split('.').pop() + ':' + s.content.type + (s.content.type === 'Ready' ? s.content.content.length : '');
+                    }).join(' '));
+                } catch (e) { entry0.push('?'); }
+            }
+            delete pending[d.response.id];
+        }
         if (d.request) {
             var p = d.request.path.join('.'), a = d.request.args || [];
             var entry = ['worker', p, now()];
@@ -105,11 +183,28 @@ const HOOK = `(function () {
         return post.apply(this, arguments);
     };
     var visible = function (el) { if (!el) return false; var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+    // The first movie of the first catalog row of the Board (not Continue Watching).
+    f.firstPoster = function () {
+        var rows = document.querySelectorAll('[class*="board-content"] [class*="board-row"]');
+        for (var i = 0; i < rows.length; i++) {
+            if (/continue-watching/.test(rows[i].className)) continue;
+            var a = rows[i].querySelector('a[href^="#/detail/movie/"]');
+            if (a) return a;
+        }
+        return null;
+    };
     f.open = function (hash) {
         var m = f.m = {};
-        f.calls = [];
+        var before = f.calls.map(function (c) { return [c[0], c[1], c[2] - Math.round(performance.now() - f.t0)].concat(c.slice(3)); });
+        f.calls = before;
         f.t0 = performance.now();
-        location.hash = hash;
+        m.atDate = Date.now();
+        if (hash) location.hash = hash;
+        else {
+            var poster = f.firstPoster();
+            m.href = poster && poster.getAttribute('href');
+            poster.click();
+        }
         var iv = setInterval(function () {
             var t = now(), top = ${ROUTE};
             // The details route once it is the one on top (before, the last route is still the Board).
@@ -196,39 +291,35 @@ const close = async () => {
     await sleep(4000);
 };
 
-async function round(ipk, label) {
-    log(`[${label}] install ${path.basename(ipk)}`);
-    try { execFileSync('ares-install', ['-d', DEVICE, '--remove', APP_ID], { stdio: 'ignore' }); } catch (e) { /* not installed */ }
-    execFileSync('ares-install', ['-d', DEVICE, ipk], { stdio: 'ignore' });
-    await sleep(3000);
-    log(`[${label}] first launch: Board after ${await launch()} s; seeding the library and the addon`);
-    await evaluate(`(function () {
-        localStorage.setItem('library', ${JSON.stringify(LIBRARY.library)});
-        localStorage.setItem('library_recent', ${JSON.stringify(LIBRARY.library_recent)});
-        return true;
-    })()`);
-    await evaluate(`fetch(${JSON.stringify(manifestUrl)}).then(function (r) { return r.json(); }).then(function (manifest) {
-        return window.core.dispatch({ action: 'Ctx', args: { action: 'InstallAddon', args: { transportUrl: ${JSON.stringify(manifestUrl)}, manifest: manifest, flags: { official: false, protected: false } } } });
-    }).then(function () { return true; })`);
-    await sleep(6000);
-    await evaluate('window.__stremioPersist && window.__stremioPersist.flush ? Promise.resolve(window.__stremioPersist.flush()).then(function () { return true; }) : true').catch(() => null);
-    await sleep(2000);
-    await close();
+// The state before a measured launch: the TV-like library and no notifications bucket (the boot pulls them).
+// --core-variant wasm|wasm2js: the core the app loads (webos.coreVariant, webos/core/README.md).
+const CORE_VARIANT = args['core-variant'] || null;
+const seedFor = (variant) => `(function () {
+    ${variant ? `localStorage.setItem('webos.coreVariant', ${JSON.stringify(variant)});` : ''}
+    localStorage.setItem('library', ${JSON.stringify(LIBRARY.library)});
+    localStorage.setItem('library_recent', ${JSON.stringify(LIBRARY.library_recent)});
+    localStorage.removeItem('notifications');
+    return true;
+})()`;
+let SEED = seedFor(CORE_VARIANT);
+
+async function measuredLaunch(result, label, quiet) {
     const boardS = await launch();
-    const check = await evaluate(`Promise.all([window.core.getState('ctx'), window.core.getState('continue_watching_preview')]).then(function (s) {
-        return { addons: s[0].profile.addons.map(function (a) { return a.manifest.id; }), continueWatching: s[1].items.length,
-            library: (localStorage.getItem('library') || '').length, libraryRecent: (localStorage.getItem('library_recent') || '').length };
-    })`);
-    log(`[${label}] Board after ${boardS} s`, JSON.stringify(check));
-    if (!check.addons.includes('io.github.gabrielsflores.webos.test-debrid') || check.continueWatching === 0) throw new Error(`fixture not in place: ${JSON.stringify(check)}`);
-    log(`[${label}] quiet ${QUIET_S} s`);
-    await sleep(QUIET_S * 1000);
+    // The page side as early as possible: the calls of the boot too.
     await evaluate(HOOK);
-    const result = { ipk: path.basename(ipk), label, boardS, fixture: check, openings: [] };
-    // Saved after every opening (a stuck opening keeps the ones before it).
-    results.push(result);
+    // The fixture check goes to the worker, which may be busy with the boot: not awaited here (it would push
+    // the opening past the boot's work), read after the openings.
+    await evaluate(`(window.__f86.check = null, Promise.all([window.core.getState('ctx'), window.core.getState('continue_watching_preview')]).then(function (s) {
+        window.__f86.check = { addons: s[0].profile.addons.map(function (a) { return a.manifest.id; }), continueWatching: s[1].items.length,
+            library: (localStorage.getItem('library') || '').length, libraryRecent: (localStorage.getItem('library_recent') || '').length };
+    }), true)`);
+    log(`[${label}] Board after ${boardS} s; quiet ${quiet} s`);
+    const launchInfo = { quiet, boardS };
+    result.launches.push(launchInfo);
+    await sleep(quiet * 1000);
     for (let i = 1; i <= OPENINGS; i++) {
-        const workerRttMs = await evaluate(`(function () { var t = performance.now(); return window.core.getState('streaming_server').then(function () { return Math.round(performance.now() - t); }); })()`).catch(() => null);
+        // How busy the worker is right before the opening: a small getState, not awaited (read at the end).
+        await evaluate(`(function () { var f = window.__f86, t = performance.now(); f.rtt = null; window.core.getState('streaming_server').then(function () { f.rtt = Math.round(performance.now() - t); }); return true; })()`);
         const profiling = PROFILE_OPENING === i;
         if (profiling) {
             await attachWorker();
@@ -236,8 +327,19 @@ async function round(ipk, label) {
             await wsend('Profiler.setSamplingInterval', { interval: PROFILE_INTERVAL_US });
             await wsend('Profiler.start');
         }
+        if (WORKER_TRACE) {
+            if (!workerId) await attachWorker();
+            const r = await wsend('Runtime.evaluate', { expression: WORKER_TRACE_SCRIPT, returnByValue: true }, 30000).catch((e) => ({ error: String(e) }));
+            if (!r || r.error || !r.result) log(`[${label}] worker trace: ${JSON.stringify(r)}`);
+        }
+        const pageProfiling = PAGE_PROFILE_OPENING === i;
+        if (pageProfiling) {
+            await session.send('Profiler.enable');
+            await session.send('Profiler.setSamplingInterval', { interval: 1000 });
+            await session.send('Profiler.start');
+        }
         const before = ticks();
-        await evaluate(`window.__f86.open(${JSON.stringify(HASH)})`);
+        await evaluate(`window.__f86.open(${FROM_BOARD ? 'null' : JSON.stringify(HASH)})`);
         const start = Date.now();
         let m = null;
         let previewShot = i !== 1;
@@ -253,6 +355,11 @@ async function round(ipk, label) {
                     fs.writeFileSync(path.join(OUT, `${label}.preview.png`), Buffer.from(shot.data, 'base64'));
                 } catch (e) { /* no screenshot */ }
             }
+        }
+        if (pageProfiling) {
+            const r = await session.send('Profiler.stop', {}, 300000).catch(() => null);
+            if (r && r.profile) fs.writeFileSync(path.join(OUT, `${label}-q${quiet}.page.cpuprofile`), JSON.stringify(r.profile));
+            await session.send('Profiler.disable').catch(() => null);
         }
         // The profile ends with the opening (meta and first stream on screen): the Chromium 53 worker takes
         // long to serialize a long profile, and on the emulator Profiler.stop may never come back.
@@ -272,19 +379,31 @@ async function round(ipk, label) {
             await sleep(1000);
         }
         const after = ticks();
-        const page = JSON.parse(await evaluate(`JSON.stringify({ calls: window.__f86.calls, streams: document.querySelectorAll('[class*="stream-container"]').length })`));
+        let workerTrace = null;
+        if (WORKER_TRACE) {
+            const r = await wsend('Runtime.evaluate', { expression: 'JSON.stringify(self.__wt || null)', returnByValue: true }, 60000).catch(() => null);
+            workerTrace = r && r.result ? JSON.parse(r.result.value) : null;
+        }
+        const page = JSON.parse(await evaluate(`JSON.stringify({ calls: window.__f86.calls, rtt: window.__f86.rtt, streams: document.querySelectorAll('[class*="stream-container"]').length })`));
+        const workerRttMs = page.rtt;
         const calls = page.calls;
         const count = (side, p, model) => calls.filter((c) => c[0] === side && c[1] === p && (model === undefined || c[3] === model)).length;
         const opening = {
-            n: i, ...m, workerRttMs, idleMs, streamsAt: page.streams,
+            n: i, quiet, ...m, workerRttMs, idleMs, streamsAt: page.streams,
             ticks: tickDelta(before, after),
             getState: Object.fromEntries([...new Set(calls.filter((c) => c[1] === 'getState').map((c) => c[3]))].map((model) => [model, count('page', 'getState', model)])),
             newState: calls.filter((c) => c[1] === 'onCoreEvent' && /^NewState/.test(c[3] || '')).length,
             setItem: calls.filter((c) => c[1] === 'localStorage.setItem').map((c) => c[3]),
             calls,
             profiled: profiling ? `${label}.worker.cpuprofile` : undefined,
+            workerTrace,
         };
         result.openings.push(opening);
+        if (!launchInfo.fixture) {
+            launchInfo.fixture = await evaluate('window.__f86.check').catch(() => null);
+            const check = launchInfo.fixture;
+            if (!check || !check.addons.includes('io.github.gabrielsflores.webos.test-debrid') || check.continueWatching === 0) throw new Error(`fixture not in place: ${JSON.stringify(check)}`);
+        }
         save();
         log(`[${label}] opening ${i}`, JSON.stringify({ titleMs: opening.titleMs, metaMs: opening.metaMs, tvMetaMs: opening.tvMetaMs, streamMs: opening.streamMs, idleMs, streamsAt: opening.streamsAt, getState: opening.getState, newState: opening.newState, setItem: opening.setItem, ticks: opening.ticks }));
         if (i === 1) {
@@ -298,15 +417,44 @@ async function round(ipk, label) {
         while (Date.now() - back < 60000 && !(await evaluate(BOARD_READY).catch(() => false))) await sleep(500);
         await sleep(5000);
     }
+}
+
+let currentVariant = null;
+async function round(ipk, label) {
+    log(`[${label}] install ${path.basename(ipk)}`);
+    try { execFileSync('ares-install', ['-d', DEVICE, '--remove', APP_ID], { stdio: 'ignore' }); } catch (e) { /* not installed */ }
+    execFileSync('ares-install', ['-d', DEVICE, ipk], { stdio: 'ignore' });
+    await sleep(3000);
+    log(`[${label}] first launch: Board after ${await launch()} s; seeding the library and the addon`);
+    await evaluate(SEED);
+    await evaluate(`fetch(${JSON.stringify(manifestUrl)}).then(function (r) { return r.json(); }).then(function (manifest) {
+        return window.core.dispatch({ action: 'Ctx', args: { action: 'InstallAddon', args: { transportUrl: ${JSON.stringify(manifestUrl)}, manifest: manifest, flags: { official: false, protected: false } } } });
+    }).then(function () { return true; })`);
+    await sleep(6000);
+    await evaluate('window.__stremioPersist && window.__stremioPersist.flush ? Promise.resolve(window.__stremioPersist.flush()).then(function () { return true; }) : true').catch(() => null);
+    await sleep(2000);
+    await close();
+    const result = { ipk: path.basename(ipk), variant: currentVariant, label, launches: [], openings: [] };
+    // Saved after every opening (a stuck opening keeps the ones before it).
+    results.push(result);
+    for (const quiet of QUIETS) {
+        await measuredLaunch(result, label, quiet);
+        // The same state for the next launch: the library again and no notifications (the core wrote them).
+        await evaluate(SEED).catch(() => null);
+        await sleep(3000);
+        await close();
+    }
     await close();
     return result;
 }
 
 const save = () => fs.writeFileSync(path.join(OUT, 'details.json'), `${JSON.stringify({ profile: process.env.EMU_PROFILE || null, instance: process.env.EMU_INSTANCE, hash: HASH, results }, null, 1)}\n`);
 for (let r = 1; r <= ROUNDS; r++) {
-    const order = r % 2 ? IPKS : [...IPKS].reverse();
-    for (const ipk of order) {
-        const label = `r${r}-${path.basename(ipk, '.ipk')}`;
+    const order = r % 2 ? ENTRIES : [...ENTRIES].reverse();
+    for (const { ipk, variant } of order) {
+        SEED = seedFor(variant || CORE_VARIANT);
+        currentVariant = variant;
+        const label = `r${r}-${path.basename(ipk, '.ipk')}${variant ? `-${variant}` : ''}`;
         try {
             await round(ipk, label);
         } catch (e) {
@@ -328,15 +476,16 @@ const workerTicks = (o) => {
     const worker = entries.find(([k]) => /worker/i.test(k));
     return worker ? worker[1] : null;
 };
-for (const ipk of IPKS) {
-    const mine = results.filter((x) => x.ipk === path.basename(ipk) && x.openings && x.openings.length > 0);
-    const all = (pick) => median(mine.flatMap((x) => x.openings.map(pick)).filter((v) => typeof v === 'number'));
-    log(path.basename(ipk), JSON.stringify({
-        rounds: mine.length,
-        titleMs: all((o) => o.titleMs), metaMs: all((o) => o.metaMs), tvMetaMs: all((o) => o.tvMetaMs), streamMs: all((o) => o.streamMs), idleMs: all((o) => o.idleMs),
-        workerCpuMs: all((o) => (workerTicks(o) === null ? null : workerTicks(o) * 10)),
-        getStateMetaDetails: all((o) => o.getState.meta_details), getStateCtx: all((o) => o.getState.ctx || 0),
-    }));
+for (const { ipk, variant } of ENTRIES) {
+    for (const quiet of QUIETS) {
+        const mine = results.filter((x) => x.ipk === path.basename(ipk) && x.variant === variant && x.openings && x.openings.length > 0);
+        const pick = (fn, first) => median(mine.flatMap((x) => x.openings.filter((o) => o.quiet === quiet && (!first || o.n === 1)).map(fn)).filter((v) => typeof v === 'number'));
+        const row = (first) => ({
+            titleMs: pick((o) => o.titleMs, first), metaMs: pick((o) => o.metaMs, first), streamMs: pick((o) => o.streamMs, first), idleMs: pick((o) => o.idleMs, first),
+            workerRttMs: pick((o) => o.workerRttMs, first), workerCpuMs: pick((o) => (workerTicks(o) === null ? null : workerTicks(o) * 10), first),
+        });
+        log(path.basename(ipk) + (variant ? `:${variant}` : ''), `quiet ${quiet}`, JSON.stringify({ rounds: mine.length, first: row(true), all: row(false) }));
+    }
 }
 addon.kill('SIGTERM');
 process.exit(0);

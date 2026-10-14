@@ -3,11 +3,13 @@
 // or series id starting with "tt") whose URLs point at webos/tools/media-server.mjs, started here
 // on a media root with the kit media, the F0.10 headers and the rebuilt probe fixtures (media.js).
 //
-//   node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <media root>] [--info <file.json>] [--delay <ms>] [--set f62|e2e|torrentio] [--far]
+//   node webos/tests/addon/server.mjs [--port N] [--media-port N] [--host 10.0.2.2] [--dir <media root>] [--info <file.json>] [--delay <ms>] [--answer-delay <ms>] [--set f62|e2e|torrentio] [--far]
 //
 // --set picks the streams (catalog.js SETS): f62 (default, the F6.2 list), e2e (the end-to-end run, F6.4)
 // or torrentio (224 Torrentio-like streams that only get listed, torrentio.js: the slow Details of F8.6).
-// Ports default to free ones. --delay puts a proxy in front of the media server that holds every
+// --answer-delay holds every addon answer (manifest, streams) that long, like a remote addon (F8.7: Torrentio +
+// AllDebrid answered the TV in ~150 ms, Cinemeta in ~33 ms; without it the local streams always reached the
+// core before the meta). Ports default to free ones. --delay puts a proxy in front of the media server that holds every
 // request that long (debrid latency); the stream URLs then point at the proxy. --host is how the client reaches this machine (10.0.2.2 from the
 // emulator, 127.0.0.1 from a desktop browser). When ready, prints and writes (--info) a JSON with
 // manifestUrl, mediaUrl and the ports. Stops the media server on SIGINT/SIGTERM.
@@ -68,6 +70,7 @@ const dir = path.resolve(ownDir ? fs.mkdtempSync(path.join(os.tmpdir(), 'webos-t
 const infoFile = option('info', null);
 const delay = Number(option('delay', 0)) || 0;
 const set = option('set', 'f62');
+const answerDelay = Number(option('answer-delay', 0)) || 0;
 // --far: the stream links redirect to another origin (a second media server on the same files), like a
 // debrid resolver sending to the file host (F8.5).
 const far = args.includes('--far');
@@ -144,7 +147,7 @@ const send = (res, status, body) => {
     res.end(JSON.stringify(body));
 };
 
-http.createServer((req, res) => {
+http.createServer((req, res) => setTimeout(() => {
     const url = new URL(req.url, 'http://x');
     const log = (status) => process.stdout.write(`${new Date().toISOString()} addon ${req.method} ${url.pathname} -> ${status}\n`);
     if (req.method === 'OPTIONS') {
@@ -162,7 +165,7 @@ http.createServer((req, res) => {
     }
     send(res, 404, { err: 'not found' });
     return log(404);
-}).listen(port, '127.0.0.1', () => {
+}, req.method === 'OPTIONS' ? 0 : answerDelay)).listen(port, '127.0.0.1', () => {
     const info = { manifestUrl, mediaUrl, port, mediaPort, farPort, delay, dir, set, streams: GENERATED[set] ? GENERATED[set](mediaUrl).length : STREAMS.length };
     if (infoFile) fs.writeFileSync(infoFile, JSON.stringify(info, null, 4));
     process.stdout.write(`${JSON.stringify(info)}\n`);

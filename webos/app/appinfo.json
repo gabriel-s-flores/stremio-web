@@ -11,5 +11,5 @@
     "resolution": "1920x1080",
     "disableBackHistoryAPI": true,
     "handlesRelaunch": true,
-    "v8ExtraFlags": "--no-crankshaft"
+    "v8ExtraFlags": "--no-crankshaft --no-flush-code"
 }

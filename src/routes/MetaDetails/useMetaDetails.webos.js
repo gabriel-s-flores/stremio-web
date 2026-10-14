@@ -5,6 +5,8 @@
 // this route, the streams page of a movie or an episode shows the name, logo and background of the
 // poster that was opened (webos/lib/meta-preview): on the TV the core took tens of seconds to answer.
 // A null meta item (no addon for this meta) keeps the upstream message.
+// F8.7: the core leaves `deepLinks.player` out of the streams of the list (webos/core/list-links.patch);
+// webos/lib/player-link builds the same link when a stream item reads it (only the ones on screen).
 
 const React = require('react');
 // The explicit extension resolves to the upstream hook, not to this file.
@@ -12,6 +14,7 @@ const useUpstreamMetaDetails = require('./useMetaDetails.js');
 const { hideTorrentStreams } = require('./hideTorrentStreams');
 const { decodeMetaEntities } = require('./decodeMetaEntities');
 const { findPreview, optimisticMetaItem } = require('../../../webos/lib/meta-preview');
+const { withPlayerLinks, linkContext } = require('../../../webos/lib/player-link');
 
 const decodeMetaItem = (metaItem) => {
     if (metaItem === null || metaItem.content.type !== 'Ready') return metaItem;
@@ -31,7 +34,8 @@ const useMetaDetails = (urlParams) => {
             null
     ), [type, id, videoId]);
     return React.useMemo(() => {
-        const streams = hideTorrentStreams(metaDetails.streams);
+        // The link's meta addon is the real meta's (before the preview takes its place).
+        const streams = withPlayerLinks(hideTorrentStreams(metaDetails.streams), linkContext(metaDetails));
         // Only the Loading of this route's item (not a state left by another page).
         const selected = metaDetails.selected;
         const current = !!selected && !!selected.metaPath && selected.metaPath.id === id && selected.metaPath.type === type;

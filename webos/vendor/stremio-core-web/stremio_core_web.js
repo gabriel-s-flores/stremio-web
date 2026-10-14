@@ -13,6 +13,7 @@ exports.get_state = get_state;
 exports.initSync = initSync;
 exports.initialize_runtime = initialize_runtime;
 exports.start = start;
+exports.webos_warm_up = webos_warm_up;
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 var _typeof2 = _interopRequireDefault(require("@babel/runtime/helpers/typeof"));
@@ -94,6 +95,28 @@ function initialize_runtime(emit_to_ui) {
 }
 function start() {
   wasm.start();
+}
+
+/**
+ * webOS port (F8.7): the code a title's Details runs, run once in advance on a copy of the model.
+ *
+ * In wasm2js on the webOS TV 4.x (V8 5.8 with "--no-crankshaft") the first run of a code path of the core
+ * costs hundreds of ms (the functions are compiled when first called: the first `dispatch` took ~700 ms on
+ * the C8 profile, the next ones 1-2 ms), and opening the first title of a session paid it for the meta and
+ * the streams answers, an addon that fails and the `get_state` of the details. Called by the page when the
+ * app is idle: a copy of the runtime's model (copying it makes no effect) gets the Details of a movie and of
+ * a series episode, set up as the Load leaves them (the requests loading), canned answers read as `fetch` reads
+ * an addon's answer (one stream addon answers an error) and its `get_state('meta_details')`; the Load
+ * action is only parsed (its update would make the requests: the core's fetch starts when the effect is
+ * built). The copy's effects are dropped: nothing reaches the runtime, the storage, the network or the page.
+ * One request is made on purpose, through the runtime's fetch: the streaming server's local addon
+ * (127.0.0.1:11470; the core asks it on every Details, and there is no server on the TV), which fails at once
+ * and warms fetch's error path. Returns how many titles it went through (0 when the runtime is not ready).
+ * @returns {number}
+ */
+function webos_warm_up() {
+  var ret = wasm.webos_warm_up();
+  return ret >>> 0;
 }
 function __wbg_get_imports() {
   var import0 = {
@@ -488,13 +511,13 @@ function __wbg_get_imports() {
       return addHeapObject(ret);
     },
     __wbindgen_cast_0000000000000001: function __wbindgen_cast_0000000000000001(arg0, arg1) {
-      // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2235, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+      // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 2221, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
       var ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h09e5e79ae7d953ce);
       return addHeapObject(ret);
     },
     __wbindgen_cast_0000000000000002: function __wbindgen_cast_0000000000000002(arg0, arg1) {
-      // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 506, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-      var ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h178bfe27f6b730e6);
+      // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 811, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+      var ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__hfc8fcfa0cce7baed);
       return addHeapObject(ret);
     },
     __wbindgen_cast_0000000000000003: function __wbindgen_cast_0000000000000003(arg0) {
@@ -525,8 +548,8 @@ function __wbg_get_imports() {
     "./stremio_core_web_bg.js": import0
   };
 }
-function wasm_bindgen__convert__closures_____invoke__h178bfe27f6b730e6(arg0, arg1) {
-  wasm.wasm_bindgen__convert__closures_____invoke__h178bfe27f6b730e6(arg0, arg1);
+function wasm_bindgen__convert__closures_____invoke__hfc8fcfa0cce7baed(arg0, arg1) {
+  wasm.wasm_bindgen__convert__closures_____invoke__hfc8fcfa0cce7baed(arg0, arg1);
 }
 function wasm_bindgen__convert__closures_____invoke__h09e5e79ae7d953ce(arg0, arg1, arg2) {
   try {
